@@ -56,7 +56,7 @@ import (
 
 	"mvdan.cc/sh/v3/syntax"
 
-	"sh-ast-shim/internal/nodeencode"
+	"eslint-sh-shim/internal/nodeencode"
 )
 
 // parseErrorInfo carries a structured parse failure: the message mvdan

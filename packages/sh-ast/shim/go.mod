@@ -1,4 +1,4 @@
-module sh-ast-shim
+module eslint-sh-shim
 
 go 1.26.5
 
