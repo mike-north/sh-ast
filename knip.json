@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": ["packages/sh-ast/generated/*.d.ts"],
+  "ignoreBinaries": ["go"],
+  "workspaces": {
+    "packages/*": {}
+  }
+}

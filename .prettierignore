@@ -1,0 +1,6 @@
+dist/
+api-report/
+api-report-combined/
+api-docs-temp/
+docs/
+pnpm-lock.yaml

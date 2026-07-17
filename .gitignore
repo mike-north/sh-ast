@@ -141,3 +141,24 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Nx
+.nx/
+
+# API Extractor intermediate output (per-package; report + rollup are committed, this isn't)
+**/temp/*
+!**/temp/.gitkeep
+
+# Workspace-level derived API report/docs output (uplevel-api-reports; regenerated, not committed)
+api-report-combined/
+api-docs-temp/
+
+# Claude Code local configuration (auto-added)
+.claude/*.local.*
+.claude/worktrees/
+.claude/toolsmith/
+
+# Agent scratch space and local-only files
+scratch/
+*.local.*
+.DS_Store

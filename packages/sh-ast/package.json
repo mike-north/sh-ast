@@ -1,0 +1,89 @@
+{
+  "name": "sh-ast",
+  "description": "Synchronous shell-script parser (mvdan/sh via WASM) with a normalized, UTF-16-safe AST.",
+  "version": "0.0.0",
+  "author": "Mike North <michael.l.north@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mike-north/sh-ast.git",
+    "directory": "packages/sh-ast"
+  },
+  "homepage": "https://github.com/mike-north/sh-ast/tree/main/packages/sh-ast#readme",
+  "bugs": {
+    "url": "https://github.com/mike-north/sh-ast/issues"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/sh-ast.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "generated/*.js",
+    "generated/*.d.ts",
+    "shim/sh-ast.wasm",
+    "shim/wasm_exec.js"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "nx": {
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist/**/*.js",
+          "{projectRoot}/dist/**/*.js.map",
+          "{projectRoot}/dist/**/*.d.ts",
+          "{projectRoot}/dist/**/*.d.ts.map",
+          "!{projectRoot}/dist/sh-ast.d.ts"
+        ]
+      },
+      "check:api-report": {
+        "outputs": [
+          "{projectRoot}/api-report",
+          "{projectRoot}/temp",
+          "{projectRoot}/dist/sh-ast.d.ts"
+        ]
+      },
+      "uplevel-api-reports": {
+        "dependsOn": [
+          "check:api-report"
+        ],
+        "cache": true,
+        "inputs": [
+          "{projectRoot}/api-report/**",
+          "{projectRoot}/temp/**"
+        ],
+        "outputs": [
+          "{workspaceRoot}/api-report-combined/sh-ast.api.md",
+          "{workspaceRoot}/api-docs-temp/sh-ast.api.json"
+        ]
+      }
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "concurrently -n lint,types,api-report \"pnpm run check:lint-ts\" \"pnpm run check:typecheck\" \"pnpm run check:api-report\"",
+    "check:api-report": "api-extractor run",
+    "check:lint-ts": "eslint .",
+    "check:typecheck": "tsc --noEmit",
+    "clean": "rimraf --glob dist \"temp/*\" \"*.tsbuildinfo\"",
+    "fix:api-report": "api-extractor run --local",
+    "fix:lint-ts": "eslint . --fix",
+    "prepack": "api-extractor run",
+    "test": "concurrently -n vitest,tsd \"pnpm run test:ts\" \"pnpm run test:types\"",
+    "test:ts": "vitest run",
+    "test:types": "tsd",
+    "uplevel-api-reports": "mkdir -p ../../api-report-combined ../../api-docs-temp && cp api-report/sh-ast.api.md ../../api-report-combined/ && cp temp/sh-ast.api.json ../../api-docs-temp/"
+  },
+  "tsd": {
+    "compilerOptions": {
+      "composite": false
+    }
+  },
+  "type": "module",
+  "types": "./dist/sh-ast.d.ts"
+}

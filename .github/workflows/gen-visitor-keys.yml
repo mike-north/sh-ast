@@ -1,0 +1,36 @@
+name: Schema reproducibility
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  regenerate-match:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/gen-visitor-keys/go.mod
+      - run: pnpm install --frozen-lockfile
+      - name: Verify the generator and the WASM shim pin the same mvdan/sh version
+        run: |
+          shim_version="$(grep -o 'mvdan\.cc/sh/v3 v[0-9.]*' packages/sh-ast/shim/go.mod)"
+          gen_version="$(grep -o 'mvdan\.cc/sh/v3 v[0-9.]*' tools/gen-visitor-keys/go.mod)"
+          if [ "$shim_version" != "$gen_version" ]; then
+            echo "::error::packages/sh-ast/shim/go.mod pins $shim_version but tools/gen-visitor-keys/go.mod pins $gen_version — the generated schema and the WASM parser must be built from the same mvdan/sh version." >&2
+            exit 1
+          fi
+      - name: Regenerate visitor-keys/child-type-schema/node-types
+        run: pnpm run generate:sh-ast-schema
+      - name: Verify regeneration matches the committed artifacts
+        run: |
+          if ! git diff --exit-code -- packages/sh-ast/generated; then
+            echo "::error::packages/sh-ast/generated is out of date. Run 'pnpm run generate:sh-ast-schema' from the repo root and commit the result." >&2
+            exit 1
+          fi
