@@ -1,0 +1,44 @@
+name: WASM reproducibility
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+env:
+  # Pinned binaryen release providing wasm-opt — see packages/sh-ast/shim's
+  # README.md "The WASM shim" for why wasm-opt is part of the build and why
+  # its version must be pinned (a different wasm-opt version can produce a
+  # different, still-correct optimization, which would break byte-for-byte
+  # reproducibility here).
+  BINARYEN_VERSION: version_131
+  BINARYEN_SHA256: b5bf1f0eaf17c63ee588ff7a5954dc8f6ce2c26989051c66f24dfe9ece3e46db
+jobs:
+  rebuild-match:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sh-ast/shim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: packages/sh-ast/shim/go.mod
+      - name: Run the shim's Go test suite
+        run: go test ./...
+      - name: Install pinned wasm-opt (binaryen)
+        run: |
+          curl -sL -o binaryen.tar.gz "https://github.com/WebAssembly/binaryen/releases/download/${BINARYEN_VERSION}/binaryen-${BINARYEN_VERSION}-x86_64-linux.tar.gz"
+          echo "${BINARYEN_SHA256}  binaryen.tar.gz" | sha256sum -c -
+          tar -xzf binaryen.tar.gz
+          echo "$PWD/binaryen-${BINARYEN_VERSION}/bin" >> "$GITHUB_PATH"
+      - name: Rebuild the WASM shim
+        run: |
+          cp sh-ast.wasm /tmp/sh-ast.committed.wasm
+          GOOS=js GOARCH=wasm go build -buildvcs=false -trimpath -ldflags="-s -w -buildid=" -o /tmp/sh-ast.rebuilt.wasm .
+          wasm-opt -Oz --enable-bulk-memory-opt --enable-nontrapping-float-to-int /tmp/sh-ast.rebuilt.wasm -o sh-ast.wasm
+      - name: Verify rebuild matches the committed artifact
+        run: |
+          if ! cmp -s sh-ast.wasm /tmp/sh-ast.committed.wasm; then
+            echo "::error::packages/sh-ast/shim/sh-ast.wasm does not match a fresh rebuild. See packages/sh-ast/README.md's \"The WASM shim\" for the exact rebuild command and commit the result." >&2
+            exit 1
+          fi

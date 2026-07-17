@@ -1,0 +1,5 @@
+module sh-ast-shim
+
+go 1.26.5
+
+require mvdan.cc/sh/v3 v3.13.1

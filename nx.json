@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "outputs": [
+        "{projectRoot}/dist/index.js",
+        "{projectRoot}/dist/index.js.map",
+        "{projectRoot}/dist/index.d.ts",
+        "{projectRoot}/dist/index.d.ts.map"
+      ]
+    },
+    "check": {
+      "dependsOn": ["build"],
+      "cache": true
+    },
+    "check:api-report": {
+      "dependsOn": ["build"],
+      "cache": true
+    },
+    "test": {
+      "dependsOn": ["check:api-report"],
+      "cache": true
+    }
+  }
+}

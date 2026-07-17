@@ -1,0 +1,5 @@
+# `go build`/`go build ./...` output — never committed; only source, go.mod,
+# and go.sum ship. Named after either the directory or the module, depending
+# on how it's invoked, so ignore both.
+/gen-visitor-keys
+/sh-ast-gen-visitor-keys

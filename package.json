@@ -1,20 +1,69 @@
 {
   "name": "sh-ast-workspace",
+  "description": "A synchronous, fully-typed shell AST for JavaScript/TypeScript",
   "version": "0.0.0",
-  "private": true,
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "Mike North <michael.l.north@gmail.com>",
+  "devDependencies": {
+    "@api-extractor-tools/eslint-plugin": "^0.1.1",
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
+    "@microsoft/api-documenter": "^7.30.7",
+    "@microsoft/api-extractor": "^7.58.9",
+    "@types/node": "^26.1.1",
+    "concurrently": "^10.0.3",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "knip": "^6.26.0",
+    "lint-staged": "^17.0.8",
+    "nx": "^23.1.0",
+    "prettier": "^3.9.5",
+    "rimraf": "^6.1.3",
+    "syncpack": "^15.3.2",
+    "tsd": "^0.33.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.64.0",
+    "vitest": "^4.1.10"
   },
-  "keywords": [],
-  "author": "",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.12.0",
+      "version": "11.12.0",
       "onFail": "download"
     }
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "keywords": [
+    "bash",
+    "shell",
+    "ast",
+    "parser"
+  ],
+  "license": "MIT",
+  "packageManager": "pnpm@11.12.0",
+  "private": true,
+  "scripts": {
+    "build": "NX_TUI=false nx run-many -t build --exclude=sh-ast-workspace",
+    "build:docs": "NX_TUI=false nx run-many -t uplevel-api-reports --exclude=sh-ast-workspace && pnpm exec api-documenter markdown -i api-docs-temp -o docs",
+    "changeset": "changeset",
+    "check": "concurrently -n packages,workspace --prefix \"[{name}]\" \"pnpm run check:packages\" \"pnpm run check:workspace\"",
+    "check:format": "prettier --check .",
+    "check:knip": "knip",
+    "check:packages": "NX_TUI=false nx run-many -t check --exclude=sh-ast-workspace",
+    "check:syncpack": "syncpack lint",
+    "check:workspace": "concurrently -n format,knip,syncpack --prefix \"[{name}]\" \"pnpm run check:format\" \"pnpm run check:knip\" \"pnpm run check:syncpack\"",
+    "clean": "rimraf --glob \"packages/*/dist\" \"packages/*/temp/*\" \"packages/*/*.tsbuildinfo\" \"api-report-combined\" \"api-docs-temp\" \".nx\"",
+    "fix": "concurrently -n packages,format,syncpack \"pnpm run fix:packages\" \"pnpm run fix:format\" \"pnpm run fix:syncpack\"",
+    "fix:format": "prettier --write .",
+    "fix:packages": "NX_TUI=false nx run-many -t fix --exclude=sh-ast-workspace",
+    "fix:syncpack": "syncpack fix && syncpack format",
+    "generate:sh-ast-schema": "go run -C tools/gen-visitor-keys . -out ../../packages/sh-ast/generated && prettier --write packages/sh-ast/generated",
+    "prepare": "husky",
+    "release": "pnpm build && changeset publish",
+    "test": "NX_TUI=false nx run-many -t test --exclude=sh-ast-workspace",
+    "version-packages": "changeset version"
   },
   "type": "module"
 }
