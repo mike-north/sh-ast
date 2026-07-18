@@ -56,6 +56,13 @@ for the serialization contract, byte→UTF-16 conversion, and normalized node sh
   environment as the thing under test proves nothing (a generator-derived coverage test, a
   same-host reproducibility check). Every verification must name its independent ground
   truth — upstream mvdan/sh structs, the linux CI builder, a hand-derived expected value.
+- **Review-fix verification.** In a review-fix cycle, "the fix commit exists + CI is green +
+  the threads were replied to" does NOT mean the reported defect is fixed. Trace the corrected
+  code by hand against the EXACT input the reviewer reported, and confirm a regression test
+  exercises that specific input, proven failing pre-fix and passing post-fix. A
+  superficially-plausible fix (skipping a token but resuming the same wrong parse) plus a
+  too-weak test (covers an easier case) sails through CI while the reported bug stays live.
+  Grepping that the fix is _present_ is not tracing that it is _correct_.
 - Multibyte fixtures (emoji, CJK, combining marks) are mandatory for anything touching
   ranges, positions, or offsets.
 - **Facts, not verdicts.** The analyze layer reports syntactic facts (argv, staticness,
