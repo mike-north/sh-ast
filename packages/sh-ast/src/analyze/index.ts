@@ -8,7 +8,7 @@
  */
 
 export { resolveWord } from './resolve-word.js';
-export type { WordResolution, WordResolutionReason } from './resolve-word.js';
+export type { ResolveWordOptions, WordResolution, WordResolutionReason } from './resolve-word.js';
 
 // `ShNode` (resolveWord's parameter type) is deliberately *not* re-exported
 // here: it's the root `sh-ast` entry point's type (see `sh-ast`'s own

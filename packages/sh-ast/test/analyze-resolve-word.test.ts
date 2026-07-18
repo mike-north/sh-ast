@@ -76,6 +76,40 @@ function resolve(wordSrc: string, dialect?: ShellDialect): WordResolution {
   return resolveWord(argWord(wordSrc, dialect));
 }
 
+/**
+ * A placeholder `range`/`loc` for hand-built synthetic `ShNode`s below
+ * (`Position`/`range` values `resolveWord` never inspects) — every real
+ * `ShNode` carries these fields, so satisfying the type requires *some*
+ * value even where the position is meaningless for the test.
+ */
+const PLACEHOLDER_LOC: ShNode['loc'] = {
+  start: { line: 1, column: 1 },
+  end: { line: 1, column: 1 },
+};
+
+/** Builds a minimal, otherwise-empty `ShNode` of the given `type` for synthetic-input tests. */
+function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> = {}): ShNode {
+  return { type, range: [0, 0], loc: PLACEHOLDER_LOC, ...fields };
+}
+
+/**
+ * Parses `<assignSrc>` (e.g. `PATH=/foo:~/bar`) as a bare assignment
+ * statement and returns the real `Assign` node's `value` — a `Word` node —
+ * for `resolveWord`'s `context: 'assignment-value'` tests. Unlike
+ * {@link argWord}, this does *not* wrap the source in a `cmd` prefix: an
+ * assignment with no following command is itself the whole simple command.
+ */
+function assignValueWord(assignSrc: string, dialect: ShellDialect = 'bash'): ShNode {
+  const file = parseSync(assignSrc, { dialect });
+  const stmt = assertDefined(file.stmts[0], `no statement parsed from: ${assignSrc}`);
+  const cmd = stmt.cmd as { readonly assigns?: readonly ShNode[] };
+  const assign = assertDefined(cmd.assigns?.[0], `no assignment parsed from: ${assignSrc}`);
+  return assertDefined(
+    (assign as { readonly value?: ShNode }).value,
+    `assignment has no value: ${assignSrc}`,
+  );
+}
+
 describe('resolveWord — criterion 1: positive (static) resolution table', () => {
   const rows: readonly { readonly label: string; readonly src: string; readonly text: string }[] = [
     // §3.1.2 "Quoting" overview: an unquoted word with no special
@@ -142,7 +176,7 @@ describe('resolveWord — criterion 1: positive (static) resolution table', () =
     // \xHH: hex value, one or two digits. Hex 41 = decimal 65 = 'A'.
     { label: '$\\x41 (hex -> "A")', src: sh`$'\x41'`, text: 'A' },
     // \uHHHH: Unicode code point, one to four hex digits. U+0041 = 'A'.
-    { label: '$\\u0041 (Unicode BMP -> "A")', src: sh`$'A'`, text: 'A' },
+    { label: '$\\u0041 (Unicode BMP -> "A")', src: sh`$'\u0041'`, text: 'A' },
     // \UHHHHHHHH: Unicode code point, one to eight hex digits.
     // U+00000041 = 'A'; U+0001F389 = 🎉 (PARTY POPPER, astral plane).
     { label: '$\\U00000041 (Unicode, 8 digits -> "A")', src: sh`$'\U00000041'`, text: 'A' },
@@ -170,27 +204,34 @@ describe("resolveWord — regression: out-of-range $'\\U...' ANSI-C code point m
   // only defines code points up to U+10FFFF. The Bash Reference Manual's
   // ANSI-C Quoting table documents no behavior for a \U value with no
   // corresponding Unicode character — real bash's actual behavior
-  // (undocumented) falls back to a pre-RFC-3629 byte-packing scheme with no
-  // range validation, which has no faithful representation as a UTF-16
-  // JavaScript string. `decodeAnsiCString` previously called
-  // `String.fromCodePoint` unconditionally, which throws `RangeError` for
-  // any value above `0x10FFFF` — a real defect, since $'\UFFFFFFFF' is
-  // well-formed shell input and resolveWord must never throw for that (see
-  // this module's "facts, not verdicts: never throws" describe block
-  // below). The fix leaves an out-of-range \U (or, defensively, \u —
-  // though its 4-hex-digit max of 0xFFFF can never actually exceed
-  // 0x10FFFF) un-decoded as literal text, matching this decoder's existing
-  // "unrecognized escape stays literal" rule.
+  // (undocumented, confirmed empirically against bash 5.3.9) falls back to
+  // a pre-RFC-3629 byte-packing scheme with no range validation:
+  // $'\U00110000' emits the raw byte sequence f4 90 80 80 (structurally
+  // UTF-8-shaped but not valid UTF-8 text, since U+110000 exceeds
+  // RFC 3629's U+10FFFF ceiling), and $'\UFFFFFFFF' emits no bytes at all
+  // (exit 0). Neither of those is representable as an exact JavaScript
+  // string. `decodeAnsiCString` previously called `String.fromCodePoint`
+  // unconditionally, which throws `RangeError` for any value above
+  // `0x10FFFF` — a real defect, since $'\UFFFFFFFF' is well-formed shell
+  // input and resolveWord must never throw for that (see this module's
+  // "facts, not verdicts: never throws" describe block below). An earlier
+  // fix attempt patched the throw by falling back to literal, un-decoded
+  // text (the same rule this decoder uses for other unrecognized escapes)
+  // — but that is itself wrong: it claims `static: true` with an *exact*
+  // text (`'\\UFFFFFFFF'`) that real bash never produces, a false static.
+  // The correct fix reports the whole word as
+  // `{ static: false, reason: 'unsupported' }` instead of either throwing
+  // or fabricating a literal.
   it("does not throw for $'\\UFFFFFFFF' (code point far above U+10FFFF)", () => {
     expect(() => resolve(sh`$'\UFFFFFFFF'`)).not.toThrow();
   });
 
-  it("resolves $'\\UFFFFFFFF' to its literal, un-decoded escape text", () => {
-    expect(resolve(sh`$'\UFFFFFFFF'`)).toEqual({ static: true, text: '\\UFFFFFFFF' });
+  it("resolves $'\\UFFFFFFFF' as unsupported, not a false literal", () => {
+    expect(resolve(sh`$'\UFFFFFFFF'`)).toEqual({ static: false, reason: 'unsupported' });
   });
 
-  it("resolves $'\\U00110000' (one past the max valid code point) to literal text too", () => {
-    expect(resolve(sh`$'\U00110000'`)).toEqual({ static: true, text: '\\U00110000' });
+  it("resolves $'\\U00110000' (one past the max valid code point) as unsupported too", () => {
+    expect(resolve(sh`$'\U00110000'`)).toEqual({ static: false, reason: 'unsupported' });
   });
 
   it("still decodes the in-range boundary $'\\U0010FFFF' (the highest valid code point)", () => {
@@ -199,6 +240,17 @@ describe("resolveWord — regression: out-of-range $'\\U...' ANSI-C code point m
 
   it("still decodes $'\\U0001F389' (in-range astral code point, already in the positive table) correctly", () => {
     expect(resolve(sh`$'\U0001F389'`)).toEqual({ static: true, text: '🎉' });
+  });
+
+  // $'\uD800' is an in-range (per MAX_UNICODE_CODE_POINT, 4 hex digits can
+  // never exceed 0x10FFFF) but lone UTF-16 surrogate code point — pinned
+  // here as a deliberately-unchanged boundary: JavaScript strings can
+  // represent an unpaired surrogate (String.fromCodePoint(0xd800) does not
+  // throw), so this is not the same "unrepresentable" case as an
+  // out-of-range \U value, and stays static.
+  it("still resolves the lone-surrogate $'\\uD800' as static (in-range, JS-representable)", () => {
+    const result = resolve(sh`$'\uD800'`);
+    expect(result).toEqual({ static: true, text: '\ud800' });
   });
 });
 
@@ -249,6 +301,26 @@ describe('resolveWord — criterion 2: negative (non-static) resolution table', 
     { label: '? (bare question mark)', src: '?', reason: 'glob' },
     { label: 'a?b (question mark mid-word)', src: 'a?b', reason: 'glob' },
     { label: '@(foo|bar) (ExtGlob node)', src: '@(foo|bar)', reason: 'glob' },
+
+    // Bracket expressions, POSIX 2.13.1 / Bash Reference Manual §3.5.8.1 —
+    // an unquoted `[` with a *later* unquoted `]` in the same word is a
+    // pattern (verified against real bash 5.3.9: `a[bc]d` in a directory
+    // containing files `abd`/`acd` expands to both).
+    { label: 'a[bc]d (bracket expression mid-word)', src: 'a[bc]d', reason: 'glob' },
+    { label: '[abc] (bracket expression, whole word)', src: '[abc]', reason: 'glob' },
+    { label: '[!abc] (negated bracket expression, "!" form)', src: '[!abc]', reason: 'glob' },
+    { label: '[^abc] (negated bracket expression, "^" form)', src: '[^abc]', reason: 'glob' },
+    // The `]` closing a bracket expression may live in a different,
+    // concatenated `Lit` word-part than the opening `[` — here mvdan/sh
+    // splits `a["b"]` into a `Lit "a["`, a `DblQuoted "b"`, and a
+    // `Lit "]"`. Quoting the character between the brackets doesn't
+    // suppress the *brackets themselves* being unquoted (verified against
+    // real bash: `a["b"]` in a directory containing `ab` expands to it).
+    {
+      label: 'a["b"] (bracket expression split by a quoted inner part)',
+      src: sh`a["b"]`,
+      reason: 'glob',
+    },
   ];
 
   it.each(rows)('$label', ({ src, reason }) => {
@@ -300,6 +372,120 @@ describe('resolveWord — negative-adjacent edge cases (escaping/position suppre
     expect(resolve(`'*.txt'`)).toEqual({ static: true, text: '*.txt' });
     expect(resolve(`"*.txt"`)).toEqual({ static: true, text: '*.txt' });
   });
+
+  it('an unquoted "[" with no later "]" in the word is not a bracket expression (stays literal)', () => {
+    // Verified against real bash: `a[bc` (no closing bracket) prints
+    // literally — there's no complete bracket-expression grammar to match.
+    expect(resolve('a[bc')).toEqual({ static: true, text: 'a[bc' });
+  });
+
+  it('an unquoted "]" with no earlier "[" in the word is not a bracket expression (stays literal)', () => {
+    // Verified against real bash: `a]b` (no opening bracket) prints
+    // literally.
+    expect(resolve('a]b')).toEqual({ static: true, text: 'a]b' });
+  });
+
+  it('a fully-quoted bracket pair is not a bracket expression (quoting suppresses it)', () => {
+    // Both `[` and `]` are inside single quotes here — mvdan/sh parses
+    // `a'['bc']'d` as `Lit "a"`, `SglQuoted "["`, `Lit "bc"`,
+    // `SglQuoted "]"`, `Lit "d"`. Verified against real bash: this prints
+    // literally as `a[bc]d`, not expanded, even in a directory containing
+    // files that `a[bc]d` (unquoted) would match.
+    expect(resolve(`a'['bc']'d`)).toEqual({ static: true, text: 'a[bc]d' });
+  });
+});
+
+describe('resolveWord — locale translation ($"...")', () => {
+  // Bash Reference Manual §3.1.2.5, "Locale-Specific Translation": a
+  // double-quoted string preceded by a `$` is translated according to the
+  // current locale via gettext at run time — its value can differ between
+  // invocations even though its source text never changes.
+  it('a plain $"..." string with no expansions is "locale", not "static"', () => {
+    expect(resolve(sh`$"hello"`)).toEqual({ static: false, reason: 'locale' });
+  });
+
+  it('an ordinary (non-$) double-quoted string with the same text is still static', () => {
+    expect(resolve('"hello"')).toEqual({ static: true, text: 'hello' });
+  });
+
+  it('a $"..." string containing a ParamExp is "locale", not "expansion" (locale takes precedence)', () => {
+    // §3.1.2.5's translation applies to the whole construct regardless of
+    // its contents — resolveWord checks DblQuoted.Dollar before
+    // descending into children, so 'locale' deterministically wins over
+    // any 'expansion' the contents would otherwise report.
+    expect(resolve(sh`$"hi $x"`)).toEqual({ static: false, reason: 'locale' });
+  });
+});
+
+describe('resolveWord — options.context: assignment-value colon-tilde expansion (§3.5.2)', () => {
+  // Bash Reference Manual §3.5.2, "Tilde Expansion": beyond the
+  // word-initial trigger, an assignment statement's value additionally
+  // tilde-expands an unquoted `~` immediately following an unquoted `:`
+  // (e.g. `PATH=/foo:~/bar` expands the `~/bar` segment) — verified
+  // against real bash 5.3.9: `bash -c 'PATH=/foo:~/bar; echo $PATH'`
+  // prints `/foo:<actual $HOME>/bar`.
+  it('a real Assign.value word with no options reports "tilde" (conservative default)', () => {
+    const word = assignValueWord('PATH=/foo:~/bar');
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'tilde' });
+  });
+
+  it('the same Assign.value word with explicit context: "assignment-value" also reports "tilde"', () => {
+    const word = assignValueWord('PATH=/foo:~/bar');
+    expect(resolveWord(word, { context: 'assignment-value' })).toEqual({
+      static: false,
+      reason: 'tilde',
+    });
+  });
+
+  it('an assignment value with no colon-adjacent tilde stays static regardless of context', () => {
+    const word = assignValueWord('PATH=/foo/bar');
+    expect(resolveWord(word)).toEqual({ static: true, text: '/foo/bar' });
+    expect(resolveWord(word, { context: 'command-argument' })).toEqual({
+      static: true,
+      text: '/foo/bar',
+    });
+  });
+
+  // `echo a:~b`'s argument word is *not* an assignment — real bash leaves
+  // it entirely literal (verified: `bash -c 'echo a:~b'` prints `a:~b`).
+  // resolveWord can't see that grammatical context from a bare Word node,
+  // so its documented conservative default (omitted options) still reports
+  // "tilde" here — this is the one place in this suite where the
+  // conservative default's result differs from real bash's behavior for
+  // that word's actual grammatical position, by design (see
+  // `ResolveWordOptions.context`'s doc comment).
+  it('an ordinary command-argument word with a colon-adjacent tilde reports "tilde" when no context is given (conservative default)', () => {
+    const word = argWord('a:~b');
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'tilde' });
+  });
+
+  it('the same command-argument word with explicit context: "command-argument" is static (matches real bash)', () => {
+    const word = argWord('a:~b');
+    expect(resolveWord(word, { context: 'command-argument' })).toEqual({
+      static: true,
+      text: 'a:~b',
+    });
+  });
+
+  it('word-initial tilde still triggers "tilde" under context: "command-argument" (unchanged existing behavior)', () => {
+    const word = argWord('~/bar');
+    expect(resolveWord(word, { context: 'command-argument' })).toEqual({
+      static: false,
+      reason: 'tilde',
+    });
+  });
+
+  it('an escaped colon does not enable colon-adjacent tilde expansion', () => {
+    // `a\:~b`: the backslash escapes the colon, so it is not the unquoted
+    // `:` §3.5.2 requires immediately before the triggering `~`.
+    const word = argWord(sh`a\:~b`);
+    expect(resolveWord(word)).toEqual({ static: true, text: 'a:~b' });
+  });
+
+  it('an escaped tilde after an unquoted colon does not trigger tilde expansion', () => {
+    const word = argWord(sh`a:\~b`);
+    expect(resolveWord(word)).toEqual({ static: true, text: 'a:~b' });
+  });
 });
 
 describe('resolveWord — criterion 3: multibyte fidelity', () => {
@@ -346,5 +532,67 @@ describe('resolveWord — API contract: requires a "Word" node', () => {
     const file = parseSync('echo hi');
     expect(() => resolveWord(file)).toThrow(TypeError);
     expect(() => resolveWord(file)).toThrow(/expects a "Word" node/);
+  });
+});
+
+describe("resolveWord — synthetic-input edge cases (not producible by this bridge's real parser today)", () => {
+  it('a synthetic BraceExp part reports "brace"', () => {
+    // `BraceExp` is a real mvdan/sh node type, but is only ever produced
+    // when a caller explicitly applies `syntax.SplitBraces` — this
+    // bridge's shim never calls it (see `kitchen-sink.test.ts`'s
+    // `KNOWN_UNREACHABLE_TYPES`, which already documents `BraceExp` as
+    // unreachable through real parsing; verified empirically above too —
+    // `echo a{b,c}`'s word normalizes to a single ordinary `Lit "a{b,c}"`,
+    // not a `BraceExp`). This test constructs the node type by hand to
+    // exercise `resolvePart`'s `BraceExp` branch directly, fails closed
+    // (`static: false`) rather than silently skipping coverage of a real,
+    // documented node type this module already handles.
+    const word = syntheticNode('Word', {
+      parts: [syntheticNode('BraceExp')],
+    });
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
+  });
+
+  it('an unrecognized word-part node type falls closed as "expansion", not an error', () => {
+    // No real mvdan/sh word-part node type reaches `resolvePart`'s
+    // `default` branch today — every type this module's `switch` doesn't
+    // name explicitly is, as far as this package's parser is concerned,
+    // hypothetical. This test exists to pin that the *fallback* itself is
+    // safe: a well-formed `Word` containing a part type resolveWord has
+    // never seen must still report a first-class `static: false` result
+    // (never throw, never crash) so a future mvdan/sh node type this
+    // module hasn't been taught yet degrades gracefully instead of
+    // silently mis-resolving as static.
+    const word = syntheticNode('Word', {
+      parts: [syntheticNode('SomeFutureNodeTypeThisModuleDoesNotKnowAbout')],
+    });
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'expansion' });
+  });
+
+  it('a Word with a genuinely empty parts array resolves to the empty static string', () => {
+    // Real source always produces at least one part for any word with
+    // *some* text (even `''` is a one-part `SglQuoted` with an empty
+    // `value`) — a `Word` whose `parts` array is empty isn't something
+    // this bridge's real parser is known to produce. Constructed by hand
+    // to pin `resolveWord`'s explicit `parts.length === 0` fast path.
+    const word = syntheticNode('Word', { parts: [] });
+    expect(resolveWord(word)).toEqual({ static: true, text: '' });
+  });
+});
+
+describe('resolveWord — consumer specifier: "sh-ast/analyze" subpath resolves like the test-relative import', () => {
+  it('resolveWord imported from the "sh-ast/analyze" package specifier behaves identically', async () => {
+    // Every other test in this file imports resolveWord via a
+    // test-relative path (`../src/analyze/index.js`), which exercises the
+    // module's logic but never the package's public subpath resolution
+    // (`package.json#exports["./analyze"]`) that real consumers actually
+    // go through. This test imports via the real public specifier instead
+    // — the package "sh-ast" resolving to itself works here because this
+    // is itself a workspace package, giving self-referencing subpath
+    // resolution as close to a real external consumer's import as this
+    // repo's test infra allows.
+    const { resolveWord: publicResolveWord } = await import('sh-ast/analyze');
+    const word = argWord('rm');
+    expect(publicResolveWord(word)).toEqual({ static: true, text: 'rm' });
   });
 });

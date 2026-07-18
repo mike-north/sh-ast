@@ -4,7 +4,11 @@
  */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import { resolveWord } from '../src/analyze/index.js';
-import type { WordResolution, WordResolutionReason } from '../src/analyze/index.js';
+import type {
+  ResolveWordOptions,
+  WordResolution,
+  WordResolutionReason,
+} from '../src/analyze/index.js';
 import type { ShNode, ShNodes } from '../src/index.js';
 
 declare const word: ShNodes.ShWordNode;
@@ -21,6 +25,17 @@ expectError(resolveWord(42));
 expectError(resolveWord('rm'));
 expectError(resolveWord(undefined));
 expectError(resolveWord());
+
+// resolveWord's second parameter (ResolveWordOptions) is optional, and
+// accepts only the two documented context values.
+expectType<WordResolution>(resolveWord(word, {}));
+expectType<WordResolution>(resolveWord(word, { context: 'command-argument' }));
+expectType<WordResolution>(resolveWord(word, { context: 'assignment-value' }));
+expectError(resolveWord(word, { context: 'nonsense' }));
+expectAssignable<ResolveWordOptions>({});
+expectAssignable<ResolveWordOptions>({ context: 'command-argument' });
+expectAssignable<ResolveWordOptions>({ context: 'assignment-value' });
+expectNotAssignable<ResolveWordOptions>({ context: 'nonsense' });
 
 // WordResolution is a discriminated union on `static`.
 declare const result: WordResolution;
@@ -52,6 +67,8 @@ expectAssignable<WordResolution>({ static: false, reason: 'expansion' });
 expectAssignable<WordResolution>({ static: false, reason: 'tilde' });
 expectAssignable<WordResolution>({ static: false, reason: 'glob' });
 expectAssignable<WordResolution>({ static: false, reason: 'brace' });
+expectAssignable<WordResolution>({ static: false, reason: 'locale' });
+expectAssignable<WordResolution>({ static: false, reason: 'unsupported' });
 
 // Invalid construction: wrong shape for each branch.
 expectError<WordResolution>({ static: true, reason: 'expansion' });
@@ -65,5 +82,24 @@ expectAssignable<WordResolutionReason>('expansion');
 expectAssignable<WordResolutionReason>('tilde');
 expectAssignable<WordResolutionReason>('glob');
 expectAssignable<WordResolutionReason>('brace');
+expectAssignable<WordResolutionReason>('locale');
+expectAssignable<WordResolutionReason>('unsupported');
 expectNotAssignable<WordResolutionReason>('nonsense');
 expectNotAssignable<WordResolutionReason>('unknown');
+
+// A forward-compatible exhaustive switch over `.reason` should compile
+// with a `default` case (see WordResolutionReason's semver-policy doc
+// comment) — this pins that the type itself doesn't force enumerating
+// every member without one.
+declare const reason: WordResolutionReason;
+switch (reason) {
+  case 'expansion':
+  case 'tilde':
+  case 'glob':
+  case 'brace':
+  case 'locale':
+  case 'unsupported':
+    break;
+  default:
+    break;
+}

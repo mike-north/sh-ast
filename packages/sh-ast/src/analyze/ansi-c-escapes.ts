@@ -41,15 +41,18 @@ function isOctalDigit(ch: string): boolean {
  * is undocumented and not a reasonable decode target: it falls back to a
  * pre-RFC-3629, up-to-6-byte "UTF-8-like" bit-packing with no range
  * validation (confirmed empirically — e.g. `$'\U00110000'` produces the
- * raw byte sequence `f4 90 80 80`, which is not valid UTF-8 text and has no
- * meaningful representation as a UTF-16 JavaScript string, and
- * `$'\UFFFFFFFF'` produces no character at all). Since the manual is silent
- * on this case and bash's actual behavior can't be represented faithfully
- * here, this module falls back to its own documented rule for any
- * unrecognized/undecodable escape: leave it as literal, un-decoded text
- * (see `decodeAnsiCString`'s doc comment) — never `String.fromCodePoint`,
- * which throws `RangeError` for any value over this limit and would
- * violate `resolveWord`'s "never throw for well-formed input" contract.
+ * raw byte sequence `f4 90 80 80`, which is not valid UTF-8 text, and
+ * `$'\UFFFFFFFF'` produces no output at all, exit 0). Neither of those is
+ * representable as an exact JavaScript string, so this module does **not**
+ * fall back to treating the escape as literal, un-decoded text the way it
+ * does for other unrecognized escapes — that would silently claim a
+ * `static: true` exact text that real bash never produces (a false
+ * static). Instead, {@link decodeAnsiCString} reports an out-of-range
+ * `\u`/`\U` as *unrepresentable* via {@link AnsiCDecodeResult}, and
+ * `resolveWord` propagates that as `{ static: false, reason: 'unsupported' }`
+ * for the whole word — never `String.fromCodePoint`, which throws
+ * `RangeError` for any value over this limit and would violate
+ * `resolveWord`'s "never throw for well-formed input" contract.
  *
  * @see https://www.gnu.org/software/bash/manual/bash.html#ANSI_002dC-Quoting
  */
@@ -97,6 +100,21 @@ function readOctalDigits(
 }
 
 /**
+ * The result of {@link decodeAnsiCString}: either the fully decoded text,
+ * or `ok: false` when the raw text contains a `\u`/`\U` escape whose value
+ * has no corresponding Unicode character (see {@link MAX_UNICODE_CODE_POINT}'s
+ * doc comment for why that case can't be decoded to an exact JavaScript
+ * string, and can't be left as literal un-decoded text either without
+ * claiming a false `static: true` result). Never throws — callers (see
+ * `resolveWord`'s `SglQuoted` handling) turn `ok: false` into
+ * `{ static: false, reason: 'unsupported' }` for the whole word.
+ *
+ * @internal
+ */
+export type AnsiCDecodeResult =
+  { readonly ok: true; readonly text: string } | { readonly ok: false };
+
+/**
  * Decodes the raw inner text of a `$'...'` (ANSI-C quoted) string per Bash
  * Reference Manual §3.1.2.4, "ANSI-C Quoting". `raw` is the text between
  * the quotes (mvdan/sh's `SglQuoted.Value` for a `Dollar: true` node),
@@ -106,16 +124,16 @@ function readOctalDigits(
  * `\nnn` (one to three digits), hex `\xHH` (one or two digits), Unicode
  * `\uHHHH` (one to four digits) and `\UHHHHHHHH` (one to eight digits), and
  * control-character `\cX`. An unrecognized backslash sequence (not in this
- * table, and not a recognized numeric escape), and a `\u`/`\U` whose value
- * has no corresponding Unicode character (see
- * {@link MAX_UNICODE_CODE_POINT}), is left as-is — Bash's own decoding is
- * best-effort for malformed/unrepresentable input, and this function
- * mirrors that rather than throwing, matching {@link resolveWord}'s "never
- * throw for well-formed input" contract at the string level too.
+ * table, and not a recognized numeric escape) is left as-is — Bash's own
+ * decoding is best-effort for malformed input, and this function mirrors
+ * that rather than throwing, matching {@link resolveWord}'s "never throw
+ * for well-formed input" contract at the string level too. A `\u`/`\U`
+ * whose value *is* well-formed but has no corresponding Unicode character
+ * is a different case — see {@link AnsiCDecodeResult}.
  *
  * @internal
  */
-export function decodeAnsiCString(raw: string): string {
+export function decodeAnsiCString(raw: string): AnsiCDecodeResult {
   let text = '';
   let i = 0;
   while (i < raw.length) {
@@ -192,30 +210,41 @@ export function decodeAnsiCString(raw: string): string {
       }
       case 'u': {
         const { value, length } = readHexDigits(raw, i + 2, 4);
-        if (length > 0 && value <= MAX_UNICODE_CODE_POINT) {
-          text += String.fromCodePoint(value);
-          i += 2 + length;
-        } else {
+        if (length === 0) {
           text += ch;
           i += 1;
+          break;
         }
+        // `\uHHHH` allows at most 4 hex digits (max 0xFFFF), which can
+        // never exceed MAX_UNICODE_CODE_POINT (0x10FFFF) — this check is
+        // purely defensive, mirroring the `\U` case below, and is
+        // unreachable today (see MAX_UNICODE_CODE_POINT's doc comment).
+        if (value > MAX_UNICODE_CODE_POINT) {
+          return { ok: false };
+        }
+        text += String.fromCodePoint(value);
+        i += 2 + length;
         break;
       }
       case 'U': {
         const { value, length } = readHexDigits(raw, i + 2, 8);
-        if (length > 0 && value <= MAX_UNICODE_CODE_POINT) {
-          text += String.fromCodePoint(value);
-          i += 2 + length;
-        } else {
-          // Out-of-range code point (see MAX_UNICODE_CODE_POINT's doc
-          // comment): leave un-decoded rather than throwing. Falls through
-          // to the same "unrecognized escape" path as a 0-digit match —
-          // only the backslash is consumed here; the literal `U` and hex
-          // digits are re-emitted verbatim on the following loop
-          // iterations (each is just an ordinary non-backslash character).
+        if (length === 0) {
+          // Not a recognized numeric escape (no valid hex digit at all):
+          // leave un-decoded, same as any other unrecognized escape.
           text += ch;
           i += 1;
+          break;
         }
+        if (value > MAX_UNICODE_CODE_POINT) {
+          // Well-formed 8-digit hex value, but out of Unicode's range (see
+          // MAX_UNICODE_CODE_POINT's doc comment): bash's real output for
+          // this case can't be represented as an exact JS string, so this
+          // is not the same as an "unrecognized escape" — signal failure
+          // for the whole string rather than claiming a false literal.
+          return { ok: false };
+        }
+        text += String.fromCodePoint(value);
+        i += 2 + length;
         break;
       }
       case 'c': {
@@ -245,5 +274,5 @@ export function decodeAnsiCString(raw: string): string {
         }
     }
   }
-  return text;
+  return { ok: true, text };
 }
