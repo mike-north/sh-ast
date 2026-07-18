@@ -168,3 +168,71 @@ describe('normalize — synthesized range/loc for non-Node auxiliary structs (is
     expect(withDefault.slice(exp.range[0], exp.range[1])).toBe('x');
   });
 });
+
+describe('normalize — regression: SglQuoted/DblQuoted "Dollar" bool flag was dropped (issue #3)', () => {
+  // mvdan/sh v3.13.1's `syntax.SglQuoted` struct is `{ Left, Right Pos;
+  // Dollar bool /* $'' */; Value string }` — `Dollar` marks ANSI-C quoting
+  // ($'...') and is a plain bool, not a position. `normalize()`'s POS_KEYS
+  // denylist previously included the bare key "Dollar" unconditionally
+  // (reused elsewhere, e.g. `ParamExp.Dollar`, as a real `Pos`), which
+  // discarded this bool for *every* node carrying a field named "Dollar" —
+  // including SglQuoted/DblQuoted, where it's real, non-positional data.
+  // Without it, `$'...'` (ANSI-C quoting) was indistinguishable from plain
+  // `'...'` in the normalized tree, which `sh-ast/analyze`'s `resolveWord`
+  // needs to know ANSI-C escapes require decoding. This suite exercises
+  // `normalize()` directly (not through `parseSync`) so it fails pre-fix
+  // regardless of how the WASM shim happens to serialize the field.
+  const pos = { Offset: 0, Line: 1, Col: 1 };
+  const wordAt = (part: JsonValue): JsonValue => ({
+    Type: 'Word',
+    Pos: pos,
+    End: pos,
+    Parts: [part],
+  });
+
+  it("preserves SglQuoted.Dollar: true (marks $'...' ANSI-C quoting)", () => {
+    const root = wordAt({ Type: 'SglQuoted', Pos: pos, End: pos, Dollar: true, Value: '\\t' });
+    const word = normalize(root, "$'\\t'");
+    const sglQuoted = (word.parts as ShNode[])[0];
+    expect(sglQuoted.type).toBe('SglQuoted');
+    expect(sglQuoted.dollar).toBe(true);
+  });
+
+  it("omits SglQuoted.dollar when the raw node has no Dollar field (plain '...')", () => {
+    // typedjson's `omitempty` never serializes `Dollar: false` at all for
+    // plain single-quoted text — this fixture matches that real shape.
+    const root = wordAt({ Type: 'SglQuoted', Pos: pos, End: pos, Value: 'rm' });
+    const word = normalize(root, "'rm'");
+    const sglQuoted = (word.parts as ShNode[])[0];
+    expect(sglQuoted.type).toBe('SglQuoted');
+    expect(sglQuoted.dollar).toBeUndefined();
+  });
+
+  it('preserves DblQuoted.Dollar: true (marks $"..." locale quoting)', () => {
+    const root = wordAt({ Type: 'DblQuoted', Pos: pos, End: pos, Dollar: true, Parts: [] });
+    const word = normalize(root, '$""');
+    const dblQuoted = (word.parts as ShNode[])[0];
+    expect(dblQuoted.type).toBe('DblQuoted');
+    expect(dblQuoted.dollar).toBe(true);
+  });
+
+  it('still drops ParamExp.Dollar (a real Pos, not data) — no fake "dollar" leaks through', () => {
+    // `ParamExp.Dollar` is `Pos` (the position of the `$` token), not a
+    // bool — this must stay dropped like every other position field, via
+    // the generic `!isRawPos(value)` check in `buildFields`, not because
+    // "Dollar" is still denylisted by name.
+    const root = wordAt({
+      Type: 'ParamExp',
+      Pos: pos,
+      End: pos,
+      Dollar: pos,
+      Short: true,
+      Param: { Type: 'Lit', Pos: pos, End: pos, Value: 'x' },
+    });
+    const word = normalize(root, '$x');
+    const paramExp = (word.parts as ShNode[])[0];
+    expect(paramExp.type).toBe('ParamExp');
+    expect(paramExp.dollar).toBeUndefined();
+    expect(Object.keys(paramExp)).not.toContain('dollar');
+  });
+});

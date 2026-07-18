@@ -16,6 +16,10 @@
     ".": {
       "types": "./dist/sh-ast.d.ts",
       "default": "./dist/index.js"
+    },
+    "./analyze": {
+      "types": "./dist/analyze.d.ts",
+      "default": "./dist/analyze/index.js"
     }
   },
   "files": [
@@ -35,14 +39,16 @@
           "{projectRoot}/dist/**/*.js.map",
           "{projectRoot}/dist/**/*.d.ts",
           "{projectRoot}/dist/**/*.d.ts.map",
-          "!{projectRoot}/dist/sh-ast.d.ts"
+          "!{projectRoot}/dist/sh-ast.d.ts",
+          "!{projectRoot}/dist/analyze.d.ts"
         ]
       },
       "check:api-report": {
         "outputs": [
           "{projectRoot}/api-report",
           "{projectRoot}/temp",
-          "{projectRoot}/dist/sh-ast.d.ts"
+          "{projectRoot}/dist/sh-ast.d.ts",
+          "{projectRoot}/dist/analyze.d.ts"
         ]
       },
       "uplevel-api-reports": {
@@ -56,7 +62,9 @@
         ],
         "outputs": [
           "{workspaceRoot}/api-report-combined/sh-ast.api.md",
-          "{workspaceRoot}/api-docs-temp/sh-ast.api.json"
+          "{workspaceRoot}/api-docs-temp/sh-ast.api.json",
+          "{workspaceRoot}/api-report-combined/sh-ast-analyze.api.md",
+          "{workspaceRoot}/api-docs-temp/sh-ast-analyze.api.json"
         ]
       }
     }
@@ -67,17 +75,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "concurrently -n lint,types,api-report \"pnpm run check:lint-ts\" \"pnpm run check:typecheck\" \"pnpm run check:api-report\"",
-    "check:api-report": "api-extractor run",
+    "check:api-report": "api-extractor run && api-extractor run --config analyze/api-extractor.json",
     "check:lint-ts": "eslint .",
     "check:typecheck": "tsc --noEmit",
     "clean": "rimraf --glob dist \"temp/*\" \"*.tsbuildinfo\"",
-    "fix:api-report": "api-extractor run --local",
+    "fix:api-report": "api-extractor run --local && api-extractor run --local --config analyze/api-extractor.json",
     "fix:lint-ts": "eslint . --fix",
-    "prepack": "api-extractor run",
+    "prepack": "api-extractor run && api-extractor run --config analyze/api-extractor.json",
     "test": "concurrently -n vitest,tsd \"pnpm run test:ts\" \"pnpm run test:types\"",
     "test:ts": "vitest run",
     "test:types": "tsd",
-    "uplevel-api-reports": "mkdir -p ../../api-report-combined ../../api-docs-temp && cp api-report/sh-ast.api.md ../../api-report-combined/ && cp temp/sh-ast.api.json ../../api-docs-temp/"
+    "uplevel-api-reports": "mkdir -p ../../api-report-combined ../../api-docs-temp && cp api-report/sh-ast.api.md api-report/sh-ast-analyze.api.md ../../api-report-combined/ && cp temp/sh-ast.api.json temp/sh-ast-analyze.api.json ../../api-docs-temp/"
   },
   "tsd": {
     "compilerOptions": {

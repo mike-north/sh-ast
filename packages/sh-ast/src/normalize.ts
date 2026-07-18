@@ -61,7 +61,16 @@ const POS_KEYS: ReadonlySet<string> = new Set([
   'Lparen',
   'Select',
   'InPos',
-  'Dollar',
+  // NOTE: 'Dollar' is deliberately *not* here. mvdan/sh v3.13.1 reuses the
+  // `Dollar` field name for two unrelated shapes: `ParamExp.Dollar` is a
+  // `Pos` (already stripped by the generic `!isRawPos(value)` check below,
+  // so no denylist entry is needed for it), but `SglQuoted.Dollar` and
+  // `DblQuoted.Dollar` are `bool` flags marking `$'...'`/`$"..."` — real
+  // data, not a position. Denylisting the bare `Dollar` key here previously
+  // discarded that flag unconditionally, making `$'...'` (ANSI-C quoting)
+  // indistinguishable from plain `'...'` (see sh-ast/analyze's
+  // `resolveWord`, which needs the flag to know ANSI-C escapes require
+  // decoding).
   'Esac',
   'Case',
   'Fi',

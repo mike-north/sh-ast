@@ -1,0 +1,6 @@
+{
+  "name": "sh-ast-analyze",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Not a published package. This file exists only so @microsoft/api-extractor (run from ./api-extractor.json in this folder) reports a distinct docModel/api-report package identity for the `sh-ast/analyze` subpath — API Extractor's CLI derives that identity from the nearest package.json to its config file, and the real `sh-ast` package.json's name would otherwise collide with the root entry point's report/docs output. The real importable specifier is \"sh-ast/analyze\"; see ../package.json's `exports` map. This folder is not a pnpm workspace member (pnpm-workspace.yaml only globs packages/*, one level up from here)."
+}
