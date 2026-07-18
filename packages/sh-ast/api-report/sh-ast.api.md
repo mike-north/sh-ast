@@ -22,6 +22,14 @@ export interface Position {
 }
 
 // @public
+export class ShAnalyzeMaxDepthError extends ShBridgeError {
+    constructor(maxDepth: number);
+    // (undocumented)
+    readonly code = "ESLINT_SH_ANALYZE_MAX_DEPTH";
+    readonly maxDepth: number;
+}
+
+// @public
 type ShAnyNode =
 | ShArithmCmdNode
 | ShArithmExpNode

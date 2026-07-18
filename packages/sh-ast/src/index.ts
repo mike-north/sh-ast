@@ -1,5 +1,6 @@
 export { parseSync } from './parse.js';
 export {
+  ShAnalyzeMaxDepthError,
   ShBridgeError,
   ShBridgeInternalError,
   ShInvalidDialectError,
