@@ -31,7 +31,10 @@ for the serialization contract, byte→UTF-16 conversion, and normalized node sh
   every push; prettier before every push. Never `rm` build outputs — `pnpm run clean` /
   `pnpm --filter <pkg> run clean`.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
-  commit both — no CI gate covers committed docs.
+  commit both — no CI gate covers committed docs. If the docs regeneration alone would push
+  the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
+  churn in its own commit and note it in the PR so the reviewer can review the source diff;
+  a documented manual substantive review substitutes when Copilot declines the PR size.
 - Changesets required for published-package behavior/type changes; never `major` without an
   issue authorizing it.
 - Commit author: `Mike North <michael.l.north@gmail.com>` (`--author` on every commit).
