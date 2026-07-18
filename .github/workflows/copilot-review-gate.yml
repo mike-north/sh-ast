@@ -1,0 +1,53 @@
+# Copilot's automated PR review runs as a bot ("copilot-pull-request-reviewer")
+# and posts a normal PR review, but it does not attach any check/status context
+# to the PR head commit. That means a branch-protection ruleset has nothing
+# native it can require to guarantee a Copilot review actually happened before
+# merge. This workflow closes that gap: it queries the PR's reviews via the
+# GitHub API and materializes "a Copilot review exists" as a requirable check
+# context (copilot-review-present), so it can be added to the ruleset like any
+# other required check.
+name: Copilot review gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+  pull_request_review:
+    types: [submitted, dismissed]
+concurrency:
+  group: copilot-review-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  pull-requests: read
+jobs:
+  copilot-review-present:
+    name: copilot-review-present
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout needed — this only queries the GitHub API for review
+      # state, it never inspects the working tree.
+      - name: Check for a completed Copilot review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # github.event.pull_request.number is present on both the
+          # pull_request and pull_request_review event payloads.
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          echo "Checking PR #${PR_NUMBER} for a completed Copilot review"
+          reviews="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/reviews" --paginate)"
+          # The REST API reports the reviewer's login with GitHub's standard
+          # "[bot]" suffix for app/bot accounts (e.g. "copilot-pull-request-
+          # reviewer[bot]"), not the bare app slug — confirmed against a live
+          # review on this PR. Match both forms so the match doesn't silently
+          # break if GitHub ever drops the suffix.
+          if echo "$reviews" | jq -e '
+              any(.[]?;
+                (.user.login == "copilot-pull-request-reviewer" or .user.login == "copilot-pull-request-reviewer[bot]")
+                and (.state == "COMMENTED" or .state == "APPROVED" or .state == "CHANGES_REQUESTED")
+              )
+            ' > /dev/null; then
+            echo "Found a completed Copilot review."
+          else
+            echo "::error::no Copilot review present yet — request one or wait for the auto-request"
+            exit 1
+          fi
