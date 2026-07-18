@@ -4,7 +4,11 @@
 
 ## WrapperSpec.argFlags property
 
-Exact flag tokens that take the \*following\* word as their operand (e.g. `-u user`<!-- -->, `-n 10`<!-- -->) — both the flag and its operand word are skipped. A `--long-flag=value` attached form (single word) is also recognized for any entry here that starts with `--`<!-- -->, consuming only that one word.
+Exact flag tokens that take an operand (e.g. `-u user`<!-- -->, `-n 10`<!-- -->). Recognized in every standard getopt-style form:
+
+- Separate word: `-u user` (both words skipped). - Attached short form: `-uuser` (one word — everything after the flag character is the operand text, exactly like real getopt). - Clustered with preceding no-operand short flags: `-Eu user`<!-- -->/`-Euuser` (`-E` from [WrapperSpec.noArgFlags](./sh-ast-analyze.wrapperspec.noargflags.md)<!-- -->, `-u` from here) — see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment for the clustering algorithm. - Attached long form (only for an entry starting with `--`<!-- -->): `--long-flag=value` (one word).
+
+Any of these forms is recognized without a separate `WrapperSpec` field — the shapes are derived structurally from `argFlags` and `noArgFlags` together, matching how real short-option parsing works, rather than needing to be spelled out per wrapper.
 
 **Signature:**
 

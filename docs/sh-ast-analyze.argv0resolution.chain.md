@@ -9,5 +9,5 @@ Every word resolved along the way, outermost wrapper first, ending with [Argv0Re
 **Signature:**
 
 ```typescript
-readonly chain: readonly WordResolution[];
+readonly chain: readonly Argv0ChainWord[];
 ```

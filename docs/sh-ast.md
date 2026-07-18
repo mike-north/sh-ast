@@ -19,6 +19,17 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)
+
+
+</td><td>
+
+Thrown by `sh-ast/analyze`<!-- -->'s `resolveArgv0` when a caller-supplied `options.transparentWrappers` array contains a malformed `WrapperSpec` entry — e.g. a non-array or empty `names`<!-- -->, or a flag field that isn't an array of strings. Fails closed with a clear, specific message at the point the malformed table is supplied, rather than letting the bad shape reach flag-matching logic and surface as a confusing native `TypeError` (or, worse, a silently wrong match) far from its actual cause.
+
+
+</td></tr>
+<tr><td>
+
 [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)
 
 
@@ -85,7 +96,7 @@ Description
 
 </td><td>
 
-Common base class for every error this package throws — originally just [parseSync()](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->).
+Common base class for every error this package throws — originally just [parseSync()](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)<!-- -->).
 
 
 </td></tr>

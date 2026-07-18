@@ -4,10 +4,10 @@
 
 ## Argv0Resolution.effective property
 
-The last element of [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md) — the effective command, or, if resolution hit a statically-unknowable word anywhere along the chain (an expansion, a glob, …), that unknowable `static: false` result itself. \*\*A `static: false` word is never guessed through\*\*: the moment one is reached (whether at argv0 or several wrappers deep), it becomes `effective` and the chain stops — this is the security-relevant guarantee that makes `sudo -u x "$prog"` report an unknowable effective command rather than silently treating `sudo` itself as the answer.
+The last element of [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md) — the effective command, or, if resolution hit a statically-unknowable word anywhere along the chain (an expansion, a glob, an unrecognized flag, an embedded-command operand, …), that unknowable result itself. \*\*A `static: false` word is never guessed through\*\*: the moment one is reached (whether at argv0, several wrappers deep, or synthesized by `resolveArgv0` itself for an unrecognized flag), it becomes `effective` and the chain stops — this is the security-relevant guarantee that makes `sudo -u x "$prog"` report an unknowable effective command rather than silently treating `sudo` itself as the answer, and makes `sudo -D /tmp rm x` (an unrecognized `sudo` flag) report `'unknown-flag'` rather than misreporting `rm` — or, worse, `/tmp` — as the effective command.
 
 **Signature:**
 
 ```typescript
-readonly effective: WordResolution;
+readonly effective: Argv0ChainWord;
 ```

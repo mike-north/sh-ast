@@ -68,7 +68,7 @@ The number of `VAR=val` shell-assignment prefixes on the `CallExpr` itself (`Com
 
 </td><td>
 
-readonly [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->\[\]
+readonly [Argv0ChainWord](./sh-ast-analyze.argv0chainword.md)<!-- -->\[\]
 
 
 </td><td>
@@ -89,12 +89,12 @@ Every word resolved along the way, outermost wrapper first, ending with [Argv0Re
 
 </td><td>
 
-[WordResolution](./sh-ast-analyze.wordresolution.md)
+[Argv0ChainWord](./sh-ast-analyze.argv0chainword.md)
 
 
 </td><td>
 
-The last element of [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md) — the effective command, or, if resolution hit a statically-unknowable word anywhere along the chain (an expansion, a glob, …), that unknowable `static: false` result itself. \*\*A `static: false` word is never guessed through\*\*: the moment one is reached (whether at argv0 or several wrappers deep), it becomes `effective` and the chain stops — this is the security-relevant guarantee that makes `sudo -u x "$prog"` report an unknowable effective command rather than silently treating `sudo` itself as the answer.
+The last element of [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md) — the effective command, or, if resolution hit a statically-unknowable word anywhere along the chain (an expansion, a glob, an unrecognized flag, an embedded-command operand, …), that unknowable result itself. \*\*A `static: false` word is never guessed through\*\*: the moment one is reached (whether at argv0, several wrappers deep, or synthesized by `resolveArgv0` itself for an unrecognized flag), it becomes `effective` and the chain stops — this is the security-relevant guarantee that makes `sudo -u x "$prog"` report an unknowable effective command rather than silently treating `sudo` itself as the answer, and makes `sudo -D /tmp rm x` (an unrecognized `sudo` flag) report `'unknown-flag'` rather than misreporting `rm` — or, worse, `/tmp` — as the effective command.
 
 
 </td></tr>

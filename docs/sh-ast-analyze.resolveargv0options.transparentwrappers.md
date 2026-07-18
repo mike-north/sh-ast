@@ -6,6 +6,8 @@
 
 The transparent-wrapper table to follow. Defaults to [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)<!-- -->. Pass a replacement array to drop a default entry entirely (that wrapper is then treated as an ordinary, non-transparent effective command), or add project-specific entries (e.g. a `with-retry` wrapper) — the table is plain data, not baked-in policy.
 
+Validated at the [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) boundary: a malformed entry (a non-array `names`<!-- -->, an empty `names`<!-- -->, or a wrong-typed flag field) throws [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md) immediately, rather than failing later with a confusing native `TypeError` deep inside flag matching.
+
 **Signature:**
 
 ```typescript

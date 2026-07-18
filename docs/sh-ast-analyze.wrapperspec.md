@@ -56,7 +56,11 @@ readonly string\[\]
 
 </td><td>
 
-_(Optional)_ Exact flag tokens that take the \*following\* word as their operand (e.g. `-u user`<!-- -->, `-n 10`<!-- -->) — both the flag and its operand word are skipped. A `--long-flag=value` attached form (single word) is also recognized for any entry here that starts with `--`<!-- -->, consuming only that one word.
+_(Optional)_ Exact flag tokens that take an operand (e.g. `-u user`<!-- -->, `-n 10`<!-- -->). Recognized in every standard getopt-style form:
+
+- Separate word: `-u user` (both words skipped). - Attached short form: `-uuser` (one word — everything after the flag character is the operand text, exactly like real getopt). - Clustered with preceding no-operand short flags: `-Eu user`<!-- -->/`-Euuser` (`-E` from [WrapperSpec.noArgFlags](./sh-ast-analyze.wrapperspec.noargflags.md)<!-- -->, `-u` from here) — see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment for the clustering algorithm. - Attached long form (only for an entry starting with `--`<!-- -->): `--long-flag=value` (one word).
+
+Any of these forms is recognized without a separate `WrapperSpec` field — the shapes are derived structurally from `argFlags` and `noArgFlags` together, matching how real short-option parsing works, rather than needing to be spelled out per wrapper.
 
 
 </td></tr>
@@ -78,6 +82,8 @@ readonly string\[\]
 </td><td>
 
 The literal, exact argv0 text (after quote/escape removal) that identifies this wrapper — e.g. `['env']`<!-- -->. Matched only against a `static: true` word; see [WrapperSpec](./sh-ast-analyze.wrapperspec.md)<!-- -->'s doc comment.
+
+Matching is \*\*exact-name-only\*\* — never basename matching. `sudo` does not match `/usr/bin/sudo` or `./sudo`<!-- -->; only a word whose \*entire\* resolved text equals one of `names` is recognized. This is a deliberate, narrower-than-real-world policy choice (a real shell would happily run `/usr/bin/sudo`<!-- -->), not an oversight: silently treating any path \*ending in\* a known wrapper name as that wrapper would be a different, broader matching policy this package isn't making on a caller's behalf. A caller who wants path-aware matching can express it explicitly via a custom [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md) table (e.g. `names: ['sudo', '/usr/bin/sudo']`<!-- -->).
 
 
 </td></tr>
@@ -162,6 +168,48 @@ boolean
 </td><td>
 
 _(Optional)_ When `true`<!-- -->, a `NAME=value`<!-- -->-shaped operand (an unquoted identifier followed by `=`<!-- -->, e.g. `A=1`<!-- -->) appearing after the wrapper name is skipped — this is `env`<!-- -->'s and `sudo`<!-- -->'s own `VAR=val` \*operand\* mechanism (setting variables in the wrapped command's environment), which is a distinct, per-wrapper concept from the shell-level `CallExpr.assigns` prefixes [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) counts.
+
+
+</td></tr>
+<tr><td>
+
+[stopsChainFlags?](./sh-ast-analyze.wrapperspec.stopschainflags.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ Exact flag tokens whose mere presence means this wrapper's own invocation \*is\* the effective command — nothing after it is ever the wrapped command, regardless of what other words follow. E.g. `command -v rm` doesn't execute `rm` at all; it prints whether `rm` is a recognized command name (Bash Reference Manual §4.1). Checked independently of word position (not "the Nth flag"), and takes precedence the moment it's seen — see `command`<!-- -->'s table entry.
+
+
+</td></tr>
+<tr><td>
+
+[unresolvableFlags?](./sh-ast-analyze.wrapperspec.unresolvableflags.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ Exact flag tokens (and, for a `--`<!-- -->-prefixed entry, its attached `--flag=value` form; for a short `-X` entry, its attached `-Xvalue` form) that make the \*\*whole\*\* [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) resolution unresolvable the moment they're seen, rather than being skipped like [WrapperSpec.argFlags](./sh-ast-analyze.wrapperspec.argflags.md) or ending the chain normally like an unrecognized word. For a flag whose \*value itself\* structurally embeds the real command in a way no `WrapperSpec` field can name a fixed "the wrapped command is word N" position for — e.g. `env -S string` splices `string`<!-- -->'s own words into argv, so the real command is \*inside\* that operand, not identifiable as a separate word at all (see `env`<!-- -->'s table entry). Reported via [Argv0Resolution.effective](./sh-ast-analyze.argv0resolution.effective.md)<!-- -->'s `'embedded-command'` reason.
 
 
 </td></tr>
