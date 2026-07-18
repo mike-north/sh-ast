@@ -23,12 +23,19 @@ export { enumerateCommands } from './enumerate-commands.js';
 export type { CommandContext, CommandSite } from './enumerate-commands.js';
 
 export { DEFAULT_TRANSPARENT_WRAPPERS, resolveArgv0 } from './resolve-argv0.js';
-export type { Argv0Resolution, ResolveArgv0Options, WrapperSpec } from './resolve-argv0.js';
+export type {
+  Argv0ChainWord,
+  Argv0Resolution,
+  Argv0UnresolvedReason,
+  Argv0UnresolvedWord,
+  ResolveArgv0Options,
+  WrapperSpec,
+} from './resolve-argv0.js';
 
-// Re-exported from the root errors module so a consumer of enumerateCommands
-// can `import { ShAnalyzeMaxDepthError } from 'sh-ast/analyze'` without also
-// reaching into the root `sh-ast` entry point.
-export { ShAnalyzeMaxDepthError } from '../errors.js';
+// Re-exported from the root errors module so a consumer of enumerateCommands/
+// resolveArgv0 can `import { ShAnalyzeMaxDepthError } from 'sh-ast/analyze'`
+// without also reaching into the root `sh-ast` entry point.
+export { ShAnalyzeInvalidWrapperSpecError, ShAnalyzeMaxDepthError } from '../errors.js';
 
 // `ShNode` (resolveWord's parameter type) is deliberately *not* re-exported
 // here: it's the root `sh-ast` entry point's type (see `sh-ast`'s own

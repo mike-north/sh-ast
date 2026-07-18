@@ -1,3 +1,5 @@
+import { ShAnalyzeInvalidWrapperSpecError } from '../errors.js';
+import { deepFreeze } from '../deep-freeze.js';
 import { nodeArray } from './node-helpers.js';
 import type { CommandSite } from './enumerate-commands.js';
 import type { WordResolution } from './resolve-word.js';
@@ -32,6 +34,17 @@ export interface WrapperSpec {
    * The literal, exact argv0 text (after quote/escape removal) that
    * identifies this wrapper — e.g. `['env']`. Matched only against a
    * `static: true` word; see {@link WrapperSpec}'s doc comment.
+   *
+   * Matching is **exact-name-only** — never basename matching. `sudo` does
+   * not match `/usr/bin/sudo` or `./sudo`; only a word whose *entire*
+   * resolved text equals one of `names` is recognized. This is a
+   * deliberate, narrower-than-real-world policy choice (a real shell would
+   * happily run `/usr/bin/sudo`), not an oversight: silently treating any
+   * path *ending in* a known wrapper name as that wrapper would be a
+   * different, broader matching policy this package isn't making on a
+   * caller's behalf. A caller who wants path-aware matching can express it
+   * explicitly via a custom {@link ResolveArgv0Options.transparentWrappers}
+   * table (e.g. `names: ['sudo', '/usr/bin/sudo']`).
    */
   readonly names: readonly string[];
 
@@ -58,13 +71,52 @@ export interface WrapperSpec {
   readonly noArgFlagPattern?: RegExp;
 
   /**
-   * Exact flag tokens that take the *following* word as their operand
-   * (e.g. `-u user`, `-n 10`) — both the flag and its operand word are
-   * skipped. A `--long-flag=value` attached form (single word) is also
-   * recognized for any entry here that starts with `--`, consuming only
-   * that one word.
+   * Exact flag tokens that take an operand (e.g. `-u user`, `-n 10`).
+   * Recognized in every standard getopt-style form:
+   *
+   * - Separate word: `-u user` (both words skipped).
+   * - Attached short form: `-uuser` (one word — everything after the flag
+   *   character is the operand text, exactly like real getopt).
+   * - Clustered with preceding no-operand short flags:
+   *   `-Eu user`/`-Euuser` (`-E` from {@link WrapperSpec.noArgFlags},
+   *   `-u` from here) — see {@link resolveArgv0}'s doc comment for the
+   *   clustering algorithm.
+   * - Attached long form (only for an entry starting with `--`):
+   *   `--long-flag=value` (one word).
+   *
+   * Any of these forms is recognized without a separate `WrapperSpec`
+   * field — the shapes are derived structurally from `argFlags` and
+   * `noArgFlags` together, matching how real short-option parsing works,
+   * rather than needing to be spelled out per wrapper.
    */
   readonly argFlags?: readonly string[];
+
+  /**
+   * Exact flag tokens (and, for a `--`-prefixed entry, its attached
+   * `--flag=value` form; for a short `-X` entry, its attached `-Xvalue`
+   * form) that make the **whole** {@link resolveArgv0} resolution
+   * unresolvable the moment they're seen, rather than being skipped like
+   * {@link WrapperSpec.argFlags} or ending the chain normally like an
+   * unrecognized word. For a flag whose *value itself* structurally embeds
+   * the real command in a way no `WrapperSpec` field can name a fixed
+   * "the wrapped command is word N" position for — e.g. `env -S string`
+   * splices `string`'s own words into argv, so the real command is
+   * *inside* that operand, not identifiable as a separate word at all (see
+   * `env`'s table entry). Reported via
+   * {@link Argv0Resolution.effective}'s `'embedded-command'` reason.
+   */
+  readonly unresolvableFlags?: readonly string[];
+
+  /**
+   * Exact flag tokens whose mere presence means this wrapper's own
+   * invocation *is* the effective command — nothing after it is ever the
+   * wrapped command, regardless of what other words follow. E.g.
+   * `command -v rm` doesn't execute `rm` at all; it prints whether `rm`
+   * is a recognized command name (Bash Reference Manual §4.1). Checked
+   * independently of word position (not "the Nth flag"), and takes
+   * precedence the moment it's seen — see `command`'s table entry.
+   */
+  readonly stopsChainFlags?: readonly string[];
 
   /**
    * The number of plain (non-flag, non-assignment-operand) words this
@@ -78,11 +130,19 @@ export interface WrapperSpec {
  * `sh-ast/analyze`'s default {@link WrapperSpec} table — every entry's
  * flag/operand handling is hand-derived from that wrapper's own manual
  * page (or, for shell builtins, the Bash Reference Manual/POSIX Shell &
- * Utilities volume), cited per entry below. This table is *data*, not
- * policy: it names no "dangerous" commands, makes no safety judgment, and
- * a caller can freely replace or extend it via
- * {@link ResolveArgv0Options.transparentWrappers} (see
- * {@link resolveArgv0}'s criterion-4-style configurability guarantee).
+ * Utilities volume), cited per entry below, and cross-checked empirically
+ * against the real utility where one was locally available (GNU coreutils
+ * `env`/`nice` directly; `sudo` via `sudo -h`'s usage/option summary only
+ * — never executed, per this package's "facts only" posture and basic
+ * safety hygiene). This table is *data*, not policy: it names no
+ * "dangerous" commands, makes no safety judgment, and a caller can freely
+ * replace or extend it via {@link ResolveArgv0Options.transparentWrappers}
+ * (see {@link resolveArgv0}'s criterion-4-style configurability guarantee).
+ *
+ * Frozen (including each entry object and its own array/regexp fields) so
+ * immutability of this shared, module-scoped table is a contract, not just
+ * a convention any importer happens to honor — mirrors `visitorKeys`'s and
+ * `CHILD_TYPE_SCHEMA`'s freezing in `visitor-keys.ts`/`normalize.ts`.
  *
  * `xargs` is deliberately **excluded**: unlike every entry here, `xargs`
  * doesn't simply re-exec a single wrapped command word it can point to
@@ -110,26 +170,44 @@ export interface WrapperSpec {
  * @see https://www.gnu.org/software/findutils/manual/html_node/find_html/xargs-options.html — GNU `xargs` (why it's excluded, above)
  * @public
  */
-export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = [
+export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // `command [-pVv] command_name [argument ...]` — Bash Reference Manual
-  // §4.1 / POSIX `command`. `-p`, `-v`, `-V` all take no operand.
-  { names: ['command'], noArgFlags: ['-p', '-v', '-V'] },
+  // §4.1 / POSIX `command`. `-p` takes no operand and doesn't change what
+  // runs. `-v`/`-V`, however, make `command` itself *print* information
+  // about `command_name` (its path, or a human-readable description)
+  // rather than execute it at all — so `command -v rm x` never runs `rm`;
+  // the effective command is `command` itself, regardless of what follows
+  // (`stopsChainFlags`, not `noArgFlags` — see `WrapperSpec.stopsChainFlags`'s
+  // doc comment).
+  { names: ['command'], noArgFlags: ['-p'], stopsChainFlags: ['-v', '-V'] },
 
   // `exec [-cl] [-a name] [command [arguments]]` — Bash Reference Manual
   // §4.1. `-c`/`-l` take no operand; `-a name` supplies argv0 for the
   // wrapped command and takes `name` as its operand.
   { names: ['exec'], noArgFlags: ['-c', '-l'], argFlags: ['-a'] },
 
-  // `env [-i0v] [-u name] [-C dir] [-S string] [name=value]... [utility
+  // `env [-i0v] [-u name] [-C dir] [name=value]... [utility
   // [argument...]]` — POSIX `env` (`-i`) plus GNU coreutils env(1)'s
   // commonly documented long/short forms. `VAR=val` operands preceding the
   // utility are `env`'s own environment-setting mechanism (distinct from
-  // `CallExpr.assigns`).
+  // `CallExpr.assigns`). `-S`/`--split-string` is deliberately *not* an
+  // `argFlags` entry — see `unresolvableFlags` below.
   {
     names: ['env'],
     skipAssignmentOperands: true,
     noArgFlags: ['-i', '--ignore-environment', '-0', '--null', '-v', '--debug'],
-    argFlags: ['-u', '--unset', '-C', '--chdir', '-S', '--split-string'],
+    argFlags: ['-u', '--unset', '-C', '--chdir'],
+    // GNU env(1) `-S`/`--split-string=S`: processes and splits `S` into
+    // separate arguments, splicing them into the invoked command's argv
+    // (documented use: shebang lines with multiple arguments) — verified
+    // empirically: `env -S 'echo hello world'` runs `echo` with args
+    // `hello`, `world`, not a command literally named by the operand text.
+    // The real wrapped command therefore lives *inside* `S`'s own text,
+    // not at a fixed "next word" position this table can name — reporting
+    // *any* word here as effective (the flag, `S`'s value, or whatever
+    // word happens to follow) would be a guess, not a fact. `resolveArgv0`
+    // stops here with `reason: 'embedded-command'` instead.
+    unresolvableFlags: ['-S', '--split-string'],
   },
 
   // `nohup utility [argument...]` — POSIX `nohup`. No documented options
@@ -141,7 +219,8 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = [
   // or the POSIX legacy attached form `nice -increment utility` (POSIX
   // `nice`, e.g. `nice -19 cmd`). `noArgFlagPattern` recognizes the
   // attached numeric form; `-n`/`--adjustment` take the adjustment as a
-  // separate operand word.
+  // separate operand word, or attached (`-n10`, verified empirically
+  // against GNU coreutils nice(1) — `nice -n10 cmd` runs `cmd`).
   {
     names: ['nice'],
     argFlags: ['-n', '--adjustment'],
@@ -176,24 +255,32 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = [
     argFlags: ['-k', '--kill-after', '-s', '--signal'],
     positionalOperandsBeforeCommand: 1,
   },
-
-  // sudo(8). Only option forms that are documented to still be followed
-  // by a command are modeled: `-A`/`-b`/`-E`/`-H`/`-k`/`-n`/`-P`/`-S` take
-  // no operand; `-g group`/`-p prompt`/`-u user` take one. Deliberately
+  // sudo(8). Only option forms that are documented (verified against real
+  // `sudo -h` usage/option output) to still be followed by a command are
+  // modeled: `-A`/`-b`/`-E`/`-H`/`-k`/`-n`/`-P`/`-S` take no operand;
+  // `-g group`/`-p prompt`/`-u user` take one, in any getopt-standard
+  // attached/clustered form (e.g. `-ualice`, `-Eu alice`). Deliberately
   // excludes `-e`/`-i`/`-l`/`-s`/`-v`/`-K` — sudo(8) documents these as
   // changing sudo's *mode* (edit, login shell, list, shell, validate,
   // reset) such that no ordinary "wrapped command" word necessarily
   // follows at all; modeling them as transparent would risk guessing a
-  // command that isn't really there. `VAR=value` operands before the
-  // command are sudo's own environment-setting mechanism, "similar to
-  // env" per sudo(8).
+  // command that isn't really there. Also deliberately excludes
+  // `-D`/`--chdir`, `-C`/`--close-from`, `-R`/`--chroot`,
+  // `-T`/`--command-timeout`, `-h`/`--host`, `-U`/`--other-user`,
+  // `--preserve-env[=list]`, and every other option `sudo -h` documents
+  // that this table doesn't name above — an unrecognized flag-shaped word
+  // now correctly makes the whole resolution unresolvable (see
+  // `resolveArgv0`'s doc comment) rather than being silently misidentified
+  // as the wrapped command, so leaving these unmodeled is safe, not a gap.
+  // `VAR=value` operands before the command are sudo's own
+  // environment-setting mechanism, "similar to env" per sudo(8).
   {
     names: ['sudo'],
     skipAssignmentOperands: true,
     noArgFlags: ['-A', '-b', '-E', '-H', '-k', '-n', '-P', '-S'],
     argFlags: ['-g', '-p', '-u'],
   },
-];
+]);
 
 /**
  * Options accepted by {@link resolveArgv0}.
@@ -208,9 +295,68 @@ export interface ResolveArgv0Options {
    * non-transparent effective command), or add project-specific entries
    * (e.g. a `with-retry` wrapper) — the table is plain data, not baked-in
    * policy.
+   *
+   * Validated at the {@link resolveArgv0} boundary: a malformed entry (a
+   * non-array `names`, an empty `names`, or a wrong-typed flag field)
+   * throws {@link ShAnalyzeInvalidWrapperSpecError} immediately, rather
+   * than failing later with a confusing native `TypeError` deep inside
+   * flag matching.
    */
   readonly transparentWrappers?: readonly WrapperSpec[];
 }
+
+/**
+ * Why {@link resolveArgv0} couldn't identify a single, definite effective
+ * command — distinct from {@link WordResolutionReason}, which is about why
+ * one *word*'s text is unknowable at the shell-syntax level (an expansion,
+ * a glob, …). `Argv0UnresolvedReason` instead reflects `resolveArgv0`'s own
+ * wrapper-table-driven analysis of an otherwise statically-known word:
+ *
+ * - `'unknown-flag'` — a statically known word shaped like a flag (starts
+ *   with `-`, isn't exactly `--`) for the wrapper currently being
+ *   followed, but that doesn't match any flag/operand shape
+ *   {@link WrapperSpec} recognizes for it. Never guessed through as the
+ *   wrapped command — see {@link resolveArgv0}'s doc comment.
+ * - `'embedded-command'` — a wrapper flag whose value structurally embeds
+ *   the real command rather than naming it as a separate word (e.g.
+ *   `env -S 'rm -rf /'` — see {@link WrapperSpec.unresolvableFlags}'s doc
+ *   comment).
+ *
+ * This union may grow in a **minor** release (mirroring
+ * `WordResolutionReason`'s and `CommandContext`'s semver policy in
+ * `resolve-word.ts`/`enumerate-commands.ts`) — a reason this version
+ * doesn't yet know about only ever accompanies `static: false`; an
+ * exhaustive `switch` should still include a `default` case.
+ *
+ * @public
+ */
+export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command';
+
+/**
+ * A word position {@link resolveArgv0} could not resolve to either a known
+ * static text or one of {@link WordResolution}'s own `static: false`
+ * reasons — see {@link Argv0UnresolvedReason}'s doc comment. Shares
+ * `WordResolution`'s `static: false` discriminant shape by design, so a
+ * consumer that only branches on `.static` treats it identically to any
+ * other unresolvable word.
+ *
+ * @public
+ */
+export interface Argv0UnresolvedWord {
+  readonly static: false;
+  readonly reason: Argv0UnresolvedReason;
+}
+
+/**
+ * The result of statically resolving one position in an
+ * {@link Argv0Resolution.chain}: either an ordinary {@link WordResolution}
+ * (from `resolveWord`) or an {@link Argv0UnresolvedWord} (a `resolveArgv0`-
+ * level "we don't know", distinct from any reason `resolveWord` itself
+ * would report).
+ *
+ * @public
+ */
+export type Argv0ChainWord = WordResolution | Argv0UnresolvedWord;
 
 /**
  * The result of following a {@link CommandSite}'s argv0 through zero or
@@ -227,20 +373,24 @@ export interface Argv0Resolution {
    * `nohup`, `env`, `command`, `rm`, in that order. Always has at least
    * one element.
    */
-  readonly chain: readonly WordResolution[];
+  readonly chain: readonly Argv0ChainWord[];
 
   /**
    * The last element of {@link Argv0Resolution.chain} — the effective
    * command, or, if resolution hit a statically-unknowable word anywhere
-   * along the chain (an expansion, a glob, …), that unknowable
-   * `static: false` result itself. **A `static: false` word is never
-   * guessed through**: the moment one is reached (whether at argv0 or
-   * several wrappers deep), it becomes `effective` and the chain stops —
-   * this is the security-relevant guarantee that makes
-   * `sudo -u x "$prog"` report an unknowable effective command rather
-   * than silently treating `sudo` itself as the answer.
+   * along the chain (an expansion, a glob, an unrecognized flag, an
+   * embedded-command operand, …), that unknowable result itself.
+   * **A `static: false` word is never guessed through**: the moment one is
+   * reached (whether at argv0, several wrappers deep, or synthesized by
+   * `resolveArgv0` itself for an unrecognized flag), it becomes
+   * `effective` and the chain stops — this is the security-relevant
+   * guarantee that makes `sudo -u x "$prog"` report an unknowable
+   * effective command rather than silently treating `sudo` itself as the
+   * answer, and makes `sudo -D /tmp rm x` (an unrecognized `sudo` flag)
+   * report `'unknown-flag'` rather than misreporting `rm` — or, worse,
+   * `/tmp` — as the effective command.
    */
-  readonly effective: WordResolution;
+  readonly effective: Argv0ChainWord;
 
   /**
    * The number of `VAR=val` shell-assignment prefixes on the `CallExpr`
@@ -259,32 +409,131 @@ function isAssignmentShapedText(text: string): boolean {
   return /^[A-Za-z_][A-Za-z0-9_]*=/.test(text);
 }
 
-/** `true` iff `text` is a `--long-flag=value` attached form of one of `argFlags`. */
-function matchesAttachedLongFlag(text: string, argFlags: readonly string[]): boolean {
-  return argFlags.some((flag) => flag.startsWith('--') && text.startsWith(`${flag}=`));
+/** `true` iff `text` is a `--long-flag=value` attached form of one of `flags`. */
+function matchesAttachedLongFlag(text: string, flags: readonly string[]): boolean {
+  return flags.some((flag) => flag.startsWith('--') && text.startsWith(`${flag}=`));
+}
+
+/**
+ * `true` iff `text` is shaped like a command-line flag: starts with `-`
+ * but isn't exactly `--` (the end-of-options marker, handled separately)
+ * or a bare `-` (POSIX reserves a lone `-` as an ordinary operand — e.g.
+ * "read from stdin" — never an option, so it is not flag-shaped here
+ * either).
+ */
+function looksLikeFlag(text: string): boolean {
+  return text.length > 1 && text.startsWith('-') && text !== '--';
+}
+
+/**
+ * `true` iff `text` matches one of `flags` for {@link WrapperSpec}'s
+ * "whole-token or attached-value" fields ({@link WrapperSpec.unresolvableFlags},
+ * {@link WrapperSpec.stopsChainFlags}): an exact match, a `--flag=value`
+ * attached form for a `--`-prefixed entry, or a `-Xvalue` attached form
+ * for a 2-character short entry. Unlike {@link WrapperSpec.argFlags}, this
+ * does not participate in short-flag *clustering* (see
+ * {@link matchShortFlagCluster}'s doc comment) — a flag combined into a
+ * cluster with other short flags (e.g. hypothetically `-iS'cmd'` for
+ * `env`) falls through to the generic unknown-flag path instead of this
+ * more specific one; still fails closed, just with a less specific reason.
+ */
+function matchesWholeOrAttachedFlag(text: string, flags: readonly string[]): boolean {
+  return flags.some((flag) => {
+    if (text === flag) return true;
+    if (flag.startsWith('--')) return text.startsWith(`${flag}=`);
+    return flag.length === 2 && text.startsWith(flag) && text.length > flag.length;
+  });
+}
+
+/**
+ * Recognizes a short-option cluster/attached form for `text` against
+ * `spec`'s `noArgFlags`/`argFlags` — the getopt-standard shapes
+ * {@link WrapperSpec.argFlags}'s doc comment documents:
+ *
+ * - `-Xvalue` — a single `argFlags` character `X` with its operand
+ *   attached directly (`-ualice`, `-n10`).
+ * - `-ABX` / `-ABXvalue` — one or more `noArgFlags` characters (`A`, `B`,
+ *   …) clustered before a final `argFlags` character `X`, whose operand is
+ *   either attached (`-Eualice`) or the next separate word (`-Eu alice`).
+ * - `-AB` — two or more `noArgFlags` characters clustered with no
+ *   trailing `argFlags` character at all (`-iv`).
+ *
+ * Scans `text`'s characters left to right; the first character that is
+ * neither a recognized `noArgFlags` nor `argFlags` entry (for that single
+ * character, as `-X`) fails the whole match (`'no-match'`) — real getopt
+ * clustering has the same "first bad option char aborts" behavior, and a
+ * partially-matched guess would be worse than failing closed. Whole-token
+ * exact matches and `--`-prefixed long flags are handled earlier by the
+ * caller and never reach here (this function only ever sees text that
+ * didn't already match `noArgFlags`/`argFlags`/`noArgFlagPattern`/attached
+ * long-flag checks directly).
+ *
+ * Returns `'one'` if the whole `text` token is consumed with no further
+ * operand word needed (the final flag was `noArgFlags`, or an `argFlags`
+ * character had an attached operand), `'two'` if the next, separate word
+ * is the final `argFlags` character's operand, or `'no-match'` if `text`
+ * isn't a valid cluster/attached form for `spec` at all.
+ */
+function matchShortFlagCluster(text: string, spec: WrapperSpec): 'one' | 'two' | 'no-match' {
+  if (!text.startsWith('-') || text.startsWith('--') || text.length < 2) {
+    return 'no-match';
+  }
+  const chars = text.slice(1);
+  for (let i = 0; i < chars.length; i += 1) {
+    const flagToken = `-${chars[i]}`;
+    if (spec.noArgFlags?.includes(flagToken) === true) {
+      continue;
+    }
+    if (spec.argFlags?.includes(flagToken) === true) {
+      return chars.slice(i + 1).length > 0 ? 'one' : 'two';
+    }
+    return 'no-match';
+  }
+  // Every character matched a noArgFlags entry — a pure no-operand
+  // cluster (e.g. `-iv`).
+  return 'one';
 }
 
 function findWrapperSpec(wrappers: readonly WrapperSpec[], text: string): WrapperSpec | undefined {
   return wrappers.find((spec) => spec.names.includes(text));
 }
 
+/** The outcome of {@link advancePastWrapperOperands} scanning `spec`'s own operands forward from a starting index. */
+type AdvanceResult =
+  | { readonly kind: 'next'; readonly index: number }
+  | { readonly kind: 'truncated' }
+  | { readonly kind: 'unresolvable'; readonly reason: Argv0UnresolvedReason };
+
 /**
- * Walks `argv` forward from `startIndex`, skipping every word this
- * `spec` structurally recognizes as its own flag, flag-operand,
- * `VAR=val` operand, or required positional operand, and returns the
- * index of the next word — either the wrapped command, or (if reached
- * first) a word this spec doesn't recognize at all, which the caller
- * treats as the wrapped command candidate regardless (see
- * {@link resolveArgv0}'s doc comment on never guessing through a
- * dynamic word). Returns `undefined` if `spec`'s own words run past the
- * end of `argv` with no wrapped-command word found (a malformed or
- * truncated invocation, e.g. bare `env` with nothing else).
+ * Walks `argv` forward from `startIndex`, skipping every word this `spec`
+ * structurally recognizes as its own flag, flag-operand (in any
+ * getopt-standard attached/clustered form — see
+ * {@link matchShortFlagCluster}'s doc comment), `VAR=val` operand, or
+ * required positional operand, and classifies what comes next:
+ *
+ * - `{ kind: 'next', index }` — either the wrapped command (an ordinary
+ *   word not shaped like a flag), or a dynamic (`static: false`) word,
+ *   which the caller's own loop already handles via `WordResolution`'s
+ *   normal "never guessed through" rule.
+ * - `{ kind: 'truncated' }` — `spec`'s own words ran past the end of
+ *   `argv` with no wrapped-command word found (a malformed or truncated
+ *   invocation, e.g. bare `env` with nothing else, or `sudo -u` with no
+ *   operand for `-u`).
+ * - `{ kind: 'unresolvable', reason }` — a *statically known* word that
+ *   looks like a flag for this wrapper (unquoted, unescaped `-` prefix,
+ *   not `--`) but matches none of `spec`'s recognized flag/operand shapes,
+ *   or matches one of `spec.unresolvableFlags` (see
+ *   {@link WrapperSpec.unresolvableFlags}'s doc comment). Such a word is
+ *   *never* treated as the wrapped command candidate: a flag-shaped word
+ *   this table doesn't recognize is far more likely to be an
+ *   unmodeled/unsupported option than a command literally named e.g.
+ *   `-D` — see {@link resolveArgv0}'s doc comment.
  */
 function advancePastWrapperOperands(
   argv: readonly WordResolution[],
   startIndex: number,
   spec: WrapperSpec,
-): number | undefined {
+): AdvanceResult {
   let index = startIndex;
   let positionalSeen = 0;
   const requiredPositional = spec.positionalOperandsBeforeCommand ?? 0;
@@ -295,17 +544,34 @@ function advancePastWrapperOperands(
       // Can't be identified as this wrapper's own flag/operand text at
       // all — never guessed through, so this word itself is the next
       // chain element (the caller's loop will see it's unresolvable and
-      // stop there).
-      return index;
+      // stop there via `WordResolution`'s own `static: false`).
+      return { kind: 'next', index };
     }
     const text = word.text;
     if (text === '--') {
       index += 1;
       continue;
     }
+    if (
+      spec.unresolvableFlags !== undefined &&
+      matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
+    ) {
+      return { kind: 'unresolvable', reason: 'embedded-command' };
+    }
     if (spec.skipAssignmentOperands === true && isAssignmentShapedText(text)) {
       index += 1;
       continue;
+    }
+    if (
+      spec.stopsChainFlags !== undefined &&
+      matchesWholeOrAttachedFlag(text, spec.stopsChainFlags)
+    ) {
+      // This wrapper's own invocation is the effective command — the
+      // caller must not advance past it at all. Modeled as "truncated":
+      // the chain simply ends at the wrapper word already pushed, the
+      // same outcome as a genuinely truncated invocation (see
+      // `resolveArgv0`'s loop) — nothing more to skip or resolve.
+      return { kind: 'truncated' };
     }
     if (spec.noArgFlags?.includes(text) === true) {
       index += 1;
@@ -323,14 +589,100 @@ function advancePastWrapperOperands(
       index += 1;
       continue;
     }
+    const clusterMatch = matchShortFlagCluster(text, spec);
+    if (clusterMatch === 'one') {
+      index += 1;
+      continue;
+    }
+    if (clusterMatch === 'two') {
+      index += 2;
+      continue;
+    }
+    // A flag-shaped word this wrapper doesn't recognize is checked *before*
+    // the positional-operand fallback below: real getopt-based parsers
+    // reject an unrecognized option outright rather than reinterpreting it
+    // as a positional operand (verified against GNU timeout(1)'s
+    // getopt_long-based option parsing) — so a required positional slot
+    // (e.g. `timeout`'s `DURATION`) may only ever be filled by a
+    // non-flag-shaped word, never by an unrecognized `-x`.
+    if (looksLikeFlag(text)) {
+      return { kind: 'unresolvable', reason: 'unknown-flag' };
+    }
     if (positionalSeen < requiredPositional) {
       positionalSeen += 1;
       index += 1;
       continue;
     }
-    return index;
+    return { kind: 'next', index };
   }
-  return undefined;
+  return { kind: 'truncated' };
+}
+
+/** `true` iff `value` is a non-empty array of non-empty strings. */
+function isNonEmptyStringArray(value: unknown): value is readonly string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => typeof item === 'string' && item.length > 0)
+  );
+}
+
+/**
+ * Validates one injected {@link WrapperSpec} entry's shape, throwing
+ * {@link ShAnalyzeInvalidWrapperSpecError} on the first problem found —
+ * see {@link ResolveArgv0Options.transparentWrappers}'s doc comment for
+ * why this happens at the boundary rather than surfacing as a confusing
+ * native `TypeError` deep inside flag matching.
+ */
+function validateWrapperSpec(spec: WrapperSpec, index: number): void {
+  const context = `transparentWrappers[${String(index)}]`;
+  if (!isNonEmptyStringArray(spec.names)) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.names must be a non-empty array of non-empty strings`,
+    );
+  }
+  const stringArrayFields: readonly (keyof WrapperSpec)[] = [
+    'noArgFlags',
+    'argFlags',
+    'unresolvableFlags',
+    'stopsChainFlags',
+  ];
+  for (const field of stringArrayFields) {
+    const value = spec[field];
+    if (
+      value !== undefined &&
+      !(Array.isArray(value) && value.every((item) => typeof item === 'string'))
+    ) {
+      throw new ShAnalyzeInvalidWrapperSpecError(
+        `${context}.${field} must be an array of strings when present`,
+      );
+    }
+  }
+  if (
+    spec.skipAssignmentOperands !== undefined &&
+    typeof spec.skipAssignmentOperands !== 'boolean'
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.skipAssignmentOperands must be a boolean when present`,
+    );
+  }
+  if (spec.noArgFlagPattern !== undefined && !(spec.noArgFlagPattern instanceof RegExp)) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.noArgFlagPattern must be a RegExp when present`,
+    );
+  }
+  if (
+    spec.positionalOperandsBeforeCommand !== undefined &&
+    !(
+      typeof spec.positionalOperandsBeforeCommand === 'number' &&
+      Number.isInteger(spec.positionalOperandsBeforeCommand) &&
+      spec.positionalOperandsBeforeCommand >= 0
+    )
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.positionalOperandsBeforeCommand must be a non-negative integer when present`,
+    );
+  }
 }
 
 /**
@@ -351,14 +703,26 @@ function advancePastWrapperOperands(
  * command) or add their own (e.g. a project's `with-retry` helper) and
  * both directions are followed identically to any built-in entry.
  *
- * **A statically-unknowable word is never guessed through.** The moment
- * `argv0` or any wrapper's located word resolves `static: false` (an
- * expansion, tilde, glob, …), that unknowable result becomes
- * {@link Argv0Resolution.effective} immediately and the chain stops —
- * this function never falls back to treating the wrapper itself, or any
- * other guess, as the effective command once a dynamic word is reached.
- * `sudo -u x "$prog"` therefore reports `effective: { static: false, ... }`
- * with `chain: [<sudo>, <"$prog">]`, not `rm`/`sudo`/anything static.
+ * **A statically-unknowable word is never guessed through** — three
+ * distinct cases all stop the chain immediately at that word rather than
+ * falling back to any other guess:
+ *
+ * 1. `argv0` or any wrapper's located word itself resolves `static: false`
+ *    (an expansion, tilde, glob, …) — `sudo -u x "$prog"` reports
+ *    `effective: { static: false, reason: 'expansion' }` with
+ *    `chain: [<sudo>, <"$prog">]`, not `rm`/`sudo`/anything static.
+ * 2. A *statically known* word shaped like a flag (`-`-prefixed, not
+ *    `--`) doesn't match any flag/operand shape the current
+ *    {@link WrapperSpec} recognizes — `sudo -D /tmp rm x` (`-D` isn't
+ *    modeled for `sudo`) reports an `effective` of `static: false` with
+ *    `reason: 'unknown-flag'`, **not** `rm` (the pre-fix behavior: any
+ *    unrecognized word, flag-shaped or not, was silently treated as the
+ *    wrapped command — a false report that hid the real effective
+ *    command behind a flag this table simply hadn't modeled yet).
+ * 3. A recognized flag's value structurally embeds the real command
+ *    rather than naming it as a separate word — `env -S 'rm -rf /'`
+ *    reports `effective: { static: false, reason: 'embedded-command' }`
+ *    (see {@link WrapperSpec.unresolvableFlags}'s doc comment).
  *
  * `VAR=val` shell-assignment prefixes on the `CallExpr` itself
  * (`CommandSite.node.assigns`, e.g. `FOO=bar rm x`) are always skipped and
@@ -373,6 +737,9 @@ function advancePastWrapperOperands(
  * the API (every `CommandSite` `enumerateCommands` ever produces has at
  * least one argv word; see its doc comment), not a "malformed shell
  * source" case.
+ * @throws {@link ShAnalyzeInvalidWrapperSpecError} if
+ * `options.transparentWrappers` contains a malformed entry (see
+ * {@link ResolveArgv0Options.transparentWrappers}'s doc comment).
  * @public
  */
 export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): Argv0Resolution {
@@ -380,9 +747,12 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
     throw new TypeError('resolveArgv0 expects a CommandSite with at least one argv word');
   }
   const wrappers = options?.transparentWrappers ?? DEFAULT_TRANSPARENT_WRAPPERS;
+  if (options?.transparentWrappers !== undefined) {
+    wrappers.forEach(validateWrapperSpec);
+  }
   const assignmentsSkipped = nodeArray(site.node.assigns).length;
   const argv = site.argv;
-  const chain: WordResolution[] = [];
+  const chain: Argv0ChainWord[] = [];
   let index = 0;
   while (index < argv.length) {
     // `index < argv.length` just checked above, so this is a real element.
@@ -391,9 +761,13 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
     if (!word.static) break;
     const spec = findWrapperSpec(wrappers, word.text);
     if (spec === undefined) break;
-    const nextIndex = advancePastWrapperOperands(argv, index + 1, spec);
-    if (nextIndex === undefined) break;
-    index = nextIndex;
+    const result = advancePastWrapperOperands(argv, index + 1, spec);
+    if (result.kind === 'truncated') break;
+    if (result.kind === 'unresolvable') {
+      chain.push({ static: false, reason: result.reason });
+      break;
+    }
+    index = result.index;
   }
   // `site.argv.length > 0` is checked above, so the loop above always runs
   // at least one iteration and pushes `argv[0]` before any `break` — chain

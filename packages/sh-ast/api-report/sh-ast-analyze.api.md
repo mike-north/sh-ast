@@ -5,10 +5,24 @@
 ```ts
 
 // @public
+export type Argv0ChainWord = WordResolution | Argv0UnresolvedWord;
+
+// @public
 export interface Argv0Resolution {
     readonly assignmentsSkipped: number;
-    readonly chain: readonly WordResolution[];
-    readonly effective: WordResolution;
+    readonly chain: readonly Argv0ChainWord[];
+    readonly effective: Argv0ChainWord;
+}
+
+// @public
+export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command';
+
+// @public
+export interface Argv0UnresolvedWord {
+    // (undocumented)
+    readonly reason: Argv0UnresolvedReason;
+    // (undocumented)
+    readonly static: false;
 }
 
 // @public
@@ -80,6 +94,13 @@ export interface ResolveWordOptions {
 // Warning: (ae-forgotten-export) The symbol "ShBridgeError" needs to be exported by the entry point index.d.ts
 //
 // @public
+export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+}
+
+// @public
 export class ShAnalyzeMaxDepthError extends ShBridgeError {
     constructor(maxDepth: number);
     // (undocumented)
@@ -107,6 +128,8 @@ export interface WrapperSpec {
     readonly noArgFlags?: readonly string[];
     readonly positionalOperandsBeforeCommand?: number;
     readonly skipAssignmentOperands?: boolean;
+    readonly stopsChainFlags?: readonly string[];
+    readonly unresolvableFlags?: readonly string[];
 }
 
 // (No @packageDocumentation comment for this package)

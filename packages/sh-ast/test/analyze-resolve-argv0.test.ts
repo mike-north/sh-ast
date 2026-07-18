@@ -43,6 +43,7 @@ import {
   enumerateCommands,
   resolveArgv0,
 } from '../src/analyze/index.js';
+import { ShAnalyzeInvalidWrapperSpecError } from '../src/index.js';
 import { parseSync } from '../src/index.js';
 import type { ShellDialect, ShNode } from '../src/index.js';
 
@@ -320,5 +321,329 @@ describe('resolveArgv0 — edge cases', () => {
       context: [],
     };
     expect(() => resolveArgv0(emptySite)).toThrow(TypeError);
+  });
+});
+
+describe('resolveArgv0 — review fix: an unrecognized flag-shaped word never becomes the effective command', () => {
+  // The root bug this fix wave addresses: `advancePastWrapperOperands`'s
+  // fallback used to treat ANY unplaceable word as the wrapped command —
+  // for a static, flag-shaped word this table doesn't recognize, that
+  // silently hid the real effective command behind a flag. Verified
+  // against each wrapper's own real usage/help output (`sudo -h`; GNU
+  // coreutils `env --help`/`nice --help` locally) that these specific
+  // flags exist and are genuinely unmodeled, not modeling gaps that should
+  // instead be filled in.
+  it.each([
+    ['command -x rm x', 'command'],
+    ['exec -x rm x', 'exec'],
+    ['nohup -x rm x', 'nohup'],
+    ['nice -x rm x', 'nice'],
+    [sh`"time" -x rm x`, 'time'],
+    ['timeout -x rm x', 'timeout'],
+    // sudo(8) -h documents both of these as real options this table
+    // deliberately doesn't model (see sudo's table-entry comment).
+    ['sudo -D /tmp rm x', 'sudo'],
+    ['sudo --preserve-env=HOME rm x', 'sudo'],
+    // GNU env(1) --help documents --default-signal (optional-argument
+    // long form), not modeled by this table at all.
+    ['env --default-signal rm x', 'env'],
+  ] as const)(
+    '%s (unrecognized flag for %s) -> effective is unresolvable, not the flag or a later word',
+    (src) => {
+      const resolution = resolveArgv0(site(src));
+      expect(resolution.effective).toEqual({ static: false, reason: 'unknown-flag' });
+    },
+  );
+
+  it('a plain unrecognized word (not flag-shaped) is still treated as the wrapped command, unaffected by this fix', () => {
+    // `env someOrdinaryCommand` — `someOrdinaryCommand` isn't flag-shaped,
+    // so it's correctly the wrapped command, exactly as before this fix.
+    const resolution = resolveArgv0(site('env someOrdinaryCommand x'));
+    expect(chainSummary(resolution)).toEqual(['env', 'someOrdinaryCommand']);
+    expect(resolution.effective).toEqual({ static: true, text: 'someOrdinaryCommand' });
+  });
+
+  it('an unknown flag several wrappers deep still stops the whole chain there', () => {
+    const resolution = resolveArgv0(site('nohup env --default-signal rm x'));
+    expect(chainSummary(resolution)).toEqual(['nohup', 'env', '<unknown-flag>']);
+    expect(resolution.effective).toEqual({ static: false, reason: 'unknown-flag' });
+  });
+});
+
+describe('resolveArgv0 — review fix: getopt-standard attached and clustered short-flag forms', () => {
+  // Each form below is verified against the real utility empirically:
+  // GNU coreutils env(1)/nice(1) locally (`genv -uFOO`, `genv -iv`,
+  // `gnice -n10` — all confirmed to behave as modeled here), and sudo(8)'s
+  // documented option syntax via `sudo -h` only (sudo itself was never
+  // executed).
+  it('sudo -ualice rm x (attached short argFlag) -> effective rm', () => {
+    const resolution = resolveArgv0(site('sudo -ualice rm x'));
+    expect(chainSummary(resolution)).toEqual(['sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('sudo -Eu alice rm x (clustered: -E no-arg + -u taking the next word) -> effective rm', () => {
+    const resolution = resolveArgv0(site('sudo -Eu alice rm x'));
+    expect(chainSummary(resolution)).toEqual(['sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('sudo -Eualice rm x (clustered with the operand attached to the cluster itself) -> effective rm', () => {
+    const resolution = resolveArgv0(site('sudo -Eualice rm x'));
+    expect(chainSummary(resolution)).toEqual(['sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('nice -n10 rm x (attached short argFlag) -> effective rm', () => {
+    const resolution = resolveArgv0(site('nice -n10 rm x'));
+    expect(chainSummary(resolution)).toEqual(['nice', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('env -uFOO rm x (attached short argFlag) -> effective rm', () => {
+    const resolution = resolveArgv0(site('env -uFOO rm x'));
+    expect(chainSummary(resolution)).toEqual(['env', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('env -iv rm x (clustered: two no-arg flags, no operand) -> effective rm', () => {
+    const resolution = resolveArgv0(site('env -iv rm x'));
+    expect(chainSummary(resolution)).toEqual(['env', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('exec -aFOO rm x (attached short argFlag) -> effective rm', () => {
+    const resolution = resolveArgv0(site('exec -aFOO rm x'));
+    expect(chainSummary(resolution)).toEqual(['exec', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('exec -cl rm x (clustered: two no-arg flags) -> effective rm', () => {
+    const resolution = resolveArgv0(site('exec -cl rm x'));
+    expect(chainSummary(resolution)).toEqual(['exec', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('timeout -k5 10 rm x (attached short argFlag) -> effective rm', () => {
+    const resolution = resolveArgv0(site('timeout -k5 10 rm x'));
+    expect(chainSummary(resolution)).toEqual(['timeout', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it(sh`"time" -ofile rm x (attached short argFlag) -> effective rm`, () => {
+    const resolution = resolveArgv0(site(sh`"time" -ofile rm x`));
+    expect(chainSummary(resolution)).toEqual(['time', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('a cluster with one unrecognized character fails the whole match, not a partial guess', () => {
+    // `-Ex` for sudo: `-E` is a real noArgFlag, but `x` isn't any
+    // recognized sudo flag character — the whole token is unresolvable,
+    // matching real getopt's "first bad option char aborts" behavior,
+    // rather than partially consuming `-E` and guessing at `x`.
+    const resolution = resolveArgv0(site('sudo -Ex rm x'));
+    expect(resolution.effective).toEqual({ static: false, reason: 'unknown-flag' });
+  });
+});
+
+describe('resolveArgv0 — review fix: env -S/--split-string is unresolvable (splice semantics)', () => {
+  // GNU env(1) -S/--split-string splices its operand's own words into the
+  // invoked command's argv (verified empirically: `env -S 'echo hello
+  // world'` runs `echo` with args `hello`/`world`) — the real wrapped
+  // command lives *inside* the operand text, not at a separate,
+  // identifiable word position, so it can never be honestly reported as
+  // "the next word" the way every other argFlags operand can.
+  it("env -S 'rm -rf' x does NOT resolve to effective 'x' (or anything else) — it's unresolvable", () => {
+    const resolution = resolveArgv0(site(sh`env -S 'rm -rf' x`));
+    expect(resolution.effective).toEqual({ static: false, reason: 'embedded-command' });
+  });
+
+  it('env --split-string=cmd x is unresolvable too (long attached form)', () => {
+    const resolution = resolveArgv0(site(sh`env --split-string=cmd x`));
+    expect(resolution.effective).toEqual({ static: false, reason: 'embedded-command' });
+  });
+
+  it('env -Secho x is unresolvable too (short attached form, verified empirically against GNU env)', () => {
+    const resolution = resolveArgv0(site(sh`env -Secho x`));
+    expect(resolution.effective).toEqual({ static: false, reason: 'embedded-command' });
+  });
+
+  it('env -S alone (separate word form) is unresolvable', () => {
+    const resolution = resolveArgv0(site(sh`env -S 'echo hi'`));
+    expect(resolution.effective).toEqual({ static: false, reason: 'embedded-command' });
+  });
+});
+
+describe('resolveArgv0 — review fix: command -v/-V stop the chain at command itself (prints, never executes)', () => {
+  // Bash Reference Manual §4.1: `command -v`/`-V` print information about
+  // `command_name` (its path, or a description) rather than execute it —
+  // so nothing after `-v`/`-V` is ever the effective command.
+  it('command -v rm x -> effective is command itself, not rm', () => {
+    const resolution = resolveArgv0(site('command -v rm x'));
+    expect(chainSummary(resolution)).toEqual(['command']);
+    expect(resolution.effective).toEqual({ static: true, text: 'command' });
+  });
+
+  it('command -V rm x -> effective is command itself, not rm', () => {
+    const resolution = resolveArgv0(site('command -V rm x'));
+    expect(chainSummary(resolution)).toEqual(['command']);
+    expect(resolution.effective).toEqual({ static: true, text: 'command' });
+  });
+
+  it('command rm x (no -v/-V) still resolves through to rm, unaffected', () => {
+    const resolution = resolveArgv0(site('command rm x'));
+    expect(chainSummary(resolution)).toEqual(['command', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('command -p -v rm x -> still stops at command (order of an ordinary flag before -v does not matter)', () => {
+    const resolution = resolveArgv0(site('command -p -v rm x'));
+    expect(chainSummary(resolution)).toEqual(['command']);
+    expect(resolution.effective).toEqual({ static: true, text: 'command' });
+  });
+});
+
+describe('resolveArgv0 — review fix: exact-name-only wrapper matching is documented and pinned', () => {
+  // WrapperSpec.names matches only the *entire* resolved word text — never
+  // a basename/suffix match. `/usr/bin/sudo` and `./sudo` are both,
+  // truthfully, just ordinary (non-transparent) commands as far as the
+  // default table is concerned.
+  it('/usr/bin/sudo -u alice rm x -> effective is /usr/bin/sudo itself, not followed', () => {
+    const resolution = resolveArgv0(site('/usr/bin/sudo -u alice rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/sudo']);
+    expect(resolution.effective).toEqual({ static: true, text: '/usr/bin/sudo' });
+  });
+
+  it('./sudo -u alice rm x -> effective is ./sudo itself, not followed', () => {
+    const resolution = resolveArgv0(site('./sudo -u alice rm x'));
+    expect(chainSummary(resolution)).toEqual(['./sudo']);
+    expect(resolution.effective).toEqual({ static: true, text: './sudo' });
+  });
+
+  it('a caller who wants path-aware matching can express it explicitly via a custom table', () => {
+    const withAbsoluteSudo: readonly WrapperSpec[] = DEFAULT_TRANSPARENT_WRAPPERS.map((wrapper) =>
+      wrapper.names.includes('sudo')
+        ? { ...wrapper, names: [...wrapper.names, '/usr/bin/sudo'] }
+        : wrapper,
+    );
+    const resolution = resolveArgv0(site('/usr/bin/sudo -u alice rm x'), {
+      transparentWrappers: withAbsoluteSudo,
+    });
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+});
+
+describe('resolveArgv0 — review fix: truncated/malformed invocations resolve to the wrapper itself', () => {
+  it('sudo -u (trailing argFlag with no operand at all) -> effective is sudo itself', () => {
+    const resolution = resolveArgv0(site('sudo -u'));
+    expect(resolution.chain).toEqual([{ static: true, text: 'sudo' }]);
+    expect(resolution.effective).toEqual({ static: true, text: 'sudo' });
+  });
+
+  it('env -u (trailing argFlag with no operand at all) -> effective is env itself', () => {
+    const resolution = resolveArgv0(site('env -u'));
+    expect(resolution.chain).toEqual([{ static: true, text: 'env' }]);
+    expect(resolution.effective).toEqual({ static: true, text: 'env' });
+  });
+
+  it('timeout -k 5 (missing the mandatory DURATION positional) -> effective is timeout itself', () => {
+    const resolution = resolveArgv0(site('timeout -k 5'));
+    expect(resolution.chain).toEqual([{ static: true, text: 'timeout' }]);
+    expect(resolution.effective).toEqual({ static: true, text: 'timeout' });
+  });
+});
+
+describe('resolveArgv0 — review fix: a WrapperSpec with multiple names is followed through either alias', () => {
+  it('a custom two-name wrapper resolves through its second, non-first name', () => {
+    const aliasedWrapper: WrapperSpec = { names: ['run-safely', 'rs'] };
+    const customWrappers: readonly WrapperSpec[] = [
+      ...DEFAULT_TRANSPARENT_WRAPPERS,
+      aliasedWrapper,
+    ];
+    const resolution = resolveArgv0(site('rs rm x'), { transparentWrappers: customWrappers });
+    expect(chainSummary(resolution)).toEqual(['rs', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('the same wrapper also resolves through its first name (both aliases behave identically)', () => {
+    const aliasedWrapper: WrapperSpec = { names: ['run-safely', 'rs'] };
+    const customWrappers: readonly WrapperSpec[] = [
+      ...DEFAULT_TRANSPARENT_WRAPPERS,
+      aliasedWrapper,
+    ];
+    const resolution = resolveArgv0(site('run-safely rm x'), {
+      transparentWrappers: customWrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['run-safely', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+});
+
+describe('resolveArgv0 — review fix: DEFAULT_TRANSPARENT_WRAPPERS is frozen', () => {
+  it('mutating a top-level entry throws (strict mode)', () => {
+    const entry = DEFAULT_TRANSPARENT_WRAPPERS[0];
+    expect(entry).toBeDefined();
+    expect(() => {
+      // @ts-expect-error — intentionally violating readonly to prove the
+      // runtime freeze, not just the compile-time type, is enforced.
+      entry.names = ['nonsense'];
+    }).toThrow(TypeError);
+  });
+
+  it("mutating a nested array field (e.g. an entry's names array) throws too — deepFreeze, not a shallow Object.freeze", () => {
+    const entry = DEFAULT_TRANSPARENT_WRAPPERS.find((w) => w.names.includes('env'));
+    expect(entry).toBeDefined();
+    // Explicit mutable-view cast (not `@ts-expect-error`) — intentionally
+    // testing runtime immutability of a `readonly string[]` field, which
+    // needs a real (typed, not suppressed) escape hatch to call a mutating
+    // method the compile-time type otherwise correctly forbids.
+    const mutableNames = entry?.names as string[] | undefined;
+    expect(() => {
+      mutableNames?.push('nonsense');
+    }).toThrow(TypeError);
+  });
+});
+
+describe('resolveArgv0 — review fix: malformed injected WrapperSpec entries throw a typed error', () => {
+  it.each([
+    ['names missing entirely', {} as WrapperSpec],
+    ['names is not an array', { names: 'env' } as unknown as WrapperSpec],
+    ['names is an empty array', { names: [] }],
+    ['names contains an empty string', { names: [''] }],
+    [
+      'noArgFlags is not an array of strings',
+      { names: ['x'], noArgFlags: 'bad' as unknown as string[] },
+    ],
+    [
+      'argFlags contains a non-string element',
+      { names: ['x'], argFlags: [1] as unknown as string[] },
+    ],
+    [
+      'skipAssignmentOperands is not a boolean',
+      { names: ['x'], skipAssignmentOperands: 'yes' as unknown as boolean },
+    ],
+    [
+      'positionalOperandsBeforeCommand is not a non-negative integer',
+      { names: ['x'], positionalOperandsBeforeCommand: -1 },
+    ],
+  ] as const)('%s throws ShAnalyzeInvalidWrapperSpecError', (_label, malformedSpec) => {
+    expect(() => resolveArgv0(site('rm x'), { transparentWrappers: [malformedSpec] })).toThrow(
+      ShAnalyzeInvalidWrapperSpecError,
+    );
+  });
+
+  it('a well-formed custom table does not throw', () => {
+    expect(() =>
+      resolveArgv0(site('rm x'), { transparentWrappers: [{ names: ['ok'] }] }),
+    ).not.toThrow();
+  });
+
+  it('the default table (no transparentWrappers override) is never validated at runtime — only caller-supplied tables are', () => {
+    // DEFAULT_TRANSPARENT_WRAPPERS is trusted, well-formed data this
+    // package ships — validation exists to fail closed on *caller*
+    // mistakes, not to re-check this package's own built-in table on
+    // every call.
+    expect(() => resolveArgv0(site('env A=1 rm x'))).not.toThrow();
   });
 });

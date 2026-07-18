@@ -12,7 +12,10 @@ import {
   resolveWord,
 } from '../src/analyze/index.js';
 import type {
+  Argv0ChainWord,
   Argv0Resolution,
+  Argv0UnresolvedReason,
+  Argv0UnresolvedWord,
   CommandContext,
   CommandSite,
   ResolveArgv0Options,
@@ -244,8 +247,8 @@ expectType<WrapperSpec[]>(DEFAULT_TRANSPARENT_WRAPPERS.filter((w) => !w.names.in
 
 // Argv0Resolution's shape: chain/effective/assignmentsSkipped, all readonly.
 declare const resolution: Argv0Resolution;
-expectType<readonly WordResolution[]>(resolution.chain);
-expectType<WordResolution>(resolution.effective);
+expectType<readonly Argv0ChainWord[]>(resolution.chain);
+expectType<Argv0ChainWord>(resolution.effective);
 expectType<number>(resolution.assignmentsSkipped);
 expectError((resolution.chain = []));
 expectError((resolution.effective = { static: true, text: 'rm' }));
@@ -266,6 +269,35 @@ expectError<Argv0Resolution>({
   assignmentsSkipped: 'zero',
 });
 
+// Argv0ChainWord is WordResolution widened with Argv0UnresolvedWord — an
+// ordinary WordResolution is still assignable, and so is the new shape.
+expectAssignable<Argv0ChainWord>({ static: true, text: 'rm' });
+expectAssignable<Argv0ChainWord>({ static: false, reason: 'expansion' });
+expectAssignable<Argv0ChainWord>({ static: false, reason: 'unknown-flag' });
+expectAssignable<Argv0ChainWord>({ static: false, reason: 'embedded-command' });
+
+// Argv0UnresolvedWord and Argv0UnresolvedReason are exactly this closed set.
+expectAssignable<Argv0UnresolvedWord>({ static: false, reason: 'unknown-flag' });
+expectAssignable<Argv0UnresolvedWord>({ static: false, reason: 'embedded-command' });
+expectError<Argv0UnresolvedWord>({ static: false, reason: 'expansion' });
+expectError<Argv0UnresolvedWord>({ static: true, text: 'rm' });
+expectAssignable<Argv0UnresolvedReason>('unknown-flag');
+expectAssignable<Argv0UnresolvedReason>('embedded-command');
+expectNotAssignable<Argv0UnresolvedReason>('expansion');
+expectNotAssignable<Argv0UnresolvedReason>('nonsense');
+
+// A forward-compatible exhaustive switch over Argv0UnresolvedReason should
+// compile with a `default` case (mirroring WordResolutionReason's and
+// CommandContext's semver-policy pattern above).
+declare const argv0Reason: Argv0UnresolvedReason;
+switch (argv0Reason) {
+  case 'unknown-flag':
+  case 'embedded-command':
+    break;
+  default:
+    break;
+}
+
 // WrapperSpec's shape: only `names` is required; the rest are optional and
 // individually typed.
 expectAssignable<WrapperSpec>({ names: ['env'] });
@@ -274,10 +306,14 @@ expectAssignable<WrapperSpec>({
   skipAssignmentOperands: true,
   noArgFlags: ['-i'],
   argFlags: ['-u'],
+  unresolvableFlags: ['-S'],
+  stopsChainFlags: ['-v'],
   positionalOperandsBeforeCommand: 1,
 });
 expectAssignable<WrapperSpec>({ names: ['nice'], noArgFlagPattern: /^-\d+$/ });
 expectError<WrapperSpec>({});
 expectError<WrapperSpec>({ names: 'env' });
 expectError<WrapperSpec>({ names: ['env'], noArgFlags: 'env' });
+expectError<WrapperSpec>({ names: ['env'], unresolvableFlags: 'env' });
+expectError<WrapperSpec>({ names: ['env'], stopsChainFlags: 'env' });
 expectError<WrapperSpec>({ names: ['env'], positionalOperandsBeforeCommand: '1' });
