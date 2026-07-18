@@ -6,6 +6,7 @@ export {
   ShBridgeInternalError,
   ShInvalidDialectError,
   ShParseError,
+  ShParseMaxDepthError,
 } from './errors.js';
 export type { ShParseErrorInfo } from './errors.js';
 export type { ParseOptions, Position, ShellDialect, ShFile, ShNode } from './types.js';

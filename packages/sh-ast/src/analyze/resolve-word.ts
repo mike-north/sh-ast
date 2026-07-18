@@ -300,6 +300,11 @@ function resolvePart(part: ShNode, quoting: 'unquoted' | 'dblquoted'): PartResul
  * never a safety judgment (see {@link WordResolution}).
  *
  * @param word - A `Word` node, e.g. `parseSync(...).stmts[0].cmd.args[0]`.
+ * A `word` sourced from `parseSync` has already passed that function's own
+ * pathological-nesting guard (`ShParseMaxDepthError` — see
+ * `parse-depth-guard.ts`), which rejects deeply-nested input before it is
+ * ever turned into a tree at all, so `resolveWord` itself never needs (and
+ * does not implement) a depth guard of its own.
  * @param options - See {@link ResolveWordOptions}.
  * @throws TypeError if `word.type` is not `"Word"` — a programmer-error
  * misuse of the API, not a "malformed shell source" case (well-formed
