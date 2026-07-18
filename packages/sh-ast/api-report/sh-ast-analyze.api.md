@@ -5,6 +5,27 @@
 ```ts
 
 // @public
+export type Argv0ChainWord = WordResolution | Argv0UnresolvedWord;
+
+// @public
+export interface Argv0Resolution {
+    readonly assignmentsSkipped: number;
+    readonly chain: readonly Argv0ChainWord[];
+    readonly effective: Argv0ChainWord;
+}
+
+// @public
+export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command';
+
+// @public
+export interface Argv0UnresolvedWord {
+    // (undocumented)
+    readonly reason: Argv0UnresolvedReason;
+    // (undocumented)
+    readonly static: false;
+}
+
+// @public
 export type CommandContext = {
     readonly kind: 'and';
     readonly side: 'right';
@@ -49,7 +70,18 @@ export interface CommandSite {
 }
 
 // @public
+export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[];
+
+// @public
 export function enumerateCommands(root: ShNode): CommandSite[];
+
+// @public
+export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): Argv0Resolution;
+
+// @public
+export interface ResolveArgv0Options {
+    readonly transparentWrappers?: readonly WrapperSpec[];
+}
 
 // @public
 export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
@@ -61,6 +93,13 @@ export interface ResolveWordOptions {
 
 // Warning: (ae-forgotten-export) The symbol "ShBridgeError" needs to be exported by the entry point index.d.ts
 //
+// @public
+export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+}
+
 // @public
 export class ShAnalyzeMaxDepthError extends ShBridgeError {
     constructor(maxDepth: number);
@@ -80,6 +119,18 @@ export type WordResolution = {
 
 // @public
 export type WordResolutionReason = 'expansion' | 'tilde' | 'glob' | 'brace' | 'locale' | 'unsupported';
+
+// @public
+export interface WrapperSpec {
+    readonly argFlags?: readonly string[];
+    readonly names: readonly string[];
+    readonly noArgFlagPattern?: RegExp;
+    readonly noArgFlags?: readonly string[];
+    readonly positionalOperandsBeforeCommand?: number;
+    readonly skipAssignmentOperands?: boolean;
+    readonly stopsChainFlags?: readonly string[];
+    readonly unresolvableFlags?: readonly string[];
+}
 
 // (No @packageDocumentation comment for this package)
 
