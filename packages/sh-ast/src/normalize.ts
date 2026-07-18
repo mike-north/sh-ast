@@ -49,7 +49,13 @@ const POS_KEYS: ReadonlySet<string> = new Set([
   'Hash',
   'Left',
   'Right',
-  'Do',
+  // NOTE: 'Do' is deliberately *not* here. mvdan/sh v3.13.1's `ForClause`
+  // and `WhileClause` structs carry both `DoPos Pos` (a position — listed
+  // below) and `Do []*Stmt` (the loop body statement list — a real child).
+  // Denylisting the bare `Do` key here previously discarded that entire
+  // statement list before the schema-driven child resolution in
+  // `buildFields` ever saw it (see issue #2: normalizer drops
+  // ForClause/WhileClause loop bodies).
   'DonePos',
   'Rparen',
   'Lparen',
