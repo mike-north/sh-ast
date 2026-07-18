@@ -1,16 +1,25 @@
 /**
  * Type-level coverage for `sh-ast/analyze`'s public API surface —
- * criterion 4 of https://github.com/mike-north/eslint-sh/issues/3 and
- * criterion 5 of https://github.com/mike-north/eslint-sh/issues/4.
+ * criterion 4 of https://github.com/mike-north/eslint-sh/issues/3,
+ * criterion 5 of https://github.com/mike-north/eslint-sh/issues/4, and
+ * criterion 6 of https://github.com/mike-north/eslint-sh/issues/5.
  */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
-import { enumerateCommands, resolveWord } from '../src/analyze/index.js';
+import {
+  DEFAULT_TRANSPARENT_WRAPPERS,
+  enumerateCommands,
+  resolveArgv0,
+  resolveWord,
+} from '../src/analyze/index.js';
 import type {
+  Argv0Resolution,
   CommandContext,
   CommandSite,
+  ResolveArgv0Options,
   ResolveWordOptions,
   WordResolution,
   WordResolutionReason,
+  WrapperSpec,
 } from '../src/analyze/index.js';
 import type { ShNode, ShNodes } from '../src/index.js';
 
@@ -203,3 +212,72 @@ switch (frame.kind) {
   default:
     break;
 }
+
+// resolveArgv0 accepts a CommandSite and an optional ResolveArgv0Options,
+// always returning an Argv0Resolution.
+expectType<Argv0Resolution>(resolveArgv0(site));
+expectType<Argv0Resolution>(resolveArgv0(site, {}));
+expectType<Argv0Resolution>(resolveArgv0(site, { transparentWrappers: [] }));
+expectType<Argv0Resolution>(
+  resolveArgv0(site, { transparentWrappers: DEFAULT_TRANSPARENT_WRAPPERS }),
+);
+
+// resolveArgv0 requires a CommandSite argument — arbitrary values are
+// rejected.
+expectError(resolveArgv0(42));
+expectError(resolveArgv0('rm'));
+expectError(resolveArgv0(undefined));
+expectError(resolveArgv0());
+
+// ResolveArgv0Options.transparentWrappers must be an array of WrapperSpec.
+expectAssignable<ResolveArgv0Options>({});
+expectAssignable<ResolveArgv0Options>({ transparentWrappers: [] });
+expectAssignable<ResolveArgv0Options>({ transparentWrappers: [{ names: ['with-retry'] }] });
+expectNotAssignable<ResolveArgv0Options>({ transparentWrappers: ['env'] });
+
+// DEFAULT_TRANSPARENT_WRAPPERS is exported as a readonly WrapperSpec array
+// (data, not a class or a fixed tuple) and is directly usable as a base to
+// extend or filter — see criterion 4 (configurability).
+expectType<readonly WrapperSpec[]>(DEFAULT_TRANSPARENT_WRAPPERS);
+expectType<WrapperSpec[]>([...DEFAULT_TRANSPARENT_WRAPPERS, { names: ['with-retry'] }]);
+expectType<WrapperSpec[]>(DEFAULT_TRANSPARENT_WRAPPERS.filter((w) => !w.names.includes('env')));
+
+// Argv0Resolution's shape: chain/effective/assignmentsSkipped, all readonly.
+declare const resolution: Argv0Resolution;
+expectType<readonly WordResolution[]>(resolution.chain);
+expectType<WordResolution>(resolution.effective);
+expectType<number>(resolution.assignmentsSkipped);
+expectError((resolution.chain = []));
+expectError((resolution.effective = { static: true, text: 'rm' }));
+expectError((resolution.assignmentsSkipped = 0));
+
+// Valid construction of an Argv0Resolution.
+expectAssignable<Argv0Resolution>({
+  chain: [{ static: true, text: 'rm' }],
+  effective: { static: true, text: 'rm' },
+  assignmentsSkipped: 0,
+});
+
+// Invalid construction: missing/wrong-shaped fields.
+expectError<Argv0Resolution>({ effective: { static: true, text: 'rm' }, assignmentsSkipped: 0 });
+expectError<Argv0Resolution>({
+  chain: [{ static: true, text: 'rm' }],
+  effective: { static: true, text: 'rm' },
+  assignmentsSkipped: 'zero',
+});
+
+// WrapperSpec's shape: only `names` is required; the rest are optional and
+// individually typed.
+expectAssignable<WrapperSpec>({ names: ['env'] });
+expectAssignable<WrapperSpec>({
+  names: ['env'],
+  skipAssignmentOperands: true,
+  noArgFlags: ['-i'],
+  argFlags: ['-u'],
+  positionalOperandsBeforeCommand: 1,
+});
+expectAssignable<WrapperSpec>({ names: ['nice'], noArgFlagPattern: /^-\d+$/ });
+expectError<WrapperSpec>({});
+expectError<WrapperSpec>({ names: 'env' });
+expectError<WrapperSpec>({ names: ['env'], noArgFlags: 'env' });
+expectError<WrapperSpec>({ names: ['env'], positionalOperandsBeforeCommand: '1' });

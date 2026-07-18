@@ -5,6 +5,13 @@
 ```ts
 
 // @public
+export interface Argv0Resolution {
+    readonly assignmentsSkipped: number;
+    readonly chain: readonly WordResolution[];
+    readonly effective: WordResolution;
+}
+
+// @public
 export type CommandContext = {
     readonly kind: 'and';
     readonly side: 'right';
@@ -49,7 +56,18 @@ export interface CommandSite {
 }
 
 // @public
+export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[];
+
+// @public
 export function enumerateCommands(root: ShNode): CommandSite[];
+
+// @public
+export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): Argv0Resolution;
+
+// @public
+export interface ResolveArgv0Options {
+    readonly transparentWrappers?: readonly WrapperSpec[];
+}
 
 // @public
 export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
@@ -80,6 +98,16 @@ export type WordResolution = {
 
 // @public
 export type WordResolutionReason = 'expansion' | 'tilde' | 'glob' | 'brace' | 'locale' | 'unsupported';
+
+// @public
+export interface WrapperSpec {
+    readonly argFlags?: readonly string[];
+    readonly names: readonly string[];
+    readonly noArgFlagPattern?: RegExp;
+    readonly noArgFlags?: readonly string[];
+    readonly positionalOperandsBeforeCommand?: number;
+    readonly skipAssignmentOperands?: boolean;
+}
 
 // (No @packageDocumentation comment for this package)
 

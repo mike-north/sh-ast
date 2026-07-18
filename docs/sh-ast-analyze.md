@@ -66,6 +66,23 @@ A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any re
 </td></tr>
 <tr><td>
 
+[resolveArgv0(site, options)](./sh-ast-analyze.resolveargv0.md)
+
+
+</td><td>
+
+Follows `site`<!-- -->'s argv0 through zero or more \*transparent wrappers\* — commands whose own argv0 isn't the command actually run, because they just locate and re-exec another command (`env FOO=1 rm -rf /`<!-- -->, `command rm`<!-- -->, `nohup rm`<!-- -->, `sudo -u x "$prog"`<!-- -->) — to the \*\*effective\*\* command: the one a permission/policy check must actually judge, since argv0 alone is trivially spoofable through any of these.
+
+The wrapper table ([ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md)<!-- -->, defaulting to [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)<!-- -->) is plain data: each [WrapperSpec](./sh-ast-analyze.wrapperspec.md) declares how to locate the word it wraps, and neither this function nor the table encodes any safety judgment about \*which\* commands are dangerous — matching [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->'s and [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s "facts only" posture. A caller can drop a default entry (that name then resolves as an ordinary, non-transparent command) or add their own (e.g. a project's `with-retry` helper) and both directions are followed identically to any built-in entry.
+
+\*\*A statically-unknowable word is never guessed through.\*\* The moment `argv0` or any wrapper's located word resolves `static: false` (an expansion, tilde, glob, …), that unknowable result becomes [Argv0Resolution.effective](./sh-ast-analyze.argv0resolution.effective.md) immediately and the chain stops — this function never falls back to treating the wrapper itself, or any other guess, as the effective command once a dynamic word is reached. `sudo -u x "$prog"` therefore reports `effective: { static: false, ... }` with `chain: [<sudo>, <"$prog">]`<!-- -->, not `rm`<!-- -->/`sudo`<!-- -->/anything static.
+
+`VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
+
+
+</td></tr>
+<tr><td>
+
 [resolveWord(word, options)](./sh-ast-analyze.resolveword.md)
 
 
@@ -92,6 +109,17 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[Argv0Resolution](./sh-ast-analyze.argv0resolution.md)
+
+
+</td><td>
+
+The result of following a [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->'s argv0 through zero or more transparent wrappers to the effective command actually invoked. Facts only — no safety verdict; see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment.
+
+
+</td></tr>
+<tr><td>
+
 [CommandSite](./sh-ast-analyze.commandsite.md)
 
 
@@ -103,12 +131,66 @@ One place in the tree where a command is actually invoked — a `CallExpr` node,
 </td></tr>
 <tr><td>
 
+[ResolveArgv0Options](./sh-ast-analyze.resolveargv0options.md)
+
+
+</td><td>
+
+Options accepted by [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
 [ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)
 
 
 </td><td>
 
 Options controlling [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s tilde-expansion detection.
+
+
+</td></tr>
+<tr><td>
+
+[WrapperSpec](./sh-ast-analyze.wrapperspec.md)
+
+
+</td><td>
+
+A data-only description of one "transparent wrapper" — a command whose own argv0 is not the \*effective\* command actually run, because it just locates and re-execs another command (`env`<!-- -->, `sudo`<!-- -->, `nohup`<!-- -->, …). [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) interprets every field here structurally (skip N words, recognize this literal flag, …); adding a new `WrapperSpec` never requires a code change to [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) itself — that's what makes [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md) data rather than a set of hardcoded `if (name === 'env')` branches, and what lets a caller extend or replace the table with their own project-specific wrappers (e.g. a `with-retry` helper).
+
+Every flag/operand-recognizing field is checked against a word's \*statically resolved\* text only (its `.text` on a [WordResolution](./sh-ast-analyze.wordresolution.md) `static: true` result) — a dynamic word can never be identified as one of a wrapper's own flags or operands (see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment for why an unrecognizable word always ends the chain rather than being guessed through).
+
+This shape may grow new optional fields in a \*\*minor\*\* release as this bridge models more wrapper flag conventions; existing fields' meaning never changes.
+
+
+</td></tr>
+</tbody></table>
+
+## Variables
+
+<table><thead><tr><th>
+
+Variable
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)
+
+
+</td><td>
+
+`sh-ast/analyze`<!-- -->'s default [WrapperSpec](./sh-ast-analyze.wrapperspec.md) table — every entry's flag/operand handling is hand-derived from that wrapper's own manual page (or, for shell builtins, the Bash Reference Manual/POSIX Shell &amp; Utilities volume), cited per entry below. This table is \*data\*, not policy: it names no "dangerous" commands, makes no safety judgment, and a caller can freely replace or extend it via [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md) (see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s criterion-4-style configurability guarantee).
+
+`xargs` is deliberately \*\*excluded\*\*: unlike every entry here, `xargs` doesn't simply re-exec a single wrapped command word it can point to statically — it invokes `command [initial-arguments]` once per \*batch\* of additional arguments assembled from its own stdin at run time (batched per `-n`<!-- -->/`-L`<!-- -->/line-splitting rules, GNU xargs(1)). Treating it as transparent would misrepresent what's actually invoked: the "wrapped command" is only ever a syntactic \*prefix\* of the real, stdin-dependent argv, and that prefix can itself be entirely absent (bare `xargs` reruns each stdin-derived line as its own command). No `WrapperSpec` shape here can honestly express that, so `xargs` is left for a caller to model explicitly if their use case calls for it, rather than shipped as a silently-wrong default.
 
 
 </td></tr>
