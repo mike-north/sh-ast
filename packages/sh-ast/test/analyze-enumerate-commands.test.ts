@@ -22,6 +22,7 @@
  * conventions.
  *
  * @see https://pkg.go.dev/mvdan.cc/sh/v3@v3.13.1/syntax — mvdan/sh's AST reference (ground truth for node shapes)
+ * @see https://www.gnu.org/software/bash/manual/bash.html#Tilde-Expansion — §3.5.2, colon-tilde vs. command-argument tilde expansion (argv-context regression below)
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -371,6 +372,42 @@ describe('enumerateCommands — negative/edge cases', () => {
     const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
     expect(site.argv0).toEqual({ static: true, text: 'cmd' });
     expect(site.argv.map((w) => w.static && w.text)).toEqual(['cmd', 'arg']);
+  });
+});
+
+describe('enumerateCommands — argv resolved with command-argument semantics (regression: colon-tilde)', () => {
+  // Bash Reference Manual §3.5.2 "Tilde Expansion": an unquoted `~`
+  // immediately following an unquoted `:` is only special-cased for
+  // certain colon-separated *assignment values* (e.g. `PATH=/foo:~/bar`).
+  // An ordinary command-argument word has no such rule — only a
+  // word-initial unquoted `~` triggers expansion there, so `a:~/b` as a
+  // command argument is literal, static text, not a tilde-expansion site.
+  // Every `CallExpr` word is command-argument position (never an
+  // assignment value), so `enumerateCommands` must resolve `argv`/`argv0`
+  // with `resolveWord`'s `{ context: 'command-argument' }` — omitting the
+  // option falls back to `resolveWord`'s more conservative
+  // `'assignment-value'` default (see `ResolveWordOptions.context`'s doc
+  // comment) and would wrongly report this word as `static: false`.
+  it('resolves a colon-tilde command argument as static text, not a tilde-expansion site', () => {
+    const src = 'cmd a:~/b';
+    const sites = enumerate(src);
+    expect(sites).toHaveLength(1);
+    const site = assertDefined(sites[0], 'unreachable — length checked above');
+    expect(site.argv).toHaveLength(2);
+    expect(site.argv[1]).toEqual({ static: true, text: 'a:~/b' });
+  });
+
+  it('resolves an scp-style host:~/path argument as static text too', () => {
+    const src = 'scp host:~/path local';
+    expect(siteTexts(src)).toEqual([src]);
+    const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
+    expect(site.argv.map((w) => w.static && w.text)).toEqual(['scp', 'host:~/path', 'local']);
+  });
+
+  it('a word-initial tilde in a command argument is still reported as a tilde-expansion site (unaffected by the colon-tilde fix)', () => {
+    const src = 'cmd ~/b';
+    const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
+    expect(site.argv[1]).toEqual({ static: false, reason: 'tilde' });
   });
 });
 

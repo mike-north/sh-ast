@@ -52,7 +52,7 @@ readonly [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->\[\]
 
 </td><td>
 
-`resolveWord` applied to every word, in argument order.
+`resolveWord` applied to every word, in argument order (same `{ context: 'command-argument' }` as [CommandSite.argv0](./sh-ast-analyze.commandsite.argv0.md)<!-- -->).
 
 
 </td></tr>
@@ -73,7 +73,7 @@ readonly [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->\[\]
 
 </td><td>
 
-`resolveWord` applied to the first word (`argv[0]`<!-- -->).
+`resolveWord` applied to the first word (`argv[0]`<!-- -->), with `{ context: 'command-argument' }` — every `CallExpr` word is an ordinary command-argument position, never an assignment value, so only a word-initial unquoted `~` triggers tilde expansion (an unquoted `~` after a `:`<!-- -->, e.g. `a:~/b`<!-- -->, is literal text here — see `ResolveWordOptions.context`<!-- -->'s doc comment).
 
 
 </td></tr>

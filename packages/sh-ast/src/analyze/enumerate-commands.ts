@@ -76,9 +76,16 @@ export type CommandContext =
 export interface CommandSite {
   /** The `CallExpr` node this site was found at. */
   readonly node: ShNode;
-  /** `resolveWord` applied to the first word (`argv[0]`). */
+  /**
+   * `resolveWord` applied to the first word (`argv[0]`), with
+   * `{ context: 'command-argument' }` — every `CallExpr` word is an
+   * ordinary command-argument position, never an assignment value, so
+   * only a word-initial unquoted `~` triggers tilde expansion (an
+   * unquoted `~` after a `:`, e.g. `a:~/b`, is literal text here — see
+   * `ResolveWordOptions.context`'s doc comment).
+   */
   readonly argv0: WordResolution;
-  /** `resolveWord` applied to every word, in argument order. */
+  /** `resolveWord` applied to every word, in argument order (same `{ context: 'command-argument' }` as {@link CommandSite.argv0}). */
   readonly argv: readonly WordResolution[];
   /** The path from the tree root to this site, outermost frame first. */
   readonly context: readonly CommandContext[];
@@ -252,7 +259,7 @@ function visitCommand(cmd: ShNode, context: readonly CommandContext[], sites: Co
       scanForHiddenCommands(cmd.args, context, sites);
       const args = nodeArray(cmd.args);
       if (args.length > 0) {
-        const argv = args.map((word) => resolveWord(word));
+        const argv = args.map((word) => resolveWord(word, { context: 'command-argument' }));
         sites.push({ node: cmd, argv0: argv[0], argv, context });
       }
       return;

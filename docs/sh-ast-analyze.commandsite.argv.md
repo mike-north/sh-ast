@@ -4,7 +4,7 @@
 
 ## CommandSite.argv property
 
-`resolveWord` applied to every word, in argument order.
+`resolveWord` applied to every word, in argument order (same `{ context: 'command-argument' }` as [CommandSite.argv0](./sh-ast-analyze.commandsite.argv0.md)<!-- -->).
 
 **Signature:**
 
