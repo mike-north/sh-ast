@@ -7,7 +7,12 @@
 // Warning: (ae-forgotten-export) The symbol "ShNode" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function resolveWord(word: ShNode): WordResolution;
+export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
+
+// @public
+export interface ResolveWordOptions {
+    readonly context?: 'command-argument' | 'assignment-value';
+}
 
 // @public
 export type WordResolution = {
@@ -19,7 +24,7 @@ export type WordResolution = {
 };
 
 // @public
-export type WordResolutionReason = 'expansion' | 'tilde' | 'glob' | 'brace';
+export type WordResolutionReason = 'expansion' | 'tilde' | 'glob' | 'brace' | 'locale' | 'unsupported';
 
 // (No @packageDocumentation comment for this package)
 
