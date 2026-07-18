@@ -66,3 +66,9 @@ echo "$(echo command substitution)"
 cat <<'HEREDOC'
 heredoc body
 HEREDOC
+
+echo piped | wc -l
+
+! false
+
+sleep 0 &

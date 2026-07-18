@@ -3,12 +3,19 @@
  * normalized AST from the package root. Its first primitive,
  * {@link resolveWord}, answers "is this word statically a known string,
  * and if so which?" — the question every downstream lint rule or command
- * inventory asks first. Facts only: no policy, no hardcoded
- * command/wrapper lists (see {@link WordResolution}'s doc comment).
+ * inventory asks first. Its second, {@link enumerateCommands}, answers
+ * "where are all the commands, and how is each one reached?" — finding
+ * every `CallExpr` anywhere in the tree, including ones hidden inside
+ * command/process substitutions nested in words. Facts only: no policy, no
+ * hardcoded command/wrapper lists (see {@link WordResolution}'s and
+ * {@link CommandSite}'s doc comments).
  */
 
 export { resolveWord } from './resolve-word.js';
 export type { ResolveWordOptions, WordResolution, WordResolutionReason } from './resolve-word.js';
+
+export { enumerateCommands } from './enumerate-commands.js';
+export type { CommandContext, CommandSite } from './enumerate-commands.js';
 
 // `ShNode` (resolveWord's parameter type) is deliberately *not* re-exported
 // here: it's the root `sh-ast` entry point's type (see `sh-ast`'s own

@@ -4,8 +4,53 @@
 
 ```ts
 
-// Warning: (ae-forgotten-export) The symbol "ShNode" needs to be exported by the entry point index.d.ts
-//
+// @public
+export type CommandContext = {
+    readonly kind: 'and';
+    readonly side: 'right';
+} | {
+    readonly kind: 'or';
+    readonly side: 'right';
+} | {
+    readonly kind: 'pipeline';
+    readonly stage: number;
+} | {
+    readonly kind: 'subshell';
+} | {
+    readonly kind: 'cmdSubst';
+} | {
+    readonly kind: 'procSubst';
+} | {
+    readonly kind: 'if';
+    readonly branch: 'then' | 'else' | 'cond';
+} | {
+    readonly kind: 'case';
+} | {
+    readonly kind: 'loop';
+    readonly role: 'body' | 'cond';
+} | {
+    readonly kind: 'function';
+    readonly name: string;
+} | {
+    readonly kind: 'background';
+} | {
+    readonly kind: 'negated';
+} | {
+    readonly kind: 'coproc';
+};
+
+// @public
+export interface CommandSite {
+    readonly argv: readonly WordResolution[];
+    readonly argv0: WordResolution;
+    readonly context: readonly CommandContext[];
+    // Warning: (ae-forgotten-export) The symbol "ShNode" needs to be exported by the entry point index.d.ts
+    readonly node: ShNode;
+}
+
+// @public
+export function enumerateCommands(root: ShNode): CommandSite[];
+
 // @public
 export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
 

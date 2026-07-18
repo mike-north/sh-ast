@@ -1,6 +1,7 @@
 import type { ShNode } from '../types.js';
 import { decodeAnsiCString } from './ansi-c-escapes.js';
 import { decodeDblQuotedLit, decodeUnquotedLit } from './decode-lit.js';
+import { nodeArray, stringField } from './node-helpers.js';
 
 /**
  * Why a {@link resolveWord} result is `static: false`: the word's exact
@@ -137,24 +138,6 @@ interface PartFail {
   readonly reason: WordResolutionReason;
 }
 type PartResult = PartOk | PartFail;
-
-function isShNodeShape(value: unknown): value is ShNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
-}
-
-function nodeArray(value: unknown): readonly ShNode[] {
-  return Array.isArray(value) ? value.filter(isShNodeShape) : [];
-}
-
-function stringField(node: ShNode, field: string): string {
-  const value = node[field];
-  return typeof value === 'string' ? value : '';
-}
 
 /**
  * True iff `raw` (a `Lit` part's *undecoded* value) begins with a literal

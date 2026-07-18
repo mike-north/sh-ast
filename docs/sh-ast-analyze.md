@@ -19,6 +19,23 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[enumerateCommands(root)](./sh-ast-analyze.enumeratecommands.md)
+
+
+</td><td>
+
+Enumerates every command invocation (`CallExpr`<!-- -->) reachable from `root`<!-- -->, with its resolved words ([resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->) and the path used to reach it ([CommandContext](./sh-ast-analyze.commandcontext.md)<!-- -->). Descends everywhere a command can occur: statement lists, both sides of `&&`<!-- -->/`||`<!-- -->/pipelines, subshells/blocks, if/case branches \*and\* conditions, loop bodies \*and\* conditions, function bodies, background/negated/coproc statements, and — critically — `CmdSubst`<!-- -->/`ProcSubst` nested inside words, wherever those words occur (arguments, redirection targets, case subjects/patterns, loop word lists, assignment values, test/arithmetic operands, …), not only inside `CallExpr.args`<!-- -->.
+
+An assignment-only `CallExpr` (`FOO=bar`<!-- -->, `args` empty) has no first word to resolve and is not itself a command invocation — no program runs — so it produces no [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->; any command substitution nested in its assigned value (`FOO=$(sub)`<!-- -->) is still found and reported.
+
+Results are sorted by source position (`node.range[0]`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
+
+Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no command/wrapper allowlist or denylist, no dataflow. A statically unknown `argv0` (`static: false`<!-- -->) is a normal, expected result.
+
+
+</td></tr>
+<tr><td>
+
 [resolveWord(word, options)](./sh-ast-analyze.resolveword.md)
 
 
@@ -45,6 +62,17 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[CommandSite](./sh-ast-analyze.commandsite.md)
+
+
+</td><td>
+
+One place in the tree where a command is actually invoked — a `CallExpr` node, together with its resolved words and the path used to reach it. Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no hardcoded command/wrapper list. A dynamic (`static: false`<!-- -->) `argv0` is a normal, expected result — not an error and not itself reported as "unknown"/"unsafe".
+
+
+</td></tr>
+<tr><td>
+
 [ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)
 
 
@@ -70,6 +98,21 @@ Description
 
 </th></tr></thead>
 <tbody><tr><td>
+
+[CommandContext](./sh-ast-analyze.commandcontext.md)
+
+
+</td><td>
+
+A single frame of the path from the root of the tree down to a [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->, describing \*how\* the command is reached — never whether it is safe to run. `CommandSite.context` is an ordered stack of these, outermost frame first:
+
+- `'and'`<!-- -->/`'or'` (`side: 'right'`<!-- -->) — the right-hand operand of a `BinaryCmd` (mvdan/sh's node for both `&&` and `||`<!-- -->); only the right side is tagged; the left side inherits the surrounding context unchanged, since it runs unconditionally relative to this operator. - `'pipeline'` (`stage: n`<!-- -->) — one stage of a `|`<!-- -->/`|&` chain (also a `BinaryCmd`<!-- -->, left-associatively nested by mvdan/sh); every stage is tagged, 0-indexed left to right, regardless of whether the chain mixes `|` and `|&`<!-- -->. - `'subshell'` — inside a `Subshell` (`( ... )`<!-- -->). - `'cmdSubst'`<!-- -->/`'procSubst'` — inside a `CmdSubst` (`$(...)`<!-- -->/backticks) or `ProcSubst` (`<(...)`<!-- -->/`>(...)`<!-- -->) reached from \*any\* word-bearing position (an argument, a redirection target, a case subject, a loop's word list, an assignment value, a test/arithmetic operand, …) — not only from `CallExpr.args`<!-- -->. - `'if'` (`branch: 'cond' | 'then' | 'else'`<!-- -->) — inside an `IfClause`<!-- -->'s condition, then-branch, or else-branch (mvdan/sh nests `elif` chains as `IfClause.else` pointing to another `IfClause`<!-- -->, so an `elif`<!-- -->'s own condition/then are reached through an `{kind:'if',branch:'else'}` frame first, then their own `'cond'`<!-- -->/`'then'` frame — reflecting the real nesting rather than collapsing it). - `'case'` — inside one `CaseClause` branch's statement list (not the case subject word or the patterns). - `'loop'` (`role` is `'body'` or `'cond'`<!-- -->) — inside a `ForClause`<!-- -->'s statement list (`role: 'body'` only — a `for` loop has no statement-list condition) or a `WhileClause`<!-- -->'s (`role: 'cond'` for the condition, `role: 'body'` for the loop body). - `'function'` (`name`<!-- -->) — inside a `FuncDecl`<!-- -->'s body; `name` is the function's literal name text. - `'background'`<!-- -->/`'negated'` — the enclosing `Stmt` has mvdan/sh's Background/Negated flag set (`cmd &`<!-- -->, `! cmd`<!-- -->). - `'coproc'` — inside a `CoprocClause`<!-- -->'s statement (a `coproc` block, optionally named).
+
+A `Block` grouping (`{ ...; }`<!-- -->) and a `TimeClause` (`time cmd`<!-- -->) are deliberately transparent — grouping and timing a command doesn't change how it's reached, so no frame is added for either.
+
+
+</td></tr>
+<tr><td>
 
 [WordResolution](./sh-ast-analyze.wordresolution.md)
 
