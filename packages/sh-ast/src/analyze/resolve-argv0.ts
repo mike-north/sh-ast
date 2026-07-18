@@ -528,6 +528,24 @@ type AdvanceResult =
  *   this table doesn't recognize is far more likely to be an
  *   unmodeled/unsupported option than a command literally named e.g.
  *   `-D` — see {@link resolveArgv0}'s doc comment.
+ *
+ * A literal `--` (the standard getopt(3)/getopt_long(3) end-of-options
+ * marker — POSIX Utility Syntax Guidelines, guideline 10) is skipped like
+ * any other recognized token, but — critically — everything *after* it is
+ * no longer eligible for **any** flag/operand recognition at all
+ * (`noArgFlags`, `noArgFlagPattern`, `argFlags` in every form,
+ * `unresolvableFlags`, `stopsChainFlags`, or the generic
+ * flag-shape/`'unknown-flag'` check): once options end, a later word that
+ * merely *looks* like a flag (e.g. `-u`) is an ordinary operand — real
+ * `sudo(8)` documents this explicitly ("command line arguments after the
+ * `--` are passed to the command as-is"), and it's the entire point of
+ * `--` for every wrapper here. A wrapper's mandatory positional operand
+ * (e.g. `timeout`'s `DURATION`) is a distinct, non-flag concept and is
+ * still consumed normally after `--` — only *flag* recognition stops.
+ * `VAR=val` operand recognition (`skipAssignmentOperands`) is likewise
+ * unaffected by `--`, matching GNU env(1)'s own two-phase argument
+ * scanning (option parsing, then a separate `NAME=value` scan over
+ * whatever's left) — `--` only ever disables *option* (flag) parsing.
  */
 function advancePastWrapperOperands(
   argv: readonly WordResolution[],
@@ -536,6 +554,7 @@ function advancePastWrapperOperands(
 ): AdvanceResult {
   let index = startIndex;
   let positionalSeen = 0;
+  let optionsEnded = false;
   const requiredPositional = spec.positionalOperandsBeforeCommand ?? 0;
   while (index < argv.length) {
     // `index < argv.length` just checked above, so this is a real element.
@@ -548,65 +567,70 @@ function advancePastWrapperOperands(
       return { kind: 'next', index };
     }
     const text = word.text;
-    if (text === '--') {
+    if (!optionsEnded && text === '--') {
+      optionsEnded = true;
       index += 1;
       continue;
     }
-    if (
-      spec.unresolvableFlags !== undefined &&
-      matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
-    ) {
-      return { kind: 'unresolvable', reason: 'embedded-command' };
-    }
-    if (spec.skipAssignmentOperands === true && isAssignmentShapedText(text)) {
+    if (!optionsEnded && spec.skipAssignmentOperands === true && isAssignmentShapedText(text)) {
       index += 1;
       continue;
     }
-    if (
-      spec.stopsChainFlags !== undefined &&
-      matchesWholeOrAttachedFlag(text, spec.stopsChainFlags)
-    ) {
-      // This wrapper's own invocation is the effective command — the
-      // caller must not advance past it at all. Modeled as "truncated":
-      // the chain simply ends at the wrapper word already pushed, the
-      // same outcome as a genuinely truncated invocation (see
-      // `resolveArgv0`'s loop) — nothing more to skip or resolve.
-      return { kind: 'truncated' };
-    }
-    if (spec.noArgFlags?.includes(text) === true) {
-      index += 1;
-      continue;
-    }
-    if (spec.noArgFlagPattern?.test(text) === true) {
-      index += 1;
-      continue;
-    }
-    if (spec.argFlags?.includes(text) === true) {
-      index += 2;
-      continue;
-    }
-    if (spec.argFlags !== undefined && matchesAttachedLongFlag(text, spec.argFlags)) {
-      index += 1;
-      continue;
-    }
-    const clusterMatch = matchShortFlagCluster(text, spec);
-    if (clusterMatch === 'one') {
-      index += 1;
-      continue;
-    }
-    if (clusterMatch === 'two') {
-      index += 2;
-      continue;
-    }
-    // A flag-shaped word this wrapper doesn't recognize is checked *before*
-    // the positional-operand fallback below: real getopt-based parsers
-    // reject an unrecognized option outright rather than reinterpreting it
-    // as a positional operand (verified against GNU timeout(1)'s
-    // getopt_long-based option parsing) — so a required positional slot
-    // (e.g. `timeout`'s `DURATION`) may only ever be filled by a
-    // non-flag-shaped word, never by an unrecognized `-x`.
-    if (looksLikeFlag(text)) {
-      return { kind: 'unresolvable', reason: 'unknown-flag' };
+    if (!optionsEnded) {
+      if (
+        spec.unresolvableFlags !== undefined &&
+        matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
+      ) {
+        return { kind: 'unresolvable', reason: 'embedded-command' };
+      }
+      if (
+        spec.stopsChainFlags !== undefined &&
+        matchesWholeOrAttachedFlag(text, spec.stopsChainFlags)
+      ) {
+        // This wrapper's own invocation is the effective command — the
+        // caller must not advance past it at all. Modeled as "truncated":
+        // the chain simply ends at the wrapper word already pushed, the
+        // same outcome as a genuinely truncated invocation (see
+        // `resolveArgv0`'s loop) — nothing more to skip or resolve.
+        return { kind: 'truncated' };
+      }
+      if (spec.noArgFlags?.includes(text) === true) {
+        index += 1;
+        continue;
+      }
+      if (spec.noArgFlagPattern?.test(text) === true) {
+        index += 1;
+        continue;
+      }
+      if (spec.argFlags?.includes(text) === true) {
+        index += 2;
+        continue;
+      }
+      if (spec.argFlags !== undefined && matchesAttachedLongFlag(text, spec.argFlags)) {
+        index += 1;
+        continue;
+      }
+      const clusterMatch = matchShortFlagCluster(text, spec);
+      if (clusterMatch === 'one') {
+        index += 1;
+        continue;
+      }
+      if (clusterMatch === 'two') {
+        index += 2;
+        continue;
+      }
+      // A flag-shaped word this wrapper doesn't recognize is checked
+      // *before* the positional-operand fallback below: real getopt-based
+      // parsers reject an unrecognized option outright rather than
+      // reinterpreting it as a positional operand (verified against GNU
+      // timeout(1)'s getopt_long-based option parsing) — so a required
+      // positional slot (e.g. `timeout`'s `DURATION`) may only ever be
+      // filled by a non-flag-shaped word, never by an unrecognized `-x`.
+      // None of this applies once `optionsEnded` — see this function's
+      // doc comment.
+      if (looksLikeFlag(text)) {
+        return { kind: 'unresolvable', reason: 'unknown-flag' };
+      }
     }
     if (positionalSeen < requiredPositional) {
       positionalSeen += 1;

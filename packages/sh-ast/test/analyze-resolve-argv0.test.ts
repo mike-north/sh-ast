@@ -310,6 +310,10 @@ describe('resolveArgv0 — edge cases', () => {
     const resolution = resolveArgv0(site('sudo -- rm x'));
     expect(chainSummary(resolution)).toEqual(['sudo', 'rm']);
   });
+  // The more important `--` semantic — that option parsing STOPS for
+  // every later word too, not just that `--` itself is skipped — is
+  // covered by the dedicated describe block below ("`--` ends option
+  // parsing for the rest of this wrapper scan").
 
   it('throws TypeError for a CommandSite with an empty argv (programmer misuse, not malformed shell source)', () => {
     const loc: ShNode['loc'] = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
@@ -645,5 +649,53 @@ describe('resolveArgv0 — review fix: malformed injected WrapperSpec entries th
     // mistakes, not to re-check this package's own built-in table on
     // every call.
     expect(() => resolveArgv0(site('env A=1 rm x'))).not.toThrow();
+  });
+});
+
+describe('resolveArgv0 — review fix: `--` ends option parsing for the rest of this wrapper scan (Copilot PR #16 review)', () => {
+  // Every wrapper's own manual page documents `--` as the standard
+  // getopt(3)/getopt_long(3) end-of-options marker: once seen, everything
+  // that follows is an ordinary operand, even if it's shaped like a flag
+  // (starts with `-`) — that's the entire point of `--` (POSIX Utility
+  // Syntax Guidelines, guideline 10; sudo(8): "the command line arguments
+  // after the -- are passed to the command as-is"). The pre-fix behavior
+  // skipped `--` itself but kept recognizing later words as this wrapper's
+  // own flags, so `sudo -- -u alice rm` incorrectly consumed `-u alice` as
+  // sudo's own `-u` option instead of treating `-u` as the wrapped
+  // command's (literal) argv0.
+  it('sudo -- -u alice rm -> chain [sudo, -u], effective is a command literally named "-u", NOT sudo -u parsed as an option', () => {
+    const resolution = resolveArgv0(site('sudo -- -u alice rm'));
+    expect(resolution.chain).toEqual([
+      { static: true, text: 'sudo' },
+      { static: true, text: '-u' },
+    ]);
+    expect(resolution.effective).toEqual({ static: true, text: '-u' });
+  });
+
+  it('env -- -i cmd -> chain [env, -i], effective is a command literally named "-i", NOT env -i parsed as an option', () => {
+    const resolution = resolveArgv0(site('env -- -i cmd'));
+    expect(resolution.chain).toEqual([
+      { static: true, text: 'env' },
+      { static: true, text: '-i' },
+    ]);
+    expect(resolution.effective).toEqual({ static: true, text: '-i' });
+  });
+
+  it('a required positional operand (timeout DURATION) is still consumed after `--` — `--` ends FLAG parsing, not positional-operand parsing', () => {
+    const resolution = resolveArgv0(site('timeout -- 10 rm x'));
+    expect(chainSummary(resolution)).toEqual(['timeout', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('an ordinary command word after `--` is still followed as the wrapped command, unaffected by this fix', () => {
+    const resolution = resolveArgv0(site('sudo -- rm x'));
+    expect(chainSummary(resolution)).toEqual(['sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('command -- -v rm -> effective is a command literally named "-v", NOT command\'s own query-mode -v flag (stopsChainFlags no longer applies after `--`)', () => {
+    const resolution = resolveArgv0(site('command -- -v rm'));
+    expect(chainSummary(resolution)).toEqual(['command', '-v']);
+    expect(resolution.effective).toEqual({ static: true, text: '-v' });
   });
 });
