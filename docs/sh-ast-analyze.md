@@ -19,6 +19,17 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)
+
+
+</td><td>
+
+Thrown by `sh-ast/analyze`<!-- -->'s `resolveArgv0` when a caller-supplied `options.transparentWrappers` array contains a malformed `WrapperSpec` entry — e.g. a non-array or empty `names`<!-- -->, or a flag field that isn't an array of strings. Fails closed with a clear, specific message at the point the malformed table is supplied, rather than letting the bad shape reach flag-matching logic and surface as a confusing native `TypeError` (or, worse, a silently wrong match) far from its actual cause.
+
+
+</td></tr>
+<tr><td>
+
 [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)
 
 
@@ -66,6 +77,25 @@ A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any re
 </td></tr>
 <tr><td>
 
+[resolveArgv0(site, options)](./sh-ast-analyze.resolveargv0.md)
+
+
+</td><td>
+
+Follows `site`<!-- -->'s argv0 through zero or more \*transparent wrappers\* — commands whose own argv0 isn't the command actually run, because they just locate and re-exec another command (`env FOO=1 rm -rf /`<!-- -->, `command rm`<!-- -->, `nohup rm`<!-- -->, `sudo -u x "$prog"`<!-- -->) — to the \*\*effective\*\* command: the one a permission/policy check must actually judge, since argv0 alone is trivially spoofable through any of these.
+
+The wrapper table ([ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md)<!-- -->, defaulting to [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)<!-- -->) is plain data: each [WrapperSpec](./sh-ast-analyze.wrapperspec.md) declares how to locate the word it wraps, and neither this function nor the table encodes any safety judgment about \*which\* commands are dangerous — matching [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->'s and [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s "facts only" posture. A caller can drop a default entry (that name then resolves as an ordinary, non-transparent command) or add their own (e.g. a project's `with-retry` helper) and both directions are followed identically to any built-in entry.
+
+\*\*A statically-unknowable word is never guessed through\*\* — three distinct cases all stop the chain immediately at that word rather than falling back to any other guess:
+
+1. `argv0` or any wrapper's located word itself resolves `static: false` (an expansion, tilde, glob, …) — `sudo -u x "$prog"` reports `effective: { static: false, reason: 'expansion' }` with `chain: [<sudo>, <"$prog">]`<!-- -->, not `rm`<!-- -->/`sudo`<!-- -->/anything static. 2. A \*statically known\* word shaped like a flag (`-`<!-- -->-prefixed, not `--`<!-- -->) doesn't match any flag/operand shape the current [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes — `sudo -D /tmp rm x` (`-D` isn't modeled for `sudo`<!-- -->) reports an `effective` of `static: false` with `reason: 'unknown-flag'`<!-- -->, \*\*not\*\* `rm` (the pre-fix behavior: any unrecognized word, flag-shaped or not, was silently treated as the wrapped command — a false report that hid the real effective command behind a flag this table simply hadn't modeled yet). 3. A recognized flag's value structurally embeds the real command rather than naming it as a separate word — `env -S 'rm -rf /'` reports `effective: { static: false, reason: 'embedded-command' }` (see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment).
+
+`VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
+
+
+</td></tr>
+<tr><td>
+
 [resolveWord(word, options)](./sh-ast-analyze.resolveword.md)
 
 
@@ -92,6 +122,28 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[Argv0Resolution](./sh-ast-analyze.argv0resolution.md)
+
+
+</td><td>
+
+The result of following a [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->'s argv0 through zero or more transparent wrappers to the effective command actually invoked. Facts only — no safety verdict; see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment.
+
+
+</td></tr>
+<tr><td>
+
+[Argv0UnresolvedWord](./sh-ast-analyze.argv0unresolvedword.md)
+
+
+</td><td>
+
+A word position [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) could not resolve to either a known static text or one of [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->'s own `static: false` reasons — see [Argv0UnresolvedReason](./sh-ast-analyze.argv0unresolvedreason.md)<!-- -->'s doc comment. Shares `WordResolution`<!-- -->'s `static: false` discriminant shape by design, so a consumer that only branches on `.static` treats it identically to any other unresolvable word.
+
+
+</td></tr>
+<tr><td>
+
 [CommandSite](./sh-ast-analyze.commandsite.md)
 
 
@@ -103,12 +155,68 @@ One place in the tree where a command is actually invoked — a `CallExpr` node,
 </td></tr>
 <tr><td>
 
+[ResolveArgv0Options](./sh-ast-analyze.resolveargv0options.md)
+
+
+</td><td>
+
+Options accepted by [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
 [ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)
 
 
 </td><td>
 
 Options controlling [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s tilde-expansion detection.
+
+
+</td></tr>
+<tr><td>
+
+[WrapperSpec](./sh-ast-analyze.wrapperspec.md)
+
+
+</td><td>
+
+A data-only description of one "transparent wrapper" — a command whose own argv0 is not the \*effective\* command actually run, because it just locates and re-execs another command (`env`<!-- -->, `sudo`<!-- -->, `nohup`<!-- -->, …). [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) interprets every field here structurally (skip N words, recognize this literal flag, …); adding a new `WrapperSpec` never requires a code change to [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) itself — that's what makes [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md) data rather than a set of hardcoded `if (name === 'env')` branches, and what lets a caller extend or replace the table with their own project-specific wrappers (e.g. a `with-retry` helper).
+
+Every flag/operand-recognizing field is checked against a word's \*statically resolved\* text only (its `.text` on a [WordResolution](./sh-ast-analyze.wordresolution.md) `static: true` result) — a dynamic word can never be identified as one of a wrapper's own flags or operands (see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment for why an unrecognizable word always ends the chain rather than being guessed through).
+
+This shape may grow new optional fields in a \*\*minor\*\* release as this bridge models more wrapper flag conventions; existing fields' meaning never changes.
+
+
+</td></tr>
+</tbody></table>
+
+## Variables
+
+<table><thead><tr><th>
+
+Variable
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)
+
+
+</td><td>
+
+`sh-ast/analyze`<!-- -->'s default [WrapperSpec](./sh-ast-analyze.wrapperspec.md) table — every entry's flag/operand handling is hand-derived from that wrapper's own manual page (or, for shell builtins, the Bash Reference Manual/POSIX Shell &amp; Utilities volume), cited per entry below, and cross-checked empirically against the real utility where one was locally available (GNU coreutils `env`<!-- -->/`nice` directly; `sudo` via `sudo -h`<!-- -->'s usage/option summary only — never executed, per this package's "facts only" posture and basic safety hygiene). This table is \*data\*, not policy: it names no "dangerous" commands, makes no safety judgment, and a caller can freely replace or extend it via [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md) (see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s criterion-4-style configurability guarantee).
+
+Frozen (including each entry object and its own array/regexp fields) so immutability of this shared, module-scoped table is a contract, not just a convention any importer happens to honor — mirrors `visitorKeys`<!-- -->'s and `CHILD_TYPE_SCHEMA`<!-- -->'s freezing in `visitor-keys.ts`<!-- -->/`normalize.ts`<!-- -->.
+
+`xargs` is deliberately \*\*excluded\*\*: unlike every entry here, `xargs` doesn't simply re-exec a single wrapped command word it can point to statically — it invokes `command [initial-arguments]` once per \*batch\* of additional arguments assembled from its own stdin at run time (batched per `-n`<!-- -->/`-L`<!-- -->/line-splitting rules, GNU xargs(1)). Treating it as transparent would misrepresent what's actually invoked: the "wrapped command" is only ever a syntactic \*prefix\* of the real, stdin-dependent argv, and that prefix can itself be entirely absent (bare `xargs` reruns each stdin-derived line as its own command). No `WrapperSpec` shape here can honestly express that, so `xargs` is left for a caller to model explicitly if their use case calls for it, rather than shipped as a silently-wrong default.
 
 
 </td></tr>
@@ -128,6 +236,32 @@ Description
 
 </th></tr></thead>
 <tbody><tr><td>
+
+[Argv0ChainWord](./sh-ast-analyze.argv0chainword.md)
+
+
+</td><td>
+
+The result of statically resolving one position in an [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md)<!-- -->: either an ordinary [WordResolution](./sh-ast-analyze.wordresolution.md) (from `resolveWord`<!-- -->) or an [Argv0UnresolvedWord](./sh-ast-analyze.argv0unresolvedword.md) (a `resolveArgv0`<!-- -->- level "we don't know", distinct from any reason `resolveWord` itself would report).
+
+
+</td></tr>
+<tr><td>
+
+[Argv0UnresolvedReason](./sh-ast-analyze.argv0unresolvedreason.md)
+
+
+</td><td>
+
+Why [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) couldn't identify a single, definite effective command — distinct from [WordResolutionReason](./sh-ast-analyze.wordresolutionreason.md)<!-- -->, which is about why one \*word\*'s text is unknowable at the shell-syntax level (an expansion, a glob, …). `Argv0UnresolvedReason` instead reflects `resolveArgv0`<!-- -->'s own wrapper-table-driven analysis of an otherwise statically-known word:
+
+- `'unknown-flag'` — a statically known word shaped like a flag (starts with `-`<!-- -->, isn't exactly `--`<!-- -->) for the wrapper currently being followed, but that doesn't match any flag/operand shape [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes for it. Never guessed through as the wrapped command — see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment. - `'embedded-command'` — a wrapper flag whose value structurally embeds the real command rather than naming it as a separate word (e.g. `env -S 'rm -rf /'` — see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment).
+
+This union may grow in a \*\*minor\*\* release (mirroring `WordResolutionReason`<!-- -->'s and `CommandContext`<!-- -->'s semver policy in `resolve-word.ts`<!-- -->/`enumerate-commands.ts`<!-- -->) — a reason this version doesn't yet know about only ever accompanies `static: false`<!-- -->; an exhaustive `switch` should still include a `default` case.
+
+
+</td></tr>
+<tr><td>
 
 [CommandContext](./sh-ast-analyze.commandcontext.md)
 

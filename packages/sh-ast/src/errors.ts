@@ -3,13 +3,14 @@ import type { ShellDialect } from './types.js';
 /**
  * Common base class for every error this package throws — originally just
  * {@link parseSync}'s errors, now also the `sh-ast/analyze` layer's (see
- * {@link ShAnalyzeMaxDepthError}). Provides a stable, documented `code`
- * discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`) alongside the usual
- * `instanceof` narrowing, so consumers can branch on failure kind
- * programmatically without parsing `.message` strings. Never thrown
- * directly — only via its concrete subclasses ({@link ShParseError},
- * {@link ShInvalidDialectError}, {@link ShBridgeInternalError},
- * {@link ShAnalyzeMaxDepthError}, {@link ShParseMaxDepthError}).
+ * {@link ShAnalyzeMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
+ * Provides a stable, documented `code` discriminator (e.g.
+ * `"ESLINT_SH_PARSE_ERROR"`) alongside the usual `instanceof` narrowing, so
+ * consumers can branch on failure kind programmatically without parsing
+ * `.message` strings. Never thrown directly — only via its concrete
+ * subclasses ({@link ShParseError}, {@link ShInvalidDialectError},
+ * {@link ShBridgeInternalError}, {@link ShAnalyzeMaxDepthError},
+ * {@link ShParseMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
  *
  * @public
  */
@@ -190,5 +191,25 @@ export class ShParseMaxDepthError extends ShBridgeError {
     this.name = 'ShParseMaxDepthError';
     this.maxDepth = maxDepth;
     this.estimatedDepth = estimatedDepth;
+  }
+}
+
+/**
+ * Thrown by `sh-ast/analyze`'s `resolveArgv0` when a caller-supplied
+ * `options.transparentWrappers` array contains a malformed `WrapperSpec`
+ * entry — e.g. a non-array or empty `names`, or a flag field that isn't an
+ * array of strings. Fails closed with a clear, specific message at the
+ * point the malformed table is supplied, rather than letting the bad shape
+ * reach flag-matching logic and surface as a confusing native `TypeError`
+ * (or, worse, a silently wrong match) far from its actual cause.
+ *
+ * @public
+ */
+export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+  readonly code = 'ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC';
+
+  constructor(message: string) {
+    super(`resolveArgv0: invalid transparentWrappers entry — ${message}`);
+    this.name = 'ShAnalyzeInvalidWrapperSpecError';
   }
 }

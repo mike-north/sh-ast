@@ -22,6 +22,13 @@ export interface Position {
 }
 
 // @public
+export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+}
+
+// @public
 export class ShAnalyzeMaxDepthError extends ShBridgeError {
     constructor(maxDepth: number);
     // (undocumented)
