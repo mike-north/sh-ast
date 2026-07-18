@@ -166,7 +166,12 @@ interface PendingHeredoc {
  *   unescaped newline, or an unpaired `&`), and saved/restored (not
  *   dropped) around a bracket/keyword region so a chain that continues
  *   after a nested subshell (`a | (b) | c`) still accumulates its full
- *   length rather than silently restarting.
+ *   length rather than silently restarting. Correctly **not** counted: a
+ *   bare `|` while the innermost `case`'s current arm is still in
+ *   *pattern* position (`PATTERN1|PATTERN2|...)`) — that's glob-pattern
+ *   alternation, not a pipeline (see `casePatternStack`'s doc comment) —
+ *   while a `|` in that same arm's *action* list (after its terminating
+ *   `)`) is a real pipeline and is counted normally.
  *
  * Skips (does not count structure inside): single-quoted strings, `$'...'`
  * ANSI-C-quoted strings, `#`-comments (only recognized at a word boundary,
@@ -236,6 +241,24 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
   const n = text.length;
   let i = 0;
 
+  // Parallel to `contextStack`, but pushed/popped only in lockstep with a
+  // `'case'` entry specifically (not with every entry): `true` while
+  // scanning the *pattern* list of the innermost open `case`'s current arm
+  // (`PATTERN)` — where a bare `|` is alternation, not a pipeline — and
+  // `false` once that arm's terminating `)` has been seen (its *action*
+  // list, `LIST` in `PATTERN) LIST ;;`, where `|` is once again a real
+  // pipeline). Reset back to `true` at that arm's `;;`/`;&`/`;;&`
+  // terminator (see the `;` handler below) for the next arm's pattern.
+  const casePatternStack: boolean[] = [];
+  // Read cursor into `pendingHeredocs` (append-only — see
+  // `startNextHeredocIfAny`) instead of `Array.prototype.shift()`, which is
+  // O(k) per call (re-indexes the whole remaining array) and so made a
+  // script queuing many heredocs an accidental O(k²) cost overall — this
+  // guard must stay cheap even against a large adversarial input (see this
+  // function's doc comment) for *every* operation it performs, not just the
+  // early-exit-on-limit-exceeded one.
+  let pendingHeredocCursor = 0;
+
   function noteDepth(): void {
     const total = bracketDepth + chainLen;
     if (total > maxDepth) maxDepth = total;
@@ -252,15 +275,32 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
     chainLenStack.push(chainLen);
     chainLen = 0;
   }
-  function popRegion(kind: ScanContext): void {
+  /**
+   * Pops `contextStack`'s top entry — and, in lockstep, restores `chainLen`
+   * from `chainLenStack` — **only if** it actually equals `kind`; otherwise
+   * does nothing at all and returns `false`. Every caller **must** gate its
+   * own `close()` (or any other closing side effect) on this return value:
+   * a closer token whose region doesn't actually match the top of the
+   * stack (a stray `}` with no open `{`, an `esac` with no open `case`, …)
+   * is inert text as far as the *real* parser is concerned, and must be
+   * exactly as inert here — closing anyway (the bug this comment guards
+   * against: see `ShParseMaxDepthError`'s regression tests for
+   * `'case x in a}) '.repeat(n) + ... `) lets a self-canceling stray-closer
+   * input decrement `bracketDepth` once per repetition while `contextStack`
+   * (the *real* nesting mvdan/sh's parser will recurse through) keeps
+   * growing unboundedly — silently hiding real, unbounded nesting from this
+   * estimator, which is the one direction it must never be wrong in.
+   */
+  function popRegion(kind: ScanContext): boolean {
     if (contextStack.length > 0 && contextStack[contextStack.length - 1] === kind) {
       contextStack.pop();
       chainLen = chainLenStack.pop() ?? 0;
+      return true;
     }
+    return false;
   }
   function toggleBacktick(): void {
-    if (contextStack.length > 0 && contextStack[contextStack.length - 1] === 'backtick') {
-      popRegion('backtick');
+    if (popRegion('backtick')) {
       close();
     } else {
       pushRegion('backtick');
@@ -274,9 +314,26 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
     chainLen++;
     noteDepth();
   }
+  /**
+   * `true` iff the innermost open region is `'case'` and its current arm is
+   * still in *pattern* position — see `casePatternStack`'s doc comment.
+   */
+  function inCasePatternPosition(): boolean {
+    if (
+      contextStack.length === 0 ||
+      contextStack[contextStack.length - 1] !== 'case' ||
+      casePatternStack.length === 0
+    ) {
+      return false;
+    }
+    return casePatternStack[casePatternStack.length - 1];
+  }
   function startNextHeredocIfAny(): void {
-    const next = pendingHeredocs.shift();
-    if (next) {
+    if (pendingHeredocCursor < pendingHeredocs.length) {
+      // `pendingHeredocCursor < pendingHeredocs.length` just checked above,
+      // so this is a real element.
+      const next = pendingHeredocs[pendingHeredocCursor];
+      pendingHeredocCursor++;
       pushRegion('heredoc');
       heredocInfoStack.push(next);
     }
@@ -411,19 +468,23 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
     if (ch === ')') {
       // A bare `)` directly inside a `case` region (no intervening real
       // opener) is that arm's pattern terminator, not a closing paren —
-      // see CASE_OPENER_KEYWORD's doc comment. Leave the region open.
+      // see CASE_OPENER_KEYWORD's doc comment. Leave the region open, but
+      // this arm's pattern list has ended: everything until the next
+      // `;;`/`;&`/`;;&` is now its *action* list (see `casePatternStack`'s
+      // doc comment) — a bare `|` there is a real pipeline again.
       if (contextStack.length > 0 && contextStack[contextStack.length - 1] === 'case') {
+        if (casePatternStack.length > 0) {
+          casePatternStack[casePatternStack.length - 1] = false;
+        }
         i++;
         continue;
       }
-      popRegion('other');
-      close();
+      if (popRegion('other')) close();
       i++;
       continue;
     }
     if (ch === '}') {
-      popRegion('other');
-      close();
+      if (popRegion('other')) close();
       i++;
       continue;
     }
@@ -467,6 +528,24 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
       continue;
     }
     if (ch === ';') {
+      // `;;`/`;;&` (both start with two semicolons) or `;&` end the
+      // *current* case arm and return to *pattern* position for the next
+      // one — see `casePatternStack`'s doc comment. A single `;` mid-arm
+      // (an ordinary statement separator within one arm's action list)
+      // does not; only the first `;` of one of these two-character
+      // sequences flips the flag, matched by lookahead without consuming
+      // extra characters (the loop still advances one `;` at a time below,
+      // which is harmless — `resetChain()`/this flag flip are each
+      // idempotent).
+      if (
+        contextStack.length > 0 &&
+        contextStack[contextStack.length - 1] === 'case' &&
+        casePatternStack.length > 0 &&
+        !casePatternStack[casePatternStack.length - 1] &&
+        (text[i + 1] === ';' || text[i + 1] === '&')
+      ) {
+        casePatternStack[casePatternStack.length - 1] = true;
+      }
       resetChain();
       i++;
       continue;
@@ -478,22 +557,30 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
       continue;
     }
     if (ch === '&' && text[i + 1] === '&') {
-      chainLink();
+      if (!inCasePatternPosition()) chainLink();
       i += 2;
       continue;
     }
     if (ch === '|' && text[i + 1] === '|') {
-      chainLink();
+      if (!inCasePatternPosition()) chainLink();
       i += 2;
       continue;
     }
     if (ch === '|' && text[i + 1] === '&') {
-      chainLink();
+      if (!inCasePatternPosition()) chainLink();
       i += 2;
       continue;
     }
     if (ch === '|') {
-      chainLink();
+      // A bare `|` while the innermost `case`'s current arm is still in
+      // *pattern* position (`PATTERN1|PATTERN2|...)`) is glob-pattern
+      // alternation, not a pipeline — mvdan/sh's parser doesn't recurse per
+      // alternative the way it does per pipeline stage, so counting it as
+      // a chain link would falsely reject e.g. a 200-alternative case arm
+      // that real bash parses trivially. Once this arm's action list
+      // begins (after its terminating `)`), `|` is a real pipeline again —
+      // see `casePatternStack`'s and the `)` handler's doc comments.
+      if (!inCasePatternPosition()) chainLink();
       i++;
       continue;
     }
@@ -512,14 +599,16 @@ function estimateMaxNestingDepth(text: string, limit: number): number {
         pushRegion('other');
         open();
       } else if (STRUCTURAL_CLOSER_KEYWORDS.has(word)) {
-        popRegion('other');
-        close();
+        if (popRegion('other')) close();
       } else if (word === CASE_OPENER_KEYWORD) {
         pushRegion('case');
+        casePatternStack.push(true);
         open();
       } else if (word === CASE_CLOSER_KEYWORD) {
-        popRegion('case');
-        close();
+        if (popRegion('case')) {
+          close();
+          casePatternStack.pop();
+        }
       }
       i = j;
       continue;

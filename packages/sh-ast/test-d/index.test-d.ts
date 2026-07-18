@@ -9,6 +9,7 @@ import {
   ShBridgeInternalError,
   ShInvalidDialectError,
   ShParseError,
+  ShParseMaxDepthError,
   visitorKeys,
   walk,
   type ParseOptions,
@@ -60,6 +61,14 @@ expectType<'ESLINT_SH_BRIDGE_INTERNAL'>(internalError.code);
 expectAssignable<Error>(internalError);
 expectAssignable<ShBridgeError>(internalError);
 expectNotAssignable<ShParseError>(internalError);
+
+const maxDepthError = new ShParseMaxDepthError(150, 151);
+expectType<'ESLINT_SH_PARSE_MAX_DEPTH'>(maxDepthError.code);
+expectType<number>(maxDepthError.maxDepth);
+expectType<number>(maxDepthError.estimatedDepth);
+expectAssignable<Error>(maxDepthError);
+expectAssignable<ShBridgeError>(maxDepthError);
+expectNotAssignable<ShParseError>(maxDepthError);
 
 expectType<Readonly<Record<string, readonly string[]>>>(visitorKeys);
 

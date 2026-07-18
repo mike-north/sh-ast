@@ -42,6 +42,39 @@ function nestedCase(n: number): string {
   return 'case x in a) '.repeat(n) + 'true' + ' ;; esac'.repeat(n);
 }
 
+/** `n` nested `case`/`esac` blocks, but with a stray `closerWord` (e.g. `}`, `fi`, `done`) inside each arm's *pattern* position instead of a plain letter. */
+function nestedCaseWithStrayCloser(closerWord: string, n: number): string {
+  return `case x in a ${closerWord}) `.repeat(n) + 'true' + ' ;; esac'.repeat(n);
+}
+
+/** `n` nested `header ... do BODY; done` loops (covers `for`/`while`/`until`/`select`, which all share `STRUCTURAL_OPENER_KEYWORDS`). */
+function nestedLoop(header: string, n: number): string {
+  let body = 'true';
+  for (let i = 0; i < n; i++) {
+    body = `${header} do ${body}; done`;
+  }
+  return body;
+}
+
+/** A chain of exactly `links` occurrences of `op` (`&&`/`||`/`|&`), i.e. `links + 1` commands. */
+function chainOperatorChain(op: '&&' | '||' | '|&', links: number): string {
+  return Array.from({ length: links + 1 }, () => 'true').join(` ${op} `);
+}
+
+/** `n` nested function definitions: `f0(){ f1(){ ... } ; }`. */
+function nestedFunctionDefs(n: number): string {
+  let body = 'true';
+  for (let i = 0; i < n; i++) {
+    body = `f${String(i)}(){ ${body} ; }`;
+  }
+  return body;
+}
+
+/** `n` nested `$((...))` arithmetic expansions. */
+function nestedArithmetic(n: number): string {
+  return '$(('.repeat(n) + '1' + '))'.repeat(n);
+}
+
 describe('parseSync — criterion 1: typed, catchable error before the WASM parser is invoked', () => {
   it('throws a ShParseMaxDepthError (not a RangeError) for pathologically deep nesting', () => {
     expect(() => parseSync(nestedSubshells(2000))).toThrow(ShParseMaxDepthError);
@@ -255,6 +288,217 @@ describe('parseSync — multibyte: quoted multibyte content never miscounts or i
   it('a lone multibyte-heavy single-quoted string with no real nesting at all still parses', () => {
     const payload = '🎉'.repeat(500) + '深い入れ子'.repeat(500);
     const file = parseSync(`echo '${payload}'`);
+    expect(file.type).toBe('File');
+  });
+});
+
+describe('parseSync — regression: an unmatched closer must never decrement depth state (self-cancel bypass)', () => {
+  // Root cause: `)`/`}`/`fi`/`done`/`esac` each used to call `close()`
+  // unconditionally after attempting `popRegion(...)`, even when the pop
+  // didn't actually match the top of the region stack. `case x in a})`
+  // pushes a `'case'` region (from `case`) but the stray `}` right after
+  // — which doesn't match anything real — used to decrement `bracketDepth`
+  // anyway, exactly canceling out the depth `case` had just added. Repeated
+  // `n` times, this produced a script whose *real* nesting (the region
+  // stack mvdan/sh's parser will actually recurse through) grows without
+  // bound while this guard's own depth estimate stayed near zero — the
+  // guard stayed silent, and the real WASM parser crashed with an
+  // uncatchable `RangeError` (empirically confirmed at n=400, well before
+  // this fix, using this exact fixture — see this describe block's first
+  // test). The fix: every closer now only decrements state when its
+  // `popRegion(...)` call actually matched.
+  it('the exact stray-brace fixture (n=400) throws ShParseMaxDepthError, never a raw RangeError', () => {
+    expect(() => parseSync(nestedCaseWithStrayCloser('}', 400))).toThrow(ShParseMaxDepthError);
+  });
+
+  it('the exact stray-brace fixture (n=1000) throws ShParseMaxDepthError, never a raw RangeError', () => {
+    expect(() => parseSync(nestedCaseWithStrayCloser('}', 1000))).toThrow(ShParseMaxDepthError);
+  });
+
+  it('a stray `fi` in case-arm pattern position is an equivalent self-cancel vector, also fixed', () => {
+    expect(() => parseSync(nestedCaseWithStrayCloser('fi', 400))).toThrow(ShParseMaxDepthError);
+  });
+
+  it('a stray `done` in case-arm pattern position is an equivalent self-cancel vector, also fixed', () => {
+    expect(() => parseSync(nestedCaseWithStrayCloser('done', 400))).toThrow(ShParseMaxDepthError);
+  });
+
+  it('a stray `esac` with no open case at all (inside unrelated subshells) is also inert, not a self-cancel', () => {
+    // `esac` here has no matching `case` on the region stack at all (the
+    // open regions are all plain subshells) — `popRegion('case')` must
+    // fail every time, so `bracketDepth` still accumulates the full `n`
+    // real subshell opens undiminished.
+    const src = '( esac '.repeat(400) + 'true' + ' )'.repeat(400);
+    expect(() => parseSync(src)).toThrow(ShParseMaxDepthError);
+  });
+
+  it('the existing control case — a real, well-formed case block past the limit — still throws correctly', () => {
+    expect(() => parseSync(nestedCase(2000))).toThrow(ShParseMaxDepthError);
+  });
+
+  it('a shallow script with the same stray-closer shape does not trip the depth guard', () => {
+    // `case x in a }) ...` is not valid shell syntax at all (real bash
+    // rejects it too — "syntax error near unexpected token `}'"), so this
+    // doesn't assert a full successful parse; it only asserts that this
+    // guard specifically stays silent for shallow input, whatever else may
+    // or may not be wrong with it.
+    expect(() => parseSync(nestedCaseWithStrayCloser('}', 10))).not.toThrow(ShParseMaxDepthError);
+  });
+});
+
+describe('parseSync — regression: `|` inside a case-arm pattern list is alternation, not a pipeline', () => {
+  // `case WORD in PATTERN1|PATTERN2|...) LIST ;; esac` — the `|` between
+  // alternative patterns is glob-alternation syntax that mvdan/sh's parser
+  // does not recurse per alternative the way it does per real pipeline
+  // stage. Counting it as a chain link over-estimated depth for a case arm
+  // with many alternatives, falsely rejecting realistic scripts (e.g. a
+  // single arm matching 151+ short option spellings).
+  it('a single case arm with 200 pattern alternatives parses fine (no longer miscounted as a 200-stage pipeline)', () => {
+    const alternatives = Array.from({ length: 200 }, (_, i) => `pat${String(i)}`).join('|');
+    const file = parseSync(`case x in ${alternatives}) true ;; esac`);
+    expect(file.type).toBe('File');
+  });
+
+  it("a REAL 151-stage pipeline inside a case arm's action list (body, not pattern) still trips the guard", () => {
+    // Guards against over-suppressing: `|` after the arm's terminating `)`
+    // is back in ordinary command position, where it's a genuine pipeline.
+    const pipeline = pipelineChain(151);
+    expect(() => parseSync(`case x in a) ${pipeline} ;; esac`)).toThrow(ShParseMaxDepthError);
+  });
+
+  it('a 149-stage pipeline in a case arm body is still at the boundary (parses)', () => {
+    // The enclosing `case` region itself contributes 1 to the total depth
+    // (from `pushRegion('case')` + `open()` at the `case` keyword), so a
+    // pipeline *inside* one of its arms reaches the same 150-unit limit one
+    // stage earlier than a top-level pipeline does (compare the 150/151
+    // boundary in the "boundary" describe block above, with no enclosing
+    // case).
+    const pipeline = pipelineChain(149);
+    const file = parseSync(`case x in a) ${pipeline} ;; esac`);
+    expect(file.type).toBe('File');
+  });
+
+  it('alternation in each arm of a multi-arm case block is correctly treated as inert in every arm, not just the first', () => {
+    // Exercises the `;;` -> pattern-position transition between arms.
+    const file = parseSync('case x in a|b) true ;; c|d) false ;; e|f) : ;; esac');
+    expect(file.type).toBe('File');
+  });
+
+  it('a bare `|` immediately after the case keyword and before `in` is not reachable in valid syntax, but a pattern-position `|` right after `in` is still inert', () => {
+    const alternatives = Array.from({ length: 200 }, (_, i) => `p${String(i)}`).join('|');
+    const file = parseSync(`case x in\n${alternatives}) true ;;\nesac`);
+    expect(file.type).toBe('File');
+  });
+});
+
+describe('parseSync — test breadth: nested backtick command substitution counts toward depth', () => {
+  it('a backtick substitution wrapping 149 nested $(...) command substitutions is exactly at the limit (150 total)', () => {
+    const src = '`' + nestedCommandSubstitutions(149) + '`';
+    const file = parseSync(src);
+    expect(file.type).toBe('File');
+  });
+
+  it('a backtick substitution wrapping 150 nested $(...) command substitutions is one past the limit (151 total)', () => {
+    const src = '`' + nestedCommandSubstitutions(150) + '`';
+    expect(() => parseSync(src)).toThrow(ShParseMaxDepthError);
+  });
+});
+
+describe('parseSync — test breadth: for/while/until/select each get their own at/over-limit pair', () => {
+  it.each([
+    ['for', 'for i in 1;'],
+    ['while', 'while true;'],
+    ['until', 'until true;'],
+    ['select', 'select x in 1;'],
+  ] as const)('%s: 150 nested loops parses, 151 throws', (_label, header) => {
+    const file = parseSync(nestedLoop(header, 150));
+    expect(file.type).toBe('File');
+    expect(() => parseSync(nestedLoop(header, 151))).toThrow(ShParseMaxDepthError);
+  });
+});
+
+describe('parseSync — test breadth: &&/||/|& chain operators are each tested, not just |', () => {
+  it.each(['&&', '||', '|&'] as const)(
+    'a 150-link %s chain parses, a 151-link chain throws',
+    (op) => {
+      const file = parseSync(chainOperatorChain(op, 150));
+      expect(file.type).toBe('File');
+      expect(() => parseSync(chainOperatorChain(op, 151))).toThrow(ShParseMaxDepthError);
+    },
+  );
+});
+
+describe('parseSync — test breadth: nested function definitions contribute to depth', () => {
+  it('150 nested function definitions parses', () => {
+    const file = parseSync(nestedFunctionDefs(150));
+    expect(file.type).toBe('File');
+  });
+
+  it('151 nested function definitions throws ShParseMaxDepthError', () => {
+    expect(() => parseSync(nestedFunctionDefs(151))).toThrow(ShParseMaxDepthError);
+  });
+});
+
+describe('parseSync — test breadth: comments/quotes/escapes full of fake structural characters never false-positive', () => {
+  it('a comment full of parens/braces/keywords contributes nothing to the depth estimate', () => {
+    const fakeStructure =
+      '# ' + ') '.repeat(2000) + '} '.repeat(2000) + 'fi done esac ((( {{{ '.repeat(500);
+    const file = parseSync(`echo hi ${fakeStructure}\necho bye`);
+    expect(file.type).toBe('File');
+  });
+
+  it('a double-quoted string full of fake structural characters contributes nothing to the depth estimate', () => {
+    const fakeStructure = '('.repeat(2000) + '{'.repeat(2000) + ' fi done esac ' + ')'.repeat(2000);
+    const file = parseSync(`echo "${fakeStructure}"`);
+    expect(file.type).toBe('File');
+  });
+
+  it('backslash-escaped parens/braces outside any quoting contribute nothing to the depth estimate', () => {
+    const escaped = '\\( \\) \\{ \\} '.repeat(2000);
+    const file = parseSync(`echo ${escaped}`);
+    expect(file.type).toBe('File');
+  });
+});
+
+describe('parseSync — test breadth: nested $((...)) arithmetic expansion is deliberately double-counted (conservative)', () => {
+  // Each `$((...))` level counts as *two* bracket-depth increments (one per
+  // paren) — see `estimateMaxNestingDepth`'s doc comment — so the boundary
+  // for pure arithmetic nesting is half of MAX_PARSE_NESTING_DEPTH (150),
+  // not the same as every other single-increment-per-level construct.
+  it('75 nested arithmetic expansions (150 total depth units) is exactly at the limit', () => {
+    const file = parseSync(`echo ${nestedArithmetic(75)}`);
+    expect(file.type).toBe('File');
+  });
+
+  it('76 nested arithmetic expansions (152 total depth units) is over the limit', () => {
+    expect(() => parseSync(`echo ${nestedArithmetic(76)}`)).toThrow(ShParseMaxDepthError);
+  });
+
+  it('74 nested arithmetic expansions (148 total depth units) is comfortably under the limit', () => {
+    const file = parseSync(`echo ${nestedArithmetic(74)}`);
+    expect(file.type).toBe('File');
+  });
+});
+
+describe('parseSync — regression: queuing several heredocs on one line still starts each in source order (pendingHeredocs cursor)', () => {
+  // `startNextHeredocIfAny` used to `Array.prototype.shift()` off a queue;
+  // it now reads through an index cursor instead (an O(k)-per-call ->
+  // O(1)-amortized fix, since `shift()` re-indexes the whole remaining
+  // array on every call) — this pins that the *order* multiple queued
+  // heredocs start in is unaffected by that change.
+  it('three heredocs queued on one line each start with their own correct delimiter, in order', () => {
+    const src = ['cat <<A <<B <<C', 'body-a', 'A', 'body-b', 'B', 'body-c', 'C', ''].join('\n');
+    const file = parseSync(src);
+    expect(file.type).toBe('File');
+  });
+
+  it('many heredocs queued across many lines all still resolve to their correct bodies', () => {
+    const lines: string[] = [];
+    const n = 50;
+    for (let i = 0; i < n; i++) {
+      lines.push(`cat <<DELIM${String(i)}`, `body${String(i)}`, `DELIM${String(i)}`);
+    }
+    const file = parseSync(lines.join('\n'));
     expect(file.type).toBe('File');
   });
 });
