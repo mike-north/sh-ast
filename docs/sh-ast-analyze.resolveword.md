@@ -4,12 +4,12 @@
 
 ## resolveWord() function
 
-Determines whether a `Word` node is statically a known string, and if so, what that string is — the atom of shell-AST static analysis (e.g. "is this word literally `rm`<!-- -->"). A word is static iff every part is a literal after shell unquoting: a bare `Lit` (backslash escapes processed), a `SglQuoted` (including `$'...'` ANSI-C escapes decoded), or a `DblQuoted` containing only literal parts — including concatenations of these (`'r'm` resolves to `"rm"`<!-- -->). A word containing any expansion (`ParamExp`<!-- -->, `CmdSubst`<!-- -->, `ArithmExp`<!-- -->, `ProcSubst`<!-- -->), a leading unquoted `~`<!-- -->, or an unquoted glob metacharacter/`ExtGlob` is `static: false` with a reason — never an error, and never a safety judgment (see [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->).
+Determines whether a `Word` node is statically a known string, and if so, what that string is — the atom of shell-AST static analysis (e.g. "is this word literally `rm`<!-- -->"). A word is static iff every part is a literal after shell unquoting: a bare `Lit` (backslash escapes processed), a `SglQuoted` (including `$'...'` ANSI-C escapes decoded), or a `DblQuoted` containing only literal parts (and not itself a `$"..."` locale translation) — including concatenations of these (`'r'm` resolves to `"rm"`<!-- -->). A word containing any expansion (`ParamExp`<!-- -->, `CmdSubst`<!-- -->, `ArithmExp`<!-- -->, `ProcSubst`<!-- -->), a triggering unquoted `~` (see `options.context`<!-- -->), an unquoted glob metacharacter/bracket expression/`ExtGlob`<!-- -->, a `$"..."` locale translation, or an unrepresentable `$'\U...'` escape is `static: false` with a reason — never an error, and never a safety judgment (see [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->).
 
 **Signature:**
 
 ```typescript
-export declare function resolveWord(word: ShNode): WordResolution;
+export declare function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
 ```
 
 ## Parameters
@@ -43,6 +43,22 @@ ShNode
 </td><td>
 
 A `Word` node, e.g. `parseSync(...).stmts[0].cmd.args[0]`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+options
+
+
+</td><td>
+
+[ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)
+
+
+</td><td>
+
+_(Optional)_ See [ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)<!-- -->.
 
 
 </td></tr>
