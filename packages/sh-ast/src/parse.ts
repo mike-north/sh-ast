@@ -1,5 +1,6 @@
 import { ShBridgeInternalError, ShInvalidDialectError, ShParseError } from './errors.js';
 import { normalize, toUtf16Column, type JsonValue } from './normalize.js';
+import { assertParseDepthWithinLimit } from './parse-depth-guard.js';
 import { callParse } from './wasm-instance.js';
 import type { ParseOptions, ShellDialect, ShFile } from './types.js';
 
@@ -106,7 +107,12 @@ function asShFile(node: ReturnType<typeof normalize>): ShFile {
  * {@link ParseOptions.dialect} is not a supported dialect. Throws
  * {@link ShBridgeInternalError} for failures that should never happen given
  * a correctly-behaving shim (malformed envelope, unexpected root node
- * type, shim contract violations).
+ * type, shim contract violations). Throws {@link ShParseMaxDepthError} if
+ * `text`'s conservatively estimated structural nesting depth exceeds the
+ * limit this bridge accepts — checked, and thrown, *before* `text` is ever
+ * handed to the WASM shim, since mvdan/sh's own parser has no recovery path
+ * for exhausting its stack on pathological nesting (see that error's doc
+ * comment and `parse-depth-guard.ts`).
  *
  * @public
  */
@@ -117,6 +123,8 @@ export function parseSync(text: string, options?: ParseOptions): ShFile {
   if (!isSupportedShellDialect(dialect)) {
     throw new ShInvalidDialectError(dialect, SUPPORTED_SHELL_DIALECTS);
   }
+
+  assertParseDepthWithinLimit(text);
 
   const raw = callParse(text, dialect, filename);
   const result: unknown = JSON.parse(raw);

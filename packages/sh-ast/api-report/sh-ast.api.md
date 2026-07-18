@@ -879,6 +879,15 @@ export interface ShParseErrorInfo {
 }
 
 // @public
+export class ShParseMaxDepthError extends ShBridgeError {
+    constructor(maxDepth: number, estimatedDepth: number);
+    // (undocumented)
+    readonly code = "ESLINT_SH_PARSE_MAX_DEPTH";
+    readonly estimatedDepth: number;
+    readonly maxDepth: number;
+}
+
+// @public
 interface ShProcSubstNode {
     // (undocumented)
     [field: string]: unknown;

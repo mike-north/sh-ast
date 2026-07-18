@@ -63,6 +63,19 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) when shell source fails to parse.
 
 
 </td></tr>
+<tr><td>
+
+[ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)
+
+
+</td><td>
+
+Thrown by [parseSync()](./sh-ast.parsesync.md) when `text`<!-- -->'s conservatively estimated structural nesting depth (subshells, command/process substitutions, `if`<!-- -->/`case`<!-- -->/loop/function bodies, `{ }` blocks, backtick or `$(...)` command substitution, `$((...))` arithmetic — see `parse-depth-guard.ts`<!-- -->'s module doc for the exact heuristic) exceeds the limit `parseSync` accepts. Thrown \*before\* `text` is ever handed to the WASM shim: mvdan/sh's own recursive-descent parser has no recovery path for exhausting its call stack on pathologically deep input (a stack overflow deep inside the shared WASM instance is not a normal, catchable JS error the way a parse syntax error is), so this bridge estimates the risk up front and fails closed with a typed error instead of ever making that call — the shared WASM instance is therefore never put at risk of wedging on this class of input; a `parseSync` call right after catching this error works exactly as it would if this input had never been attempted.
+
+Like [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, this is pathological-input protection, not a normal-usage ceiling: a legitimately deep (but realistic) script parses fine. The estimate can \*over\*-count relative to mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep input) but is designed to never \*under\*-count relative to it — see `parse-depth-guard.ts` for the documented false-positive sources this trades off against ever letting a genuinely crash-inducing input through.
+
+
+</td></tr>
 </tbody></table>
 
 ## Abstract Classes
@@ -85,7 +98,7 @@ Description
 
 </td><td>
 
-Common base class for every error this package throws — originally just [parseSync()](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->).
+Common base class for every error this package throws — originally just [parseSync()](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->).
 
 
 </td></tr>
@@ -115,7 +128,7 @@ Synchronously parses shell source into a normalized AST.
 
 The first call instantiates the WASM shim synchronously (Node-only); the instance is reused across subsequent calls, so repeated calls do not re-instantiate (see design/ARCHITECTURE.md).
 
-Throws [ShParseError](./sh-ast.shparseerror.md) on a shell syntax error, carrying the position mvdan/sh reported: `.line` is 1-based exactly as mvdan/sh reports it; `.column` is converted to UTF-16 code units so it agrees with [ShNode.loc](./sh-ast.shnode.loc.md)<!-- -->'s columns (mvdan/sh itself reports `column` as a byte count — see [ShParseErrorInfo.column](./sh-ast.shparseerrorinfo.column.md)<!-- -->). That unconverted, raw position appears only inside `.message`<!-- -->, which is mvdan/sh's own formatted string, verbatim. Throws [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md) when [ParseOptions.dialect](./sh-ast.parseoptions.dialect.md) is not a supported dialect. Throws [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md) for failures that should never happen given a correctly-behaving shim (malformed envelope, unexpected root node type, shim contract violations).
+Throws [ShParseError](./sh-ast.shparseerror.md) on a shell syntax error, carrying the position mvdan/sh reported: `.line` is 1-based exactly as mvdan/sh reports it; `.column` is converted to UTF-16 code units so it agrees with [ShNode.loc](./sh-ast.shnode.loc.md)<!-- -->'s columns (mvdan/sh itself reports `column` as a byte count — see [ShParseErrorInfo.column](./sh-ast.shparseerrorinfo.column.md)<!-- -->). That unconverted, raw position appears only inside `.message`<!-- -->, which is mvdan/sh's own formatted string, verbatim. Throws [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md) when [ParseOptions.dialect](./sh-ast.parseoptions.dialect.md) is not a supported dialect. Throws [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md) for failures that should never happen given a correctly-behaving shim (malformed envelope, unexpected root node type, shim contract violations). Throws [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md) if `text`<!-- -->'s conservatively estimated structural nesting depth exceeds the limit this bridge accepts — checked, and thrown, \*before\* `text` is ever handed to the WASM shim, since mvdan/sh's own parser has no recovery path for exhausting its stack on pathological nesting (see that error's doc comment and `parse-depth-guard.ts`<!-- -->).
 
 
 </td></tr>

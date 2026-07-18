@@ -50,7 +50,7 @@ ShNode
 
 </td><td>
 
-Any `ShNode` — typically a `File` from `parseSync`<!-- -->, but any subtree (a `Stmt`<!-- -->, a `Command`<!-- -->, or even a bare `Word`<!-- -->) is handled.
+Any `ShNode` — typically a `File` from `parseSync`<!-- -->, but any subtree (a `Stmt`<!-- -->, a `Command`<!-- -->, or even a bare `Word`<!-- -->) is handled. Note `parseSync` itself already refuses (via its own `ShParseMaxDepthError`<!-- -->) any input whose estimated nesting exceeds \*its\* limit before ever producing a tree — see `parse-depth-guard.ts` — so a `root` sourced from `parseSync` has already passed that earlier, lower-level line of defense; this module's own guard below remains a second, independent backstop for trees built or mutated some other way.
 
 
 </td></tr>

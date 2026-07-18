@@ -9,7 +9,7 @@ import type { ShellDialect } from './types.js';
  * programmatically without parsing `.message` strings. Never thrown
  * directly — only via its concrete subclasses ({@link ShParseError},
  * {@link ShInvalidDialectError}, {@link ShBridgeInternalError},
- * {@link ShAnalyzeMaxDepthError}).
+ * {@link ShAnalyzeMaxDepthError}, {@link ShParseMaxDepthError}).
  *
  * @public
  */
@@ -141,5 +141,54 @@ export class ShAnalyzeMaxDepthError extends ShBridgeError {
     );
     this.name = 'ShAnalyzeMaxDepthError';
     this.maxDepth = maxDepth;
+  }
+}
+
+/**
+ * Thrown by {@link parseSync} when `text`'s conservatively estimated
+ * structural nesting depth (subshells, command/process substitutions,
+ * `if`/`case`/loop/function bodies, `{ }` blocks, backtick or `$(...)`
+ * command substitution, `$((...))` arithmetic — see
+ * `parse-depth-guard.ts`'s module doc for the exact heuristic) exceeds the
+ * limit `parseSync` accepts. Thrown *before* `text` is ever handed to the
+ * WASM shim: mvdan/sh's own recursive-descent parser has no recovery path
+ * for exhausting its call stack on pathologically deep input (a stack
+ * overflow deep inside the shared WASM instance is not a normal, catchable
+ * JS error the way a parse syntax error is), so this bridge estimates the
+ * risk up front and fails closed with a typed error instead of ever making
+ * that call — the shared WASM instance is therefore never put at risk of
+ * wedging on this class of input; a `parseSync` call right after catching
+ * this error works exactly as it would if this input had never been
+ * attempted.
+ *
+ * Like {@link ShAnalyzeMaxDepthError}, this is pathological-input
+ * protection, not a normal-usage ceiling: a legitimately deep (but
+ * realistic) script parses fine. The estimate can *over*-count relative to
+ * mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep
+ * input) but is designed to never *under*-count relative to it — see
+ * `parse-depth-guard.ts` for the documented false-positive sources this
+ * trades off against ever letting a genuinely crash-inducing input
+ * through.
+ *
+ * @public
+ */
+export class ShParseMaxDepthError extends ShBridgeError {
+  readonly code = 'ESLINT_SH_PARSE_MAX_DEPTH';
+  /** The maximum structural nesting depth `parseSync` accepts; the same value every time (not caller-configurable). */
+  readonly maxDepth: number;
+  /**
+   * The conservatively estimated nesting depth that tripped the guard.
+   * Not necessarily `text`'s "true" nesting depth under a real parse — see
+   * {@link ShParseMaxDepthError}'s doc comment — only ever `> maxDepth`.
+   */
+  readonly estimatedDepth: number;
+
+  constructor(maxDepth: number, estimatedDepth: number) {
+    super(
+      `parseSync: input's estimated structural nesting depth (${String(estimatedDepth)}+ frames) exceeds the maximum this bridge accepts (${String(maxDepth)}) — refusing to hand this input to the WASM parser, which would risk exhausting its call stack uncatchably. Treat this as a deny signal, not "input looks fine".`,
+    );
+    this.name = 'ShParseMaxDepthError';
+    this.maxDepth = maxDepth;
+    this.estimatedDepth = estimatedDepth;
   }
 }
