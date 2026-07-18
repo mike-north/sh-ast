@@ -11,7 +11,7 @@
  *
  * The last `describe` block below also covers criterion 2 of
  * https://github.com/mike-north/eslint-sh/issues/12: a malformed envelope
- * must throw `ShBridgeInternalError` (not a bare `Error`), reusing this
+ * must throw `ShInternalError` (not a bare `Error`), reusing this
  * file's `vi.mock` scaffolding for the WASM shim boundary.
  *
  * @see design/ARCHITECTURE.md — serialization contract between the WASM
@@ -116,18 +116,16 @@ describe('parseSync — regression: asShFile validates the normalized root, not 
   });
 });
 
-describe('parseSync — criterion 2: malformed shim envelope throws ShBridgeInternalError', () => {
-  it('throws ShBridgeInternalError (code "ESLINT_SH_BRIDGE_INTERNAL") when the shim returns a JSON array', async () => {
+describe('parseSync — criterion 2: malformed shim envelope throws ShInternalError', () => {
+  it('throws ShInternalError (code "SH_AST_INTERNAL") when the shim returns a JSON array', async () => {
     expect.assertions(3);
     callParse.mockReturnValueOnce('[]');
-    const { parseSync, ShBridgeInternalError } = await import('../src/index.js');
+    const { parseSync, ShInternalError } = await import('../src/index.js');
     try {
       parseSync('echo hi');
     } catch (error) {
-      expect(error).toBeInstanceOf(ShBridgeInternalError);
-      expect((error as InstanceType<typeof ShBridgeInternalError>).code).toBe(
-        'ESLINT_SH_BRIDGE_INTERNAL',
-      );
+      expect(error).toBeInstanceOf(ShInternalError);
+      expect((error as InstanceType<typeof ShInternalError>).code).toBe('SH_AST_INTERNAL');
       // criterion 5 (negative): a malformed-envelope error is not a parse error
       const { ShParseError } = await import('../src/index.js');
       expect(error).not.toBeInstanceOf(ShParseError);

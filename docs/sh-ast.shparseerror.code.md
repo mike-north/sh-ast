@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-readonly code = "ESLINT_SH_PARSE_ERROR";
+readonly code = "SH_AST_PARSE_ERROR";
 ```

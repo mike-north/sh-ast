@@ -91,20 +91,20 @@ export interface ResolveWordOptions {
     readonly context?: 'command-argument' | 'assignment-value';
 }
 
-// Warning: (ae-forgotten-export) The symbol "ShBridgeError" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ShAstError" needs to be exported by the entry point index.d.ts
 //
 // @public
-export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
     constructor(message: string);
     // (undocumented)
-    readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+    readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
 }
 
 // @public
-export class ShAnalyzeMaxDepthError extends ShBridgeError {
+export class ShAnalyzeMaxDepthError extends ShAstError {
     constructor(maxDepth: number);
     // (undocumented)
-    readonly code = "ESLINT_SH_ANALYZE_MAX_DEPTH";
+    readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
     readonly maxDepth: number;
 }
 

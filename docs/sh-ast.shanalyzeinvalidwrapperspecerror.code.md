@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
 ```

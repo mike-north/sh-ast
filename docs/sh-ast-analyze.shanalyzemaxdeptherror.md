@@ -11,9 +11,9 @@ Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely
 **Signature:**
 
 ```typescript
-export declare class ShAnalyzeMaxDepthError extends ShBridgeError 
+export declare class ShAnalyzeMaxDepthError extends ShAstError 
 ```
-**Extends:** ShBridgeError
+**Extends:** ShAstError
 
 ## Constructors
 

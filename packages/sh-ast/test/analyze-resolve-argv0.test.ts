@@ -643,6 +643,20 @@ describe('resolveArgv0 — review fix: malformed injected WrapperSpec entries th
     ).not.toThrow();
   });
 
+  it('exposes code === "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC" (rename: eslint-sh#17)', () => {
+    const invoke = () => resolveArgv0(site('rm x'), { transparentWrappers: [{} as WrapperSpec] });
+    expect(invoke).toThrow(ShAnalyzeInvalidWrapperSpecError);
+    let caught: unknown;
+    try {
+      invoke();
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as ShAnalyzeInvalidWrapperSpecError).code).toBe(
+      'SH_AST_ANALYZE_INVALID_WRAPPER_SPEC',
+    );
+  });
+
   it('the default table (no transparentWrappers override) is never validated at runtime — only caller-supplied tables are', () => {
     // DEFAULT_TRANSPARENT_WRAPPERS is trusted, well-formed data this
     // package ships — validation exists to fail closed on *caller*

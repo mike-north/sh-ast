@@ -22,17 +22,17 @@ export interface Position {
 }
 
 // @public
-export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
+export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
     constructor(message: string);
     // (undocumented)
-    readonly code = "ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC";
+    readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
 }
 
 // @public
-export class ShAnalyzeMaxDepthError extends ShBridgeError {
+export class ShAnalyzeMaxDepthError extends ShAstError {
     constructor(maxDepth: number);
     // (undocumented)
-    readonly code = "ESLINT_SH_ANALYZE_MAX_DEPTH";
+    readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
     readonly maxDepth: number;
 }
 
@@ -187,6 +187,11 @@ interface ShAssignNode {
 }
 
 // @public
+export abstract class ShAstError extends Error {
+    abstract readonly code: string;
+}
+
+// @public
 interface ShBinaryArithmNode {
     // (undocumented)
     [field: string]: unknown;
@@ -277,18 +282,6 @@ interface ShBraceExpNode {
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'BraceExp';
-}
-
-// @public
-export abstract class ShBridgeError extends Error {
-    abstract readonly code: string;
-}
-
-// @public
-export class ShBridgeInternalError extends ShBridgeError {
-    constructor(message: string);
-    // (undocumented)
-    readonly code = "ESLINT_SH_BRIDGE_INTERNAL";
 }
 
 // @public
@@ -636,10 +629,17 @@ interface ShIfClauseNode {
 }
 
 // @public
-export class ShInvalidDialectError extends ShBridgeError {
+export class ShInternalError extends ShAstError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "SH_AST_INTERNAL";
+}
+
+// @public
+export class ShInvalidDialectError extends ShAstError {
     constructor(dialect: string, supportedDialects: readonly ShellDialect[]);
     // (undocumented)
-    readonly code = "ESLINT_SH_INVALID_DIALECT";
+    readonly code = "SH_AST_INVALID_DIALECT";
     readonly dialect: string;
 }
 
@@ -866,10 +866,10 @@ interface ShParenTestNode {
 }
 
 // @public
-export class ShParseError extends ShBridgeError {
+export class ShParseError extends ShAstError {
     constructor(message: string, info: ShParseErrorInfo);
     // (undocumented)
-    readonly code = "ESLINT_SH_PARSE_ERROR";
+    readonly code = "SH_AST_PARSE_ERROR";
     // (undocumented)
     readonly column: number;
     // (undocumented)
@@ -886,10 +886,10 @@ export interface ShParseErrorInfo {
 }
 
 // @public
-export class ShParseMaxDepthError extends ShBridgeError {
+export class ShParseMaxDepthError extends ShAstError {
     constructor(maxDepth: number, estimatedDepth: number);
     // (undocumented)
-    readonly code = "ESLINT_SH_PARSE_MAX_DEPTH";
+    readonly code = "SH_AST_PARSE_MAX_DEPTH";
     readonly estimatedDepth: number;
     readonly maxDepth: number;
 }

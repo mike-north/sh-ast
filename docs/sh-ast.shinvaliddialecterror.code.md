@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-readonly code = "ESLINT_SH_INVALID_DIALECT";
+readonly code = "SH_AST_INVALID_DIALECT";
 ```

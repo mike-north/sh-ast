@@ -624,13 +624,13 @@ describe('enumerateCommands — stack safety: defensive depth guard for genuine 
     expect(() => enumerateCommands(syntheticNestedSubshells(501))).toThrow(ShAnalyzeMaxDepthError);
   });
 
-  it('the thrown error carries the stable ESLINT_SH_ANALYZE_MAX_DEPTH code', () => {
+  it('the thrown error carries the stable SH_AST_ANALYZE_MAX_DEPTH code', () => {
     expect.assertions(2);
     try {
       enumerateCommands(syntheticNestedSubshells(501));
     } catch (error) {
       expect(error).toBeInstanceOf(ShAnalyzeMaxDepthError);
-      expect((error as ShAnalyzeMaxDepthError).code).toBe('ESLINT_SH_ANALYZE_MAX_DEPTH');
+      expect((error as ShAnalyzeMaxDepthError).code).toBe('SH_AST_ANALYZE_MAX_DEPTH');
     }
   });
 
