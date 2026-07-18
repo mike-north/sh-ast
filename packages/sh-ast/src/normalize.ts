@@ -1,5 +1,6 @@
 import { deepFreeze } from './deep-freeze.js';
 import { CHILD_TYPE_SCHEMA } from '../generated/child-type-schema.js';
+import { POSITION_FIELDS } from '../generated/position-fields.js';
 import type { Position, ShNode } from './types.js';
 
 /**
@@ -10,6 +11,13 @@ import type { Position, ShNode } from './types.js';
  */
 const FROZEN_CHILD_TYPE_SCHEMA: Readonly<Record<string, Readonly<Record<string, string | null>>>> =
   deepFreeze(CHILD_TYPE_SCHEMA);
+
+/**
+ * Frozen (including each per-type field-name array), same rationale as
+ * {@link FROZEN_CHILD_TYPE_SCHEMA} above.
+ */
+const FROZEN_POSITION_FIELDS: Readonly<Record<string, readonly string[]>> =
+  deepFreeze(POSITION_FIELDS);
 
 /**
  * A JSON value as produced by `JSON.parse`.
@@ -32,56 +40,39 @@ interface RawPos {
 }
 
 /**
- * Fields that hold positions or other named scalars, never child nodes.
- * mvdan/sh's typedjson tree surfaces several extra named positions
- * (`OpPos`, `ValuePos`, …) beyond the `Pos`/`End` pair every node carries;
- * see design/ARCHITECTURE.md open question 4 — they are dropped here rather
- * than exposed, matching the spike's behavior.
+ * `Pos`/`End` are synthesized top-level keys every raw node carries (see
+ * `shim/internal/nodeencode/encode.go`'s `posField`/`endField`) — never a
+ * literal Go struct field, so they're checked directly rather than through
+ * {@link FROZEN_POSITION_FIELDS} (which is keyed by node *type*, and these
+ * two keys are universal, not type-specific).
  */
-const POS_KEYS: ReadonlySet<string> = new Set([
-  'Pos',
-  'End',
-  'Position',
-  'Semicolon',
-  'OpPos',
-  'ValuePos',
-  'ValueEnd',
-  'Hash',
-  'Left',
-  'Right',
-  // NOTE: 'Do' is deliberately *not* here. mvdan/sh v3.13.1's `ForClause`
-  // and `WhileClause` structs carry both `DoPos Pos` (a position — listed
-  // below) and `Do []*Stmt` (the loop body statement list — a real child).
-  // Denylisting the bare `Do` key here previously discarded that entire
-  // statement list before the schema-driven child resolution in
-  // `buildFields` ever saw it (see issue #2: normalizer drops
-  // ForClause/WhileClause loop bodies).
-  'DonePos',
-  'Rparen',
-  'Lparen',
-  'Select',
-  'InPos',
-  // NOTE: 'Dollar' is deliberately *not* here. mvdan/sh v3.13.1 reuses the
-  // `Dollar` field name for two unrelated shapes: `ParamExp.Dollar` is a
-  // `Pos` (already stripped by the generic `!isRawPos(value)` check below,
-  // so no denylist entry is needed for it), but `SglQuoted.Dollar` and
-  // `DblQuoted.Dollar` are `bool` flags marking `$'...'`/`$"..."` — real
-  // data, not a position. Denylisting the bare `Dollar` key here previously
-  // discarded that flag unconditionally, making `$'...'` (ANSI-C quoting)
-  // indistinguishable from plain `'...'` (see sh-ast/analyze's
-  // `resolveWord`, which needs the flag to know ANSI-C escapes require
-  // decoding).
-  'Esac',
-  'Case',
-  'Fi',
-  'ThenPos',
-  'FiPos',
-  'WhilePos',
-  'DoPos',
-  'Until',
-  'Unsigned',
-  'TorF',
-]);
+const UNIVERSAL_POSITION_KEYS: ReadonlySet<string> = new Set(['Pos', 'End']);
+
+/**
+ * Reports whether `key` on a raw node of type `type` holds a position
+ * (`syntax.Pos`) rather than child/scalar data — driving the "drop this
+ * field" decision `buildFields` below makes, in place of the bare-name
+ * `POS_KEYS` denylist this replaced (see issue #8, "replace the bare-name
+ * POS_KEYS denylist with generated per-(type,field) position data").
+ *
+ * Scoping the check per (type, key) — via the generated
+ * {@link FROZEN_POSITION_FIELDS} table, itself derived from mvdan/sh's own
+ * struct definitions by `tools/gen-visitor-keys` — is what closes the
+ * collision class a single global bare-name set could never close: mvdan/sh
+ * reuses field names across unrelated struct shapes. `Do` is both
+ * `WhileClause.DoPos Pos` (a position) and `ForClause.Do []*Stmt` (the loop
+ * body — real data, issue #2); `Dollar` is both `ParamExp.Dollar Pos` and
+ * `SglQuoted.Dollar`/`DblQuoted.Dollar bool` (the `$'...'`/`$"..."` ANSI-C
+ * quoting flag — real data, issue #3); `Select` (`ForClause.Select bool`),
+ * `Until` (`WhileClause.Until bool`), and `Unsigned`
+ * (`ArithmExp`/`ArithmCmd.Unsigned bool`) were never positions in *any*
+ * mvdan/sh v3.13.1 struct at all, yet the old bare-name denylist dropped
+ * them unconditionally regardless of node type.
+ */
+function isPositionField(type: string, key: string): boolean {
+  if (UNIVERSAL_POSITION_KEYS.has(key)) return true;
+  return (FROZEN_POSITION_FIELDS[type] ?? []).includes(key);
+}
 
 function isJsonObject(value: JsonValue): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -249,7 +240,7 @@ export function normalize(root: JsonValue, text: string): ShNode {
     };
 
     for (const [key, value] of Object.entries(node)) {
-      if (key === 'Type' || POS_KEYS.has(key)) continue;
+      if (key === 'Type' || isPositionField(type, key)) continue;
       const outKey = key.toLowerCase();
       const childType = schema[key] ?? null;
       if (Array.isArray(value)) {

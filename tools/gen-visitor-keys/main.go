@@ -6,6 +6,9 @@
 //   - generated/visitor-keys.js(.d.ts)      — per-node-type traversal keys
 //   - generated/child-type-schema.js(.d.ts) — (parentType, fieldName) -> childType
 //   - generated/node-types.d.ts             — ShNode subtypes for every node
+//   - generated/position-fields.js(.d.ts)   — per-node-type fields whose Go
+//     type is `syntax.Pos` — see issue #8, "replace the bare-name POS_KEYS
+//     denylist with generated per-(type,field) position data"
 //
 // See design/ARCHITECTURE.md, "The schema table is generated, not
 // hand-written", and design/PACKAGES.md's `tools/gen-visitor-keys` entry.
@@ -40,10 +43,16 @@ type nodeType struct {
 	fields []nodeField
 }
 
-// nodeField describes one struct field that holds child node(s) — i.e. every
-// field is either omitted entirely (scalars, positions, and fields whose
-// static type doesn't implement syntax.Node) or present here. Exactly one of
-// iface/childType is set: childType for a field whose static Go type is a
+// nodeField describes one struct field that is either a child node (real
+// data reachable during traversal) or a position (`syntax.Pos`, dropped by
+// the normalizer, never data) — every other field (plain scalars: bool,
+// string, operator enums, ...) is invisible to this generator entirely,
+// since neither `CHILD_TYPE_SCHEMA`/`visitorKeys` nor `POSITION_FIELDS` need
+// to say anything about them (the normalizer copies them through as-is).
+//
+// Exactly one of isPos/iface/childType is set: isPos for a field whose
+// static Go type is `syntax.Pos` (this is `position-fields`'s whole reason
+// to exist — see issue #8), childType for a field whose static Go type is a
 // concrete node struct (typedjson never emits a discriminator for these —
 // this is the child-type-schema's whole reason to exist), iface for a field
 // whose static Go type is a Node-derived interface (Command, WordPart,
@@ -52,6 +61,7 @@ type nodeField struct {
 	goName    string
 	jsonName  string
 	slice     bool
+	isPos     bool
 	iface     string
 	childType string
 }
@@ -100,11 +110,23 @@ func main() {
 	// Core Node-implementing types are exempt — a childless Node type
 	// (`Lit`, `Comment`, `SglQuoted`, …) is still a real, traversable AST
 	// position and always gets an entry (possibly empty).
+	//
+	// Position-only fields (`isPos`) never count as "child-bearing" here —
+	// a position never points to a child node, so an aux struct with only
+	// position fields (were one ever added upstream) is still a true
+	// scalar-only leaf from this generator's perspective.
 	for {
 		var pruned []*nodeType
 		removedAny := false
 		for _, nt := range nodeTypes {
-			if !coreNames[nt.name] && len(nt.fields) == 0 {
+			hasChildField := false
+			for _, f := range nt.fields {
+				if !f.isPos {
+					hasChildField = true
+					break
+				}
+			}
+			if !coreNames[nt.name] && !hasChildField {
 				removedAny = true
 				continue
 			}
@@ -149,6 +171,8 @@ func main() {
 	writeFile(filepath.Join(*outDir, "child-type-schema.js"), renderChildTypeSchemaJS(nodeTypes, version))
 	writeFile(filepath.Join(*outDir, "child-type-schema.d.ts"), renderChildTypeSchemaDTS(version))
 	writeFile(filepath.Join(*outDir, "node-types.d.ts"), renderNodeTypesDTS(nodeTypes, implementers, version))
+	writeFile(filepath.Join(*outDir, "position-fields.js"), renderPositionFieldsJS(nodeTypes, version))
+	writeFile(filepath.Join(*outDir, "position-fields.d.ts"), renderPositionFieldsDTS(version))
 }
 
 func writeFile(path, contents string) {
@@ -386,9 +410,15 @@ func classifyFields(pkg *types.Package, nodeTypes []*nodeType, childIfaces map[s
 // `discoverAuxStructTypes` found (e.g. `Slice`/`Replace`/`Expansion`) — from
 // this function's perspective they're classified identically, since both
 // need their concrete type name injected by the schema rather than reading
-// a typedjson "Type" discriminator. Returns ok=false for scalars, position
-// fields, and fields whose target struct isn't in `nodeTypeNames` at all
-// (i.e. it has no child-bearing fields of its own and was pruned as a leaf).
+// a typedjson "Type" discriminator. Position fields (static type
+// `syntax.Pos`) are classified too (`isPos: true`) — this is what
+// `position-fields` is generated from (see issue #8) — but are kept out of
+// `nt.fields`' other consumers (child-type-schema, visitor-keys,
+// node-types.d.ts) by those renderers explicitly skipping `isPos` fields, so
+// this change is additive: those artifacts are unaffected. Returns ok=false
+// only for plain scalars (bool, string, operator enums, ...) and fields
+// whose target struct isn't in `nodeTypeNames` at all (i.e. it has no
+// child-bearing fields of its own and was pruned as a leaf).
 func classifyFieldType(t types.Type, nodeTypeNames map[string]bool, childIfaces map[string]*types.Named) (nodeField, bool) {
 	slice := false
 	elem := t
@@ -405,7 +435,7 @@ func classifyFieldType(t types.Type, nodeTypeNames map[string]bool, childIfaces 
 	}
 	name := named.Obj().Name()
 	if name == "Pos" {
-		return nodeField{}, false
+		return nodeField{slice: slice, isPos: true}, true
 	}
 	if _, ok := childIfaces[name]; ok {
 		return nodeField{slice: slice, iface: name}, true
@@ -451,9 +481,12 @@ func renderVisitorKeysJS(nodeTypes []*nodeType, version string) string {
 	b.WriteString(header(version))
 	b.WriteString("export const visitorKeys = {\n")
 	for _, nt := range nodeTypes {
-		names := make([]string, len(nt.fields))
-		for i, f := range nt.fields {
-			names[i] = f.jsonName
+		var names []string
+		for _, f := range nt.fields {
+			if f.isPos {
+				continue
+			}
+			names = append(names, f.jsonName)
 		}
 		sort.Strings(names)
 		b.WriteString("  " + jsKey(nt.name) + ": [")
@@ -491,6 +524,9 @@ func renderChildTypeSchemaJS(nodeTypes []*nodeType, version string) string {
 		fields := append([]nodeField(nil), nt.fields...)
 		sort.Slice(fields, func(i, j int) bool { return fields[i].goName < fields[j].goName })
 		for _, f := range fields {
+			if f.isPos {
+				continue
+			}
 			value := "null"
 			if f.childType != "" {
 				value = jsString(f.childType)
@@ -517,6 +553,63 @@ func renderChildTypeSchemaDTS(version string) string {
 		" * @internal\n" +
 		" */\n" +
 		"export declare const CHILD_TYPE_SCHEMA: Record<string, Record<string, string | null>>;\n"
+}
+
+// renderPositionFieldsJS emits, for every node type, the sorted list of its
+// own fields (raw mvdan/sh Go names, exactly as typedjson serializes them —
+// e.g. "OpPos", not "opPos") whose static Go type is `syntax.Pos`. This is
+// the generated replacement for `normalize.ts`'s old bare-name `POS_KEYS`
+// denylist (see issue #8): scoping the table per (nodeType, fieldName)
+// closes the collision class a global bare-name set could never close —
+// mvdan/sh reuses field names like `Do`, `Dollar`, `Select`, `Until`, and
+// `Unsigned` across unrelated struct shapes, and only *some* of those
+// occurrences are actually positions.
+func renderPositionFieldsJS(nodeTypes []*nodeType, version string) string {
+	var b strings.Builder
+	b.WriteString(header(version))
+	b.WriteString("export const POSITION_FIELDS = {\n")
+	for _, nt := range nodeTypes {
+		var names []string
+		for _, f := range nt.fields {
+			if f.isPos {
+				names = append(names, f.goName)
+			}
+		}
+		sort.Strings(names)
+		b.WriteString("  " + jsKey(nt.name) + ": [")
+		for i, n := range names {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(jsString(n))
+		}
+		b.WriteString("],\n")
+	}
+	b.WriteString("};\n")
+	return b.String()
+}
+
+func renderPositionFieldsDTS(version string) string {
+	return header(version) +
+		"/**\n" +
+		" * `nodeType -> fieldName[]` for every field whose static Go type is\n" +
+		" * `syntax.Pos` — a real position (byte offset + line + column), never\n" +
+		" * child data. Keyed by the exact, unlowercased Go field name, matching\n" +
+		" * typedjson's raw JSON keys (the same convention `CHILD_TYPE_SCHEMA`\n" +
+		" * uses) — `normalize()`'s `buildFields` looks fields up here by the raw\n" +
+		" * key it sees in `Object.entries(node)`, before lowercasing.\n" +
+		" *\n" +
+		" * Scoped per (nodeType, fieldName) rather than a single global set of\n" +
+		" * bare names: mvdan/sh reuses field names across unrelated struct\n" +
+		" * shapes (`Do`, `Dollar`, `Select`, `Until`, `Unsigned`, ...), and a\n" +
+		" * bare-name denylist can't tell a real position apart from real data\n" +
+		" * that merely happens to share a field name with one, in a different\n" +
+		" * node type. See design/ARCHITECTURE.md, \"The schema table is\n" +
+		" * generated, not hand-written\", and issue #8.\n" +
+		" *\n" +
+		" * @internal\n" +
+		" */\n" +
+		"export declare const POSITION_FIELDS: Record<string, string[]>;\n"
 }
 
 // renderNodeTypesDTS emits one ShNode subtype per node type, plus a union
@@ -564,6 +657,9 @@ func renderNodeTypesDTS(nodeTypes []*nodeType, implementers map[string][]string,
 		fields := append([]nodeField(nil), nt.fields...)
 		sort.Slice(fields, func(i, j int) bool { return fields[i].jsonName < fields[j].jsonName })
 		for _, f := range fields {
+			if f.isPos {
+				continue
+			}
 			var elemTS string
 			if f.iface != "" {
 				elemTS = "Sh" + f.iface + "Node"
