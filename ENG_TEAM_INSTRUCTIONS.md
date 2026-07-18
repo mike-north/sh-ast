@@ -35,6 +35,10 @@ for the serialization contract, byte→UTF-16 conversion, and normalized node sh
   the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
   churn in its own commit and note it in the PR so the reviewer can review the source diff;
   a documented manual substantive review substitutes when Copilot declines the PR size.
+- Nx cache is unreliable for doc-comment-only edits (no API shape change): a cached
+  `check:api-report`/docs regen can show "no diff" when the real output changed. After any
+  doc-comment edit, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`) and
+  verify by inspecting the output files, not the cache's word.
 - Changesets required for published-package behavior/type changes; never `major` without an
   issue authorizing it.
 - Commit author: `Mike North <michael.l.north@gmail.com>` (`--author` on every commit).
