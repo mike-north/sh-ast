@@ -29,6 +29,33 @@ function isOctalDigit(ch: string): boolean {
 }
 
 /**
+ * The highest Unicode scalar value `\uHHHH`/`\UHHHHHHHH` can validly decode
+ * to. `\uHHHH` (max 4 hex digits, i.e. `0xFFFF`) can never exceed this, but
+ * `\UHHHHHHHH` (up to 8 hex digits, i.e. up to `0xFFFFFFFF`) routinely does.
+ *
+ * The Bash Reference Manual's ANSI-C Quoting table documents `\UHHHHHHHH`
+ * only as "the Unicode ... character whose value is the hexadecimal value
+ * HHHHHHHH" — it does not say what happens when that value has no
+ * corresponding Unicode character (i.e. is greater than `U+10FFFF`, the
+ * highest code point Unicode defines). Real bash's behavior for this case
+ * is undocumented and not a reasonable decode target: it falls back to a
+ * pre-RFC-3629, up-to-6-byte "UTF-8-like" bit-packing with no range
+ * validation (confirmed empirically — e.g. `$'\U00110000'` produces the
+ * raw byte sequence `f4 90 80 80`, which is not valid UTF-8 text and has no
+ * meaningful representation as a UTF-16 JavaScript string, and
+ * `$'\UFFFFFFFF'` produces no character at all). Since the manual is silent
+ * on this case and bash's actual behavior can't be represented faithfully
+ * here, this module falls back to its own documented rule for any
+ * unrecognized/undecodable escape: leave it as literal, un-decoded text
+ * (see `decodeAnsiCString`'s doc comment) — never `String.fromCodePoint`,
+ * which throws `RangeError` for any value over this limit and would
+ * violate `resolveWord`'s "never throw for well-formed input" contract.
+ *
+ * @see https://www.gnu.org/software/bash/manual/bash.html#ANSI_002dC-Quoting
+ */
+const MAX_UNICODE_CODE_POINT = 0x10ffff;
+
+/**
  * Greedily consumes up to `maxDigits` hex digits starting at `start`,
  * returning the parsed numeric value and how many digits were consumed (`0`
  * if none were valid).
@@ -79,10 +106,12 @@ function readOctalDigits(
  * `\nnn` (one to three digits), hex `\xHH` (one or two digits), Unicode
  * `\uHHHH` (one to four digits) and `\UHHHHHHHH` (one to eight digits), and
  * control-character `\cX`. An unrecognized backslash sequence (not in this
- * table, and not a recognized numeric escape) is left as-is — Bash's own
- * decoding is best-effort for malformed input, and this function mirrors
- * that rather than throwing, matching {@link resolveWord}'s "never throw
- * for well-formed input" contract at the string level too.
+ * table, and not a recognized numeric escape), and a `\u`/`\U` whose value
+ * has no corresponding Unicode character (see
+ * {@link MAX_UNICODE_CODE_POINT}), is left as-is — Bash's own decoding is
+ * best-effort for malformed/unrepresentable input, and this function
+ * mirrors that rather than throwing, matching {@link resolveWord}'s "never
+ * throw for well-formed input" contract at the string level too.
  *
  * @internal
  */
@@ -163,7 +192,7 @@ export function decodeAnsiCString(raw: string): string {
       }
       case 'u': {
         const { value, length } = readHexDigits(raw, i + 2, 4);
-        if (length > 0) {
+        if (length > 0 && value <= MAX_UNICODE_CODE_POINT) {
           text += String.fromCodePoint(value);
           i += 2 + length;
         } else {
@@ -174,10 +203,16 @@ export function decodeAnsiCString(raw: string): string {
       }
       case 'U': {
         const { value, length } = readHexDigits(raw, i + 2, 8);
-        if (length > 0) {
+        if (length > 0 && value <= MAX_UNICODE_CODE_POINT) {
           text += String.fromCodePoint(value);
           i += 2 + length;
         } else {
+          // Out-of-range code point (see MAX_UNICODE_CODE_POINT's doc
+          // comment): leave un-decoded rather than throwing. Falls through
+          // to the same "unrecognized escape" path as a 0-digit match —
+          // only the backslash is consumed here; the literal `U` and hex
+          // digits are re-emitted verbatim on the following loop
+          // iterations (each is just an ordinary non-backslash character).
           text += ch;
           i += 1;
         }

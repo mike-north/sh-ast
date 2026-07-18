@@ -165,6 +165,43 @@ describe('resolveWord — criterion 1: positive (static) resolution table', () =
   });
 });
 
+describe("resolveWord — regression: out-of-range $'\\U...' ANSI-C code point must not throw", () => {
+  // $'\UHHHHHHHH' allows up to 8 hex digits (max 0xFFFFFFFF), but Unicode
+  // only defines code points up to U+10FFFF. The Bash Reference Manual's
+  // ANSI-C Quoting table documents no behavior for a \U value with no
+  // corresponding Unicode character — real bash's actual behavior
+  // (undocumented) falls back to a pre-RFC-3629 byte-packing scheme with no
+  // range validation, which has no faithful representation as a UTF-16
+  // JavaScript string. `decodeAnsiCString` previously called
+  // `String.fromCodePoint` unconditionally, which throws `RangeError` for
+  // any value above `0x10FFFF` — a real defect, since $'\UFFFFFFFF' is
+  // well-formed shell input and resolveWord must never throw for that (see
+  // this module's "facts, not verdicts: never throws" describe block
+  // below). The fix leaves an out-of-range \U (or, defensively, \u —
+  // though its 4-hex-digit max of 0xFFFF can never actually exceed
+  // 0x10FFFF) un-decoded as literal text, matching this decoder's existing
+  // "unrecognized escape stays literal" rule.
+  it("does not throw for $'\\UFFFFFFFF' (code point far above U+10FFFF)", () => {
+    expect(() => resolve(sh`$'\UFFFFFFFF'`)).not.toThrow();
+  });
+
+  it("resolves $'\\UFFFFFFFF' to its literal, un-decoded escape text", () => {
+    expect(resolve(sh`$'\UFFFFFFFF'`)).toEqual({ static: true, text: '\\UFFFFFFFF' });
+  });
+
+  it("resolves $'\\U00110000' (one past the max valid code point) to literal text too", () => {
+    expect(resolve(sh`$'\U00110000'`)).toEqual({ static: true, text: '\\U00110000' });
+  });
+
+  it("still decodes the in-range boundary $'\\U0010FFFF' (the highest valid code point)", () => {
+    expect(resolve(sh`$'\U0010FFFF'`)).toEqual({ static: true, text: '\u{10ffff}' });
+  });
+
+  it("still decodes $'\\U0001F389' (in-range astral code point, already in the positive table) correctly", () => {
+    expect(resolve(sh`$'\U0001F389'`)).toEqual({ static: true, text: '🎉' });
+  });
+});
+
 describe('resolveWord — criterion 2: negative (non-static) resolution table', () => {
   const rows: readonly {
     readonly label: string;
