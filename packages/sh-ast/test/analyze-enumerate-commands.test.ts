@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { CommandContext, CommandSite } from '../src/analyze/index.js';
 import { enumerateCommands } from '../src/analyze/index.js';
+import { ShAnalyzeMaxDepthError } from '../src/index.js';
 import { parseSync } from '../src/index.js';
 import type { ShellDialect, ShNode } from '../src/index.js';
 import { visitorKeys as rawGeneratedVisitorKeys } from '../generated/visitor-keys.js';
@@ -70,6 +71,60 @@ function siteFor(sites: readonly CommandSite[], src: string, text: string): Comm
     `expected exactly one site for ${JSON.stringify(text)}, found ${String(matches.length)}`,
   ).toHaveLength(1);
   return assertDefined(matches[0], 'unreachable — length checked above');
+}
+
+// --- Synthetic-node helpers for stack-depth tests below ---
+//
+// A chain/nesting depth large enough to actually exercise this module's
+// iterative-traversal fix or its depth guard is, empirically, also large
+// enough to crash mvdan/sh's own WASM parser before `enumerateCommands`
+// ever sees the tree (verified: `parseSync` on a real 900+-stage pipeline
+// or 900+-deep nested-subshell source string hits its own
+// `RangeError: Maximum call stack size exceeded` well before this module's
+// depth guard would). These tests therefore build the `ShNode` tree
+// directly — bypassing `parseSync` entirely — mirroring the pattern
+// `analyze-resolve-word.test.ts` uses for other real-parser-unreachable
+// shapes.
+
+const SYNTHETIC_LOC: ShNode['loc'] = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
+
+/** Builds a minimal, otherwise-empty synthetic `ShNode` of the given `type`. */
+function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> = {}): ShNode {
+  return { type, range: [0, 0], loc: SYNTHETIC_LOC, ...fields };
+}
+
+function syntheticCallStmt(name: string): ShNode {
+  return syntheticNode('Stmt', {
+    cmd: syntheticNode('CallExpr', {
+      args: [syntheticNode('Word', { parts: [syntheticNode('Lit', { value: name })] })],
+    }),
+  });
+}
+
+/**
+ * A left-nested `BinaryCmd` chain of `n` `CallExpr` stages, mirroring
+ * exactly what mvdan/sh itself would produce for `c0 <op> c1 <op> ... <op>
+ * c(n-1)` (see `flattenPipelineStages`'s and `visitBinaryCmd`'s doc
+ * comments for the shape). `op` is the raw `BinCmdOperator` token value —
+ * `13` for `|` (pipeline), `11` for `&&`.
+ */
+function syntheticBinaryChain(n: number, op: number): ShNode {
+  let acc = syntheticCallStmt('c0');
+  for (let i = 1; i < n; i += 1) {
+    acc = syntheticNode('Stmt', {
+      cmd: syntheticNode('BinaryCmd', { op, x: acc, y: syntheticCallStmt(`c${String(i)}`) }),
+    });
+  }
+  return acc;
+}
+
+/** `n` levels of `Subshell`-in-`Subshell` nesting around a single inner `CallExpr`. */
+function syntheticNestedSubshells(n: number): ShNode {
+  let acc = syntheticCallStmt('inner');
+  for (let i = 0; i < n; i += 1) {
+    acc = syntheticNode('Stmt', { cmd: syntheticNode('Subshell', { stmts: [acc] }) });
+  }
+  return acc;
 }
 
 describe('enumerateCommands — criterion 1: compound coverage (one context kind per test)', () => {
@@ -203,6 +258,19 @@ describe('enumerateCommands — criterion 1: compound coverage (one context kind
     expect(enumerate(src).map((s) => s.context)).toEqual([[{ kind: 'coproc' }]]);
     expect(siteTexts(src)).toEqual(['cpbody']);
   });
+
+  it("TimeClause is transparent: `time cmd`'s site has an empty context array, not just a matching count", () => {
+    // The kitchen-sink completeness backstop (criterion 3) already proves
+    // `time echo timed` contributes exactly one CallExpr site — but a
+    // count match alone can't distinguish "correctly transparent" from
+    // "wrongly tagged with some frame, but still exactly one site". Assert
+    // the context directly.
+    const src = 'time timed';
+    const sites = enumerate(src);
+    expect(sites).toHaveLength(1);
+    expect(sites[0]?.context).toEqual([]);
+    expect(siteTexts(src)).toEqual(['timed']);
+  });
 });
 
 describe('enumerateCommands — criterion 2: hidden-command coverage (one test per hiding place)', () => {
@@ -223,6 +291,48 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
       siteFor(sites, src, text).context;
     expect(siteTexts(src)).toEqual(['cat', 'hidden']);
     expect(contextOf('hidden')).toEqual([{ kind: 'procSubst' }]);
+  });
+
+  // The four tests below each pin one `scanForHiddenCommands` call site in
+  // `visitCommand`'s switch — `CaseClause.word`, `ForClause.loop`,
+  // `TestClause.x`, `ArithmCmd.x` — that the review's mutation-testing pass
+  // found had *no* test that would fail if that specific call were removed
+  // (each site's hidden command still happened to be found by some *other*
+  // in-scope scan, or the branch's other coverage masked the omission).
+  // Verified for real: temporarily deleting each corresponding
+  // `scanForHiddenCommands(...)` line and re-running these four tests
+  // fails exactly the matching one, with `sub` missing from the result.
+
+  it('finds a command hidden inside a `case` subject (CaseClause.word)', () => {
+    const src = 'case $(sub) in x) : ;; esac';
+    const sites = enumerate(src);
+    const contextOf = (text: string): readonly CommandContext[] =>
+      siteFor(sites, src, text).context;
+    expect(siteTexts(src)).toEqual(['sub', ':']);
+    expect(contextOf('sub')).toEqual([{ kind: 'cmdSubst' }]);
+  });
+
+  it('finds a command hidden inside a `for` loop word list (ForClause.loop)', () => {
+    const src = 'for i in $(sub); do :; done';
+    const sites = enumerate(src);
+    const contextOf = (text: string): readonly CommandContext[] =>
+      siteFor(sites, src, text).context;
+    expect(siteTexts(src)).toEqual(['sub', ':']);
+    expect(contextOf('sub')).toEqual([{ kind: 'cmdSubst' }]);
+  });
+
+  it('finds a command hidden inside a `[[ ]]` test operand (TestClause.x)', () => {
+    const src = '[[ $(sub) = x ]]';
+    expect(siteTexts(src)).toEqual(['sub']);
+    const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
+    expect(site.context).toEqual([{ kind: 'cmdSubst' }]);
+  });
+
+  it('finds a command hidden inside a `(( ))` arithmetic operand (ArithmCmd.x)', () => {
+    const src = '(( $(sub) ))';
+    expect(siteTexts(src)).toEqual(['sub']);
+    const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
+    expect(site.context).toEqual([{ kind: 'cmdSubst' }]);
   });
 });
 
@@ -444,5 +554,89 @@ describe('enumerateCommands — binary command operator identification (canary)'
       [{ kind: 'pipeline', stage: 0 }],
       [{ kind: 'pipeline', stage: 1 }],
     ]);
+  });
+});
+
+describe('enumerateCommands — stack safety: long linear chains traverse iteratively', () => {
+  // Both `|`/`|&` pipelines and `&&`/`||` chains left-nest in mvdan/sh's
+  // tree (see `flattenPipelineStages`'s and `visitBinaryCmd`'s doc
+  // comments), so a chain's length used to consume native call-stack depth
+  // linearly — a long enough chain crashed with an uncatchable
+  // `RangeError: Maximum call stack size exceeded`. Both are now traversed
+  // with an explicit heap-allocated work structure instead of per-stage
+  // recursion, so chain length alone never grows real stack depth. 5,000
+  // is comfortably past where the old recursive implementation crashed
+  // (empirically, well under 1,000) and past `MAX_STRUCTURAL_DEPTH` (500)
+  // too — proving chain length is fully decoupled from the depth guard,
+  // not just "large enough to not crash yet".
+  it('a 5,000-stage pipeline enumerates every stage without a stack overflow', () => {
+    const chain = syntheticBinaryChain(5000, 13 /* BIN_CMD_OP_PIPE */);
+    const sites = enumerateCommands(chain);
+    expect(sites).toHaveLength(5000);
+    expect(sites[0]?.argv0).toEqual({ static: true, text: 'c0' });
+    expect(sites[0]?.context).toEqual([{ kind: 'pipeline', stage: 0 }]);
+    expect(sites[4999]?.argv0).toEqual({ static: true, text: 'c4999' });
+    expect(sites[4999]?.context).toEqual([{ kind: 'pipeline', stage: 4999 }]);
+  });
+
+  it('a 5,000-link && chain enumerates every link without a stack overflow', () => {
+    const chain = syntheticBinaryChain(5000, 11 /* BIN_CMD_OP_AND */);
+    const sites = enumerateCommands(chain);
+    expect(sites).toHaveLength(5000);
+    // The leftmost operand of a left-nested &&-chain inherits the
+    // surrounding (empty) context unchanged — only right-hand operands are
+    // tagged 'and' — matching the existing 'a && b || c | d' test's
+    // documented semantics for the analogous 2-stage case.
+    expect(sites[0]?.context).toEqual([]);
+    expect(sites[1]?.context).toEqual([{ kind: 'and', side: 'right' }]);
+    expect(sites[4999]?.context).toEqual([{ kind: 'and', side: 'right' }]);
+  });
+
+  it('a long pipeline nested inside genuine (bounded) subshell nesting still enumerates fully, and the depth counter only reflects the real nesting, not the chain length', () => {
+    // Guards against a design that accidentally grows the depth counter
+    // per pipeline stage (which would make a long pipeline inside even
+    // modest real nesting spuriously trip MAX_STRUCTURAL_DEPTH).
+    let tree = syntheticBinaryChain(5000, 13 /* BIN_CMD_OP_PIPE */);
+    for (let i = 0; i < 50; i += 1) {
+      tree = syntheticNode('Stmt', { cmd: syntheticNode('Subshell', { stmts: [tree] }) });
+    }
+    const sites = enumerateCommands(tree);
+    expect(sites).toHaveLength(5000);
+    // 50 subshell frames + 1 pipeline-stage frame for the innermost site.
+    expect(sites[0]?.context).toHaveLength(51);
+  });
+});
+
+describe('enumerateCommands — stack safety: defensive depth guard for genuine nesting', () => {
+  // Unlike linear chains, genuinely nested structure (Subshell-in-Subshell,
+  // etc.) still recurses — this describes the defensive backstop for that
+  // case: enumerateCommands must throw a typed, catchable
+  // ShAnalyzeMaxDepthError rather than crash with an uncatchable
+  // RangeError, and must not silently return a truncated/partial result.
+  it('nesting exactly at MAX_STRUCTURAL_DEPTH (500) still enumerates successfully', () => {
+    const sites = enumerateCommands(syntheticNestedSubshells(500));
+    expect(sites).toHaveLength(1);
+    expect(sites[0]?.context).toHaveLength(500);
+    expect(sites[0]?.context.every((frame) => frame.kind === 'subshell')).toBe(true);
+  });
+
+  it('nesting one level past MAX_STRUCTURAL_DEPTH (501) throws ShAnalyzeMaxDepthError, not a raw stack overflow', () => {
+    expect(() => enumerateCommands(syntheticNestedSubshells(501))).toThrow(ShAnalyzeMaxDepthError);
+  });
+
+  it('the thrown error carries the stable ESLINT_SH_ANALYZE_MAX_DEPTH code', () => {
+    expect.assertions(2);
+    try {
+      enumerateCommands(syntheticNestedSubshells(501));
+    } catch (error) {
+      expect(error).toBeInstanceOf(ShAnalyzeMaxDepthError);
+      expect((error as ShAnalyzeMaxDepthError).code).toBe('ESLINT_SH_ANALYZE_MAX_DEPTH');
+    }
+  });
+
+  it('a shallow, realistic nesting depth (10 levels) is unaffected by the guard', () => {
+    const sites = enumerateCommands(syntheticNestedSubshells(10));
+    expect(sites).toHaveLength(1);
+    expect(sites[0]?.context).toHaveLength(10);
   });
 });

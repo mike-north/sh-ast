@@ -59,6 +59,16 @@ export interface ResolveWordOptions {
     readonly context?: 'command-argument' | 'assignment-value';
 }
 
+// Warning: (ae-forgotten-export) The symbol "ShBridgeError" needs to be exported by the entry point index.d.ts
+//
+// @public
+export class ShAnalyzeMaxDepthError extends ShBridgeError {
+    constructor(maxDepth: number);
+    // (undocumented)
+    readonly code = "ESLINT_SH_ANALYZE_MAX_DEPTH";
+    readonly maxDepth: number;
+}
+
 // @public
 export type WordResolution = {
     readonly static: true;

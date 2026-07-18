@@ -180,3 +180,26 @@ declare const frame: CommandContext;
 if (frame.kind === 'pipeline') {
   expectError((frame.stage = 1));
 }
+
+// A forward-compatible exhaustive switch over `.kind` should compile with
+// a `default` case (see CommandContext's semver-policy doc comment,
+// mirroring WordResolutionReason's above) — this pins that the type
+// itself doesn't force enumerating every member without one.
+switch (frame.kind) {
+  case 'and':
+  case 'or':
+  case 'pipeline':
+  case 'subshell':
+  case 'cmdSubst':
+  case 'procSubst':
+  case 'if':
+  case 'case':
+  case 'loop':
+  case 'function':
+  case 'background':
+  case 'negated':
+  case 'coproc':
+    break;
+  default:
+    break;
+}

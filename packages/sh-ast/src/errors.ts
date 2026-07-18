@@ -1,12 +1,15 @@
 import type { ShellDialect } from './types.js';
 
 /**
- * Common base class for every error {@link parseSync} can throw. Provides a
- * stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`)
- * alongside the usual `instanceof` narrowing, so consumers can branch on
- * failure kind programmatically without parsing `.message` strings. Never
- * thrown directly — only via its concrete subclasses ({@link ShParseError},
- * {@link ShInvalidDialectError}, {@link ShBridgeInternalError}).
+ * Common base class for every error this package throws — originally just
+ * {@link parseSync}'s errors, now also the `sh-ast/analyze` layer's (see
+ * {@link ShAnalyzeMaxDepthError}). Provides a stable, documented `code`
+ * discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`) alongside the usual
+ * `instanceof` narrowing, so consumers can branch on failure kind
+ * programmatically without parsing `.message` strings. Never thrown
+ * directly — only via its concrete subclasses ({@link ShParseError},
+ * {@link ShInvalidDialectError}, {@link ShBridgeInternalError},
+ * {@link ShAnalyzeMaxDepthError}).
  *
  * @public
  */
@@ -104,5 +107,39 @@ export class ShBridgeInternalError extends ShBridgeError {
   constructor(message: string) {
     super(message);
     this.name = 'ShBridgeInternalError';
+  }
+}
+
+/**
+ * Thrown by `sh-ast/analyze`'s `enumerateCommands` when a tree's genuinely
+ * nested structure — subshells within subshells, chained command/process
+ * substitutions, deeply nested `if`/`case`/loop/function/`time`/`{ }`
+ * bodies, deeply chained `elif` — exceeds its defensive recursion-depth
+ * guard. **Not** thrown for a long *linear* chain (`|`/`|&`/`&&`/`||` of
+ * any realistic length): `enumerateCommands` traverses those iteratively,
+ * so chain length alone never grows this guard's depth counter — only
+ * genuine tree nesting does.
+ *
+ * `enumerateCommands` deliberately fails closed here rather than returning
+ * a truncated, partial result: a partial `CommandSite[]` silently omits
+ * real command sites, which is a false negative for a permission-hook-style
+ * consumer that treats "command not found in the enumeration" as "nothing
+ * to worry about" — an explicit, documented throw is safer than a silent
+ * under-report. Gate-style consumers should treat this error as `deny`,
+ * not fall back to "no commands found, so allow".
+ *
+ * @public
+ */
+export class ShAnalyzeMaxDepthError extends ShBridgeError {
+  readonly code = 'ESLINT_SH_ANALYZE_MAX_DEPTH';
+  /** The maximum nesting depth `enumerateCommands` supports; the same value every time (not caller-configurable). */
+  readonly maxDepth: number;
+
+  constructor(maxDepth: number) {
+    super(
+      `enumerateCommands: exceeded the maximum supported structural nesting depth (${String(maxDepth)} frames) — refusing to return a partial result. Treat this as a deny signal, not "no commands found".`,
+    );
+    this.name = 'ShAnalyzeMaxDepthError';
+    this.maxDepth = maxDepth;
   }
 }

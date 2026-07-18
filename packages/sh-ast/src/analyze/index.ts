@@ -17,6 +17,11 @@ export type { ResolveWordOptions, WordResolution, WordResolutionReason } from '.
 export { enumerateCommands } from './enumerate-commands.js';
 export type { CommandContext, CommandSite } from './enumerate-commands.js';
 
+// Re-exported from the root errors module so a consumer of enumerateCommands
+// can `import { ShAnalyzeMaxDepthError } from 'sh-ast/analyze'` without also
+// reaching into the root `sh-ast` entry point.
+export { ShAnalyzeMaxDepthError } from '../errors.js';
+
 // `ShNode` (resolveWord's parameter type) is deliberately *not* re-exported
 // here: it's the root `sh-ast` entry point's type (see `sh-ast`'s own
 // `index.ts`), and every caller of `resolveWord` already has a `ShNode` in
