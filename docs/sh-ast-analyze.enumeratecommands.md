@@ -12,6 +12,8 @@ Results are sorted by source position (`node.range[0]`<!-- -->), so nested comma
 
 Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no command/wrapper allowlist or denylist, no dataflow. A statically unknown `argv0` (`static: false`<!-- -->) is a normal, expected result.
 
+A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any realistic length — is traversed iteratively and never risks a stack overflow or trips the nesting-depth guard below, regardless of how many stages/links it has.
+
 **Signature:**
 
 ```typescript
@@ -57,4 +59,8 @@ Any `ShNode` — typically a `File` from `parseSync`<!-- -->, but any subtree (a
 **Returns:**
 
 [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->\[\]
+
+## Exceptions
+
+[ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md) if `root`<!-- -->'s genuinely nested structure (subshells within subshells, chained command/process substitutions, deeply nested `if`<!-- -->/`case`<!-- -->/loop/function/`time`<!-- -->/`{ }` bodies, chained `elif`<!-- -->) exceeds this module's defensive recursion-depth guard — see that error's doc comment for why this fails closed instead of returning a partial result, and why a gate-style consumer should treat it as `deny`<!-- -->.
 

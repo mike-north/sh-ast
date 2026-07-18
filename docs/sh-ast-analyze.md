@@ -4,6 +4,34 @@
 
 ## sh-ast-analyze package
 
+## Classes
+
+<table><thead><tr><th>
+
+Class
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)
+
+
+</td><td>
+
+Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely nested structure — subshells within subshells, chained command/process substitutions, deeply nested `if`<!-- -->/`case`<!-- -->/loop/function/`time`<!-- -->/`{ }` bodies, deeply chained `elif` — exceeds its defensive recursion-depth guard. \*\*Not\*\* thrown for a long \*linear\* chain (`|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any realistic length): `enumerateCommands` traverses those iteratively, so chain length alone never grows this guard's depth counter — only genuine tree nesting does.
+
+`enumerateCommands` deliberately fails closed here rather than returning a truncated, partial result: a partial `CommandSite[]` silently omits real command sites, which is a false negative for a permission-hook-style consumer that treats "command not found in the enumeration" as "nothing to worry about" — an explicit, documented throw is safer than a silent under-report. Gate-style consumers should treat this error as `deny`<!-- -->, not fall back to "no commands found, so allow".
+
+
+</td></tr>
+</tbody></table>
+
 ## Functions
 
 <table><thead><tr><th>
@@ -31,6 +59,8 @@ An assignment-only `CallExpr` (`FOO=bar`<!-- -->, `args` empty) has no first wor
 Results are sorted by source position (`node.range[0]`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
 
 Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no command/wrapper allowlist or denylist, no dataflow. A statically unknown `argv0` (`static: false`<!-- -->) is a normal, expected result.
+
+A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any realistic length — is traversed iteratively and never risks a stack overflow or trips the nesting-depth guard below, regardless of how many stages/links it has.
 
 
 </td></tr>
@@ -109,6 +139,8 @@ A single frame of the path from the root of the tree down to a [CommandSite](./s
 - `'and'`<!-- -->/`'or'` (`side: 'right'`<!-- -->) — the right-hand operand of a `BinaryCmd` (mvdan/sh's node for both `&&` and `||`<!-- -->); only the right side is tagged; the left side inherits the surrounding context unchanged, since it runs unconditionally relative to this operator. - `'pipeline'` (`stage: n`<!-- -->) — one stage of a `|`<!-- -->/`|&` chain (also a `BinaryCmd`<!-- -->, left-associatively nested by mvdan/sh); every stage is tagged, 0-indexed left to right, regardless of whether the chain mixes `|` and `|&`<!-- -->. - `'subshell'` — inside a `Subshell` (`( ... )`<!-- -->). - `'cmdSubst'`<!-- -->/`'procSubst'` — inside a `CmdSubst` (`$(...)`<!-- -->/backticks) or `ProcSubst` (`<(...)`<!-- -->/`>(...)`<!-- -->) reached from \*any\* word-bearing position (an argument, a redirection target, a case subject, a loop's word list, an assignment value, a test/arithmetic operand, …) — not only from `CallExpr.args`<!-- -->. - `'if'` (`branch: 'cond' | 'then' | 'else'`<!-- -->) — inside an `IfClause`<!-- -->'s condition, then-branch, or else-branch (mvdan/sh nests `elif` chains as `IfClause.else` pointing to another `IfClause`<!-- -->, so an `elif`<!-- -->'s own condition/then are reached through an `{kind:'if',branch:'else'}` frame first, then their own `'cond'`<!-- -->/`'then'` frame — reflecting the real nesting rather than collapsing it). - `'case'` — inside one `CaseClause` branch's statement list (not the case subject word or the patterns). - `'loop'` (`role` is `'body'` or `'cond'`<!-- -->) — inside a `ForClause`<!-- -->'s statement list (`role: 'body'` only — a `for` loop has no statement-list condition) or a `WhileClause`<!-- -->'s (`role: 'cond'` for the condition, `role: 'body'` for the loop body). - `'function'` (`name`<!-- -->) — inside a `FuncDecl`<!-- -->'s body; `name` is the function's literal name text. - `'background'`<!-- -->/`'negated'` — the enclosing `Stmt` has mvdan/sh's Background/Negated flag set (`cmd &`<!-- -->, `! cmd`<!-- -->). - `'coproc'` — inside a `CoprocClause`<!-- -->'s statement (a `coproc` block, optionally named).
 
 A `Block` grouping (`{ ...; }`<!-- -->) and a `TimeClause` (`time cmd`<!-- -->) are deliberately transparent — grouping and timing a command doesn't change how it's reached, so no frame is added for either.
+
+This union may grow in a \*\*minor\*\* release — a future mvdan/sh grammar construct this module starts modeling can add a new `kind` variant without that being a breaking change (mirroring [WordResolutionReason](./sh-ast-analyze.wordresolutionreason.md)<!-- -->'s semver policy in `resolve-word.ts`<!-- -->). It is deliberately not sealed against extension elsewhere in the codebase. Every existing variant's shape (its extra fields, if any) is stable — only new variants are ever added — so an exhaustive compile-time `switch` over `.kind` should still include a `default` case to stay forward-compatible.
 
 
 </td></tr>

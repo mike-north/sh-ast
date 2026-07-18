@@ -4,7 +4,7 @@
 
 ## ShBridgeError class
 
-Common base class for every error [parseSync()](./sh-ast.parsesync.md) can throw. Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->).
+Common base class for every error this package throws — originally just [parseSync()](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"ESLINT_SH_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShBridgeInternalError](./sh-ast.shbridgeinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->).
 
 **Signature:**
 

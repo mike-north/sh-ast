@@ -10,6 +10,8 @@ A single frame of the path from the root of the tree down to a [CommandSite](./s
 
 A `Block` grouping (`{ ...; }`<!-- -->) and a `TimeClause` (`time cmd`<!-- -->) are deliberately transparent — grouping and timing a command doesn't change how it's reached, so no frame is added for either.
 
+This union may grow in a \*\*minor\*\* release — a future mvdan/sh grammar construct this module starts modeling can add a new `kind` variant without that being a breaking change (mirroring [WordResolutionReason](./sh-ast-analyze.wordresolutionreason.md)<!-- -->'s semver policy in `resolve-word.ts`<!-- -->). It is deliberately not sealed against extension elsewhere in the codebase. Every existing variant's shape (its extra fields, if any) is stable — only new variants are ever added — so an exhaustive compile-time `switch` over `.kind` should still include a `default` case to stay forward-compatible.
+
 **Signature:**
 
 ```typescript
