@@ -2,7 +2,7 @@
 'sh-ast': minor
 ---
 
-Renamed the public error taxonomy in `sh-ast/errors` to drop pre-spinout `eslint-sh`/`@eslint-sh/bridge` naming, now that this package ships standalone. This is a breaking rename with **no back-compat aliases** — 0.x, so it ships as `minor` rather than `major` per this repo's pre-1.0 policy.
+Renamed the public error taxonomy exported from `sh-ast` to drop pre-spinout `eslint-sh`/`@eslint-sh/bridge` naming, now that this package ships standalone. This is a breaking rename with **no back-compat aliases** — 0.x, so it ships as `minor` rather than `major` per this repo's pre-1.0 policy.
 
 `code` string literals:
 
