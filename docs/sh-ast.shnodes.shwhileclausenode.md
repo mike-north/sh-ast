@@ -168,5 +168,26 @@ readonly \[number, number\]
 
 
 </td></tr>
+<tr><td>
+
+[until?](./sh-ast.shnodes.shwhileclausenode.until.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
 </tbody></table>
 

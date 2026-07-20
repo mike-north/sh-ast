@@ -56,6 +56,27 @@ Description
 </td></tr>
 <tr><td>
 
+[op?](./sh-ast.shnodes.shextglobnode.op.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [pattern?](./sh-ast.shnodes.shextglobnode.pattern.md)
 
 

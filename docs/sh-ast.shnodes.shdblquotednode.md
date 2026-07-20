@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[dollar?](./sh-ast.shnodes.shdblquotednode.dollar.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [loc](./sh-ast.shnodes.shdblquotednode.loc.md)
 
 

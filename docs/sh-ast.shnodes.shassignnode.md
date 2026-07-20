@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[append?](./sh-ast.shnodes.shassignnode.append.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [array?](./sh-ast.shnodes.shassignnode.array.md)
 
 
@@ -93,6 +114,27 @@ _(Optional)_
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[naked?](./sh-ast.shnodes.shassignnode.naked.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

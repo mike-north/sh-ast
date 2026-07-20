@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[excl?](./sh-ast.shnodes.shparamexpnode.excl.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [exp?](./sh-ast.shnodes.shparamexpnode.exp.md)
 
 
@@ -100,6 +121,48 @@ _(Optional)_
 </td></tr>
 <tr><td>
 
+[isset?](./sh-ast.shnodes.shparamexpnode.isset.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
+[length?](./sh-ast.shnodes.shparamexpnode.length.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [loc](./sh-ast.shnodes.shparamexpnode.loc.md)
 
 
@@ -133,6 +196,27 @@ readonly [ShLitNode](./sh-ast.shnodes.shlitnode.md)<!-- -->\[\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[names?](./sh-ast.shnodes.shparamexpnode.names.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>
@@ -220,6 +304,27 @@ _(Optional)_
 </td></tr>
 <tr><td>
 
+[short?](./sh-ast.shnodes.shparamexpnode.short.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [slice?](./sh-ast.shnodes.shparamexpnode.slice.md)
 
 
@@ -255,6 +360,27 @@ _(Optional)_
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[width?](./sh-ast.shnodes.shparamexpnode.width.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

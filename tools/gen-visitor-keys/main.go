@@ -43,20 +43,30 @@ type nodeType struct {
 	fields []nodeField
 }
 
-// nodeField describes one struct field that is either a child node (real
-// data reachable during traversal) or a position (`syntax.Pos`, dropped by
-// the normalizer, never data) — every other field (plain scalars: bool,
-// string, operator enums, ...) is invisible to this generator entirely,
-// since neither `CHILD_TYPE_SCHEMA`/`visitorKeys` nor `POSITION_FIELDS` need
-// to say anything about them (the normalizer copies them through as-is).
+// nodeField describes one struct field that is a child node (real data
+// reachable during traversal), a position (`syntax.Pos`, dropped by the
+// normalizer, never data), or a scalar leaf (bool, string, or an
+// mvdan/sh operator-enum type — see issue #22, "generated node types leave
+// key fields as `unknown`"). `CHILD_TYPE_SCHEMA`/`visitorKeys`/
+// `POSITION_FIELDS` only need to say something about the first two kinds
+// (the normalizer copies scalar fields through as-is, unchanged), but
+// `node-types.d.ts` needs a concrete TS type for all three.
 //
-// Exactly one of isPos/iface/childType is set: isPos for a field whose
-// static Go type is `syntax.Pos` (this is `position-fields`'s whole reason
-// to exist — see issue #8), childType for a field whose static Go type is a
-// concrete node struct (typedjson never emits a discriminator for these —
-// this is the child-type-schema's whole reason to exist), iface for a field
-// whose static Go type is a Node-derived interface (Command, WordPart,
-// ArithmExpr, TestExpr, Loop — typedjson already emits "Type" for these).
+// Exactly one of isPos/iface/childType/scalarTS is set: isPos for a field
+// whose static Go type is `syntax.Pos` (this is `position-fields`'s whole
+// reason to exist — see issue #8), childType for a field whose static Go
+// type is a concrete node struct (typedjson never emits a discriminator for
+// these — this is the child-type-schema's whole reason to exist), iface for
+// a field whose static Go type is a Node-derived interface (Command,
+// WordPart, ArithmExpr, TestExpr, Loop — typedjson already emits "Type" for
+// these), scalarTS for a field whose static Go type is `bool`, `string`, or
+// a named `uint32`-backed operator-enum type (mvdan/sh's `RedirOperator`,
+// `BinCmdOperator`, ... — see tokens.go's `type token uint32`). Those
+// operator types only implement `fmt.Stringer` (`String() string`), not
+// `json.Marshaler`, so the shim's typedjson-compatible encoder
+// (packages/sh-ast/shim/internal/nodeencode/encode.go) serializes them as plain JSON
+// numbers, not strings — `scalarTS: "number"` matches that actual runtime
+// shape, not the Go type's nominal name.
 type nodeField struct {
 	goName    string
 	jsonName  string
@@ -64,6 +74,7 @@ type nodeField struct {
 	isPos     bool
 	iface     string
 	childType string
+	scalarTS  string
 }
 
 func main() {
@@ -111,17 +122,18 @@ func main() {
 	// (`Lit`, `Comment`, `SglQuoted`, …) is still a real, traversable AST
 	// position and always gets an entry (possibly empty).
 	//
-	// Position-only fields (`isPos`) never count as "child-bearing" here —
-	// a position never points to a child node, so an aux struct with only
-	// position fields (were one ever added upstream) is still a true
-	// scalar-only leaf from this generator's perspective.
+	// Position-only and scalar-only fields (`isPos`/`scalarTS`) never count
+	// as "child-bearing" here — neither a position nor a scalar leaf points
+	// to a child node, so an aux struct with only such fields (were one ever
+	// added upstream) is still a true scalar-only leaf from this generator's
+	// perspective.
 	for {
 		var pruned []*nodeType
 		removedAny := false
 		for _, nt := range nodeTypes {
 			hasChildField := false
 			for _, f := range nt.fields {
-				if !f.isPos {
+				if !f.isPos && f.scalarTS == "" {
 					hasChildField = true
 					break
 				}
@@ -413,12 +425,23 @@ func classifyFields(pkg *types.Package, nodeTypes []*nodeType, childIfaces map[s
 // a typedjson "Type" discriminator. Position fields (static type
 // `syntax.Pos`) are classified too (`isPos: true`) — this is what
 // `position-fields` is generated from (see issue #8) — but are kept out of
-// `nt.fields`' other consumers (child-type-schema, visitor-keys,
-// node-types.d.ts) by those renderers explicitly skipping `isPos` fields, so
-// this change is additive: those artifacts are unaffected. Returns ok=false
-// only for plain scalars (bool, string, operator enums, ...) and fields
-// whose target struct isn't in `nodeTypeNames` at all (i.e. it has no
-// child-bearing fields of its own and was pruned as a leaf).
+// `nt.fields`' other consumers (child-type-schema, visitor-keys) by those
+// renderers explicitly skipping `isPos` fields, so this change is additive:
+// those artifacts are unaffected.
+//
+// Plain scalar fields (`bool`, `string`, and mvdan/sh's `uint32`-backed
+// operator-enum types) are classified too (`scalarTS` set — see issue #22)
+// so `node-types.d.ts` can emit a concrete TS type instead of letting them
+// fall through to the catch-all `[field: string]: unknown` index signature.
+// Like `isPos`, scalar fields are kept out of child-type-schema and
+// visitor-keys by those renderers explicitly skipping `scalarTS != ""`
+// fields — a scalar is never a child to traverse into or inject a
+// discriminated type for.
+//
+// Returns ok=false only for fields whose target struct isn't in
+// `nodeTypeNames` at all (i.e. it has no child-bearing fields of its own and
+// was pruned as a leaf) or whose type this generator has no principled
+// mapping for.
 func classifyFieldType(t types.Type, nodeTypeNames map[string]bool, childIfaces map[string]*types.Named) (nodeField, bool) {
 	slice := false
 	elem := t
@@ -428,6 +451,15 @@ func classifyFieldType(t types.Type, nodeTypeNames map[string]bool, childIfaces 
 	}
 	if p, ok := elem.(*types.Pointer); ok {
 		elem = p.Elem()
+	}
+	if basic, ok := elem.(*types.Basic); ok {
+		switch basic.Kind() {
+		case types.Bool:
+			return nodeField{slice: slice, scalarTS: "boolean"}, true
+		case types.String:
+			return nodeField{slice: slice, scalarTS: "string"}, true
+		}
+		return nodeField{}, false
 	}
 	named, ok := elem.(*types.Named)
 	if !ok {
@@ -442,6 +474,15 @@ func classifyFieldType(t types.Type, nodeTypeNames map[string]bool, childIfaces 
 	}
 	if nodeTypeNames[name] {
 		return nodeField{slice: slice, childType: name}, true
+	}
+	// A named type whose underlying representation is `uint32` is one of
+	// mvdan/sh's operator-enum types (RedirOperator, BinCmdOperator, ...;
+	// see tokens.go's `type token uint32`). They implement `fmt.Stringer`
+	// but not `json.Marshaler`, so the shim's encoder (a fork of
+	// syntax/typedjson's encode path) serializes them as plain JSON numbers
+	// — `scalarTS: "number"` matches that actual wire shape.
+	if basic, ok := named.Underlying().(*types.Basic); ok && basic.Kind() == types.Uint32 {
+		return nodeField{slice: slice, scalarTS: "number"}, true
 	}
 	return nodeField{}, false
 }
@@ -483,7 +524,7 @@ func renderVisitorKeysJS(nodeTypes []*nodeType, version string) string {
 	for _, nt := range nodeTypes {
 		var names []string
 		for _, f := range nt.fields {
-			if f.isPos {
+			if f.isPos || f.scalarTS != "" {
 				continue
 			}
 			names = append(names, f.jsonName)
@@ -524,7 +565,7 @@ func renderChildTypeSchemaJS(nodeTypes []*nodeType, version string) string {
 		fields := append([]nodeField(nil), nt.fields...)
 		sort.Slice(fields, func(i, j int) bool { return fields[i].goName < fields[j].goName })
 		for _, f := range fields {
-			if f.isPos {
+			if f.isPos || f.scalarTS != "" {
 				continue
 			}
 			value := "null"
@@ -631,6 +672,21 @@ func renderPositionFieldsDTS(version string) string {
 // "readonly by contract, not convention" typing in `src/types.ts` — a
 // stronger-typed view of an immutable node shape should not itself claim to
 // be more mutable than the base contract it's assignable to.
+//
+// Every well-known field — child, interface-union, or scalar (`bool`,
+// `string`, operator-enum-as-`number`; see issue #22) — is emitted with its
+// concrete type. The `[field: string]: unknown` index signature in
+// `baseFields` is kept deliberately even though every field this generator
+// can classify is now concretely typed: it's an escape hatch for the
+// generic-`unknown` shape a totally new, not-yet-classified field would
+// still fall through to (an explicit `readonly foo: string` property is
+// legally assignable alongside a `[field: string]: unknown` index
+// signature — TypeScript only requires the property's type be assignable to
+// the index signature's, and everything is assignable to `unknown`), not a
+// hedge against these known fields. Removing it entirely is a broader
+// design change (it would make `ShNode`'s structural-typing contract with
+// this file's interfaces exact rather than open-ended) and is out of scope
+// here.
 func renderNodeTypesDTS(nodeTypes []*nodeType, implementers map[string][]string, version string) string {
 	var b strings.Builder
 	b.WriteString(header(version))
@@ -661,9 +717,12 @@ func renderNodeTypesDTS(nodeTypes []*nodeType, implementers map[string][]string,
 				continue
 			}
 			var elemTS string
-			if f.iface != "" {
+			switch {
+			case f.scalarTS != "":
+				elemTS = f.scalarTS
+			case f.iface != "":
 				elemTS = "Sh" + f.iface + "Node"
-			} else {
+			default:
 				elemTS = "Sh" + f.childType + "Node"
 			}
 			if f.slice {

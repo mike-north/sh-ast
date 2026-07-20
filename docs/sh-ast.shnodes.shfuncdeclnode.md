@@ -117,6 +117,27 @@ readonly [ShLitNode](./sh-ast.shnodes.shlitnode.md)<!-- -->\[\]
 </td></tr>
 <tr><td>
 
+[parens?](./sh-ast.shnodes.shfuncdeclnode.parens.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [range](./sh-ast.shnodes.shfuncdeclnode.range.md)
 
 
@@ -131,6 +152,27 @@ readonly \[number, number\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[rsrvword?](./sh-ast.shnodes.shfuncdeclnode.rsrvword.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

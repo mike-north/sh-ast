@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[braces?](./sh-ast.shnodes.shcaseclausenode.braces.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [items](./sh-ast.shnodes.shcaseclausenode.items.md)
 
 

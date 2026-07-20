@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[background?](./sh-ast.shnodes.shstmtnode.background.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [cmd?](./sh-ast.shnodes.shstmtnode.cmd.md)
 
 
@@ -77,6 +98,48 @@ readonly [ShCommentNode](./sh-ast.shnodes.shcommentnode.md)<!-- -->\[\]
 </td></tr>
 <tr><td>
 
+[coprocess?](./sh-ast.shnodes.shstmtnode.coprocess.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
+[disown?](./sh-ast.shnodes.shstmtnode.disown.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [loc](./sh-ast.shnodes.shstmtnode.loc.md)
 
 
@@ -91,6 +154,27 @@ readonly [ShCommentNode](./sh-ast.shnodes.shcommentnode.md)<!-- -->\[\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[negated?](./sh-ast.shnodes.shstmtnode.negated.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

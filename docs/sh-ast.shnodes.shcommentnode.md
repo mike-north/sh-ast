@@ -75,6 +75,27 @@ readonly \[number, number\]
 </td></tr>
 <tr><td>
 
+[text?](./sh-ast.shnodes.shcommentnode.text.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [type](./sh-ast.shnodes.shcommentnode.type.md)
 
 

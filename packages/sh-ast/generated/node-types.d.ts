@@ -13,6 +13,7 @@ export interface ShArithmCmdNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly unsigned?: boolean;
   readonly x?: ShArithmExprNode;
 }
 
@@ -29,6 +30,8 @@ export interface ShArithmExpNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly bracket?: boolean;
+  readonly unsigned?: boolean;
   readonly x?: ShArithmExprNode;
 }
 
@@ -80,8 +83,10 @@ export interface ShAssignNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly append?: boolean;
   readonly array?: ShArrayExprNode;
   readonly index?: ShArithmExprNode;
+  readonly naked?: boolean;
   readonly name?: ShLitNode;
   readonly value?: ShWordNode;
 }
@@ -99,6 +104,7 @@ export interface ShBinaryArithmNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly x?: ShArithmExprNode;
   readonly y?: ShArithmExprNode;
 }
@@ -116,6 +122,7 @@ export interface ShBinaryCmdNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly x?: ShStmtNode;
   readonly y?: ShStmtNode;
 }
@@ -133,6 +140,7 @@ export interface ShBinaryTestNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly x?: ShTestExprNode;
   readonly y?: ShTestExprNode;
 }
@@ -168,6 +176,7 @@ export interface ShBraceExpNode {
   };
   [field: string]: unknown;
   readonly elems: readonly ShWordNode[];
+  readonly sequence?: boolean;
 }
 
 /**
@@ -218,6 +227,7 @@ export interface ShCaseClauseNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly braces?: boolean;
   readonly items: readonly ShCaseItemNode[];
   readonly last: readonly ShCommentNode[];
   readonly word?: ShWordNode;
@@ -238,6 +248,7 @@ export interface ShCaseItemNode {
   [field: string]: unknown;
   readonly comments: readonly ShCommentNode[];
   readonly last: readonly ShCommentNode[];
+  readonly op?: number;
   readonly patterns: readonly ShWordNode[];
   readonly stmts: readonly ShStmtNode[];
 }
@@ -255,8 +266,11 @@ export interface ShCmdSubstNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly backquotes?: boolean;
   readonly last: readonly ShCommentNode[];
+  readonly replyvar?: boolean;
   readonly stmts: readonly ShStmtNode[];
+  readonly tempfile?: boolean;
 }
 
 /**
@@ -272,6 +286,7 @@ export interface ShCommentNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly text?: string;
 }
 
 /**
@@ -304,6 +319,7 @@ export interface ShDblQuotedNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly dollar?: boolean;
   readonly parts: readonly ShWordPartNode[];
 }
 
@@ -337,6 +353,7 @@ export interface ShExpansionNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly word?: ShWordNode;
 }
 
@@ -353,6 +370,7 @@ export interface ShExtGlobNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly pattern?: ShLitNode;
 }
 
@@ -370,6 +388,7 @@ export interface ShFileNode {
   };
   [field: string]: unknown;
   readonly last: readonly ShCommentNode[];
+  readonly name?: string;
   readonly stmts: readonly ShStmtNode[];
 }
 
@@ -403,9 +422,11 @@ export interface ShForClauseNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly braces?: boolean;
   readonly do: readonly ShStmtNode[];
   readonly dolast: readonly ShCommentNode[];
   readonly loop?: ShLoopNode;
+  readonly select?: boolean;
 }
 
 /**
@@ -424,6 +445,8 @@ export interface ShFuncDeclNode {
   readonly body?: ShStmtNode;
   readonly name?: ShLitNode;
   readonly names: readonly ShLitNode[];
+  readonly parens?: boolean;
+  readonly rsrvword?: boolean;
 }
 
 /**
@@ -476,6 +499,7 @@ export interface ShLitNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly value?: string;
 }
 
 /**
@@ -491,14 +515,20 @@ export interface ShParamExpNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly excl?: boolean;
   readonly exp?: ShExpansionNode;
   readonly flags?: ShLitNode;
   readonly index?: ShArithmExprNode;
+  readonly isset?: boolean;
+  readonly length?: boolean;
   readonly modifiers: readonly ShLitNode[];
+  readonly names?: number;
   readonly nestedparam?: ShWordPartNode;
   readonly param?: ShLitNode;
   readonly repl?: ShReplaceNode;
+  readonly short?: boolean;
   readonly slice?: ShSliceNode;
+  readonly width?: boolean;
 }
 
 /**
@@ -547,6 +577,7 @@ export interface ShProcSubstNode {
   };
   [field: string]: unknown;
   readonly last: readonly ShCommentNode[];
+  readonly op?: number;
   readonly stmts: readonly ShStmtNode[];
 }
 
@@ -565,6 +596,7 @@ export interface ShRedirectNode {
   [field: string]: unknown;
   readonly hdoc?: ShWordNode;
   readonly n?: ShLitNode;
+  readonly op?: number;
   readonly word?: ShWordNode;
 }
 
@@ -581,6 +613,7 @@ export interface ShReplaceNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly all?: boolean;
   readonly orig?: ShWordNode;
   readonly with?: ShWordNode;
 }
@@ -598,6 +631,8 @@ export interface ShSglQuotedNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly dollar?: boolean;
+  readonly value?: string;
 }
 
 /**
@@ -630,8 +665,12 @@ export interface ShStmtNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly background?: boolean;
   readonly cmd?: ShCommandNode;
   readonly comments: readonly ShCommentNode[];
+  readonly coprocess?: boolean;
+  readonly disown?: boolean;
+  readonly negated?: boolean;
   readonly redirs: readonly ShRedirectNode[];
 }
 
@@ -698,6 +737,7 @@ export interface ShTimeClauseNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly posixformat?: boolean;
   readonly stmt?: ShStmtNode;
 }
 
@@ -714,6 +754,8 @@ export interface ShUnaryArithmNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
+  readonly post?: boolean;
   readonly x?: ShArithmExprNode;
 }
 
@@ -730,6 +772,7 @@ export interface ShUnaryTestNode {
     readonly end: { readonly line: number; readonly column: number };
   };
   [field: string]: unknown;
+  readonly op?: number;
   readonly x?: ShTestExprNode;
 }
 
@@ -750,6 +793,7 @@ export interface ShWhileClauseNode {
   readonly condlast: readonly ShCommentNode[];
   readonly do: readonly ShStmtNode[];
   readonly dolast: readonly ShCommentNode[];
+  readonly until?: boolean;
 }
 
 /**

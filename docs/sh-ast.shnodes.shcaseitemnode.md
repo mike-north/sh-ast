@@ -94,6 +94,27 @@ readonly [ShCommentNode](./sh-ast.shnodes.shcommentnode.md)<!-- -->\[\]
 </td></tr>
 <tr><td>
 
+[op?](./sh-ast.shnodes.shcaseitemnode.op.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [patterns](./sh-ast.shnodes.shcaseitemnode.patterns.md)
 
 
