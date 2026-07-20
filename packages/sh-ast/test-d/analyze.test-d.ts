@@ -13,7 +13,7 @@ import {
   enumerateCommands,
   resolveArgv0,
   resolveWord,
-} from '../src/analyze/index.js';
+} from 'sh-ast/analyze';
 import type {
   Argv0ChainWord,
   Argv0Resolution,
@@ -28,8 +28,8 @@ import type {
   WordResolution,
   WordResolutionReason,
   WrapperSpec,
-} from '../src/analyze/index.js';
-import type { ShNode, ShNodes } from '../src/index.js';
+} from 'sh-ast/analyze';
+import type { ShNode, ShNodes } from 'sh-ast';
 
 // `sh-ast/analyze` re-exports the shared base error class, and `ShNode`/
 // `Position` (see https://github.com/mike-north/sh-ast/issues/23): a

@@ -40,11 +40,7 @@ export type {
 // re-exported here too — otherwise a consumer could not `catch`/reference
 // the base class without also importing from the root `sh-ast` entry point
 // (see #23).
-export {
-  ShAnalyzeInvalidWrapperSpecError,
-  ShAnalyzeMaxDepthError,
-  ShAstError,
-} from '../errors.js';
+export { ShAnalyzeInvalidWrapperSpecError, ShAnalyzeMaxDepthError, ShAstError } from '../errors.js';
 
 // `ShNode` (resolveWord's/enumerateCommands's parameter and CommandSite.node
 // type) is re-exported here for the same reason as `ShAstError` above:

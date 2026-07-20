@@ -13,8 +13,8 @@ import {
   ShAnalyzeMaxDepthError,
   ShAstError,
   enumerateCommands,
-} from '../src/analyze/index.js';
-import type { ShNode } from '../src/analyze/index.js';
+} from 'sh-ast/analyze';
+import type { ShNode } from 'sh-ast/analyze';
 
 const SYNTHETIC_LOC = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
 
@@ -42,7 +42,7 @@ function syntheticNestedSubshells(n: number): ShNode {
 
 describe('ShAstError reachable from sh-ast/analyze (issue #23)', () => {
   it('is the same class as the root entry point export (not a re-declared duplicate)', async () => {
-    const root = await import('../src/index.js');
+    const root = await import('sh-ast');
     expect(ShAstError).toBe(root.ShAstError);
   });
 
