@@ -5,16 +5,16 @@ import type { ShellDialect } from './types.js';
  * {@link parseSync}'s errors, now also the `sh-ast/analyze` layer's (see
  * {@link ShAnalyzeMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
  * Provides a stable, documented `code` discriminator (e.g.
- * `"ESLINT_SH_PARSE_ERROR"`) alongside the usual `instanceof` narrowing, so
+ * `"SH_AST_PARSE_ERROR"`) alongside the usual `instanceof` narrowing, so
  * consumers can branch on failure kind programmatically without parsing
  * `.message` strings. Never thrown directly — only via its concrete
  * subclasses ({@link ShParseError}, {@link ShInvalidDialectError},
- * {@link ShBridgeInternalError}, {@link ShAnalyzeMaxDepthError},
+ * {@link ShInternalError}, {@link ShAnalyzeMaxDepthError},
  * {@link ShParseMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
  *
  * @public
  */
-export abstract class ShBridgeError extends Error {
+export abstract class ShAstError extends Error {
   /**
    * Stable, machine-readable discriminator for this error kind. Distinct
    * per subclass and will not change once published.
@@ -55,8 +55,8 @@ export interface ShParseErrorInfo {
  *
  * @public
  */
-export class ShParseError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_PARSE_ERROR';
+export class ShParseError extends ShAstError {
+  readonly code = 'SH_AST_PARSE_ERROR';
   readonly line: number;
   readonly column: number;
   readonly filename: string;
@@ -78,8 +78,8 @@ export class ShParseError extends ShBridgeError {
  *
  * @public
  */
-export class ShInvalidDialectError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_INVALID_DIALECT';
+export class ShInvalidDialectError extends ShAstError {
+  readonly code = 'SH_AST_INVALID_DIALECT';
   /** The rejected dialect value, exactly as passed to {@link parseSync}. */
   readonly dialect: string;
 
@@ -102,12 +102,12 @@ export class ShInvalidDialectError extends ShBridgeError {
  *
  * @public
  */
-export class ShBridgeInternalError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_BRIDGE_INTERNAL';
+export class ShInternalError extends ShAstError {
+  readonly code = 'SH_AST_INTERNAL';
 
   constructor(message: string) {
     super(message);
-    this.name = 'ShBridgeInternalError';
+    this.name = 'ShInternalError';
   }
 }
 
@@ -131,8 +131,8 @@ export class ShBridgeInternalError extends ShBridgeError {
  *
  * @public
  */
-export class ShAnalyzeMaxDepthError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_ANALYZE_MAX_DEPTH';
+export class ShAnalyzeMaxDepthError extends ShAstError {
+  readonly code = 'SH_AST_ANALYZE_MAX_DEPTH';
   /** The maximum nesting depth `enumerateCommands` supports; the same value every time (not caller-configurable). */
   readonly maxDepth: number;
 
@@ -173,8 +173,8 @@ export class ShAnalyzeMaxDepthError extends ShBridgeError {
  *
  * @public
  */
-export class ShParseMaxDepthError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_PARSE_MAX_DEPTH';
+export class ShParseMaxDepthError extends ShAstError {
+  readonly code = 'SH_AST_PARSE_MAX_DEPTH';
   /** The maximum structural nesting depth `parseSync` accepts; the same value every time (not caller-configurable). */
   readonly maxDepth: number;
   /**
@@ -205,8 +205,8 @@ export class ShParseMaxDepthError extends ShBridgeError {
  *
  * @public
  */
-export class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError {
-  readonly code = 'ESLINT_SH_ANALYZE_INVALID_WRAPPER_SPEC';
+export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
+  readonly code = 'SH_AST_ANALYZE_INVALID_WRAPPER_SPEC';
 
   constructor(message: string) {
     super(`resolveArgv0: invalid transparentWrappers entry — ${message}`);

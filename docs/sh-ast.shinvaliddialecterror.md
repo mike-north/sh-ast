@@ -9,9 +9,9 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) when [ParseOptions.dialect](./sh-
 **Signature:**
 
 ```typescript
-export declare class ShInvalidDialectError extends ShBridgeError 
+export declare class ShInvalidDialectError extends ShAstError 
 ```
-**Extends:** [ShBridgeError](./sh-ast.shbridgeerror.md)
+**Extends:** [ShAstError](./sh-ast.shasterror.md)
 
 ## Constructors
 

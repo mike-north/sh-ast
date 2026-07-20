@@ -7,7 +7,7 @@ import '../shim/wasm_exec.js';
 // file, even for tools (e.g. tsd) that compute their own root-file set from
 // import graphs rather than directory globbing.
 import type {} from './wasm-globals.js';
-import { ShBridgeInternalError } from './errors.js';
+import { ShInternalError } from './errors.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // `shim/` is a sibling of both `src/` (test-time) and `dist/` (build-time).
@@ -65,7 +65,7 @@ function ensureInstance(): ShimExports {
   const instance = new WebAssembly.Instance(wasmModule, go.importObject);
   void go.run(instance);
   if (!isShimExports(instance.exports)) {
-    throw new ShBridgeInternalError(
+    throw new ShInternalError(
       'bridge: WASM shim did not export the expected alloc/process/free/mem linear-memory ABI',
     );
   }
@@ -113,7 +113,7 @@ export function callParse(text: string, dialect: string, filename: string): stri
   exports.free(f.ptr);
 
   if (resultPtr === 0) {
-    throw new ShBridgeInternalError('bridge: WASM shim returned a null result pointer');
+    throw new ShInternalError('bridge: WASM shim returned a null result pointer');
   }
 
   // Re-read `mem.buffer` fresh (see `writeString`'s comment) and scan for the

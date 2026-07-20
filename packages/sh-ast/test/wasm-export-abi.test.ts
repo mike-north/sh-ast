@@ -5,8 +5,9 @@
  *
  * Before the linear-memory ABI switch (see design/ARCHITECTURE.md's
  * "Performance"), `shim/main.go` registered a single variadic `js.FuncOf`
- * global (`__eslint_sh_parse`) that indexed `args[0]`/`args[1]`/`args[2]`
- * unchecked. A wrong-arity call panicked inside Go's WASM scheduler — a
+ * global (named after the pre-spinout package this bridge originally
+ * shipped in) that indexed `args[0]`/`args[1]`/`args[2]` unchecked. A
+ * wrong-arity call panicked inside Go's WASM scheduler — a
  * panic `wasm_exec.js`'s `Go._resume()` has no matching try/catch for —
  * which permanently wedged the shared, lazily-instantiated WASM instance.
  *

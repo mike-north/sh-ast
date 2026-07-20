@@ -1,4 +1,4 @@
-import { ShBridgeInternalError, ShInvalidDialectError, ShParseError } from './errors.js';
+import { ShInternalError, ShInvalidDialectError, ShParseError } from './errors.js';
 import { normalize, toUtf16Column, type JsonValue } from './normalize.js';
 import { assertParseDepthWithinLimit } from './parse-depth-guard.js';
 import { callParse } from './wasm-instance.js';
@@ -80,12 +80,10 @@ export function isResultEnvelope(value: unknown): value is ResultEnvelope {
 
 function asShFile(node: ReturnType<typeof normalize>): ShFile {
   if (node.type !== 'File') {
-    throw new ShBridgeInternalError(
-      `bridge: expected root node of type "File", got "${node.type}"`,
-    );
+    throw new ShInternalError(`bridge: expected root node of type "File", got "${node.type}"`);
   }
   if (!Array.isArray(node.stmts)) {
-    throw new ShBridgeInternalError('bridge: expected root node to have an array "stmts" field');
+    throw new ShInternalError('bridge: expected root node to have an array "stmts" field');
   }
   return node as ShFile;
 }
@@ -105,7 +103,7 @@ function asShFile(node: ReturnType<typeof normalize>): ShFile {
  * position appears only inside `.message`, which is mvdan/sh's own
  * formatted string, verbatim. Throws {@link ShInvalidDialectError} when
  * {@link ParseOptions.dialect} is not a supported dialect. Throws
- * {@link ShBridgeInternalError} for failures that should never happen given
+ * {@link ShInternalError} for failures that should never happen given
  * a correctly-behaving shim (malformed envelope, unexpected root node
  * type, shim contract violations). Throws {@link ShParseMaxDepthError} if
  * `text`'s conservatively estimated structural nesting depth exceeds the
@@ -129,7 +127,7 @@ export function parseSync(text: string, options?: ParseOptions): ShFile {
   const raw = callParse(text, dialect, filename);
   const result: unknown = JSON.parse(raw);
   if (!isResultEnvelope(result)) {
-    throw new ShBridgeInternalError('bridge: WASM shim returned an unexpected payload shape');
+    throw new ShInternalError('bridge: WASM shim returned an unexpected payload shape');
   }
   if (result.parseError) {
     // mvdan/sh reports `column` as a byte count on the source line, not a
@@ -148,10 +146,10 @@ export function parseSync(text: string, options?: ParseOptions): ShFile {
     });
   }
   if (result.error) {
-    throw new ShBridgeInternalError(result.error.message);
+    throw new ShInternalError(result.error.message);
   }
   if (result.file === undefined) {
-    throw new ShBridgeInternalError('bridge: WASM shim returned neither a file nor an error');
+    throw new ShInternalError('bridge: WASM shim returned neither a file nor an error');
   }
   return asShFile(normalize(result.file, text));
 }

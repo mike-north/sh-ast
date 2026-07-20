@@ -9,9 +9,9 @@ Thrown by `sh-ast/analyze`<!-- -->'s `resolveArgv0` when a caller-supplied `opti
 **Signature:**
 
 ```typescript
-export declare class ShAnalyzeInvalidWrapperSpecError extends ShBridgeError 
+export declare class ShAnalyzeInvalidWrapperSpecError extends ShAstError 
 ```
-**Extends:** ShBridgeError
+**Extends:** ShAstError
 
 ## Constructors
 

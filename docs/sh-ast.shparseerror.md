@@ -9,9 +9,9 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) when shell source fails to parse.
 **Signature:**
 
 ```typescript
-export declare class ShParseError extends ShBridgeError 
+export declare class ShParseError extends ShAstError 
 ```
-**Extends:** [ShBridgeError](./sh-ast.shbridgeerror.md)
+**Extends:** [ShAstError](./sh-ast.shasterror.md)
 
 ## Constructors
 

@@ -11,9 +11,9 @@ Like [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, this 
 **Signature:**
 
 ```typescript
-export declare class ShParseMaxDepthError extends ShBridgeError 
+export declare class ShParseMaxDepthError extends ShAstError 
 ```
-**Extends:** [ShBridgeError](./sh-ast.shbridgeerror.md)
+**Extends:** [ShAstError](./sh-ast.shasterror.md)
 
 ## Constructors
 

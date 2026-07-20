@@ -5,8 +5,8 @@
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import {
   parseSync,
-  ShBridgeError,
-  ShBridgeInternalError,
+  ShAstError,
+  ShInternalError,
   ShInvalidDialectError,
   ShParseError,
   ShParseMaxDepthError,
@@ -42,32 +42,32 @@ expectType<number>(err.line);
 expectType<number>(err.column);
 expectType<string>(err.filename);
 expectAssignable<Error>(err);
-expectAssignable<ShBridgeError>(err);
-expectType<'ESLINT_SH_PARSE_ERROR'>(err.code);
+expectAssignable<ShAstError>(err);
+expectType<'SH_AST_PARSE_ERROR'>(err.code);
 
 // The error taxonomy for https://github.com/mike-north/eslint-sh/issues/12:
-// stable `code` discriminators and a common `ShBridgeError` base, on top of
+// stable `code` discriminators and a common `ShAstError` base, on top of
 // the usual `instanceof` narrowing.
 const invalidDialectError = new ShInvalidDialectError('fish', ['bash', 'posix']);
-expectType<'ESLINT_SH_INVALID_DIALECT'>(invalidDialectError.code);
+expectType<'SH_AST_INVALID_DIALECT'>(invalidDialectError.code);
 expectType<string>(invalidDialectError.dialect);
 expectAssignable<Error>(invalidDialectError);
-expectAssignable<ShBridgeError>(invalidDialectError);
+expectAssignable<ShAstError>(invalidDialectError);
 // Not assignable to ShParseError's more specific shape — no .line/.column.
 expectNotAssignable<ShParseError>(invalidDialectError);
 
-const internalError = new ShBridgeInternalError('bridge: something unexpected happened');
-expectType<'ESLINT_SH_BRIDGE_INTERNAL'>(internalError.code);
+const internalError = new ShInternalError('bridge: something unexpected happened');
+expectType<'SH_AST_INTERNAL'>(internalError.code);
 expectAssignable<Error>(internalError);
-expectAssignable<ShBridgeError>(internalError);
+expectAssignable<ShAstError>(internalError);
 expectNotAssignable<ShParseError>(internalError);
 
 const maxDepthError = new ShParseMaxDepthError(150, 151);
-expectType<'ESLINT_SH_PARSE_MAX_DEPTH'>(maxDepthError.code);
+expectType<'SH_AST_PARSE_MAX_DEPTH'>(maxDepthError.code);
 expectType<number>(maxDepthError.maxDepth);
 expectType<number>(maxDepthError.estimatedDepth);
 expectAssignable<Error>(maxDepthError);
-expectAssignable<ShBridgeError>(maxDepthError);
+expectAssignable<ShAstError>(maxDepthError);
 expectNotAssignable<ShParseError>(maxDepthError);
 
 expectType<Readonly<Record<string, readonly string[]>>>(visitorKeys);

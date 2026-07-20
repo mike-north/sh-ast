@@ -80,13 +80,13 @@ describe('parseSync — criterion 1: typed, catchable error before the WASM pars
     expect(() => parseSync(nestedSubshells(2000))).toThrow(ShParseMaxDepthError);
   });
 
-  it('the thrown error carries the stable ESLINT_SH_PARSE_MAX_DEPTH code', () => {
+  it('the thrown error carries the stable SH_AST_PARSE_MAX_DEPTH code', () => {
     expect.assertions(2);
     try {
       parseSync(nestedSubshells(2000));
     } catch (error) {
       expect(error).toBeInstanceOf(ShParseMaxDepthError);
-      expect((error as ShParseMaxDepthError).code).toBe('ESLINT_SH_PARSE_MAX_DEPTH');
+      expect((error as ShParseMaxDepthError).code).toBe('SH_AST_PARSE_MAX_DEPTH');
     }
   });
 

@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-readonly code = "ESLINT_SH_PARSE_MAX_DEPTH";
+readonly code = "SH_AST_PARSE_MAX_DEPTH";
 ```
