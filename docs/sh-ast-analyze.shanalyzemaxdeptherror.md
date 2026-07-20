@@ -13,7 +13,7 @@ Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely
 ```typescript
 export declare class ShAnalyzeMaxDepthError extends ShAstError 
 ```
-**Extends:** ShAstError
+**Extends:** [ShAstError](./sh-ast-analyze.shasterror.md)
 
 ## Constructors
 

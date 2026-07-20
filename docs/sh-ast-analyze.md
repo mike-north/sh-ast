@@ -43,6 +43,34 @@ Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely
 </td></tr>
 </tbody></table>
 
+## Abstract Classes
+
+<table><thead><tr><th>
+
+Abstract Class
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[ShAstError](./sh-ast-analyze.shasterror.md)
+
+
+</td><td>
+
+Common base class for every error this package throws — originally just [parseSync](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShInternalError](./sh-ast.shinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->).
+
+Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry point (see \#23) — every subclass thrown by `sh-ast/analyze`<!-- -->'s own functions extends this, so a consumer of that subpath alone can `catch`<!-- -->/reference the base without also importing from root.
+
+
+</td></tr>
+</tbody></table>
+
 ## Functions
 
 <table><thead><tr><th>
@@ -155,6 +183,17 @@ One place in the tree where a command is actually invoked — a `CallExpr` node,
 </td></tr>
 <tr><td>
 
+[Position](./sh-ast-analyze.position.md)
+
+
+</td><td>
+
+A 1-based line/column position. Columns are UTF-16 code units, matching JavaScript string indexing (see [ShNode.range](./sh-ast-analyze.shnode.range.md)<!-- -->).
+
+
+</td></tr>
+<tr><td>
+
 [ResolveArgv0Options](./sh-ast-analyze.resolveargv0options.md)
 
 
@@ -172,6 +211,21 @@ Options accepted by [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->.
 </td><td>
 
 Options controlling [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s tilde-expansion detection.
+
+
+</td></tr>
+<tr><td>
+
+[ShNode](./sh-ast-analyze.shnode.md)
+
+
+</td><td>
+
+A normalized AST node produced by [parseSync](./sh-ast.parsesync.md)<!-- -->.
+
+`range` and `loc` are expressed in UTF-16 code units, so `code.slice(node.range[0], node.range[1])` reproduces the node's exact source text — even though mvdan/sh itself reports byte offsets and byte-counting columns internally (see design/ARCHITECTURE.md's "Serialization contract"). Every other field copied over from mvdan/sh's typedjson tree keeps its original value but with the field name lowercased (`Stmts` becomes `stmts`<!-- -->, `CondLast` becomes `condlast`<!-- -->, etc.).
+
+Also re-exported from `sh-ast/analyze` (see \#23) — the subpath's public surface consumes and exposes `ShNode`<!-- -->, so a consumer can reference the type without also importing from the root `sh-ast` entry point.
 
 
 </td></tr>

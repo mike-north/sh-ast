@@ -41,7 +41,7 @@ export interface Position {
 }
 
 /**
- * A normalized AST node produced by {@link parseSync}.
+ * A normalized AST node produced by {@link sh-ast#parseSync | parseSync}.
  *
  * `range` and `loc` are expressed in UTF-16 code units, so
  * `code.slice(node.range[0], node.range[1])` reproduces the node's exact
@@ -50,6 +50,10 @@ export interface Position {
  * "Serialization contract"). Every other field copied over from mvdan/sh's
  * typedjson tree keeps its original value but with the field name
  * lowercased (`Stmts` becomes `stmts`, `CondLast` becomes `condlast`, etc.).
+ *
+ * Also re-exported from `sh-ast/analyze` (see #23) — the subpath's public
+ * surface consumes and exposes `ShNode`, so a consumer can reference the type
+ * without also importing from the root `sh-ast` entry point.
  *
  * @public
  */
