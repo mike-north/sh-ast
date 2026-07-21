@@ -34,14 +34,19 @@ export type {
 
 // Re-exported from the root errors module so a consumer of enumerateCommands/
 // resolveArgv0 can `import { ShAnalyzeMaxDepthError } from 'sh-ast/analyze'`
-// without also reaching into the root `sh-ast` entry point.
-export { ShAnalyzeInvalidWrapperSpecError, ShAnalyzeMaxDepthError } from '../errors.js';
+// without also reaching into the root `sh-ast` entry point. `ShAstError`
+// is the shared base every analyze-layer error extends (see
+// `ShAnalyzeMaxDepthError`, `ShAnalyzeInvalidWrapperSpecError`), so it's
+// re-exported here too — otherwise a consumer could not `catch`/reference
+// the base class without also importing from the root `sh-ast` entry point
+// (see #23).
+export { ShAnalyzeInvalidWrapperSpecError, ShAnalyzeMaxDepthError, ShAstError } from '../errors.js';
 
-// `ShNode` (resolveWord's parameter type) is deliberately *not* re-exported
-// here: it's the root `sh-ast` entry point's type (see `sh-ast`'s own
-// `index.ts`), and every caller of `resolveWord` already has a `ShNode` in
-// hand from `parseSync`/`walk` there. This is a known, intentional
-// "ae-forgotten-export" in this subpath's api-report — `sh-ast/analyze`
-// consumes the root layer's type without re-exporting it, rather than
-// re-exporting it (and its own transitive doc-linked types) just to
-// silence API Extractor.
+// `ShNode` (resolveWord's/enumerateCommands's parameter and CommandSite.node
+// type) is re-exported here for the same reason as `ShAstError` above:
+// consistency, so a consumer of `sh-ast/analyze` can reference every type
+// its public surface mentions without also reaching into the root `sh-ast`
+// entry point (see #23). `Position` is re-exported alongside it because
+// `ShNode.loc` is defined in terms of it — re-exporting `ShNode` without it
+// would just trade one ae-forgotten-export warning for another.
+export type { Position, ShNode } from '../types.js';

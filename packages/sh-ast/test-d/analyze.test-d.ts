@@ -7,10 +7,13 @@
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import {
   DEFAULT_TRANSPARENT_WRAPPERS,
+  ShAnalyzeInvalidWrapperSpecError,
+  ShAnalyzeMaxDepthError,
+  ShAstError,
   enumerateCommands,
   resolveArgv0,
   resolveWord,
-} from '../src/analyze/index.js';
+} from 'sh-ast/analyze';
 import type {
   Argv0ChainWord,
   Argv0Resolution,
@@ -18,13 +21,28 @@ import type {
   Argv0UnresolvedWord,
   CommandContext,
   CommandSite,
+  Position,
   ResolveArgv0Options,
   ResolveWordOptions,
+  ShNode as AnalyzeShNode,
   WordResolution,
   WordResolutionReason,
   WrapperSpec,
-} from '../src/analyze/index.js';
-import type { ShNode, ShNodes } from '../src/index.js';
+} from 'sh-ast/analyze';
+import type { ShNode, ShNodes } from 'sh-ast';
+
+// `sh-ast/analyze` re-exports the shared base error class, and `ShNode`/
+// `Position` (see https://github.com/mike-north/sh-ast/issues/23): a
+// consumer of this subpath alone can reference/catch these without also
+// importing from the root `sh-ast` entry point.
+expectAssignable<new (message: string) => Error>(ShAnalyzeInvalidWrapperSpecError);
+declare const analyzeError: ShAnalyzeMaxDepthError;
+expectAssignable<ShAstError>(analyzeError);
+declare const analyzeShNode: AnalyzeShNode;
+expectType<ShNode>(analyzeShNode);
+declare const analyzePosition: Position;
+expectType<number>(analyzePosition.line);
+expectType<number>(analyzePosition.column);
 
 declare const word: ShNodes.ShWordNode;
 declare const node: ShNode;

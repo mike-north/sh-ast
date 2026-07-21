@@ -11,7 +11,7 @@ Thrown by `sh-ast/analyze`<!-- -->'s `resolveArgv0` when a caller-supplied `opti
 ```typescript
 export declare class ShAnalyzeInvalidWrapperSpecError extends ShAstError 
 ```
-**Extends:** ShAstError
+**Extends:** [ShAstError](./sh-ast-analyze.shasterror.md)
 
 ## Constructors
 
