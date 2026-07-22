@@ -68,7 +68,7 @@ describe('dialect matrix — regex test `=~` (parser.go:2614, checkLang: langBas
   );
 
   it("mksh: `[[ a =~ b ]]` throws — regex tests are not in mksh's checkLang set", () => {
-    expect(() => parseSync('[[ a =~ b ]]', { dialect: 'mksh' })).toThrow(/regex tests/);
+    expect(() => parseSync('[[ a =~ b ]]', { dialect: 'mksh' })).toThrow(ShParseError);
   });
 
   it('posix: `[[ a =~ b ]]` is accepted, but the checkLang gate is never reached — `[[` is already an ordinary word under posix (see "test clause" block above), so the whole line is a CallExpr and `=~` is just another literal argument', () => {
@@ -91,7 +91,7 @@ describe('dialect matrix — array literal `a=(1 2 3)` (parser.go:1501/1929, che
   );
 
   it("posix: array literal throws — arrays are not in posix's checkLang set", () => {
-    expect(() => parseSync('a=(1 2 3)', { dialect: 'posix' })).toThrow(/arrays/);
+    expect(() => parseSync('a=(1 2 3)', { dialect: 'posix' })).toThrow(ShParseError);
   });
 });
 
@@ -110,7 +110,7 @@ describe('dialect matrix — process substitution `<()` (lexer.go:601-605, LEXER
   it.each(['posix', 'mksh'] as const)(
     '%s: `cat <(echo hi)` throws — `<(` is never tokenized as a process substitution opener outside langBashLike|LangZsh, so it falls back to a bare `<` redirect looking for a word',
     (dialect) => {
-      expect(() => parseSync('cat <(echo hi)', { dialect })).toThrow(/must be followed by a word/);
+      expect(() => parseSync('cat <(echo hi)', { dialect })).toThrow(ShParseError);
     },
   );
 });
@@ -144,9 +144,7 @@ describe('dialect matrix — `function` keyword (parser.go:2166 SILENT gate for 
   });
 
   it('posix: `function f { echo hi; }` throws — "function" falls through to an ordinary word under posix, then hits the checkLang(langBashLike) fallback error once it is immediately followed by "{"', () => {
-    expect(() => parseSync('function f { echo hi; }', { dialect: 'posix' })).toThrow(
-      /"function" builtin/,
-    );
+    expect(() => parseSync('function f { echo hi; }', { dialect: 'posix' })).toThrow(ShParseError);
   });
 });
 
@@ -160,7 +158,7 @@ describe('dialect matrix — c-style for `for (( ; ; ))` (parser.go:2414, checkL
     '%s: c-style for throws — not in the langBashLike|LangZsh checkLang set (mksh excluded, unlike its usual bash/mksh/zsh grouping)',
     (dialect) => {
       expect(() => parseSync('for ((i=0;i<3;i++)); do echo $i; done', { dialect })).toThrow(
-        /c-style fors/,
+        ShParseError,
       );
     },
   );
@@ -180,7 +178,7 @@ describe('dialect matrix — extended glob `@(a|b)` (lexer.go:404-420 gates toke
   );
 
   it('posix: `ls @(a|b)` throws — not in the langBashLike|LangMirBSDKorn checkLang set', () => {
-    expect(() => parseSync('ls @(a|b)', { dialect: 'posix' })).toThrow(/extended globs/);
+    expect(() => parseSync('ls @(a|b)', { dialect: 'posix' })).toThrow(ShParseError);
   });
 
   it("zsh: `ls @(a|b)` parses WITHOUT error but WITHOUT an ExtGlob node — zsh's lexer (lexer.go:404-411) never tokenizes `@(` as an extended-glob opener at all (to avoid ambiguity with zsh glob qualifiers like `*(N)`), so `@(a|b)` stays two plain Lit word parts and the checkLang gate is never reached", () => {
@@ -202,7 +200,7 @@ describe('dialect matrix — herestring `<<<` (parser.go:2036, checkLang: langBa
   );
 
   it("posix: `cat <<< hi` throws — herestrings are not in posix's checkLang set", () => {
-    expect(() => parseSync('cat <<< hi', { dialect: 'posix' })).toThrow(/herestrings/);
+    expect(() => parseSync('cat <<< hi', { dialect: 'posix' })).toThrow(ShParseError);
   });
 });
 
@@ -231,22 +229,29 @@ describe('dialect matrix — `let` clause (parser.go:2166, SILENT gate: langBash
   });
 });
 
-describe('dialect matrix — cross-cutting: every parse error is a ShParseError, never a different error type', () => {
+describe('dialect matrix — gate error messages identify the rejected construct', () => {
+  // The per-construct reject cells above assert only that a `ShParseError` is thrown, so
+  // the accept/reject matrix stays robust to upstream wording tweaks. This one block
+  // additionally pins that the *right* dialect gate fired (not some unrelated syntax
+  // error) by matching a stable fragment of each mvdan/sh gate message. It is the single
+  // place intentionally coupled to mvdan/sh's message wording — if a future mvdan/sh
+  // release only rephrases a gate message, just this block updates, not the whole matrix.
   it.each([
-    ['posix', 'a=(1 2 3)'],
-    ['mksh', '[[ a =~ b ]]'],
-    ['posix', 'cat <(echo hi)'],
-    ['posix', 'function f { echo hi; }'],
-    ['mksh', 'for ((i=0;i<3;i++)); do echo $i; done'],
-    ['posix', 'ls @(a|b)'],
-    ['posix', 'cat <<< hi'],
-  ] as const)('%s / %s throws ShParseError', (dialect, source) => {
-    expect.assertions(1);
+    ['posix', 'a=(1 2 3)', /arrays/],
+    ['mksh', '[[ a =~ b ]]', /regex tests/],
+    ['posix', 'cat <(echo hi)', /must be followed by a word/],
+    ['posix', 'function f { echo hi; }', /"function" builtin/],
+    ['mksh', 'for ((i=0;i<3;i++)); do echo $i; done', /c-style fors/],
+    ['posix', 'ls @(a|b)', /extended globs/],
+    ['posix', 'cat <<< hi', /herestrings/],
+  ] as const)('%s / %s throws a ShParseError whose message matches %s', (dialect, source, re) => {
+    let thrown: unknown;
     try {
       parseSync(source, { dialect });
-      throw new Error('expected parseSync to throw');
     } catch (error) {
-      expect(error).toBeInstanceOf(ShParseError);
+      thrown = error;
     }
+    expect(thrown).toBeInstanceOf(ShParseError);
+    expect((thrown as ShParseError).message).toMatch(re);
   });
 });

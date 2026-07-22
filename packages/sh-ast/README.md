@@ -52,8 +52,8 @@ zsh`, mapped to mvdan/sh's `LangVariant` by string name.
 (`checkLang` in its `syntax/parser.go`) when the requested dialect isn't in that construct's
 allowed set — but a couple of bash-only keywords (`[[` test clauses, `let`) have **no such gate**:
 outside the dialects that recognize them, they silently fall through to ordinary word/command
-parsing instead of erroring. The table below is generated from that source, not from guessing at
-current behavior, and is pinned by `test/dialect-matrix.test.ts`.
+parsing instead of erroring. The table below is derived by hand from that source, not from
+guessing at current behavior, and is pinned by `test/dialect-matrix.test.ts`.
 
 | Construct                  |    bash    |         posix          |    mksh    |    bats    |              zsh               |
 | -------------------------- | :--------: | :--------------------: | :--------: | :--------: | :----------------------------: |
