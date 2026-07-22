@@ -1,5 +1,15 @@
 # sh-ast
 
+## 0.3.0
+
+### Minor Changes
+
+- [#24](https://github.com/mike-north/sh-ast/pull/24) [`b93cba8`](https://github.com/mike-north/sh-ast/commit/b93cba8d7238cbc120d77a85b93a9f27b89b6a11) Thanks [@mike-north](https://github.com/mike-north)! - Generated node types (`node-types.d.ts`) now give every scalar leaf field a concrete TypeScript type instead of leaving it as `unknown` — e.g. `ShLitNode.value: string | undefined`, `ShStmtNode.negated: boolean | undefined`, `ShRedirectNode.op: number | undefined` (see issue [#22](https://github.com/mike-north/sh-ast/issues/22)). `tools/gen-visitor-keys` was only classifying node-reference/interface-union child fields; plain scalars fell through to the `[field: string]: unknown` catch-all every node still carries.
+
+  Types are derived from the pinned `mvdan.cc/sh/v3 v3.13.1` struct definitions plus the shim's actual runtime serialization: `bool`/`string` fields map straight through, and mvdan/sh's `uint32`-backed operator-enum fields (`RedirOperator`, `BinAritOperator`, `CaseOperator`, ...) are typed `number` — those types implement only `fmt.Stringer`, not `json.Marshaler`, so the shim's encoder serializes them as plain JSON numbers, not string tokens.
+
+  Every generated interface still carries `[field: string]: unknown` as an escape hatch for fields this generator doesn't yet classify — this is unchanged and intentional, not a hedge against the newly-typed fields.
+
 ## 0.2.0
 
 ### Minor Changes
