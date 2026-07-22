@@ -31,7 +31,7 @@
  * @see https://github.com/mvdan/sh/blob/v3.13.1/syntax/tokens.go
  */
 import { expectNotAssignable, expectType } from 'tsd';
-import type { ShNodes } from '../src/index.js';
+import type { ShNodes } from 'sh-ast';
 
 // --- ShArithmCmdNode ---
 declare const arithmCmd: ShNodes.ShArithmCmdNode;
