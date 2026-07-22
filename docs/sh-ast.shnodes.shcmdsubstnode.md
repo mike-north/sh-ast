@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[backquotes?](./sh-ast.shnodes.shcmdsubstnode.backquotes.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [last](./sh-ast.shnodes.shcmdsubstnode.last.md)
 
 
@@ -94,6 +115,27 @@ readonly \[number, number\]
 </td></tr>
 <tr><td>
 
+[replyvar?](./sh-ast.shnodes.shcmdsubstnode.replyvar.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [stmts](./sh-ast.shnodes.shcmdsubstnode.stmts.md)
 
 
@@ -108,6 +150,27 @@ readonly [ShStmtNode](./sh-ast.shnodes.shstmtnode.md)<!-- -->\[\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[tempfile?](./sh-ast.shnodes.shcmdsubstnode.tempfile.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

@@ -94,6 +94,27 @@ readonly \[number, number\]
 </td></tr>
 <tr><td>
 
+[unsigned?](./sh-ast.shnodes.sharithmcmdnode.unsigned.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [x?](./sh-ast.shnodes.sharithmcmdnode.x.md)
 
 

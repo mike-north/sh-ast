@@ -56,6 +56,27 @@ Description
 </td></tr>
 <tr><td>
 
+[posixformat?](./sh-ast.shnodes.shtimeclausenode.posixformat.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [range](./sh-ast.shnodes.shtimeclausenode.range.md)
 
 

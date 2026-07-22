@@ -99,6 +99,8 @@ interface ShArithmCmdNode {
     // (undocumented)
     readonly type: 'ArithmCmd';
     // (undocumented)
+    readonly unsigned?: boolean;
+    // (undocumented)
     readonly x?: ShArithmExprNode;
 }
 
@@ -106,6 +108,8 @@ interface ShArithmCmdNode {
 interface ShArithmExpNode {
     // (undocumented)
     [field: string]: unknown;
+    // (undocumented)
+    readonly bracket?: boolean;
     // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
@@ -115,6 +119,8 @@ interface ShArithmExpNode {
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'ArithmExp';
+    // (undocumented)
+    readonly unsigned?: boolean;
     // (undocumented)
     readonly x?: ShArithmExprNode;
 }
@@ -168,6 +174,8 @@ interface ShAssignNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly append?: boolean;
+    // (undocumented)
     readonly array?: ShArrayExprNode;
     // (undocumented)
     readonly index?: ShArithmExprNode;
@@ -176,6 +184,8 @@ interface ShAssignNode {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly naked?: boolean;
     // (undocumented)
     readonly name?: ShLitNode;
     // (undocumented)
@@ -201,6 +211,8 @@ interface ShBinaryArithmNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'BinaryArithm';
@@ -220,6 +232,8 @@ interface ShBinaryCmdNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'BinaryCmd';
@@ -238,6 +252,8 @@ interface ShBinaryTestNode {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly op?: number;
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
@@ -281,6 +297,8 @@ interface ShBraceExpNode {
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
+    readonly sequence?: boolean;
+    // (undocumented)
     readonly type: 'BraceExp';
 }
 
@@ -307,6 +325,8 @@ interface ShCallExprNode {
 interface ShCaseClauseNode {
     // (undocumented)
     [field: string]: unknown;
+    // (undocumented)
+    readonly braces?: boolean;
     // (undocumented)
     readonly items: readonly ShCaseItemNode[];
     // (undocumented)
@@ -338,6 +358,8 @@ interface ShCaseItemNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly patterns: readonly ShWordNode[];
     // (undocumented)
     readonly range: readonly [number, number];
@@ -352,6 +374,8 @@ interface ShCmdSubstNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly backquotes?: boolean;
+    // (undocumented)
     readonly last: readonly ShCommentNode[];
     // (undocumented)
     readonly loc: {
@@ -361,7 +385,11 @@ interface ShCmdSubstNode {
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
+    readonly replyvar?: boolean;
+    // (undocumented)
     readonly stmts: readonly ShStmtNode[];
+    // (undocumented)
+    readonly tempfile?: boolean;
     // (undocumented)
     readonly type: 'CmdSubst';
 }
@@ -396,6 +424,8 @@ interface ShCommentNode {
     };
     // (undocumented)
     readonly range: readonly [number, number];
+    // (undocumented)
+    readonly text?: string;
     // (undocumented)
     readonly type: 'Comment';
 }
@@ -445,6 +475,8 @@ interface ShDblQuotedNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly dollar?: boolean;
+    // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
@@ -489,6 +521,8 @@ interface ShExpansionNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'Expansion';
@@ -505,6 +539,8 @@ interface ShExtGlobNode {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly op?: number;
     // (undocumented)
     readonly pattern?: ShLitNode;
     // (undocumented)
@@ -532,6 +568,8 @@ interface ShFileNode {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly name?: string;
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
@@ -564,6 +602,8 @@ interface ShForClauseNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly braces?: boolean;
+    // (undocumented)
     readonly do: readonly ShStmtNode[];
     // (undocumented)
     readonly dolast: readonly ShCommentNode[];
@@ -576,6 +616,8 @@ interface ShForClauseNode {
     readonly loop?: ShLoopNode;
     // (undocumented)
     readonly range: readonly [number, number];
+    // (undocumented)
+    readonly select?: boolean;
     // (undocumented)
     readonly type: 'ForClause';
 }
@@ -596,7 +638,11 @@ interface ShFuncDeclNode {
     // (undocumented)
     readonly names: readonly ShLitNode[];
     // (undocumented)
+    readonly parens?: boolean;
+    // (undocumented)
     readonly range: readonly [number, number];
+    // (undocumented)
+    readonly rsrvword?: boolean;
     // (undocumented)
     readonly type: 'FuncDecl';
 }
@@ -673,6 +719,8 @@ interface ShLitNode {
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'Lit';
+    // (undocumented)
+    readonly value?: string;
 }
 
 // @public
@@ -805,11 +853,17 @@ interface ShParamExpNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly excl?: boolean;
+    // (undocumented)
     readonly exp?: ShExpansionNode;
     // (undocumented)
     readonly flags?: ShLitNode;
     // (undocumented)
     readonly index?: ShArithmExprNode;
+    // (undocumented)
+    readonly isset?: boolean;
+    // (undocumented)
+    readonly length?: boolean;
     // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
@@ -817,6 +871,8 @@ interface ShParamExpNode {
     };
     // (undocumented)
     readonly modifiers: readonly ShLitNode[];
+    // (undocumented)
+    readonly names?: number;
     // (undocumented)
     readonly nestedparam?: ShWordPartNode;
     // (undocumented)
@@ -826,9 +882,13 @@ interface ShParamExpNode {
     // (undocumented)
     readonly repl?: ShReplaceNode;
     // (undocumented)
+    readonly short?: boolean;
+    // (undocumented)
     readonly slice?: ShSliceNode;
     // (undocumented)
     readonly type: 'ParamExp';
+    // (undocumented)
+    readonly width?: boolean;
 }
 
 // @public
@@ -906,6 +966,8 @@ interface ShProcSubstNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly stmts: readonly ShStmtNode[];
@@ -927,6 +989,8 @@ interface ShRedirectNode {
     // (undocumented)
     readonly n?: ShLitNode;
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'Redirect';
@@ -938,6 +1002,8 @@ interface ShRedirectNode {
 interface ShReplaceNode {
     // (undocumented)
     [field: string]: unknown;
+    // (undocumented)
+    readonly all?: boolean;
     // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
@@ -958,6 +1024,8 @@ interface ShSglQuotedNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly dollar?: boolean;
+    // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
@@ -966,6 +1034,8 @@ interface ShSglQuotedNode {
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'SglQuoted';
+    // (undocumented)
+    readonly value?: string;
 }
 
 // @public
@@ -992,14 +1062,22 @@ interface ShStmtNode {
     // (undocumented)
     [field: string]: unknown;
     // (undocumented)
+    readonly background?: boolean;
+    // (undocumented)
     readonly cmd?: ShCommandNode;
     // (undocumented)
     readonly comments: readonly ShCommentNode[];
+    // (undocumented)
+    readonly coprocess?: boolean;
+    // (undocumented)
+    readonly disown?: boolean;
     // (undocumented)
     readonly loc: {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly negated?: boolean;
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
@@ -1076,6 +1154,8 @@ interface ShTimeClauseNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly posixformat?: boolean;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly stmt?: ShStmtNode;
@@ -1093,6 +1173,10 @@ interface ShUnaryArithmNode {
         readonly end: { readonly line: number; readonly column: number };
     };
     // (undocumented)
+    readonly op?: number;
+    // (undocumented)
+    readonly post?: boolean;
+    // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'UnaryArithm';
@@ -1109,6 +1193,8 @@ interface ShUnaryTestNode {
         readonly start: { readonly line: number; readonly column: number };
         readonly end: { readonly line: number; readonly column: number };
     };
+    // (undocumented)
+    readonly op?: number;
     // (undocumented)
     readonly range: readonly [number, number];
     // (undocumented)
@@ -1138,6 +1224,8 @@ interface ShWhileClauseNode {
     readonly range: readonly [number, number];
     // (undocumented)
     readonly type: 'WhileClause';
+    // (undocumented)
+    readonly until?: boolean;
 }
 
 // @public

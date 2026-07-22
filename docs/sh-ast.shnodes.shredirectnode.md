@@ -98,6 +98,27 @@ _(Optional)_
 </td></tr>
 <tr><td>
 
+[op?](./sh-ast.shnodes.shredirectnode.op.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [range](./sh-ast.shnodes.shredirectnode.range.md)
 
 

@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[bracket?](./sh-ast.shnodes.sharithmexpnode.bracket.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [loc](./sh-ast.shnodes.sharithmexpnode.loc.md)
 
 
@@ -89,6 +110,27 @@ readonly \[number, number\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[unsigned?](./sh-ast.shnodes.sharithmexpnode.unsigned.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

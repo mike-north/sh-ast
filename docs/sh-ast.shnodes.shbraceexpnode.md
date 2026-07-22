@@ -94,6 +94,27 @@ readonly \[number, number\]
 </td></tr>
 <tr><td>
 
+[sequence?](./sh-ast.shnodes.shbraceexpnode.sequence.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [type](./sh-ast.shnodes.shbraceexpnode.type.md)
 
 

@@ -92,5 +92,26 @@ readonly \[number, number\]
 
 
 </td></tr>
+<tr><td>
+
+[value?](./sh-ast.shnodes.shlitnode.value.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
 </tbody></table>
 

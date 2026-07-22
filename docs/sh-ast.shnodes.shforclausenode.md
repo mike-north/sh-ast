@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[braces?](./sh-ast.shnodes.shforclausenode.braces.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [do](./sh-ast.shnodes.shforclausenode.do.md)
 
 
@@ -129,6 +150,27 @@ readonly \[number, number\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[select?](./sh-ast.shnodes.shforclausenode.select.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

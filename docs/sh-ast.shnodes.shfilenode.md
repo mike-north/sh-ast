@@ -75,6 +75,27 @@ readonly [ShCommentNode](./sh-ast.shnodes.shcommentnode.md)<!-- -->\[\]
 </td></tr>
 <tr><td>
 
+[name?](./sh-ast.shnodes.shfilenode.name.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [range](./sh-ast.shnodes.shfilenode.range.md)
 
 

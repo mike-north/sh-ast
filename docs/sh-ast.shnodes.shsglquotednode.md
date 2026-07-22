@@ -37,6 +37,27 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[dollar?](./sh-ast.shnodes.shsglquotednode.dollar.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_
+
+
+</td></tr>
+<tr><td>
+
 [loc](./sh-ast.shnodes.shsglquotednode.loc.md)
 
 
@@ -89,6 +110,27 @@ readonly \[number, number\]
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[value?](./sh-ast.shnodes.shsglquotednode.value.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+string
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>
