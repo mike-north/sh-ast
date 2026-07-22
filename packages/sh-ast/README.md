@@ -45,6 +45,64 @@ zsh`, mapped to mvdan/sh's `LangVariant` by string name.
 - `walk(node, visit)` — visits every node in a normalized tree; discovers children structurally
   rather than depending on `visitorKeys`.
 
+## Dialect enforcement
+
+`dialect` maps directly onto mvdan/sh's `LangVariant` (`LangBash`, `LangPOSIX`, `LangMirBSDKorn`,
+`LangBats`, `LangZsh`). mvdan/sh gates most dialect-specific syntax with a hard parse error
+(`checkLang` in its `syntax/parser.go`) when the requested dialect isn't in that construct's
+allowed set — but a couple of bash-only keywords (`[[` test clauses, `let`) have **no such gate**:
+outside the dialects that recognize them, they silently fall through to ordinary word/command
+parsing instead of erroring. The table below is generated from that source, not from guessing at
+current behavior, and is pinned by `test/dialect-matrix.test.ts`.
+
+| Construct                  |    bash    |         posix          |    mksh    |    bats    |              zsh               |
+| -------------------------- | :--------: | :--------------------: | :--------: | :--------: | :----------------------------: |
+| Test clause `[[ ]]`        |   parses   | **parses** (see below) |   parses   |   parses   |             parses             |
+| Regex test `[[ a =~ b ]]`  |   parses   |        parses\*        | **error**  |   parses   |             parses             |
+| Array literal `a=(1 2 3)`  |   parses   |       **error**        |   parses   |   parses   |             parses             |
+| Process substitution `<()` |   parses   |       **error**        | **error**  |   parses   |             parses             |
+| Brace expansion `{a,b}`    | parses\*\* |       parses\*\*       | parses\*\* | parses\*\* |           parses\*\*           |
+| `function` keyword         |   parses   |       **error**        |   parses   |   parses   |             parses             |
+| C-style `for (( ; ; ))`    |   parses   |       **error**        | **error**  |   parses   |             parses             |
+| Extended glob `@(a\|b)`    |   parses   |       **error**        |   parses   |   parses   | parses\*\*\* (no ExtGlob node) |
+| Herestring `<<<`           |   parses   |       **error**        |   parses   |   parses   |             parses             |
+| `let` clause               |   parses   | **parses** (see below) |   parses   |   parses   |             parses             |
+
+\* Under posix, `[[` is already an ordinary command word (see below), so `[[ a =~ b ]]` never
+reaches the regex-test parser at all — `=~` is just another literal argument to a command named
+`[[`.
+
+\*\* Brace expansion is never split into a `BraceExp` node by this bridge, in any dialect — mvdan/sh
+only produces `BraceExp` nodes when the caller explicitly runs its `syntax.SplitBraces()`
+post-processing pass, which `shim/main.go` does not invoke. `{a,b}` always parses as an ordinary
+`Lit` word part, identically in every dialect.
+
+\*\*\* zsh's lexer never tokenizes `@(` as an extended-glob opener at all — deliberately, to avoid
+ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses without error under
+`dialect: 'zsh'`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
+`checkLang` gate that rejects extended globs under posix is never reached for zsh.
+
+### `[[ ... ]]` and `let` under posix: accepted by design
+
+`dialect: 'posix'` accepting `[[ a == b ]]` and `let x=1` is **intentional upstream behavior, not
+a bridge bug**. POSIX sh has no `[[` test clause or `let` builtin as syntax — so mvdan/sh's parser
+doesn't special-case those keywords at all outside bash-like/mksh/zsh; it falls through to
+ordinary word/command parsing, exactly as a real POSIX-mode shell would tokenize `[[` as a command
+name. Contrast bash-only constructs with actual grammar (arrays, `[[ ... =~ ... ]]`, C-style
+`for`, `<()`, `<<<`, extended globs, the `function` keyword) — those all fail to parse under
+`checkLang` because they don't have a valid ordinary-word/command reading to fall back to.
+
+Concretely, under `dialect: 'posix'`:
+
+```ts
+const file = parseSync('[[ a == b ]]', { dialect: 'posix' });
+file.stmts[0].cmd.type; // "CallExpr" — a command literally named "[[", not "TestClause"
+```
+
+Evidence: mvdan/sh's own test suite (`syntax/filetests_test.go`) asserts this exact shape for
+`LangPOSIX`, and `shim/main.go` passes the requested dialect through to mvdan/sh's
+`LangVariant.Set` unmodified — the bridge does not special-case or mis-map `[[`.
+
 ## Regenerating the schema tables
 
 After bumping the pinned mvdan/sh version (`shim/go.mod` _and_ `../../tools/gen-visitor-keys/go.mod`
