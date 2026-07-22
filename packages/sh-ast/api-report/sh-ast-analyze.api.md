@@ -65,7 +65,6 @@ export interface CommandSite {
     readonly argv: readonly WordResolution[];
     readonly argv0: WordResolution;
     readonly context: readonly CommandContext[];
-    // Warning: (ae-forgotten-export) The symbol "ShNode" needs to be exported by the entry point index.d.ts
     readonly node: ShNode;
 }
 
@@ -74,6 +73,14 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[];
 
 // @public
 export function enumerateCommands(root: ShNode): CommandSite[];
+
+// @public
+export interface Position {
+    // (undocumented)
+    readonly column: number;
+    // (undocumented)
+    readonly line: number;
+}
 
 // @public
 export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): Argv0Resolution;
@@ -91,8 +98,6 @@ export interface ResolveWordOptions {
     readonly context?: 'command-argument' | 'assignment-value';
 }
 
-// Warning: (ae-forgotten-export) The symbol "ShAstError" needs to be exported by the entry point index.d.ts
-//
 // @public
 export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
     constructor(message: string);
@@ -106,6 +111,26 @@ export class ShAnalyzeMaxDepthError extends ShAstError {
     // (undocumented)
     readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
     readonly maxDepth: number;
+}
+
+// @public
+export abstract class ShAstError extends Error {
+    abstract readonly code: string;
+}
+
+// @public
+export interface ShNode {
+    // (undocumented)
+    [field: string]: unknown;
+    // (undocumented)
+    readonly loc: {
+        readonly start: Position;
+        readonly end: Position;
+    };
+    // (undocumented)
+    readonly range: readonly [number, number];
+    // (undocumented)
+    readonly type: string;
 }
 
 // @public

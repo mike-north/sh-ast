@@ -2,15 +2,24 @@ import type { ShellDialect } from './types.js';
 
 /**
  * Common base class for every error this package throws — originally just
- * {@link parseSync}'s errors, now also the `sh-ast/analyze` layer's (see
- * {@link ShAnalyzeMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
- * Provides a stable, documented `code` discriminator (e.g.
- * `"SH_AST_PARSE_ERROR"`) alongside the usual `instanceof` narrowing, so
- * consumers can branch on failure kind programmatically without parsing
- * `.message` strings. Never thrown directly — only via its concrete
- * subclasses ({@link ShParseError}, {@link ShInvalidDialectError},
- * {@link ShInternalError}, {@link ShAnalyzeMaxDepthError},
- * {@link ShParseMaxDepthError}, {@link ShAnalyzeInvalidWrapperSpecError}).
+ * {@link sh-ast#parseSync | parseSync}'s errors, now also the
+ * `sh-ast/analyze` layer's (see {@link ShAnalyzeMaxDepthError},
+ * {@link ShAnalyzeInvalidWrapperSpecError}). Provides a stable, documented
+ * `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`) alongside the usual
+ * `instanceof` narrowing, so consumers can branch on failure kind
+ * programmatically without parsing `.message` strings. Never thrown directly
+ * — only via its concrete subclasses
+ * ({@link sh-ast#ShParseError | ShParseError},
+ * {@link sh-ast#ShInvalidDialectError | ShInvalidDialectError},
+ * {@link sh-ast#ShInternalError | ShInternalError},
+ * {@link ShAnalyzeMaxDepthError},
+ * {@link sh-ast#ShParseMaxDepthError | ShParseMaxDepthError},
+ * {@link ShAnalyzeInvalidWrapperSpecError}).
+ *
+ * Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry
+ * point (see #23) — every subclass thrown by `sh-ast/analyze`'s own
+ * functions extends this, so a consumer of that subpath alone can
+ * `catch`/reference the base without also importing from root.
  *
  * @public
  */
