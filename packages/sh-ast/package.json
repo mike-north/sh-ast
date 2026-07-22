@@ -1,7 +1,7 @@
 {
   "name": "sh-ast",
   "description": "Synchronous shell-script parser (mvdan/sh via WASM) with a normalized, UTF-16-safe AST.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Mike North <michael.l.north@gmail.com>",
   "repository": {
     "type": "git",
