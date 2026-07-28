@@ -17,7 +17,6 @@
  *
  * @see https://github.com/mvdan/sh — mvdan/sh, the underlying Go shell parser (pinned v3.13.1)
  * @see https://pkg.go.dev/mvdan.cc/sh/v3/syntax#LangVariant — the dialect enum this maps `dialect` onto
- * @see design/ARCHITECTURE.md — serialization contract, parse errors and dialects
  * @see packages/sh-ast/README.md#dialect-enforcement — the published construct table this test pins
  */
 import { describe, expect, it } from 'vitest';

@@ -50,7 +50,7 @@ zsh`, mapped to mvdan/sh's `LangVariant` by string name.
 `dialect` maps directly onto mvdan/sh's `LangVariant` (`LangBash`, `LangPOSIX`, `LangMirBSDKorn`,
 `LangBats`, `LangZsh`). mvdan/sh gates most dialect-specific syntax with a hard parse error
 (`checkLang` in its `syntax/parser.go`) when the requested dialect isn't in that construct's
-allowed set — but a couple of bash-only keywords (`[[` test clauses, `let`) have **no such gate**:
+allowed set — but two dialect-specific keywords (`[[` test clauses and `let`) have **no such gate**:
 outside the dialects that recognize them, they silently fall through to ordinary word/command
 parsing instead of erroring. The table below is derived by hand from that source, not from
 guessing at current behavior, and is pinned by `test/dialect-matrix.test.ts`.
@@ -88,9 +88,11 @@ ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses with
 a bridge bug**. POSIX sh has no `[[` test clause or `let` builtin as syntax — so mvdan/sh's parser
 doesn't special-case those keywords at all outside bash-like/mksh/zsh; it falls through to
 ordinary word/command parsing, exactly as a real POSIX-mode shell would tokenize `[[` as a command
-name. Contrast bash-only constructs with actual grammar (arrays, `[[ ... =~ ... ]]`, C-style
-`for`, `<()`, `<<<`, extended globs, the `function` keyword) — those all fail to parse under
-`checkLang` because they don't have a valid ordinary-word/command reading to fall back to.
+name. By contrast, dialect-specific constructs that cannot be read as ordinary commands—arrays,
+C-style `for`, `<()`, `<<<`, extended globs, and the `function` form—are rejected in POSIX mode,
+either by an explicit `checkLang` gate or, for process substitution, after lexer fallback. A regex
+operator inside `[[ a =~ b ]]` remains ordinary command text because POSIX mode never enters the
+test-clause parser.
 
 Concretely, under `dialect: 'posix'`:
 
