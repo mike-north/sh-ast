@@ -10,7 +10,7 @@
  *      links below and inline per test).
  *   2. Dynamic-in-chain / "never guessed through" — `describe('... criterion
  *      2 ...')`.
- *   3. `CallExpr.assigns` prefix counting, distinct from a wrapper's own
+ *   3. `CallExpr.Assigns` prefix counting, distinct from a wrapper's own
  *      `VAR=val` operands — `describe('... criterion 3 ...')`.
  *   4. Configurability (custom wrapper spec added; default wrapper removed)
  *      — `describe('... criterion 4 ...')`.
@@ -45,7 +45,7 @@ import {
 } from '../src/analyze/index.js';
 import { ShAnalyzeInvalidWrapperSpecError } from '../src/index.js';
 import { parseSync } from '../src/index.js';
-import type { ShellDialect, ShNode } from '../src/index.js';
+import { syntheticNode } from './analyze-fixtures.js';
 
 const sh = String.raw;
 
@@ -62,8 +62,8 @@ function assertDefined<T>(value: T | undefined, message: string): T {
 }
 
 /** Parses `src` and returns the sole `CommandSite` it produces. */
-function site(src: string, dialect?: ShellDialect): CommandSite {
-  const file = parseSync(src, dialect ? { dialect } : undefined);
+function site(src: string, dialect?: number): CommandSite {
+  const file = parseSync(src, dialect ? { Variant: dialect } : undefined);
   const sites = enumerateCommands(file);
   expect(sites, `expected exactly one CommandSite in: ${src}`).toHaveLength(1);
   return assertDefined(sites[0], 'unreachable — length checked above');
@@ -126,7 +126,7 @@ describe('resolveArgv0 — criterion 1: each default wrapper follows to its wrap
   // POSIX `time` utility: `time [-p] utility [argument...]` — but bash's
   // *reserved word* `time` is parsed by mvdan/sh as a transparent
   // `TimeClause` (see `enumerate-commands.ts`), never reaching
-  // `CallExpr.args` as an ordinary word, so an unquoted, statement-initial
+  // `CallExpr.Args` as an ordinary word, so an unquoted, statement-initial
   // `time rm x` never even produces a `CommandSite` whose argv0 reads
   // "time" — it produces one for `rm` directly, with no wrapper to
   // follow. Quoting suppresses bash's reserved-word recognition (Bash
@@ -197,7 +197,7 @@ describe('resolveArgv0 — criterion 2: an unknowable word in the chain is never
   });
 });
 
-describe('resolveArgv0 — criterion 3: CallExpr.assigns prefixes are counted separately from a wrapper operand', () => {
+describe('resolveArgv0 — criterion 3: CallExpr.Assigns prefixes are counted separately from a wrapper operand', () => {
   it('FOO=bar rm x -> effective rm, assignmentsSkipped: 1, chain has no wrapper (assigns are not argv words)', () => {
     const resolution = resolveArgv0(site('FOO=bar rm x'));
     expect(resolution.assignmentsSkipped).toBe(1);
@@ -216,7 +216,7 @@ describe('resolveArgv0 — criterion 3: CallExpr.assigns prefixes are counted se
     expect(chainSummary(resolution)).toEqual(['env', 'rm']);
   });
 
-  it('CallExpr.assigns prefixes and a wrapper VAR=val operand combine additively', () => {
+  it('CallExpr.Assigns prefixes and a wrapper VAR=val operand combine additively', () => {
     const resolution = resolveArgv0(site('FOO=bar env A=1 rm x'));
     expect(resolution.assignmentsSkipped).toBe(1);
     expect(chainSummary(resolution)).toEqual(['env', 'rm']);
@@ -316,8 +316,7 @@ describe('resolveArgv0 — edge cases', () => {
   // parsing for the rest of this wrapper scan").
 
   it('throws TypeError for a CommandSite with an empty argv (programmer misuse, not malformed shell source)', () => {
-    const loc: ShNode['loc'] = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
-    const node: ShNode = { type: 'CallExpr', range: [0, 0], loc, args: [], assigns: [] };
+    const node = syntheticNode('CallExpr', { Args: [], Assigns: [] });
     const emptySite: CommandSite = {
       node,
       argv0: { static: true, text: '' },
@@ -353,7 +352,7 @@ describe('resolveArgv0 — review fix: an unrecognized flag-shaped word never be
     ['env --default-signal rm x', 'env'],
   ] as const)(
     '%s (unrecognized flag for %s) -> effective is unresolvable, not the flag or a later word',
-    (src) => {
+    (src, _wrapper) => {
       const resolution = resolveArgv0(site(src));
       expect(resolution.effective).toEqual({ static: false, reason: 'unknown-flag' });
     },

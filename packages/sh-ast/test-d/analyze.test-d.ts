@@ -21,39 +21,39 @@ import type {
   Argv0UnresolvedWord,
   CommandContext,
   CommandSite,
-  Position,
+  SyntaxPos,
   ResolveArgv0Options,
   ResolveWordOptions,
-  ShNode as AnalyzeShNode,
+  Node as AnalyzeNode,
   WordResolution,
   WordResolutionReason,
   WrapperSpec,
 } from 'sh-ast/analyze';
-import type { ShNode, ShNodes } from 'sh-ast';
+import type { CallExpr, File, Node, Word } from 'sh-ast';
 
-// `sh-ast/analyze` re-exports the shared base error class, and `ShNode`/
-// `Position` (see https://github.com/mike-north/sh-ast/issues/23): a
+// `sh-ast/analyze` re-exports the shared base error class, and `Node`/
+// `SyntaxPos` (see https://github.com/mike-north/sh-ast/issues/23): a
 // consumer of this subpath alone can reference/catch these without also
 // importing from the root `sh-ast` entry point.
 expectAssignable<new (message: string) => Error>(ShAnalyzeInvalidWrapperSpecError);
 declare const analyzeError: ShAnalyzeMaxDepthError;
 expectAssignable<ShAstError>(analyzeError);
-declare const analyzeShNode: AnalyzeShNode;
-expectType<ShNode>(analyzeShNode);
-declare const analyzePosition: Position;
-expectType<number>(analyzePosition.line);
-expectType<number>(analyzePosition.column);
+declare const analyzeNode: AnalyzeNode;
+expectType<Node>(analyzeNode);
+declare const analyzeSyntaxPos: SyntaxPos;
+expectType<number>(analyzeSyntaxPos.Line);
+expectType<number>(analyzeSyntaxPos.Col);
 
-declare const word: ShNodes.ShWordNode;
-declare const node: ShNode;
+declare const word: Word;
+declare const node: Node;
 
-// resolveWord accepts a Word node (or any ShNode-typed value — the runtime
+// resolveWord accepts a Word node (or any Node-typed value — the runtime
 // check on `.type` is not expressible at the type level) and always
 // returns WordResolution.
 expectType<WordResolution>(resolveWord(word));
 expectType<WordResolution>(resolveWord(node));
 
-// resolveWord requires an ShNode argument — arbitrary values are rejected.
+// resolveWord requires an Node argument — arbitrary values are rejected.
 expectError(resolveWord(42));
 expectError(resolveWord('rm'));
 expectError(resolveWord(undefined));
@@ -84,8 +84,7 @@ if (result.static) {
   expectError(result.text);
 }
 
-// Both branches are readonly by contract, matching this package's other
-// public result shapes (ShNode/ShFile in ../src/index.js).
+// Analysis results are readonly snapshots; the retained upstream nodes remain mutable.
 if (result.static) {
   expectError((result.text = 'x'));
   expectError((result.static = false));
@@ -137,13 +136,13 @@ switch (reason) {
     break;
 }
 
-// enumerateCommands accepts any ShNode (typically a File, but any subtree
+// enumerateCommands accepts any Node (typically a File, but any subtree
 // is handled) and always returns an array of CommandSite.
-declare const file: ShNodes.ShFileNode;
+declare const file: File;
 expectType<CommandSite[]>(enumerateCommands(file));
 expectType<CommandSite[]>(enumerateCommands(node));
 
-// enumerateCommands requires an ShNode argument — arbitrary values are
+// enumerateCommands requires an Node argument — arbitrary values are
 // rejected (unlike resolveWord, there is no runtime `.type` check to
 // express here either, but the parameter type itself is still enforced).
 expectError(enumerateCommands(42));
@@ -153,7 +152,7 @@ expectError(enumerateCommands());
 
 // CommandSite's shape: node/argv0/argv/context, all readonly.
 declare const site: CommandSite;
-expectType<ShNode>(site.node);
+expectType<CallExpr>(site.node);
 expectType<WordResolution>(site.argv0);
 expectType<readonly WordResolution[]>(site.argv);
 expectType<readonly CommandContext[]>(site.context);
@@ -162,9 +161,10 @@ expectError((site.argv0 = { static: true, text: 'rm' }));
 expectError((site.argv = []));
 expectError((site.context = []));
 
-// Valid construction of a CommandSite.
+// Valid construction of a CommandSite retains a concrete invocation node.
+declare const call: CallExpr;
 expectAssignable<CommandSite>({
-  node,
+  node: call,
   argv0: { static: true, text: 'rm' },
   argv: [{ static: true, text: 'rm' }],
   context: [],

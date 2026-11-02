@@ -7,22 +7,9 @@
  * implementation, nor from running real `bash` — see "Spec-First Test
  * Assertions" in this repo's testing conventions).
  *
- * One implementation detail worth recording here since it isn't obvious
- * from the manual alone and shaped this module's design: mvdan/sh v3.13.1's
- * parser does **not** decode `$'...'` (ANSI-C quoting) escapes itself — for
- * a `SglQuoted` word part with `Dollar: true`, the normalized `value` field
- * is the raw, un-decoded source text between the quotes (e.g. `$'\t'`
- * normalizes to a `SglQuoted` node whose `value` is the two characters
- * `\` `t`, not an actual tab). This was verified empirically by parsing
- * each escape form and inspecting the normalized tree (not by asserting
- * against that output — see `src/analyze/ansi-c-escapes.ts`'s decoder,
- * which supplies the Bash-documented decoding mvdan/sh itself doesn't
- * perform). Similarly, `SglQuoted.Dollar`/`DblQuoted.Dollar` (booleans
- * marking `$'...'`/`$"..."`) were previously discarded by this package's
- * `normalize.ts` — a real normalizer bug this issue's work surfaced and
- * fixed (see `normalize.ts`'s `POS_KEYS` comment for `'Dollar'`), since
- * without that flag `$'...'` is indistinguishable from plain `'...'` in the
- * normalized tree.
+ * mvdan/sh keeps literal source escape text in SglQuoted.Value and marks
+ * ANSI-C and locale quoting with the upstream Dollar booleans. Expectations
+ * therefore cover shell decoding independently of parser data transport.
  *
  * @see https://www.gnu.org/software/bash/manual/bash.html#Quoting — §3.1.2 quoting overview
  * @see https://www.gnu.org/software/bash/manual/bash.html#Escape-Character — §3.1.2.1
@@ -36,7 +23,9 @@ import { describe, expect, it } from 'vitest';
 import { resolveWord } from '../src/analyze/index.js';
 import type { WordResolution } from '../src/analyze/index.js';
 import { parseSync } from '../src/index.js';
-import type { ShellDialect, ShNode } from '../src/index.js';
+import type { Word, WordPart } from '../generated/syntax-types.js';
+import { LangBash } from '../generated/syntax-constants.js';
+import { syntheticNode } from './analyze-fixtures.js';
 
 const sh = String.raw;
 
@@ -45,18 +34,18 @@ const sh = String.raw;
  * and returns it narrowed to `T`, without a forbidden non-null assertion —
  * mirrors `kitchen-sink.test.ts`'s helper of the same name/shape.
  */
-function assertDefined<T>(value: T | undefined, message: string): T {
+function assertDefined<T>(value: T | null | undefined, message: string): T {
   expect(value, message).toBeDefined();
-  if (value === undefined) throw new Error(message);
+  if (value === undefined || value === null) throw new Error(message);
   return value;
 }
 
-/** Parses `src` and returns the first statement's `CallExpr.args`. */
-function commandArgs(src: string, dialect: ShellDialect = 'bash'): readonly ShNode[] {
-  const file = parseSync(src, { dialect });
-  const stmt = assertDefined(file.stmts[0], `no statement parsed from: ${src}`);
-  const cmd = stmt.cmd as { readonly args?: readonly ShNode[] };
-  return cmd.args ?? [];
+/** Parses `src` and returns the first statement's `CallExpr.Args`. */
+function commandArgs(src: string, dialect: number = LangBash): readonly Word[] {
+  const file = parseSync(src, { Variant: dialect });
+  const stmt = assertDefined(file.Stmts?.[0], `no statement parsed from: ${src}`);
+  if (stmt.Cmd?.Type !== 'CallExpr') throw new Error('expected a CallExpr');
+  return (stmt.Cmd.Args ?? []).filter((word): word is Word => word !== null);
 }
 
 /**
@@ -67,29 +56,13 @@ function commandArgs(src: string, dialect: ShellDialect = 'bash'): readonly ShNo
  * assignment-like grammar a bare first word can trigger (e.g. `a[bc]` as a
  * command name is a parse error; as an argument it's an ordinary word).
  */
-function argWord(wordSrc: string, dialect: ShellDialect = 'bash'): ShNode {
+function argWord(wordSrc: string, dialect: number = LangBash): Word {
   const args = commandArgs(`cmd ${wordSrc}`, dialect);
   return assertDefined(args[1], `no argument word parsed from: cmd ${wordSrc}`);
 }
 
-function resolve(wordSrc: string, dialect?: ShellDialect): WordResolution {
+function resolve(wordSrc: string, dialect?: number): WordResolution {
   return resolveWord(argWord(wordSrc, dialect));
-}
-
-/**
- * A placeholder `range`/`loc` for hand-built synthetic `ShNode`s below
- * (`Position`/`range` values `resolveWord` never inspects) — every real
- * `ShNode` carries these fields, so satisfying the type requires *some*
- * value even where the position is meaningless for the test.
- */
-const PLACEHOLDER_LOC: ShNode['loc'] = {
-  start: { line: 1, column: 1 },
-  end: { line: 1, column: 1 },
-};
-
-/** Builds a minimal, otherwise-empty `ShNode` of the given `type` for synthetic-input tests. */
-function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> = {}): ShNode {
-  return { type, range: [0, 0], loc: PLACEHOLDER_LOC, ...fields };
 }
 
 /**
@@ -99,15 +72,12 @@ function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> =
  * {@link argWord}, this does *not* wrap the source in a `cmd` prefix: an
  * assignment with no following command is itself the whole simple command.
  */
-function assignValueWord(assignSrc: string, dialect: ShellDialect = 'bash'): ShNode {
-  const file = parseSync(assignSrc, { dialect });
-  const stmt = assertDefined(file.stmts[0], `no statement parsed from: ${assignSrc}`);
-  const cmd = stmt.cmd as { readonly assigns?: readonly ShNode[] };
-  const assign = assertDefined(cmd.assigns?.[0], `no assignment parsed from: ${assignSrc}`);
-  return assertDefined(
-    (assign as { readonly value?: ShNode }).value,
-    `assignment has no value: ${assignSrc}`,
-  );
+function assignValueWord(assignSrc: string, dialect: number = LangBash): Word {
+  const file = parseSync(assignSrc, { Variant: dialect });
+  const stmt = assertDefined(file.Stmts?.[0], `no statement parsed from: ${assignSrc}`);
+  if (stmt.Cmd?.Type !== 'CallExpr') throw new Error('expected a CallExpr');
+  const assign = assertDefined(stmt.Cmd.Assigns?.[0], `no assignment parsed from: ${assignSrc}`);
+  return assertDefined(assign.Value, `assignment has no value: ${assignSrc}`);
 }
 
 describe('resolveWord — criterion 1: positive (static) resolution table', () => {
@@ -263,7 +233,7 @@ describe('resolveWord — criterion 2: negative (non-static) resolution table', 
     // ParamExp — mvdan.cc/sh/v3's `syntax.ParamExp` node.
     { label: '$x (short ParamExp)', src: '$x', reason: 'expansion' },
     { label: '${x} (braced ParamExp)', src: '${x}', reason: 'expansion' },
-    { label: '${x:-default} (ParamExp with modifier)', src: '${x:-default}', reason: 'expansion' },
+    { label: '${X:-default} (ParamExp with modifier)', src: '${X:-default}', reason: 'expansion' },
     // CmdSubst — both syntactic forms mvdan/sh normalizes to `CmdSubst`.
     { label: '$(cmd) (CmdSubst, dollar-paren form)', src: '$(cmd)', reason: 'expansion' },
     // Plain (untagged) JS string: backticks need no escaping inside a
@@ -424,12 +394,12 @@ describe('resolveWord — options.context: assignment-value colon-tilde expansio
   // (e.g. `PATH=/foo:~/bar` expands the `~/bar` segment) — verified
   // against real bash 5.3.9: `bash -c 'PATH=/foo:~/bar; echo $PATH'`
   // prints `/foo:<actual $HOME>/bar`.
-  it('a real Assign.value word with no options reports "tilde" (conservative default)', () => {
+  it('a real Assign.Value word with no options reports "tilde" (conservative default)', () => {
     const word = assignValueWord('PATH=/foo:~/bar');
     expect(resolveWord(word)).toEqual({ static: false, reason: 'tilde' });
   });
 
-  it('the same Assign.value word with explicit context: "assignment-value" also reports "tilde"', () => {
+  it('the same Assign.Value word with explicit context: "assignment-value" also reports "tilde"', () => {
     const word = assignValueWord('PATH=/foo:~/bar');
     expect(resolveWord(word, { context: 'assignment-value' })).toEqual({
       static: false,
@@ -548,7 +518,7 @@ describe("resolveWord — synthetic-input edge cases (not producible by this bri
     // (`static: false`) rather than silently skipping coverage of a real,
     // documented node type this module already handles.
     const word = syntheticNode('Word', {
-      parts: [syntheticNode('BraceExp')],
+      Parts: [syntheticNode('BraceExp')],
     });
     expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
   });
@@ -564,7 +534,7 @@ describe("resolveWord — synthetic-input edge cases (not producible by this bri
     // module hasn't been taught yet degrades gracefully instead of
     // silently mis-resolving as static.
     const word = syntheticNode('Word', {
-      parts: [syntheticNode('SomeFutureNodeTypeThisModuleDoesNotKnowAbout')],
+      Parts: [{ Type: 'SomeFutureNodeTypeThisModuleDoesNotKnowAbout' } as unknown as WordPart],
     });
     expect(resolveWord(word)).toEqual({ static: false, reason: 'expansion' });
   });
@@ -575,7 +545,7 @@ describe("resolveWord — synthetic-input edge cases (not producible by this bri
     // `value`) — a `Word` whose `parts` array is empty isn't something
     // this bridge's real parser is known to produce. Constructed by hand
     // to pin `resolveWord`'s explicit `parts.length === 0` fast path.
-    const word = syntheticNode('Word', { parts: [] });
+    const word = syntheticNode('Word', { Parts: [] });
     expect(resolveWord(word)).toEqual({ static: true, text: '' });
   });
 });

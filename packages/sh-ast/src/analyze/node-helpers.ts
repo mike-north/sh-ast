@@ -1,42 +1,29 @@
-import type { ShNode } from '../types.js';
+/** Shared guards retain faithful node identity and omit only explicitly nil slice elements. */
+import { SYNTAX_SCHEMA } from '../../generated/syntax-schema.js';
+import type { Node } from '../../generated/syntax-types.js';
 
 /**
- * True iff `value` has the minimal shape every normalized {@link ShNode}
- * carries (an object, not an array, with a string `type` field). Used to
- * narrow `unknown` field values discovered while walking a node's own
- * properties — every node field on {@link ShNode} is typed `unknown` (see
- * its index signature), so any code that inspects a specific field's value
- * needs this runtime check before treating it as a child node.
- *
+ * Recognizes upstream syntax.Node discriminators without confusing auxiliary
+ * records or token positions with Nodes. It does not validate complete trees.
  * @internal
  */
-export function isShNodeShape(value: unknown): value is ShNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
+export function isSyntaxNode(value: unknown): value is Node {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('Type' in value) ||
+    typeof value.Type !== 'string'
+  ) {
+    return false;
+  }
+  return Object.hasOwn(SYNTAX_SCHEMA, value.Type) && SYNTAX_SCHEMA[value.Type].node;
 }
 
 /**
- * Filters `value` down to the {@link ShNode} elements of an array-shaped
- * field, discarding anything else — and returning `[]` for a non-array or
- * `undefined` field, so callers never need a separate `Array.isArray` guard.
- *
+ * Retains slice order and object identity while exposing present records to
+ * semantic traversal; nil slices and nil pointers contain no subtree to visit.
  * @internal
  */
-export function nodeArray(value: unknown): readonly ShNode[] {
-  return Array.isArray(value) ? value.filter(isShNodeShape) : [];
-}
-
-/**
- * Reads `node[field]` as a string, defaulting to `''` for any other shape
- * (missing field, non-string value).
- *
- * @internal
- */
-export function stringField(node: ShNode, field: string): string {
-  const value = node[field];
-  return typeof value === 'string' ? value : '';
+export function nodeArray<T>(value: readonly (T | null)[] | null): T[] {
+  return value?.filter((node): node is T => node !== null) ?? [];
 }

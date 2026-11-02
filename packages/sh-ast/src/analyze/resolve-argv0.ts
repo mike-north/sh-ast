@@ -54,7 +54,7 @@ export interface WrapperSpec {
    * skipped — this is `env`'s and `sudo`'s own `VAR=val` *operand*
    * mechanism (setting variables in the wrapped command's environment),
    * which is a distinct, per-wrapper concept from the shell-level
-   * `CallExpr.assigns` prefixes {@link Argv0Resolution.assignmentsSkipped}
+   * `CallExpr.Assigns` prefixes {@link Argv0Resolution.assignmentsSkipped}
    * counts.
    */
   readonly skipAssignmentOperands?: boolean;
@@ -141,8 +141,8 @@ export interface WrapperSpec {
  *
  * Frozen (including each entry object and its own array/regexp fields) so
  * immutability of this shared, module-scoped table is a contract, not just
- * a convention any importer happens to honor — mirrors `visitorKeys`'s and
- * `CHILD_TYPE_SCHEMA`'s freezing in `visitor-keys.ts`/`normalize.ts`.
+ * a convention any importer happens to honor. Per-call wrapper options are
+ * separate values and cannot mutate these shared defaults.
  *
  * `xargs` is deliberately **excluded**: unlike every entry here, `xargs`
  * doesn't simply re-exec a single wrapped command word it can point to
@@ -190,7 +190,7 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // [argument...]]` — POSIX `env` (`-i`) plus GNU coreutils env(1)'s
   // commonly documented long/short forms. `VAR=val` operands preceding the
   // utility are `env`'s own environment-setting mechanism (distinct from
-  // `CallExpr.assigns`). `-S`/`--split-string` is deliberately *not* an
+  // `CallExpr.Assigns`). `-S`/`--split-string` is deliberately *not* an
   // `argFlags` entry — see `unresolvableFlags` below.
   {
     names: ['env'],
@@ -233,7 +233,7 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // `enumerate-commands.ts`'s doc comment — `enumerateCommands` treats it
   // as transparent and never emits a `CallExpr`/`CommandSite` for it), so
   // this entry only ever matches an argv0 word reading literally `time`
-  // that reached `CallExpr.args` some other way (quoted — `"time" cmd`
+  // that reached `CallExpr.Args` some other way (quoted — `"time" cmd`
   // suppresses reserved-word recognition — or as another wrapper's
   // operand, e.g. `env time cmd`). `-p` (POSIX) and GNU time(1)'s
   // `--verbose`/`--portability` take no operand; `-o file`/`-f format`
@@ -394,11 +394,11 @@ export interface Argv0Resolution {
 
   /**
    * The number of `VAR=val` shell-assignment prefixes on the `CallExpr`
-   * itself (`CommandSite.node.assigns`, e.g. the `FOO=bar` in
+   * itself (`CommandSite.node.Assigns`, e.g. the `FOO=bar` in
    * `FOO=bar rm x`) that were skipped to reach argv0. This is a distinct
    * mechanism from a wrapper's own `VAR=val` *operands* (e.g. `env`'s or
    * `sudo`'s, see {@link WrapperSpec.skipAssignmentOperands}) — always
-   * exactly `CommandSite.node.assigns`'s length, independent of the
+   * exactly `CommandSite.node.Assigns`'s length, independent of the
    * wrapper chain found afterward.
    */
   readonly assignmentsSkipped: number;
@@ -749,7 +749,7 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  *    (see {@link WrapperSpec.unresolvableFlags}'s doc comment).
  *
  * `VAR=val` shell-assignment prefixes on the `CallExpr` itself
- * (`CommandSite.node.assigns`, e.g. `FOO=bar rm x`) are always skipped and
+ * (`CommandSite.node.Assigns`, e.g. `FOO=bar rm x`) are always skipped and
  * counted in {@link Argv0Resolution.assignmentsSkipped} — a mechanism
  * distinct from a wrapper's own `VAR=val` *operands* (`env A=1 rm x`,
  * `sudo A=1 rm x`), which {@link WrapperSpec.skipAssignmentOperands}
@@ -774,7 +774,7 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
   if (options?.transparentWrappers !== undefined) {
     wrappers.forEach(validateWrapperSpec);
   }
-  const assignmentsSkipped = nodeArray(site.node.assigns).length;
+  const assignmentsSkipped = nodeArray(site.node.Assigns).length;
   const argv = site.argv;
   const chain: Argv0ChainWord[] = [];
   let index = 0;

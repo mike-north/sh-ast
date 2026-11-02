@@ -1,6 +1,6 @@
 /**
  * `sh-ast/analyze` — the static-analysis layer built on top of the
- * normalized AST from the package root. Its first primitive,
+ * faithful upstream syntax records from the package root. Its first primitive,
  * {@link resolveWord}, answers "is this word statically a known string,
  * and if so which?" — the question every downstream lint rule or command
  * inventory asks first. Its second, {@link enumerateCommands}, answers
@@ -42,11 +42,21 @@ export type {
 // (see #23).
 export { ShAnalyzeInvalidWrapperSpecError, ShAnalyzeMaxDepthError, ShAstError } from '../errors.js';
 
-// `ShNode` (resolveWord's/enumerateCommands's parameter and CommandSite.node
-// type) is re-exported here for the same reason as `ShAstError` above:
-// consistency, so a consumer of `sh-ast/analyze` can reference every type
-// its public surface mentions without also reaching into the root `sh-ast`
-// entry point (see #23). `Position` is re-exported alongside it because
-// `ShNode.loc` is defined in terms of it — re-exporting `ShNode` without it
-// would just trade one ae-forgotten-export warning for another.
-export type { Position, ShNode } from '../types.js';
+// Re-export faithful record types so analyze consumers can describe their inputs
+// and retained command-node identities without a second entry-point import.
+export type * from '../../generated/syntax-types.js';
+export type {
+  BinAritOperator,
+  BinCmdOperator,
+  BinTestOperator,
+  CaseOperator,
+  GlobOperator,
+  OperatorFamily,
+  ParExpOperator,
+  ParNamesOperator,
+  ProcOperator,
+  RawOperator,
+  RedirOperator,
+  UnAritOperator,
+  UnTestOperator,
+} from '../../generated/syntax-constants.js';

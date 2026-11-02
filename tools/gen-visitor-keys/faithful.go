@@ -470,10 +470,8 @@ func renderFaithfulConstantsDTS(schema *faithfulSchema, version string) string {
 		families = append(families, jsString(name))
 	}
 	fmt.Fprintf(&b, "export type OperatorFamily = %s;\n\n", strings.Join(families, " | "))
-	writeSemanticComment(&b, "", "Nominal proof supplied by the checked raw-operator constructor; callers cannot accidentally mix unnamed values from different upstream families.", "internal")
-	b.WriteString("declare const rawOperatorFamily: unique symbol;\n\n")
-	writeSemanticComment(&b, "", "An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation.", "public")
-	b.WriteString("export type RawOperator<Family extends OperatorFamily> = number & { readonly [rawOperatorFamily]: Family };\n\n")
+	writeSemanticComment(&b, "", "An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.", "public")
+	b.WriteString("export type RawOperator<Family extends OperatorFamily> = number & { readonly __shAstOperatorFamily: Family };\n\n")
 	for _, name := range sortedKeys(schema.Operators) {
 		writeSemanticComment(&b, "", "The upstream "+name+" domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.", "public")
 		values := []string{"0"}

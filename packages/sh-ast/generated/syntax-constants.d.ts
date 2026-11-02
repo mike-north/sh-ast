@@ -1402,19 +1402,12 @@ export type OperatorFamily =
   | 'UnTestOperator';
 
 /**
- * Nominal proof supplied by the checked raw-operator constructor; callers cannot accidentally mix unnamed values from different upstream families.
- *
- * @internal
- */
-declare const rawOperatorFamily: unique symbol;
-
-/**
- * An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation.
+ * An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
  *
  * @public
  */
 export type RawOperator<Family extends OperatorFamily> = number & {
-  readonly [rawOperatorFamily]: Family;
+  readonly __shAstOperatorFamily: Family;
 };
 
 /**
