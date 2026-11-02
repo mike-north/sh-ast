@@ -1,26 +1,47 @@
-export { parseSync } from './parse.js';
+/**
+ * A faithful synchronous interface to mvdan/sh syntax. The root exposes upstream
+ * records, constants, parser controls and position operations. Consumer-specific
+ * source views and semantic analysis are separate responsibilities.
+ */
+import {
+  SYNTAX_INTERFACES as interfaces,
+  SYNTAX_SCHEMA as schema,
+} from '../generated/syntax-schema.js';
+import { deepFreeze } from './deep-freeze.js';
+
+export {
+  InputError,
+  LangError,
+  ParseError,
+  newPos,
+  nodeEnd,
+  nodePos,
+  parseSync,
+  rawOperator,
+} from './syntax.js';
+export type { ParseOptions } from './syntax.js';
+export type * from '../generated/syntax-types.js';
+export * from '../generated/syntax-constants.js';
+export type { SyntaxFieldSchema, SyntaxRecordSchema } from '../generated/syntax-schema.js';
 export {
   ShAnalyzeInvalidWrapperSpecError,
   ShAnalyzeMaxDepthError,
   ShAstError,
   ShInternalError,
-  ShInvalidDialectError,
-  ShParseError,
   ShParseMaxDepthError,
 } from './errors.js';
-export type { ShParseErrorInfo } from './errors.js';
-export type { ParseOptions, Position, ShellDialect, ShFile, ShNode } from './types.js';
-export { visitorKeys } from './visitor-keys.js';
-export { walk } from './walk.js';
 
 /**
- * Strongly-typed `ShNode` subtypes for every mvdan/sh node type — generated
- * by `tools/gen-visitor-keys` alongside {@link visitorKeys} (see
- * design/ARCHITECTURE.md, "The schema table is generated, not
- * hand-written"). {@link ShNode}'s index signature remains the base
- * contract; these are an additive, opt-in stronger typing for consumers
- * that want e.g. `ShNodes.ShCallExprNode` instead of a generic `ShNode`.
- *
+ * Complete upstream field metadata for validating or adapting syntax records.
+ * Metadata order is not the upstream Walk visitation order. Shared records are
+ * deeply frozen even though the syntax values they describe are mutable.
  * @public
  */
-export type * as ShNodes from '../generated/node-types.js';
+export const SYNTAX_SCHEMA = deepFreeze(schema);
+
+/**
+ * Concrete alternatives for upstream syntax interfaces. Auxiliary records are
+ * absent from Node; consumers must preserve that distinction in their adapters.
+ * @public
+ */
+export const SYNTAX_INTERFACES = deepFreeze(interfaces);

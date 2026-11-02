@@ -36,6 +36,15 @@ interface ShimExports {
     filenamePtr: number,
     filenameLen: number,
   ) => number;
+  /** The lossless syntax protocol uses the same pointer/length calling convention. */
+  syntaxProcess?: (
+    operationPtr: number,
+    operationLen: number,
+    payloadPtr: number,
+    payloadLen: number,
+    optionsPtr: number,
+    optionsLen: number,
+  ) => number;
 }
 
 function isShimExports(value: WebAssembly.Exports): value is WebAssembly.Exports & ShimExports {
@@ -125,4 +134,47 @@ export function callParse(text: string, dialect: string, filename: string): stri
   const json = decoder.decode(memory.subarray(resultPtr, end));
   exports.free(resultPtr);
   return json;
+}
+
+/**
+ * Calls the lossless syntax protocol synchronously with byte-exact payloads.
+ * Every returned allocation is released even when a later allocation, exported
+ * operation, or response validation fails. Views are recreated after each call
+ * because Go allocation can grow and detach linear memory.
+ * @internal
+ */
+export function callSyntax(operation: string, payload: Uint8Array, options = '{}'): string {
+  const exports = ensureInstance();
+  const process = exports.syntaxProcess;
+  if (typeof process !== 'function') {
+    throw new ShInternalError(
+      'The installed WASM asset does not export the lossless syntax protocol',
+    );
+  }
+  const allocations: number[] = [];
+  const write = (bytes: Uint8Array): { ptr: number; len: number } => {
+    const ptr = exports.alloc(bytes.length);
+    allocations.push(ptr);
+    if (ptr === 0) throw new ShInternalError('The syntax bridge returned a null input allocation');
+    new Uint8Array(exports.mem.buffer, ptr, bytes.length).set(bytes);
+    return { ptr, len: bytes.length };
+  };
+  try {
+    const op = write(encoder.encode(operation));
+    const input = write(payload);
+    const opts = write(encoder.encode(options));
+    const result = process(op.ptr, op.len, input.ptr, input.len, opts.ptr, opts.len);
+    if (result === 0) throw new ShInternalError('The syntax bridge returned a null result');
+    allocations.push(result);
+    const memory = new Uint8Array(exports.mem.buffer);
+    if (result >= memory.length)
+      throw new ShInternalError('The syntax bridge returned an out-of-bounds result');
+    let end = result;
+    while (end < memory.length && memory[end] !== 0) end++;
+    if (end === memory.length)
+      throw new ShInternalError('The syntax bridge result has no terminator');
+    return decoder.decode(memory.subarray(result, end));
+  } finally {
+    for (const ptr of allocations) exports.free(ptr);
+  }
 }
