@@ -8,9 +8,9 @@
 # other required check.
 name: Copilot review gate
 on:
+  # Require review evidence on stacked candidate PRs as well as main-bound PRs.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main]
   pull_request_review:
     types: [submitted, dismissed]
 concurrency:

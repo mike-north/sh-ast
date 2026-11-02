@@ -2,8 +2,8 @@ name: WASM reproducibility
 on:
   push:
     branches: [main]
+  # Stacked candidates need the same checks as PRs targeting main.
   pull_request:
-    branches: [main]
 env:
   # Pinned binaryen release providing wasm-opt — see packages/sh-ast/shim's
   # README.md "The WASM shim" for why wasm-opt is part of the build and why

@@ -2,8 +2,8 @@ name: CI
 on:
   push:
     branches: [main]
+  # Stacked candidates need the same checks as PRs targeting main.
   pull_request:
-    branches: [main]
 jobs:
   build-check-test:
     runs-on: ubuntu-latest

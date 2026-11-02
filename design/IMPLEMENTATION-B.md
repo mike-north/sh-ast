@@ -51,3 +51,13 @@ canonical Linux WASM verification, all Release A gates, linked and installed exa
 candidate receipts, and bounded traversal/print/fix measurements remain pending.
 
 No public Release B operation has been accepted as implemented by this record.
+
+## Stacked candidate workflow preparation
+
+The inherited validation workflows only triggered PRs targeting main, which would
+skip the independent Linux builder for the required stacked B PR. The bounded
+configuration test `design/validation/release-b/stacked-pr-workflows.rb` first
+failed all four validation workflows for base `codex/faithful-syntax-release-plan`.
+It now passes after removing their PR-base filters. Main-only push triggers and
+the publication workflow remain unchanged. A real stacked PR run must still
+confirm the event and canonical artifact; the configuration test is not that proof.
