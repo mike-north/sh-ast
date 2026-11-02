@@ -187,7 +187,7 @@ func TestFaithfulDeclarationsPreserveValueModel(t *testing.T) {
 	decls := renderFaithfulTypes(schema, "v3.13.1")
 	for _, want := range []string{
 		"export type GoString = string | Uint8Array;",
-		"export interface SyntaxPos", "IsRecovered: boolean;",
+		"export interface SyntaxPos", "IsRecovered: boolean;", "OffsetOverflow: boolean;",
 		"Type: 'File';", "Stmts: (Stmt | null)[] | null;",
 		"Last: Comment[] | null;", "Negated: boolean;",
 		"Cmd: Command | null;", "Op: RedirOperator;",

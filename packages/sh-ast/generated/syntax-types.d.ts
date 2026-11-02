@@ -52,7 +52,7 @@ import type {
 export type GoString = string | Uint8Array;
 
 /**
- * The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid and IsRecovered are independent observations, not inferred from truthiness of the coordinates. Token positions are data; node bounds are derived operations.
+ * The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid, IsRecovered, and OffsetOverflow retain distinctions that coordinates alone cannot express. Token positions are data; node bounds are derived operations.
  *
  * @public
  */
@@ -77,6 +77,10 @@ export interface SyntaxPos {
    * Whether upstream synthesized this missing syntax position during error recovery.
    */
   IsRecovered: boolean;
+  /**
+   * Whether the stored upstream offset exceeds its representable source-offset maximum, including the recovered sentinel. This preserves ordering distinctions even when Offset() reports zero; ordinary zero-invalid positions have false here.
+   */
+  OffsetOverflow: boolean;
 }
 
 /**

@@ -14,8 +14,10 @@ Print. Integration owns those changes and the resulting API reports/docs.
   Scalars and token positions are required. Pointers, interfaces, nil slices, and
   nil slice elements remain explicit. Auxiliary structs are excluded from Node.
 - `GoString` retains string bytes through `string | Uint8Array`; `SyntaxPos` retains
-  Offset, Line, Col, IsValid, and IsRecovered. Derived node bounds are operations,
-  not stored writable fields.
+  Offset, Line, Col, IsValid, IsRecovered, and OffsetOverflow. Derived node bounds
+  are operations, not stored writable fields. OffsetOverflow distinguishes derived
+  offset-overflow positions from ordinary invalid zero positions when their other
+  observations coincide; upstream ordering can distinguish them.
 - Named operator values retain exact upstream numeric identity. Each family also
   admits zero and its own branded raw uint32 values. Runtime construction/range
   checks remain an integration obligation. Language constants remain separate.
@@ -42,6 +44,11 @@ Two later focused red-to-green checks refined the shared contract:
 - Readonly metadata tests failed four assignments before readonly declarations
   were emitted. An alias test failed before the union deduplicated ClbOut/RdrClob
   by numeric identity while retaining both exported constant names.
+- A follow-up upstream experiment identified an ordering distinction between
+  ordinary invalid and derived offset-overflow positions. The new declaration
+  assertion and tsd property check failed before adding OffsetOverflow. The Go
+  codec workstream owns native/WASM behavioral proof and reconstruction tests;
+  this schema slice preserves that observation in the public value contract.
 
 ## Completed validation
 

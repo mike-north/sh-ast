@@ -44,6 +44,7 @@ expectType<boolean>(statement.Background);
 expectType<Command | null>(statement.Cmd);
 expectType<SyntaxPos>(statement.Semicolon);
 expectType<boolean>(statement.Semicolon.IsRecovered);
+expectType<boolean>(statement.Semicolon.OffsetOverflow);
 expectAssignable<Node>(statement);
 
 declare const parameter: ParamExp;

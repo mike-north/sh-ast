@@ -388,7 +388,7 @@ func renderFaithfulTypes(schema *faithfulSchema, version string) string {
 	b.WriteString("import type { " + strings.Join(sortedKeys(schema.Operators), ", ") + " } from './syntax-constants.js';\n\n")
 	writeSemanticComment(&b, "", "A Go string's exact bytes. Valid UTF-8 is represented as a JavaScript string; other bytes use Uint8Array. String inputs must not contain unpaired surrogates, which have no faithful UTF-8 representation.", "public")
 	b.WriteString("export type GoString = string | Uint8Array;\n\n")
-	writeSemanticComment(&b, "", "The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid and IsRecovered are independent observations, not inferred from truthiness of the coordinates. Token positions are data; node bounds are derived operations.", "public")
+	writeSemanticComment(&b, "", "The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid, IsRecovered, and OffsetOverflow retain distinctions that coordinates alone cannot express. Token positions are data; node bounds are derived operations.", "public")
 	b.WriteString("export interface SyntaxPos {\n")
 	for _, field := range []struct{ name, typ, doc string }{
 		{"Offset", "number", "Zero-based source byte offset, including upstream saturation behavior."},
@@ -396,6 +396,7 @@ func renderFaithfulTypes(schema *faithfulSchema, version string) string {
 		{"Col", "number", "One-based byte column; zero retains upstream invalid or overflow information."},
 		{"IsValid", "boolean", "Whether upstream considers this position useful; recovered positions are not valid."},
 		{"IsRecovered", "boolean", "Whether upstream synthesized this missing syntax position during error recovery."},
+		{"OffsetOverflow", "boolean", "Whether the stored upstream offset exceeds its representable source-offset maximum, including the recovered sentinel. This preserves ordering distinctions even when Offset() reports zero; ordinary zero-invalid positions have false here."},
 	} {
 		writeSemanticComment(&b, "  ", field.doc, "")
 		fmt.Fprintf(&b, "  %s: %s;\n", field.name, field.typ)
