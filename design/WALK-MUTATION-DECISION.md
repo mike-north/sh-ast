@@ -29,15 +29,25 @@ The JavaScript operation `args[1] = replacement; args.length = 1` destroys those
 slots; retaining only the initial values loses the intervening replacement.
 Recovering these effects requires observing writes or representing backing storage.
 
+The independent reviewer also confirmed a value-slot identity distinction without
+changing length or capacity. File.Last is a Go `[]Comment`; Walk passes a pointer
+to its element. Inside that callback, replacing `file.Last[0]` with a new Comment
+value immediately changes the text observed through the retained callback pointer,
+which still equals `&file.Last[0]`. Ordinary JavaScript array-slot replacement
+creates a different object, leaving the retained callback object unchanged. This
+is part of the same representation decision, not merely a resizing limitation.
+
 ## Recommendation and alternative
 
 The smallest implementation keeps the accepted ordinary-array model and defines
 its live traversal storage semantics explicitly: capture each list reference and
 initial extent, read later existing slots live, ignore appended elements, and
 allow field replacement without retargeting an active list. It preserves ordinary
-field edits, child replacement, pruning, comment copy/identity semantics, and
-synchronous reentrancy. It cannot claim complete equivalence for destructive
-structural mutation of an active array or Go capacity-dependent reallocation.
+node-field edits, pointer-child replacement, pruning, the tested comment copy
+behavior, and synchronous reentrancy. It cannot claim complete equivalence for
+destructive structural mutation of an active array, Go capacity-dependent
+reallocation, or replacing a Go value-array slot through an already-retained
+callback reference.
 That restriction needs explicit acceptance; it must not be disguised as full
 upstream mutation parity or silently implemented as rejection.
 

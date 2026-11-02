@@ -1436,6 +1436,17 @@ export const UpperAll: 97;
 export const UpperFirst: 96;
 
 // @public
+export function walk(node: Node_2, callback: (node: Node_2 | null) => boolean): void;
+
+// @public
+export class WalkPanicError extends ShAstError {
+    constructor(Message: GoString);
+    readonly code = "SH_AST_WALK_PANIC";
+    // (undocumented)
+    readonly Message: GoString;
+}
+
+// @public
 export interface WhileClause {
     Cond: (Stmt | null)[] | null;
     CondLast: Comment_2[] | null;

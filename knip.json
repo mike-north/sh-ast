@@ -1,6 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["packages/sh-ast/generated/*.d.ts"],
+  "ignore": [
+    "packages/sh-ast/generated/*.d.ts",
+    "packages/sh-ast/shim/cmd/walk-oracle/js-array-storage.mjs",
+    "packages/sh-ast/src/syntax-walk-license.ts"
+  ],
   "ignoreBinaries": ["go"],
   "workspaces": {
     "packages/*": {}

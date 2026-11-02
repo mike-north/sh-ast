@@ -1,6 +1,7 @@
 /** Upstream license for the walk dispatcher and private boundary evaluator. */
 /*
-This directory adapts code from mvdan.cc/sh/v3/syntax/typedjson
+The walk dispatcher and private bounds evaluator adapt code from
+mvdan.cc/sh/v3/syntax (walk.go and nodes.go)
 (https://github.com/mvdan/sh), which is distributed under the following
 license:
 
