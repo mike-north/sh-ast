@@ -59,10 +59,29 @@ Independent source/test review found no actionable runtime issues and separately
 passed the focused streaming Go suites. Source inspection confirmed that the
 production target does not import the frozen oracle packages.
 
-Local source validation and canonical Linux artifact validation are separate gates.
-No locally built WASM is committed. The source candidate requires independent
-review before a source-only pull request; its exact-source Linux CI artifact then
-requires adoption and final package verification.
+Canonical adoption uses the independently downloaded Linux artifact from
+[workflow run 41534214435](https://github.com/mike-north/sh-ast/actions/runs/41534214435),
+artifact `13182089937`, built from source commit
+`25630a596f848b3f2ab6478ca34de66c23e28091`. The archive digest was verified against
+GitHub's metadata, and its sole nonsymlink `sh-ast.wasm` member was read directly
+into the fixed destination after validating its WASM header. No general archive
+extraction was used.
+
+The adopted WASM is 4,537,470 bytes with SHA-256
+`c2adf9c8f0df30a16ce26bdcdde2b4050d094e0ed6c347650d7bc0e18ea9b0c9`.
+The archive is 1,334,026 bytes with SHA-256
+`b22918c5c78efe73797e54206a24bed99324514c6fa4ee344298693d8c8efdd3`.
+Its bytes happen to match the local optimized build, but the committed artifact's
+provenance is the independent Linux CI output. The
+[artifact provenance record](stream-syntax-encoding/artifact-provenance.json)
+retains every tracked Go source/test and module-manifest hash (27 files), all
+verified unchanged from that source commit at adoption.
+
+After adoption, the full native Go suite and verified Node 22.22.1 uncached
+build/check/test passed again: 793 runtime tests, tsd, and 27 harness tests.
+The source run passed Go tests, build and artifact upload; its final comparison
+failed as expected against the pre-change binary. A subsequent exact-head
+rebuild-match run is still required. Copilot review is also pending.
 
 Performance measurements will compare this candidate against the baseline above,
 using the existing harness and canonical artifacts. Preserve raw samples and
