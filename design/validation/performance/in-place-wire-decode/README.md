@@ -10,7 +10,29 @@ hashes, raw process samples and verification operations are retained in
 `report.json` and `samples.jsonl`. The candidate was uncommitted when packed;
 the source hashes, not its base Git SHA or unchanged version, identify the code.
 
-## Results
+## Final candidate retest
+
+Copilot's review identified a second `Object.keys` allocation per ordinary record.
+The final candidate reuses the first key list. The independent reviewer rechecked
+this exact delta and found no semantic change. All focused and full Node22 gates
+passed again. A fresh targeted M2 run is retained under `final-cache/`, with the
+final source/asset hashes and repeated full-tree/all-5,801-snapshot equivalence.
+
+| Phase               |      Published 0.5.0 ms |      Final candidate ms |
+| ------------------- | ----------------------: | ----------------------: |
+| Parse               |    67.74 [59.46, 70.59] |    61.99 [46.92, 65.35] |
+| Parse plus snapshot | 127.21 [107.53, 131.67] | 106.01 [102.37, 114.10] |
+
+This uses the same Node24.14, hardware, rotated five-process/ten-sample design
+and quiet-team protocol as the initial run below. Both process ranges overlap;
+the large shift in baseline times between runs shows substantial environmental
+variation. The final run's median snapshot difference is 21.20 ms, but that is
+not evidence of a stable 20 ms gain or a benefit attributable specifically to
+key-list reuse. The reliable conclusions are preserved output and less duplicate
+allocation, with improved observed medians in these runs. End-to-end ESLint
+latency and a guaranteed percentage improvement remain unproven.
+
+## Initial candidate results
 
 Node **24.14.0**, darwin/arm64, Apple M5 Max. Five fresh processes per case, each
 with three excluded warmups and ten measured calls; artifact order rotates.
@@ -90,6 +112,9 @@ pnpm benchmark --prepared scratch/decode-prepared/pair.json \
   --phases parse,parse-with-positions --rounds 5 --iterations 10 --warmup 3 \
   --output scratch/decode-results
 ```
+
+For the final targeted retest, use `--fixtures consumer-m2` and a fresh prepared
+candidate. Do not reuse an initial prepared artifact after editing source.
 
 The broader generated report includes unsupported adjacent-version comparisons
 because only the relevant pair was selected. They are not zero-latency results.

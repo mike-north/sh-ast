@@ -1,0 +1,7 @@
+{
+  "functions": 100,
+  "nodeOccurrences": 5801,
+  "fileDeepEqual": true,
+  "allSnapshotsEqual": true,
+  "wasmSha256": "fd1ee7cd380abac985c4732a0a4e831a671b3907b6af83ba0e0e1c6ffe3ffad4"
+}

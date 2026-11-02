@@ -12,7 +12,9 @@ priority. Root retains acceptance and merge authority. Implementers stop at PR-o
 - #38: `brace-correctness` managed worktree/branch; specialist owns changes.
 - #39: `/Users/mnorth/.codex/worktrees/wrapper-assignments/sh-ast`, branch
   `codex/wrapper-assignment-operands`; specialist owns changes. PR #44 at
-  `50ba11e62365f8623e62f92504fbe46ab3584858` has verified Node22.22.1 gates.
+  `68d4ebfb91c818ca2797d9eb5ba2a1805a5a12bf` passed all exact-head gates and was
+  accepted/merged by root as `11697ff10d20fe5936762b558ea14156fe9facf2`.
+  Issue #39 is closed with acceptance evidence; no release publication implied.
 - Main checkout's pre-existing `tools/gen-visitor-keys/go.sum` edit is untouched.
 - GitHub CLI authentication returned HTTP 401. Connector equivalent ground-truth
   reads showed #38/#39/#37 open, unassigned, without prior claims/comments, and
@@ -46,6 +48,25 @@ priority. Root retains acceptance and merge authority. Implementers stop at PR-o
   matches, all 80 raw timing records match the report, and verification operation
   counts match each pair. Requested reproduction recipe and M2 equivalence
   command were added to the retained README.
+- Copilot's one low finding (duplicate Object.keys enumeration) is corrected by
+  reusing the key list. Independent re-review found no semantic change; all
+  local gates passed again. Final-source targeted M2 evidence lives under
+  `in-place-wire-decode/final-cache/`: parse 67.74 to 61.99 ms; snapshot 127.21
+  to 106.01 ms. Process ranges overlap and baseline drift is substantial; this
+  does not establish a guaranteed gain or isolated key-cache benefit.
+
+## Remaining delivery state
+
+#38 remains draft PR #46 until corrected-source canonical Linux WASM adoption and
+full artifact verification. Independent review caught adjacent-Lit and quote-boundary
+escape uncertainty; the conservative unsupported guard is approved after 58
+focused outcomes independently passed. No grammar repair was added. Initial
+local benchmark timings predate this guard and are not final candidate evidence.
+
+#35, #36, #40 and #41 have not started implementation. #35 remains approved after
+the initial slices; #36 still needs a separate root gate, #40/#41 are follow-ons.
+#42 remains held and #43 remains lower priority. Live exact-head operational state
+is retained in the lead worktree's `scratch/DELIVERY-STATE.md`.
 
 ## Correctness decisions
 

@@ -1,0 +1,940 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-02T21:31:33.127Z",
+  "environment": {
+    "node": "v24.14.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18,
+    "totalMemory": 137438953472
+  },
+  "config": {
+    "rounds": 5,
+    "iterations": 10,
+    "warmup": 3,
+    "phases": ["parse", "parse-with-positions"],
+    "dialects": ["bash"],
+    "invocation": [
+      "/Users/mnorth/.nodenv/versions/24.14.0/bin/node",
+      "/Users/mnorth/.codex/worktrees/optimization-delivery/sh-ast/tools/benchmark/run.mjs",
+      "--prepared",
+      "scratch/decode-final-prepared/pair.json",
+      "--fixtures",
+      "consumer-m2",
+      "--phases",
+      "parse,parse-with-positions",
+      "--rounds",
+      "5",
+      "--iterations",
+      "10",
+      "--warmup",
+      "3",
+      "--output",
+      "scratch/decode-final-results"
+    ]
+  },
+  "artifacts": [
+    {
+      "label": "0.5.0",
+      "version": "0.5.0",
+      "entry": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/0.5.0/package/dist/index.js",
+      "packageRoot": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/0.5.0/package",
+      "tarball": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/0.5.0/sh-ast-0.5.0.tgz",
+      "tarballSha256": "ad14e8fbde585f010e75aa4e93ec59ab1d9b368ed120da659ecff81bda49924f",
+      "integrity": "sha512-0SR7ifUpOvP8QWrbFcgyORHxenTYaPlMqlF4tL6UivjFH529FzUcwlNuCGMImcOgd35KbrCOq2lsnUne3ZqnrQ==",
+      "registryTarball": "https://registry.npmjs.org/sh-ast/-/sh-ast-0.5.0.tgz",
+      "assets": {
+        "README.md": "ae76a32937ccb6770bbf37deac0ead2e1ed0b9bd6bd31888d46f4b3411971de4",
+        "dist/analyze/ansi-c-escapes.d.ts": "062e50dfe47467a44b709f0feda7acbe1d4dc3a5224e391ab00164df1f02181d",
+        "dist/analyze/ansi-c-escapes.d.ts.map": "c98fd19f1949f2d3ffba86a5d065ffeb1983d64988527effae7b3c35050c5c46",
+        "dist/analyze/ansi-c-escapes.js": "e5416ff479e4e4a53099ac189a5130261d335f9edd2adbbb8c3e1780ba5ee859",
+        "dist/analyze/ansi-c-escapes.js.map": "b9c222195bba72d3a85125f1922c48512096891853a1f747603f4dbe02db735a",
+        "dist/analyze/decode-lit.d.ts": "38db327eb8fd580a90a5bbbde6eb02b9d94aa382d7651d32635584c27df7fad4",
+        "dist/analyze/decode-lit.d.ts.map": "5a779cd72268b6f07420abba4512b8860e365f8836917a07245683484ceb065e",
+        "dist/analyze/decode-lit.js": "9bba6d7e0f37dae1621b80fa800b0a2ce9c2bf06e4a92b1fc5af73a5083d4955",
+        "dist/analyze/decode-lit.js.map": "e34d8c79ea9abeb066e8c15d898ab6e13dc3cffbc53400742b218da4cdc47162",
+        "dist/analyze/enumerate-commands.d.ts": "57076c5bbf455a65741f37881e7944dc7e52c603ab006089fe91d965ee505666",
+        "dist/analyze/enumerate-commands.d.ts.map": "aa2352c2112d555ef59fb008286de17012587f2be76bf9b46a5853f702f1e5b0",
+        "dist/analyze/enumerate-commands.js": "a1a4304e83cd8b992b5f8a19aa0cd455b54c8531cea7d8a60f12750097d11eea",
+        "dist/analyze/enumerate-commands.js.map": "1ebdf1863fa1bfebda3df75f0ce2a3e52a44f1f40fc5db1e85049102d9c75e1b",
+        "dist/analyze/index.d.ts": "2916f4ff7696cc13498c23ff3362ac4788513cf2158a29f932f7ea20980c37ba",
+        "dist/analyze/index.d.ts.map": "c69303592ebcc14eba4cf9a665e1d041299fd3dabb6eded575ad3f7a21a41606",
+        "dist/analyze/index.js": "e68bceb80ae05e58d01ab524651d21f9ccc59b7726ca7625eb18ec1efd55fbfe",
+        "dist/analyze/index.js.map": "7f292eaaf4b618e48a95183e817145cb2bdd7722a971d3d33a153bb85f9bfb13",
+        "dist/analyze/node-helpers.d.ts": "6445d2c57a121d16a76fe2dd7285f226f6ae28a9c35f8b4935e5d9356a43d017",
+        "dist/analyze/node-helpers.d.ts.map": "0a1a53f75d4c0983fae2c976f06c56f933d5c0566e25fca4005d7f9f85eb4e2a",
+        "dist/analyze/node-helpers.js": "8be136cbe0e7484601ea50210b609c34ce1d72fc87951e91e83bfea7eddf4a51",
+        "dist/analyze/node-helpers.js.map": "5ffa0e9cca18bc471b0ce0fc3ff58bfe8dcb45ca2fad219711a1d6f962a51027",
+        "dist/analyze/resolve-argv0.d.ts": "2c5353c7c9df73b814a3b92c345e3d15f220c0693663df5ea65805a475497cf3",
+        "dist/analyze/resolve-argv0.d.ts.map": "8a87a390bc798bda00357398145567e97873fef18e35c5d9dcab1c3755402043",
+        "dist/analyze/resolve-argv0.js": "6530617587eb4c4e200e49df01b48ced24fefe50b35f1ecb049527c92673f0f5",
+        "dist/analyze/resolve-argv0.js.map": "f0d34bfc93e56c24c8b2bd1936ee1874ae8d4486d021611becdde161fcbd01e5",
+        "dist/analyze/resolve-word.d.ts": "6f1bc577983105338b02045ee3ac6cc1144bec660a4cabf893e8848379fe78ac",
+        "dist/analyze/resolve-word.d.ts.map": "251b965e61c39dc3af9c99beebf64158f03a7aa41d78db86b3e0c18c7d044579",
+        "dist/analyze/resolve-word.js": "b4ba557041fdccbf9983d051405d43ee8373fc2cd59638526e0e6254bbba0e05",
+        "dist/analyze/resolve-word.js.map": "235bfba0ebd0fae779817044025cbe07333d44f313f2f6b5904577e4a92793b4",
+        "dist/analyze.d.ts": "16137480e9b9dbf6ad0c21eb961ca1f5dcf9b265443565fe9ca5520415a8d5a7",
+        "dist/deep-freeze.d.ts": "b91d8f80b780b69d852465691a85b86baa83f485c4869b192ed95d59546a1917",
+        "dist/deep-freeze.d.ts.map": "f917e83ec9353f56a8c53ace265b1bc26556e12a699372d2cefe420ac6eff123",
+        "dist/deep-freeze.js": "be5638802d351d97a3179ceaf4dff98a793c167f2fd049886ca7ae1c2e9b8a8e",
+        "dist/deep-freeze.js.map": "b6f7c94d9a1bfff8dff855fa99cdd1685ad182dc695437d72713adcc95c64757",
+        "dist/errors.d.ts": "2cac2cc19cafe3e74d504b928df1052322ed50159f5468a928391bfb256ee2c6",
+        "dist/errors.d.ts.map": "75ef486bef8ab57c17b387fc3d241f6af9dbe2a7db7596f9fb5025ed6a9244f8",
+        "dist/errors.js": "a47015e9c0d9d59cc0f377a5ac0d87e142e072c4af3359db0274547bf685add9",
+        "dist/errors.js.map": "477d6c69518c2a87fc66a962fdba89f19ae104232b064ce9f10e7c35918bff9f",
+        "dist/index.d.ts": "cc37c2c8cf8c30ee9d1ca55494e7bcab63e131ec6954889578bd4c30c08fd0cd",
+        "dist/index.d.ts.map": "adba5ed819e14be9f08bfaec16265b207ae9243067108d172bd479cd0f1297bf",
+        "dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+        "dist/index.js.map": "23628ba56dfcd7713a9ac7d21fbf837e7d0e63244b8fd65e2d83f62fc2be9e0b",
+        "dist/parse-depth-guard.d.ts": "d66b2d311cee094cfcf26bd7799f27b0f7180c47900ebc3ebed7078fb8d02405",
+        "dist/parse-depth-guard.d.ts.map": "0ab8c7fb791b54d9aec05a740c85331b7b2fdb34cdee2b7434fe78d617af4a48",
+        "dist/parse-depth-guard.js": "9b6aad6788e297ee9eec6a76c1c22f8deda38b8dc404aa9c1030202b12cb8b7b",
+        "dist/parse-depth-guard.js.map": "51b53a73bb84c7c4ecae7262164673b89ebbd2469df0e579b41a8200f1874e8c",
+        "dist/sh-ast.d.ts": "d51da45e2edc2da006f6b0c8cd15e9625605f76d2069be118a9d91e757fae27c",
+        "dist/syntax-errors.d.ts": "90d4b61de601d0dadbd0028b630abcb59b4259227370eaa3c3b7e6d5142183b9",
+        "dist/syntax-errors.d.ts.map": "233f2c8c98727a792dce36143ca8d63c5ec419c4342bd4c175555cf377fc905b",
+        "dist/syntax-errors.js": "b7dd80e5e204c9b03d7270daced47dfc279c973b9cdd96203c9ed8a456eb457a",
+        "dist/syntax-errors.js.map": "e84878ba0d40085f46cc74f16100b291d9f844025f083288a03b8c4ae37f3e55",
+        "dist/syntax-print-errors.d.ts": "433d8a253f0ffbf50a269e70259da369f89ae5269468ab3d6fb692967b937f23",
+        "dist/syntax-print-errors.d.ts.map": "3be51ac8769e0b210194f484369a09683fc0807acd5ae4033589f97ac27d2379",
+        "dist/syntax-print-errors.js": "fd87f98ff736e47fbc2bd8eb5e0de47344f80a9d19d2d54b12f92fcc5bbcdad3",
+        "dist/syntax-print-errors.js.map": "00ef306a6d52a536e2a0a773d138cbcf4b69f55e34ebd4ccaad99bbaee0e863f",
+        "dist/syntax-print.d.ts": "901558a3e80e98d6a2dbb3259bda24eb8f66f41d85f1edbe9c867c7a92adf2d3",
+        "dist/syntax-print.d.ts.map": "dd0b8e78bb5ab764d64ddd5af69d534cab1fd4d64c931e6ebd20a534f36e1274",
+        "dist/syntax-print.js": "636385af1588cc80fb83cff65e2e4ce06f47d7c38bfe8bf029d26b0d72c09e64",
+        "dist/syntax-print.js.map": "090966acec9c25f2474ca1e2b13bb1a3c9c90f039523578af46b8f02b0f2c568",
+        "dist/syntax-snapshot.d.ts": "a88019baa98b8c39daccda5ac502dcce55a605400f60e684c1503cabef75979b",
+        "dist/syntax-snapshot.d.ts.map": "d469921001bb1493b23c14ac64cb3f3e3534a0b43e9120180fc1747d96baf30d",
+        "dist/syntax-snapshot.js": "224183ccb48d9b1ff93e7f734f3322c9fd2aba54ae9b8deb6628d173ee81ad3a",
+        "dist/syntax-snapshot.js.map": "c19ef51ae9ca9ae178a58c1155c11174a116bfbf49f88e20c640f1a5c25c94e9",
+        "dist/syntax-walk-bounds.d.ts": "bfee0c96705f71b04e6e61aa205cbadadb8c192392c64d0f3936525248667f12",
+        "dist/syntax-walk-bounds.d.ts.map": "e9682066e2fa403f756521784253ba626a2eae9a7a4d77272df29d9a0b1b280c",
+        "dist/syntax-walk-bounds.js": "a5f6f71aaade05d5b52af45cec3656bf280aae0c67e2a9df62d039168f82c5cd",
+        "dist/syntax-walk-bounds.js.map": "02b4c48fb3863d82722ca480ffb440c882a4c9fb22bbeada0358611971409af1",
+        "dist/syntax-walk-errors.d.ts": "063f9eac55aa9d3e2df59afa3a3f07e9eafc6b35ad4f5afac60b05a199608152",
+        "dist/syntax-walk-errors.d.ts.map": "a719deb159c2194f1e75652152157b54b7df37761c461e64df8d808a8ffff277",
+        "dist/syntax-walk-errors.js": "793942b3ec9926900b15690611a3a75e45ec2039f4975d52bdc66fdef6c21f14",
+        "dist/syntax-walk-errors.js.map": "8bdecbf1a48e7c3de65dbfd05ede26cdf927836331afcf0594380f5b9e0b67b2",
+        "dist/syntax-walk-license.d.ts": "e13c558bd4d3fabee0347fc04e6a4a5eff1962a07e3295109f7fee7c18b8fb76",
+        "dist/syntax-walk-license.d.ts.map": "48e3e810f0647329c54be438495ec564553b46d69136519258ac9a045ce29f08",
+        "dist/syntax-walk-license.js": "9a03338454a34e6947e9ab9e89841840ebeda675768f26bf8c6215bf6050f420",
+        "dist/syntax-walk-license.js.map": "f21e451b954ce3c1d7ed886376b70c06f20046126429ebb31ab0117f90041be3",
+        "dist/syntax-walk.d.ts": "2c26379f5fb585c81ac5a991944a3a180f9b238007079c3a9e27927ef24d4287",
+        "dist/syntax-walk.d.ts.map": "75f4a2a2bec8066825829c52e87dc6292244ebe356e7921e8bd2cf97d565eafe",
+        "dist/syntax-walk.js": "1d7b629fb557cdaab187bf32b8648723277d44ad80a7adb80f761c84f58c592d",
+        "dist/syntax-walk.js.map": "e0a3a71562002448bb3bdcc5e15ed9b9800e08823341329da0acdab757e61541",
+        "dist/syntax-wire.d.ts": "48bd7f51db050a04f4dcdd96303b34e2c2518c947b03c40da7040069a79ac399",
+        "dist/syntax-wire.d.ts.map": "ac8b83a4a49d09eee776d1d36f075f592be54243d1caca8701e11a19504b86f0",
+        "dist/syntax-wire.js": "42bdacb8304ae50f5ecb0e2311f18efb1a4e25e85e2788b2fd54e05be0870e6c",
+        "dist/syntax-wire.js.map": "b43ad15a642e5c30998dee17ba2799dbb0d983d4ba65bae8e3dda910fc4e82e5",
+        "dist/syntax.d.ts": "d72471b8d53e39dc12de8c5c627ea9e73f65724282d85398e97009f056943a29",
+        "dist/syntax.d.ts.map": "d8e7bc717640d44095c84600e8adee2c8c0823e152ac3ac2309c480b2ab56351",
+        "dist/syntax.js": "7524a5bd5d0bc784d4c7008a6b08392e63ca534914ecedabb0711a1bfd640854",
+        "dist/syntax.js.map": "b7b7a38138ebc2f879e2d22a8d9b89ccf85c58dbcd2b8640c85e8cb7cbfce2db",
+        "dist/wasm-instance.d.ts": "06b63e15b80665cff98a00c617640acaec8010268484a4dd9f937cd20ed92ccd",
+        "dist/wasm-instance.d.ts.map": "ba3c0ab1639e14740e611462dc92743cf9c862a463edb421635f4ee42d3f8650",
+        "dist/wasm-instance.js": "58a52575b814ca430685df32ab489853e111764cac136b93864534646a79382b",
+        "dist/wasm-instance.js.map": "12aefd5f892d09e8c206004419504a80b16716e4721155d83b00e3b04378848c",
+        "generated/syntax-constants.d.ts": "9158e981aa9f62366285bd4b51a6b3b6d5bb00c58994117cf4adbda0f719803b",
+        "generated/syntax-constants.js": "d0278c7a12f2ce98fd3f6f46ca800c16fda40a7f6f9bb2cf2a30e77466023ad8",
+        "generated/syntax-schema.d.ts": "1e90ac044ca3d84cfe0d1bee119e4c84df300b5784e9fc41655d64989d024c30",
+        "generated/syntax-schema.js": "cd240a082e73e392949898be93f3b9486b19b405ae813e11eefd8c206c9d9326",
+        "generated/syntax-types.d.ts": "d5f97fb7a5999a244846109377bc4181ef4e6942aefc98783ced2f13ede4af53",
+        "package.json": "9b201575a55b673dd7ba4457a5dd05b4fff6cad322003edfcb6a50b66774e1fc",
+        "shim/sh-ast.wasm": "fd1ee7cd380abac985c4732a0a4e831a671b3907b6af83ba0e0e1c6ffe3ffad4",
+        "shim/wasm_exec.js": "aebe031720f29deea5dfa7aa07961e7cd509912af2714a09dd0b2ec6aecaca02"
+      }
+    },
+    {
+      "label": "local-candidate",
+      "version": "0.5.0",
+      "entry": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/local/package/dist/index.js",
+      "packageRoot": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/local/package",
+      "tarball": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-EBv1F5/local/sh-ast-0.5.0.tgz",
+      "tarballSha256": "a00c782088ebdab2e51cdf3e7ebf5249ef64ab68e1ca08893397890b8e125048",
+      "integrity": "sha512-YDL7ovyelGoZLScC+Ou9h56XhT5RZTSJUrgs05Ros5favgCFqrJODWEg6rOmOblPD+fZs5qnfHEeF7ljwEkPWQ==",
+      "registryTarball": null,
+      "assets": {
+        "README.md": "ae76a32937ccb6770bbf37deac0ead2e1ed0b9bd6bd31888d46f4b3411971de4",
+        "dist/analyze/ansi-c-escapes.d.ts": "062e50dfe47467a44b709f0feda7acbe1d4dc3a5224e391ab00164df1f02181d",
+        "dist/analyze/ansi-c-escapes.d.ts.map": "c98fd19f1949f2d3ffba86a5d065ffeb1983d64988527effae7b3c35050c5c46",
+        "dist/analyze/ansi-c-escapes.js": "e5416ff479e4e4a53099ac189a5130261d335f9edd2adbbb8c3e1780ba5ee859",
+        "dist/analyze/ansi-c-escapes.js.map": "b9c222195bba72d3a85125f1922c48512096891853a1f747603f4dbe02db735a",
+        "dist/analyze/decode-lit.d.ts": "38db327eb8fd580a90a5bbbde6eb02b9d94aa382d7651d32635584c27df7fad4",
+        "dist/analyze/decode-lit.d.ts.map": "5a779cd72268b6f07420abba4512b8860e365f8836917a07245683484ceb065e",
+        "dist/analyze/decode-lit.js": "9bba6d7e0f37dae1621b80fa800b0a2ce9c2bf06e4a92b1fc5af73a5083d4955",
+        "dist/analyze/decode-lit.js.map": "e34d8c79ea9abeb066e8c15d898ab6e13dc3cffbc53400742b218da4cdc47162",
+        "dist/analyze/enumerate-commands.d.ts": "57076c5bbf455a65741f37881e7944dc7e52c603ab006089fe91d965ee505666",
+        "dist/analyze/enumerate-commands.d.ts.map": "aa2352c2112d555ef59fb008286de17012587f2be76bf9b46a5853f702f1e5b0",
+        "dist/analyze/enumerate-commands.js": "a1a4304e83cd8b992b5f8a19aa0cd455b54c8531cea7d8a60f12750097d11eea",
+        "dist/analyze/enumerate-commands.js.map": "1ebdf1863fa1bfebda3df75f0ce2a3e52a44f1f40fc5db1e85049102d9c75e1b",
+        "dist/analyze/index.d.ts": "2916f4ff7696cc13498c23ff3362ac4788513cf2158a29f932f7ea20980c37ba",
+        "dist/analyze/index.d.ts.map": "c69303592ebcc14eba4cf9a665e1d041299fd3dabb6eded575ad3f7a21a41606",
+        "dist/analyze/index.js": "e68bceb80ae05e58d01ab524651d21f9ccc59b7726ca7625eb18ec1efd55fbfe",
+        "dist/analyze/index.js.map": "7f292eaaf4b618e48a95183e817145cb2bdd7722a971d3d33a153bb85f9bfb13",
+        "dist/analyze/node-helpers.d.ts": "6445d2c57a121d16a76fe2dd7285f226f6ae28a9c35f8b4935e5d9356a43d017",
+        "dist/analyze/node-helpers.d.ts.map": "0a1a53f75d4c0983fae2c976f06c56f933d5c0566e25fca4005d7f9f85eb4e2a",
+        "dist/analyze/node-helpers.js": "8be136cbe0e7484601ea50210b609c34ce1d72fc87951e91e83bfea7eddf4a51",
+        "dist/analyze/node-helpers.js.map": "5ffa0e9cca18bc471b0ce0fc3ff58bfe8dcb45ca2fad219711a1d6f962a51027",
+        "dist/analyze/resolve-argv0.d.ts": "2c5353c7c9df73b814a3b92c345e3d15f220c0693663df5ea65805a475497cf3",
+        "dist/analyze/resolve-argv0.d.ts.map": "8a87a390bc798bda00357398145567e97873fef18e35c5d9dcab1c3755402043",
+        "dist/analyze/resolve-argv0.js": "6530617587eb4c4e200e49df01b48ced24fefe50b35f1ecb049527c92673f0f5",
+        "dist/analyze/resolve-argv0.js.map": "f0d34bfc93e56c24c8b2bd1936ee1874ae8d4486d021611becdde161fcbd01e5",
+        "dist/analyze/resolve-word.d.ts": "6f1bc577983105338b02045ee3ac6cc1144bec660a4cabf893e8848379fe78ac",
+        "dist/analyze/resolve-word.d.ts.map": "251b965e61c39dc3af9c99beebf64158f03a7aa41d78db86b3e0c18c7d044579",
+        "dist/analyze/resolve-word.js": "b4ba557041fdccbf9983d051405d43ee8373fc2cd59638526e0e6254bbba0e05",
+        "dist/analyze/resolve-word.js.map": "235bfba0ebd0fae779817044025cbe07333d44f313f2f6b5904577e4a92793b4",
+        "dist/analyze.d.ts": "16137480e9b9dbf6ad0c21eb961ca1f5dcf9b265443565fe9ca5520415a8d5a7",
+        "dist/deep-freeze.d.ts": "b91d8f80b780b69d852465691a85b86baa83f485c4869b192ed95d59546a1917",
+        "dist/deep-freeze.d.ts.map": "f917e83ec9353f56a8c53ace265b1bc26556e12a699372d2cefe420ac6eff123",
+        "dist/deep-freeze.js": "be5638802d351d97a3179ceaf4dff98a793c167f2fd049886ca7ae1c2e9b8a8e",
+        "dist/deep-freeze.js.map": "b6f7c94d9a1bfff8dff855fa99cdd1685ad182dc695437d72713adcc95c64757",
+        "dist/errors.d.ts": "2cac2cc19cafe3e74d504b928df1052322ed50159f5468a928391bfb256ee2c6",
+        "dist/errors.d.ts.map": "75ef486bef8ab57c17b387fc3d241f6af9dbe2a7db7596f9fb5025ed6a9244f8",
+        "dist/errors.js": "a47015e9c0d9d59cc0f377a5ac0d87e142e072c4af3359db0274547bf685add9",
+        "dist/errors.js.map": "477d6c69518c2a87fc66a962fdba89f19ae104232b064ce9f10e7c35918bff9f",
+        "dist/index.d.ts": "cc37c2c8cf8c30ee9d1ca55494e7bcab63e131ec6954889578bd4c30c08fd0cd",
+        "dist/index.d.ts.map": "adba5ed819e14be9f08bfaec16265b207ae9243067108d172bd479cd0f1297bf",
+        "dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+        "dist/index.js.map": "23628ba56dfcd7713a9ac7d21fbf837e7d0e63244b8fd65e2d83f62fc2be9e0b",
+        "dist/parse-depth-guard.d.ts": "d66b2d311cee094cfcf26bd7799f27b0f7180c47900ebc3ebed7078fb8d02405",
+        "dist/parse-depth-guard.d.ts.map": "0ab8c7fb791b54d9aec05a740c85331b7b2fdb34cdee2b7434fe78d617af4a48",
+        "dist/parse-depth-guard.js": "9b6aad6788e297ee9eec6a76c1c22f8deda38b8dc404aa9c1030202b12cb8b7b",
+        "dist/parse-depth-guard.js.map": "51b53a73bb84c7c4ecae7262164673b89ebbd2469df0e579b41a8200f1874e8c",
+        "dist/sh-ast.d.ts": "d51da45e2edc2da006f6b0c8cd15e9625605f76d2069be118a9d91e757fae27c",
+        "dist/syntax-errors.d.ts": "90d4b61de601d0dadbd0028b630abcb59b4259227370eaa3c3b7e6d5142183b9",
+        "dist/syntax-errors.d.ts.map": "233f2c8c98727a792dce36143ca8d63c5ec419c4342bd4c175555cf377fc905b",
+        "dist/syntax-errors.js": "b7dd80e5e204c9b03d7270daced47dfc279c973b9cdd96203c9ed8a456eb457a",
+        "dist/syntax-errors.js.map": "e84878ba0d40085f46cc74f16100b291d9f844025f083288a03b8c4ae37f3e55",
+        "dist/syntax-print-errors.d.ts": "433d8a253f0ffbf50a269e70259da369f89ae5269468ab3d6fb692967b937f23",
+        "dist/syntax-print-errors.d.ts.map": "3be51ac8769e0b210194f484369a09683fc0807acd5ae4033589f97ac27d2379",
+        "dist/syntax-print-errors.js": "fd87f98ff736e47fbc2bd8eb5e0de47344f80a9d19d2d54b12f92fcc5bbcdad3",
+        "dist/syntax-print-errors.js.map": "00ef306a6d52a536e2a0a773d138cbcf4b69f55e34ebd4ccaad99bbaee0e863f",
+        "dist/syntax-print.d.ts": "901558a3e80e98d6a2dbb3259bda24eb8f66f41d85f1edbe9c867c7a92adf2d3",
+        "dist/syntax-print.d.ts.map": "dd0b8e78bb5ab764d64ddd5af69d534cab1fd4d64c931e6ebd20a534f36e1274",
+        "dist/syntax-print.js": "636385af1588cc80fb83cff65e2e4ce06f47d7c38bfe8bf029d26b0d72c09e64",
+        "dist/syntax-print.js.map": "090966acec9c25f2474ca1e2b13bb1a3c9c90f039523578af46b8f02b0f2c568",
+        "dist/syntax-snapshot.d.ts": "a88019baa98b8c39daccda5ac502dcce55a605400f60e684c1503cabef75979b",
+        "dist/syntax-snapshot.d.ts.map": "d469921001bb1493b23c14ac64cb3f3e3534a0b43e9120180fc1747d96baf30d",
+        "dist/syntax-snapshot.js": "224183ccb48d9b1ff93e7f734f3322c9fd2aba54ae9b8deb6628d173ee81ad3a",
+        "dist/syntax-snapshot.js.map": "c19ef51ae9ca9ae178a58c1155c11174a116bfbf49f88e20c640f1a5c25c94e9",
+        "dist/syntax-walk-bounds.d.ts": "bfee0c96705f71b04e6e61aa205cbadadb8c192392c64d0f3936525248667f12",
+        "dist/syntax-walk-bounds.d.ts.map": "e9682066e2fa403f756521784253ba626a2eae9a7a4d77272df29d9a0b1b280c",
+        "dist/syntax-walk-bounds.js": "a5f6f71aaade05d5b52af45cec3656bf280aae0c67e2a9df62d039168f82c5cd",
+        "dist/syntax-walk-bounds.js.map": "02b4c48fb3863d82722ca480ffb440c882a4c9fb22bbeada0358611971409af1",
+        "dist/syntax-walk-errors.d.ts": "063f9eac55aa9d3e2df59afa3a3f07e9eafc6b35ad4f5afac60b05a199608152",
+        "dist/syntax-walk-errors.d.ts.map": "a719deb159c2194f1e75652152157b54b7df37761c461e64df8d808a8ffff277",
+        "dist/syntax-walk-errors.js": "793942b3ec9926900b15690611a3a75e45ec2039f4975d52bdc66fdef6c21f14",
+        "dist/syntax-walk-errors.js.map": "8bdecbf1a48e7c3de65dbfd05ede26cdf927836331afcf0594380f5b9e0b67b2",
+        "dist/syntax-walk-license.d.ts": "e13c558bd4d3fabee0347fc04e6a4a5eff1962a07e3295109f7fee7c18b8fb76",
+        "dist/syntax-walk-license.d.ts.map": "48e3e810f0647329c54be438495ec564553b46d69136519258ac9a045ce29f08",
+        "dist/syntax-walk-license.js": "9a03338454a34e6947e9ab9e89841840ebeda675768f26bf8c6215bf6050f420",
+        "dist/syntax-walk-license.js.map": "f21e451b954ce3c1d7ed886376b70c06f20046126429ebb31ab0117f90041be3",
+        "dist/syntax-walk.d.ts": "2c26379f5fb585c81ac5a991944a3a180f9b238007079c3a9e27927ef24d4287",
+        "dist/syntax-walk.d.ts.map": "75f4a2a2bec8066825829c52e87dc6292244ebe356e7921e8bd2cf97d565eafe",
+        "dist/syntax-walk.js": "1d7b629fb557cdaab187bf32b8648723277d44ad80a7adb80f761c84f58c592d",
+        "dist/syntax-walk.js.map": "e0a3a71562002448bb3bdcc5e15ed9b9800e08823341329da0acdab757e61541",
+        "dist/syntax-wire.d.ts": "b3693706e677ffce8488c937417025f2c7707c5e125b7f979f4f061e85ed8608",
+        "dist/syntax-wire.d.ts.map": "949c86da69275a0a9454dac1f6319b7e30580d8d26bc4ca9c57d73f5721a8dae",
+        "dist/syntax-wire.js": "0c2ad2762055e0474047753de1733e8eb53aa92e8755ba8463a059f583f873e2",
+        "dist/syntax-wire.js.map": "314581b2955afacee27442a6c2e379de638643ece2b67983c448fcace58b1fc4",
+        "dist/syntax.d.ts": "d72471b8d53e39dc12de8c5c627ea9e73f65724282d85398e97009f056943a29",
+        "dist/syntax.d.ts.map": "d8e7bc717640d44095c84600e8adee2c8c0823e152ac3ac2309c480b2ab56351",
+        "dist/syntax.js": "7524a5bd5d0bc784d4c7008a6b08392e63ca534914ecedabb0711a1bfd640854",
+        "dist/syntax.js.map": "b7b7a38138ebc2f879e2d22a8d9b89ccf85c58dbcd2b8640c85e8cb7cbfce2db",
+        "dist/wasm-instance.d.ts": "06b63e15b80665cff98a00c617640acaec8010268484a4dd9f937cd20ed92ccd",
+        "dist/wasm-instance.d.ts.map": "ba3c0ab1639e14740e611462dc92743cf9c862a463edb421635f4ee42d3f8650",
+        "dist/wasm-instance.js": "58a52575b814ca430685df32ab489853e111764cac136b93864534646a79382b",
+        "dist/wasm-instance.js.map": "12aefd5f892d09e8c206004419504a80b16716e4721155d83b00e3b04378848c",
+        "generated/syntax-constants.d.ts": "9158e981aa9f62366285bd4b51a6b3b6d5bb00c58994117cf4adbda0f719803b",
+        "generated/syntax-constants.js": "d0278c7a12f2ce98fd3f6f46ca800c16fda40a7f6f9bb2cf2a30e77466023ad8",
+        "generated/syntax-schema.d.ts": "1e90ac044ca3d84cfe0d1bee119e4c84df300b5784e9fc41655d64989d024c30",
+        "generated/syntax-schema.js": "cd240a082e73e392949898be93f3b9486b19b405ae813e11eefd8c206c9d9326",
+        "generated/syntax-types.d.ts": "d5f97fb7a5999a244846109377bc4181ef4e6942aefc98783ced2f13ede4af53",
+        "package.json": "afc83225484a448b6ef571d78422d46adcb28cc43f822827ac3ed707b6dc6e0f",
+        "shim/sh-ast.wasm": "fd1ee7cd380abac985c4732a0a4e831a671b3907b6af83ba0e0e1c6ffe3ffad4",
+        "shim/wasm_exec.js": "aebe031720f29deea5dfa7aa07961e7cd509912af2714a09dd0b2ec6aecaca02"
+      },
+      "gitHead": "54fafdb85c446430002123ba87ce9882c0ea344d",
+      "gitStatus": " M packages/sh-ast/src/syntax-wire.ts\n",
+      "sourceAssets": {
+        "analyze/ansi-c-escapes.ts": "e72052ad468170c1df6885c66fa8405917a31476dfb7e2c8b5133f3dd64565a7",
+        "analyze/decode-lit.ts": "482395644e91da80561736ea79d798bab7f89b919cf4ccac246a52d8717c7eb5",
+        "analyze/enumerate-commands.ts": "7e56da2980abd8b04a82de8426730af1ccaada99125b8f676decf03cd8330eaa",
+        "analyze/index.ts": "fbe976ece53d2d5d926ad591b36789e824a021219a784d4faa0c6cb4c764e7a3",
+        "analyze/node-helpers.ts": "5d27ba7c31b700c29639d04778b622b4a5a02376b99e141f23a5cb8c0fa37e68",
+        "analyze/resolve-argv0.ts": "7f172014afe37386f5385028cf2b06d31983a0b33980636af0c0bbec1b5accc2",
+        "analyze/resolve-word.ts": "31297bdd7e9457c7aa5f64147cc7fc4ee1875c27d1e488efb1083c054cca0766",
+        "deep-freeze.ts": "8419e7ef7553169ce75897903a5dd72ba266bfd17c0c3c8e94093757c8c8b55a",
+        "errors.ts": "0bf22e96125f3d37c994488e74696103f1903acd60a4710ad4549d9359a13283",
+        "index.ts": "d962af0051998e259c633eaa5d04bfe39be8a2e2c69dfc1a072c101260cb1262",
+        "parse-depth-guard.ts": "dd5a8fda807c2a1ca70599db55d5ac5255c2cde0503d7feaf0996c3b6758c69b",
+        "syntax-errors.ts": "e9f7c3071f82bbbf8454d4c137d0cfca383d961248284f1a2d11bb682930da91",
+        "syntax-print-errors.ts": "a590db0c49367d9aa0591550e67dfe8f9f8d8f277cf2f382b8341a98f4357968",
+        "syntax-print.ts": "c7eacc43a47e0757401d42c35c0169926670aed20edb926ccbcf4c7b8a774bce",
+        "syntax-snapshot.ts": "459304ca58ed4cc96b57548529267d4c7062a87ef734a4db5fa4f3d566de82af",
+        "syntax-walk-bounds.ts": "69446ba28e07afb4e6c76331055a290addf7b1ed8a0e5030235848d4deee33a3",
+        "syntax-walk-errors.ts": "3eb6ff6f71a085412d6e6e86e9ddc1b1958c364c360fa96f5537ed3d4d78d9cd",
+        "syntax-walk-license.ts": "e1920b0e00e7baa30a686b953a59653d604721c41dc0c5323c60a954c0361d9a",
+        "syntax-walk.ts": "aca7539c6dcbc1dff0498dd499c23c4773028299f40729405ff83690461e3d8f",
+        "syntax-wire.ts": "0ed3c8c80fd3445bd2a11b250ec1299a4f87977682e63ad6a93754ce85b7eb07",
+        "syntax.ts": "0c6bd47bc69cb93cf1d3f35e30138f1bc63b2f0db7d66c31998e004afaca2dbe",
+        "wasm-globals.d.ts": "58ff41b63dfe3c96a47499f6a0b85d216dc801c691f240ff54fb43d17d9ad7f8",
+        "wasm-instance.ts": "15dda04d33d89b343d59e41702a41d60969cdd5f56650fecf580047dd005bdcf"
+      }
+    }
+  ],
+  "fixtures": [
+    {
+      "name": "consumer-m2",
+      "markers": 0,
+      "dimensions": {
+        "functions": 100,
+        "ifClauses": 100,
+        "caseClauses": 100
+      },
+      "dialect": "bash",
+      "bytes": 11270,
+      "utf16Units": 11070,
+      "lines": 700,
+      "sha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562"
+    }
+  ],
+  "verification": [
+    {
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20106,
+      "phase": "parse",
+      "mode": "verify",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "transport": {
+        "parse": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20134,
+      "phase": "parse",
+      "mode": "verify",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "transport": {
+        "parse": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21406,
+      "phase": "parse-with-positions",
+      "mode": "verify",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "transport": {
+        "parse-with-positions": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21524,
+      "phase": "parse-with-positions",
+      "mode": "verify",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "transport": {
+        "parse-with-positions": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    }
+  ],
+  "samples": [
+    {
+      "round": 0,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20207,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        67.25133399999999, 70.91808399999996, 68.23249999999996, 66.73445900000002,
+        63.88274999999999, 72.30612499999995, 75.96070800000007, 73.74558300000001,
+        53.65141700000004, 48.23608300000001
+      ],
+      "summary": {
+        "count": 10,
+        "min": 48.23608300000001,
+        "median": 67.74191699999997,
+        "max": 75.96070800000007
+      }
+    },
+    {
+      "round": 0,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20328,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        44.55412499999997, 59.53145800000004, 39.76770800000003, 60.273082999999986,
+        39.425749999999994, 66.77991699999995, 60.98245899999995, 61.38200000000006,
+        65.18724999999995, 61.473749999999995
+      ],
+      "summary": {
+        "count": 10,
+        "min": 39.425749999999994,
+        "median": 60.62777099999997,
+        "max": 66.77991699999995
+      }
+    },
+    {
+      "round": 1,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20402,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        65.498167, 69.14912500000003, 63.22325000000001, 65.66754099999997, 62.40170899999998,
+        65.20233399999995, 68.43700000000001, 67.72466600000007, 47.63437499999998,
+        42.235874999999965
+      ],
+      "summary": {
+        "count": 10,
+        "min": 42.235874999999965,
+        "median": 65.35025049999997,
+        "max": 69.14912500000003
+      }
+    },
+    {
+      "round": 1,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20474,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        73.63862499999999, 71.39104099999997, 68.63008300000001, 64.97174999999999,
+        64.65879200000006, 69.59608300000002, 72.30604100000005, 54.70324999999991,
+        47.300208999999995, 46.43487499999992
+      ],
+      "summary": {
+        "count": 10,
+        "min": 46.43487499999992,
+        "median": 66.8009165,
+        "max": 73.63862499999999
+      }
+    },
+    {
+      "round": 2,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20554,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        68.83112500000004, 69.89904200000001, 71.32441699999998, 70.83612500000004,
+        68.25283300000001, 72.53774999999996, 76.59762500000011, 64.74170800000002,
+        52.83974999999998, 48.41370800000004
+      ],
+      "summary": {
+        "count": 10,
+        "min": 48.41370800000004,
+        "median": 69.36508350000003,
+        "max": 76.59762500000011
+      }
+    },
+    {
+      "round": 2,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20648,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        64.95929199999998, 60.740583000000015, 60.862292000000025, 63.108791999999994,
+        60.02216699999997, 65.96825000000001, 66.75470900000005, 67.20887500000003,
+        50.418916999999965, 42.89420800000005
+      ],
+      "summary": {
+        "count": 10,
+        "min": 42.89420800000005,
+        "median": 61.98554200000001,
+        "max": 67.20887500000003
+      }
+    },
+    {
+      "round": 3,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20721,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        41.95616699999999, 58.98508399999997, 40.572, 60.262917000000016, 38.94875000000002,
+        53.57791699999996, 42.02175, 58.096374999999966, 37.37570800000003, 51.811624999999935
+      ],
+      "summary": {
+        "count": 10,
+        "min": 37.37570800000003,
+        "median": 46.916687499999966,
+        "max": 60.262917000000016
+      }
+    },
+    {
+      "round": 3,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20790,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        61.26162500000004, 50.95224999999999, 65.71300000000002, 59.57862499999999,
+        48.39124999999996, 62.184958999999935, 42.125125000000025, 59.33558300000004, 60.582042,
+        41.642916000000014
+      ],
+      "summary": {
+        "count": 10,
+        "min": 41.642916000000014,
+        "median": 59.457104000000015,
+        "max": 65.71300000000002
+      }
+    },
+    {
+      "round": 4,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 20916,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        70.889208, 71.135041, 70.28766599999994, 64.60645900000003, 65.32762500000001,
+        71.09016600000007, 72.26629200000002, 82.51312499999995, 60.508125000000064,
+        53.488291000000004
+      ],
+      "summary": {
+        "count": 10,
+        "min": 53.488291000000004,
+        "median": 70.58843699999997,
+        "max": 82.51312499999995
+      }
+    },
+    {
+      "round": 4,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21218,
+      "phase": "parse",
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        62.66549999999998, 61.140416000000016, 69.94245800000004, 65.56012500000003,
+        66.79629099999994, 67.493292, 69.65641700000003, 49.72283300000004, 51.08858299999997,
+        48.76816699999995
+      ],
+      "summary": {
+        "count": 10,
+        "min": 48.76816699999995,
+        "median": 64.1128125,
+        "max": 69.94245800000004
+      }
+    },
+    {
+      "round": 0,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21557,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        98.87595899999997, 117.60620799999992, 108.12983300000008, 103.74304200000006,
+        114.38083399999994, 122.53920799999992, 106.93658400000004, 94.37866699999995,
+        112.26512500000013, 100.888416
+      ],
+      "summary": {
+        "count": 10,
+        "min": 94.37866699999995,
+        "median": 107.53320850000006,
+        "max": 122.53920799999992
+      }
+    },
+    {
+      "round": 0,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21779,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        96.58558400000004, 103.73591599999997, 114.93991600000004, 104.17712499999993,
+        88.51437499999997, 106.87800000000004, 101.01116600000012, 94.159625, 106.58291699999995,
+        98.72279099999992
+      ],
+      "summary": {
+        "count": 10,
+        "min": 88.51437499999997,
+        "median": 102.37354100000005,
+        "max": 114.93991600000004
+      }
+    },
+    {
+      "round": 1,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 21945,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        98.01787499999995, 113.60429099999999, 99.987709, 108.81054099999994, 109.71366599999999,
+        98.65383300000008, 119.23199999999997, 115.26062500000012, 140.568583, 98.11754199999996
+      ],
+      "summary": {
+        "count": 10,
+        "min": 98.01787499999995,
+        "median": 109.26210349999997,
+        "max": 140.568583
+      }
+    },
+    {
+      "round": 1,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 22233,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        122.277375, 150.18954099999996, 134.63466700000004, 117.61620899999991, 142.8431250000001,
+        131.68929200000002, 122.93741699999987, 145.808583, 129.40612499999997, 123.49816600000008
+      ],
+      "summary": {
+        "count": 10,
+        "min": 117.61620899999991,
+        "median": 130.5477085,
+        "max": 150.18954099999996
+      }
+    },
+    {
+      "round": 2,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 22519,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        105.87670899999995, 153.26462500000002, 129.84279200000003, 137.88591699999995,
+        144.67483299999992, 135.99633300000005, 125.1533750000001, 133.3576250000001,
+        129.9742080000001, 113.80558300000007
+      ],
+      "summary": {
+        "count": 10,
+        "min": 105.87670899999995,
+        "median": 131.6659165000001,
+        "max": 153.26462500000002
+      }
+    },
+    {
+      "round": 2,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 22607,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        94.99700000000001, 118.34387500000003, 114.00691599999993, 96.27808300000004,
+        122.92562499999997, 101.22404199999994, 98.21408399999996, 106.04250000000002, 113.847125,
+        105.98112500000002
+      ],
+      "summary": {
+        "count": 10,
+        "min": 94.99700000000001,
+        "median": 106.01181250000002,
+        "max": 122.92562499999997
+      }
+    },
+    {
+      "round": 3,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 22923,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        100.67554100000001, 113.13425000000007, 126.27575000000002, 116.81233299999997,
+        104.28250000000003, 133.81441700000005, 113.03058399999986, 106.65662500000008,
+        123.85529099999985, 115.055791
+      ],
+      "summary": {
+        "count": 10,
+        "min": 100.67554100000001,
+        "median": 114.09502050000003,
+        "max": 133.81441700000005
+      }
+    },
+    {
+      "round": 3,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 23172,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        108.44387499999993, 122.09558299999992, 127.22291599999994, 125.30487500000004,
+        132.67766600000016, 115.95254099999988, 115.81166600000006, 106.14020800000003,
+        129.9804999999999, 130.89370800000006
+      ],
+      "summary": {
+        "count": 10,
+        "min": 106.14020800000003,
+        "median": 123.70022899999998,
+        "max": 132.67766600000016
+      }
+    },
+    {
+      "round": 4,
+      "artifact": "0.5.0",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 23591,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        109.56445900000006, 119.70762500000001, 109.94779200000005, 128.77254200000004, 130.723209,
+        135.35300000000007, 140.3905420000001, 145.68454199999996, 125.6467090000001,
+        113.78866599999992
+      ],
+      "summary": {
+        "count": 10,
+        "min": 109.56445900000006,
+        "median": 127.20962550000007,
+        "max": 145.68454199999996
+      }
+    },
+    {
+      "round": 4,
+      "artifact": "local-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 24021,
+      "phase": "parse-with-positions",
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        99.93404099999998, 117.38662499999998, 100.705375, 90.83783300000005, 111.11725000000001,
+        104.69795899999997, 98.00841700000001, 93.9670000000001, 116.19008299999996,
+        107.88324999999986
+      ],
+      "summary": {
+        "count": 10,
+        "min": 90.83783300000005,
+        "median": 102.70166699999999,
+        "max": 117.38662499999998
+      }
+    }
+  ],
+  "rows": [
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "artifact": "0.5.0",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "processes": 5,
+      "observations": 50,
+      "count": 5,
+      "min": 59.457104000000015,
+      "median": 67.74191699999997,
+      "max": 70.58843699999997
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "artifact": "local-candidate",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "processes": 5,
+      "observations": 50,
+      "count": 5,
+      "min": 46.916687499999966,
+      "median": 61.98554200000001,
+      "max": 65.35025049999997
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "artifact": "0.5.0",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "processes": 5,
+      "observations": 50,
+      "count": 5,
+      "min": 107.53320850000006,
+      "median": 127.20962550000007,
+      "max": 131.6659165000001
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "artifact": "local-candidate",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "processes": 5,
+      "observations": 50,
+      "count": 5,
+      "min": 102.37354100000005,
+      "median": 106.01181250000002,
+      "max": 114.09502050000003
+    }
+  ],
+  "comparisons": [
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "baseline": "0.4.0",
+      "candidate": "0.5.0",
+      "status": "unsupported"
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "baseline": "0.4.0",
+      "candidate": "0.5.0",
+      "status": "unsupported"
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "baseline": "0.5.0",
+      "candidate": "local-candidate",
+      "status": "ok",
+      "ratio": 0.9150249172901327
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "baseline": "0.5.0",
+      "candidate": "local-candidate",
+      "status": "ok",
+      "ratio": 0.8333631365025909
+    }
+  ]
+}

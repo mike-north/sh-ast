@@ -97,13 +97,14 @@ export function decodeWire(text: string): unknown {
       return item;
     }
     if (!isRecord(item)) return item;
-    if (Object.keys(item).length === 1 && typeof item.Bytes === 'string') {
+    const keys = Object.keys(item);
+    if (keys.length === 1 && typeof item.Bytes === 'string') {
       const bytes = Buffer.from(item.Bytes, 'base64');
       if (bytes.toString('base64') !== item.Bytes)
         throw new ShInternalError('Invalid base64 in syntax bridge response');
       return new Uint8Array(bytes);
     }
-    for (const key of Object.keys(item)) {
+    for (const key of keys) {
       const child = item[key];
       const restored = visit(child);
       if (restored !== child) {
