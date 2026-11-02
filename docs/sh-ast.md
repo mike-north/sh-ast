@@ -185,6 +185,17 @@ Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First u
 </td></tr>
 <tr><td>
 
+[parseWithPositionsSync(source, options)](./sh-ast.parsewithpositionssync.md)
+
+
+</td><td>
+
+Parses once while observing every real node's upstream bounds in Go. The separate immutable lookup describes this original parse; it never replaces live nodePos/nodeEnd or tracks edits. Source adapters avoid reconstructing each descendant subtree just to display the original source locations.
+
+
+</td></tr>
+<tr><td>
+
 [rawOperator(family, value)](./sh-ast.rawoperator.md)
 
 
@@ -611,6 +622,17 @@ A syntax node with mutable upstream fields. Its source bounds are derived from t
 </td></tr>
 <tr><td>
 
+[NodePositions](./sh-ast.nodepositions.md)
+
+
+</td><td>
+
+A node's upstream bounds as observed during parsing. These values refer to the original source, even when the corresponding syntax record is later edited.
+
+
+</td></tr>
+<tr><td>
+
 [ParamExp](./sh-ast.paramexp.md)
 
 
@@ -650,12 +672,34 @@ A syntax node with mutable upstream fields. Its source bounds are derived from t
 </td></tr>
 <tr><td>
 
+[ParsedFile](./sh-ast.parsedfile.md)
+
+
+</td><td>
+
+Mutable upstream syntax together with a separate source-bound position view. Editing File never updates Positions; source consumers can retain original spans while transformations query live nodePos/nodeEnd as needed.
+
+
+</td></tr>
+<tr><td>
+
 [ParseOptions](./sh-ast.parseoptions.md)
 
 
 </td><td>
 
 Whole-file parser inputs corresponding to upstream controls. Defaults match NewParser; in particular comments are retained only when KeepComments is true. Numeric int arguments accept bigint because Go's WASM int is signed 64-bit.
+
+
+</td></tr>
+<tr><td>
+
+[PositionSnapshot](./sh-ast.positionsnapshot.md)
+
+
+</td><td>
+
+Identity-based lookup of the original parse's bounds. A new or copied node has no observation. The index never calls WASM or recalculates edited node bounds.
 
 
 </td></tr>
