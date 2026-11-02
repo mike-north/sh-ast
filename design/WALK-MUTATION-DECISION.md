@@ -71,7 +71,7 @@ records and source.
 | On `a`, assign owner Args to a new array `[x, c]`                     | Active list continues `a, b`; later traversal/printing sees the new field.          |
 | In a stored Comment callback, replace its own slot with a new Comment | Retained callback object remains the old object; slot points at the replacement.    |
 | Mutate a specialized item-comment callback's copied fields            | Original comment record is unchanged.                                               |
-| Truncate, delete or remove indices from the active captured array     | Outside the supported mutation contract; no particular result or error is promised. |
+| Remove indices within the captured extent or shrink below it          | Outside the supported mutation contract; no particular result or error is promised. |
 
 Tests for these expectations derive from this accepted TypeScript contract.
 Native Go oracle traces remain the ground truth for common order, control and
