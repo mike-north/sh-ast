@@ -1,0 +1,12 @@
+{
+  "name": "representative-1",
+  "source": "# Deploy job 0: 你好 🎉 é\njob_0() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_0\n",
+  "markers": 1,
+  "dimensions": {
+    "functions": 1,
+    "forLoops": 1,
+    "ifClauses": 1,
+    "commandSubstitutions": 1,
+    "pipelineLinks": 1
+  }
+}

@@ -55,8 +55,10 @@
     "generate:sh-ast-schema": "go run -C tools/gen-visitor-keys . -out ../../packages/sh-ast/generated && prettier --write packages/sh-ast/generated",
     "prepare": "husky",
     "release": "pnpm build && changeset publish",
-    "test": "NX_TUI=false nx run-many -t test --exclude=sh-ast-workspace",
-    "version-packages": "changeset version"
+    "test": "pnpm run test:benchmark && NX_TUI=false nx run-many -t test --exclude=sh-ast-workspace",
+    "version-packages": "changeset version",
+    "benchmark": "node tools/benchmark/run.mjs",
+    "test:benchmark": "node --test tools/benchmark/*.test.mjs && pnpm build && node --test tools/benchmark/*.integration.mjs"
   },
   "type": "module"
 }

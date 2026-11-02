@@ -1,0 +1,11 @@
+{
+  "name": "nested-2",
+  "source": "# Nested deployment input: 你好 🎉 é\ndeploy() {\nfor item0 in one two; do\nfor item1 in one two; do\nresult=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\nprintf '%s\\n' \"$result\" BENCHMARK_TOKEN # leaf 🎉\ndone\ndone\n}\ndeploy\n",
+  "markers": 1,
+  "dimensions": {
+    "functions": 1,
+    "nestedForLoops": 2,
+    "commandSubstitutions": 1,
+    "pipelineLinks": 1
+  }
+}
