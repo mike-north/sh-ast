@@ -1,5 +1,31 @@
 # sh-ast
 
+## 0.6.0
+
+### Minor Changes
+
+- [#46](https://github.com/mike-north/sh-ast/pull/46) [`80bdcd9`](https://github.com/mike-north/sh-ast/commit/80bdcd9f99e2ad5e48dc8d15af13c8470f12794e) Thanks [@mike-north](https://github.com/mike-north)! - Recognize potential brace expansions in `resolveWord`, `enumerateCommands`, and
+  `resolveArgv0` using mvdan/sh v3.13.1 on private observation copies. Parse records
+  remain unchanged. Bare words are classified conservatively across dialects;
+  brace candidates with uncertain backslash handling report `unsupported` rather
+  than claiming a static command name.
+
+  Caller-constructed words whose unquoted backslash escapes cross word-part
+  boundaries also report `unsupported`; analysis no longer claims static text
+  through those uncertain quoting boundaries.
+
+- [#44](https://github.com/mike-north/sh-ast/pull/44) [`11697ff`](https://github.com/mike-north/sh-ast/commit/11697ff10d20fe5936762b558ea14156fe9facf2) Thanks [@mike-north](https://github.com/mike-north)! - Correct `resolveArgv0` assignment-operand recognition for `env` and `sudo` with mvdan/sh v3.13.1 syntax records. Names such as `A-B`, `1X`, and `名` no longer become false effective commands. `env` recognizes assignments after `--` and stops option parsing at its first assignment; `sudo` retains its own option and assignment boundaries. Platform-dependent empty-name `env` assignments now report `ambiguous-assignment`.
+
+  Add explicit `WrapperSpec.assignmentOperands` grammar presets while preserving existing caller-supplied `skipAssignmentOperands` behavior. Parse output, shell assignment counts, and command policy remain unchanged.
+
+### Patch Changes
+
+- [#48](https://github.com/mike-north/sh-ast/pull/48) [`4e3420b`](https://github.com/mike-north/sh-ast/commit/4e3420bbb45df45bdd41947fe7c8f784a85c8811) Thanks [@mike-north](https://github.com/mike-north)! - Stream faithful syntax responses and position snapshots without intermediate syntax maps or retained boxed paths, preserving response bytes and error precedence. Reject cyclic slice inputs instead of recursing indefinitely.
+
+- [#45](https://github.com/mike-north/sh-ast/pull/45) [`38d2be1`](https://github.com/mike-north/sh-ast/commit/38d2be19ad7964be6e332fe48cfcf812594215fd) Thanks [@mike-north](https://github.com/mike-north)! - Restore wire byte values in the JSON parser's owned records and arrays instead of
+  allocating a second syntax tree. Public syntax values, byte preservation, and
+  bridge validation remain unchanged.
+
 ## 0.5.0
 
 ### Minor Changes
