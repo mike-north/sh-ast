@@ -542,7 +542,6 @@ type AdvanceResult =
   | {
       readonly kind: 'unresolvable';
       readonly reason: Argv0UnresolvedReason;
-      readonly index: number;
     };
 
 /**
@@ -560,8 +559,8 @@ type AdvanceResult =
  *   `argv` with no wrapped-command word found (a malformed or truncated
  *   invocation, e.g. bare `env` with nothing else, or `sudo -u` with no
  *   operand for `-u`).
- * - `{ kind: 'unresolvable', reason, index }` — identifies the exact
- *   triggering word: an ambiguous assignment, or a *statically known* word that
+ * - `{ kind: 'unresolvable', reason }` — an ambiguous assignment, or a
+ *   *statically known* word that
  *   looks like a flag for this wrapper (unquoted, unescaped `-` prefix,
  *   not `--`) but matches none of `spec`'s recognized flag/operand shapes,
  *   or matches one of `spec.unresolvableFlags` (see
@@ -625,7 +624,7 @@ function advancePastWrapperOperands(
     if (canRecognizeAssignment && assignmentGrammar === 'env' && text.startsWith('=')) {
       // glibc putenv accepts an empty name, while FreeBSD setenv rejects
       // it. The grammar therefore cannot identify a portable invocation.
-      return { kind: 'unresolvable', reason: 'ambiguous-assignment', index };
+      return { kind: 'unresolvable', reason: 'ambiguous-assignment' };
     }
     const isAssignment =
       assignmentGrammar === 'shell-identifier'
@@ -645,7 +644,7 @@ function advancePastWrapperOperands(
         spec.unresolvableFlags !== undefined &&
         matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
       ) {
-        return { kind: 'unresolvable', reason: 'embedded-command', index };
+        return { kind: 'unresolvable', reason: 'embedded-command' };
       }
       if (
         spec.stopsChainFlags !== undefined &&
@@ -693,7 +692,7 @@ function advancePastWrapperOperands(
       // None of this applies once `optionsEnded` — see this function's
       // doc comment.
       if (looksLikeFlag(text)) {
-        return { kind: 'unresolvable', reason: 'unknown-flag', index };
+        return { kind: 'unresolvable', reason: 'unknown-flag' };
       }
     }
     if (positionalSeen < requiredPositional) {
