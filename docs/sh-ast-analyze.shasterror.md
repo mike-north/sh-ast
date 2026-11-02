@@ -4,9 +4,7 @@
 
 ## ShAstError class
 
-Common base class for every error this package throws — originally just [parseSync](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShInternalError](./sh-ast.shinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->).
-
-Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry point (see \#23) — every subclass thrown by `sh-ast/analyze`<!-- -->'s own functions extends this, so a consumer of that subpath alone can `catch`<!-- -->/reference the base without also importing from root.
+Common base for every package failure, including upstream syntax errors and analysis errors. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
 
 **Signature:**
 
@@ -57,7 +55,7 @@ string
 
 </td><td>
 
-Stable, machine-readable discriminator for this error kind. Distinct per subclass and will not change once published.
+Stable machine-readable identity of the concrete failure kind.
 
 
 </td></tr>

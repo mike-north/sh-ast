@@ -9,5 +9,5 @@ The `CallExpr` node this site was found at.
 **Signature:**
 
 ```typescript
-readonly node: ShNode;
+readonly node: CallExpr;
 ```

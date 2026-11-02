@@ -9,7 +9,7 @@ Determines whether a `Word` node is statically a known string, and if so, what t
 **Signature:**
 
 ```typescript
-export declare function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
+export declare function resolveWord(word: Node, options?: ResolveWordOptions): WordResolution;
 ```
 
 ## Parameters
@@ -37,12 +37,12 @@ word
 
 </td><td>
 
-[ShNode](./sh-ast-analyze.shnode.md)
+[Node](./sh-ast-analyze.node_2.md)
 
 
 </td><td>
 
-A `Word` node, e.g. `parseSync(...).stmts[0].cmd.args[0]`<!-- -->. A `word` sourced from `parseSync` has already passed that function's own pathological-nesting guard (`ShParseMaxDepthError` — see `parse-depth-guard.ts`<!-- -->), which rejects deeply-nested input before it is ever turned into a tree at all, so `resolveWord` itself never needs (and does not implement) a depth guard of its own.
+A `Word` node, e.g. `parseSync(...).Stmts[0].Cmd.Args[0]`<!-- -->.
 
 
 </td></tr>
@@ -70,5 +70,5 @@ _(Optional)_ See [ResolveWordOptions](./sh-ast-analyze.resolvewordoptions.md)<!-
 
 ## Exceptions
 
-TypeError if `word.type` is not `"Word"` — a programmer-error misuse of the API, not a "malformed shell source" case (well-formed shell source, however dynamic, never throws; see [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->).
+TypeError if `word.Type` is neither `"Word"` nor `"TypedNil"` — a programmer-error misuse of the API, not a "malformed shell source" case (well-formed shell source, however dynamic, never throws; see [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->).
 

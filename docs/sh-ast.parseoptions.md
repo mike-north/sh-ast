@@ -4,7 +4,7 @@
 
 ## ParseOptions interface
 
-Options accepted by [parseSync()](./sh-ast.parsesync.md)<!-- -->.
+Whole-file parser inputs corresponding to upstream controls. Defaults match NewParser; in particular comments are retained only when KeepComments is true. Numeric int arguments accept bigint because Go's WASM int is signed 64-bit.
 
 **Signature:**
 
@@ -37,43 +37,96 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[dialect?](./sh-ast.parseoptions.dialect.md)
+[Filename?](./sh-ast.parseoptions.filename.md)
 
 
 </td><td>
 
-`readonly`
+
+</td><td>
+
+[GoString](./sh-ast.gostring.md)
 
 
 </td><td>
 
-[ShellDialect](./sh-ast.shelldialect.md)
-
-
-</td><td>
-
-_(Optional)_ The shell dialect to parse against.
+_(Optional)_ Source identity carried by File/errors; no file is opened by the binding.
 
 
 </td></tr>
 <tr><td>
 
-[filename?](./sh-ast.parseoptions.filename.md)
+[KeepComments?](./sh-ast.parseoptions.keepcomments.md)
 
 
 </td><td>
 
-`readonly`
+
+</td><td>
+
+boolean
 
 
 </td><td>
 
-string
+_(Optional)_ Retains comment nodes when true; upstream defaults to false.
+
+
+</td></tr>
+<tr><td>
+
+[RecoverErrors?](./sh-ast.parseoptions.recovererrors.md)
 
 
 </td><td>
 
-_(Optional)_ Filename used only to annotate error messages and positions; the source is never read from disk.
+
+</td><td>
+
+number \| bigint
+
+
+</td><td>
+
+_(Optional)_ Maximum number of recoverable missing grammar tokens, using upstream behavior.
+
+
+</td></tr>
+<tr><td>
+
+[StopAt?](./sh-ast.parseoptions.stopat.md)
+
+
+</td><td>
+
+
+</td><td>
+
+[GoString](./sh-ast.gostring.md)
+
+
+</td><td>
+
+_(Optional)_ Lexer delimiter with upstream byte-length, whitespace and prefix semantics.
+
+
+</td></tr>
+<tr><td>
+
+[Variant?](./sh-ast.parseoptions.variant.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number \| bigint
+
+
+</td><td>
+
+_(Optional)_ Upstream LangVariant value. Variant rejects unsupported values, including LangAuto.
 
 
 </td></tr>

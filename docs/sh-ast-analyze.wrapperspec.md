@@ -167,7 +167,7 @@ boolean
 
 </td><td>
 
-_(Optional)_ When `true`<!-- -->, a `NAME=value`<!-- -->-shaped operand (an unquoted identifier followed by `=`<!-- -->, e.g. `A=1`<!-- -->) appearing after the wrapper name is skipped — this is `env`<!-- -->'s and `sudo`<!-- -->'s own `VAR=val` \*operand\* mechanism (setting variables in the wrapped command's environment), which is a distinct, per-wrapper concept from the shell-level `CallExpr.assigns` prefixes [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) counts.
+_(Optional)_ When `true`<!-- -->, a `NAME=value`<!-- -->-shaped operand (an unquoted identifier followed by `=`<!-- -->, e.g. `A=1`<!-- -->) appearing after the wrapper name is skipped — this is `env`<!-- -->'s and `sudo`<!-- -->'s own `VAR=val` \*operand\* mechanism (setting variables in the wrapped command's environment), which is a distinct, per-wrapper concept from the shell-level `CallExpr.Assigns` prefixes [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) counts.
 
 
 </td></tr>
