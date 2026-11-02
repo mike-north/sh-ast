@@ -1,0 +1,9703 @@
+{
+  "upstream": "mvdan.cc/sh/v3 v3.13.1",
+  "cases": [
+    {
+      "id": "grammar-bash",
+      "setup": "source",
+      "source": "#!/bin/bash\n# A leading comment, for Comment coverage.\necho \"hello $USER, you are ${USER:-nobody}\" 'and single quoted'\necho \"${USER:1:2}\" \"${USER/foo/bar}\"\n\nx=1\ny=$((x + 2))\nz=$(( (1 + 2) * 3 ))\n((x++))\n\nif [ -n \"$x\" ]; then\n  echo yes\nelif [ -z \"$x\" ]; then\n  echo no\nelse\n  echo maybe\nfi\n\nwhile read -r line; do\n  echo \"$line\"\ndone \u003c \"$0\"\n\nfor i in 1 2 3; do\n  echo \"$i\"\ndone\n\nfor ((i = 0; i \u003c 3; i++)); do\n  echo \"$i\"\ndone\n\ngreet() {\n  echo \"in function\"\n}\ngreet\n\n(echo in a subshell)\n\necho one \u0026\u0026 echo two || echo three\n\ncase \"$x\" in\n  a | b) echo ab ;;\n  *) echo default ;;\nesac\n\ndeclare -i n=5\narr=(one two three)\necho \"${arr[1]}\"\ndeclare -A assoc=([key]=value)\n\ntime echo timed\n\ncoproc worker { echo coproc body; }\n\nlet \"z2 = 1 + 2\"\n\necho ?(b)*(c)+(d)@(e)!(f)\n\ngreet \u003e(cat)\ngreet \u003c \u003c(echo procsub)\n\n[[ -n \"$x\" \u0026\u0026 -z \"$y\" ]]\n[[ (-n \"$x\") ]]\n\necho \"$(echo command substitution)\"\n\ncat \u003c\u003c'HEREDOC'\nheredoc body\nHEREDOC\n\necho piped | wc -l\n\n! false\n\nsleep 0 \u0026\n",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "!/bin/bash",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " A leading comment, for Comment coverage.",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "hello "
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Lit",
+          "value": ", you are "
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "nobody"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "foo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "bar"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "y"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "z"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "ParenArithm"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "ArithmCmd"
+        },
+        {
+          "type": "UnaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "yes"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-z"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "no"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "maybe"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "WhileClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "read"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-r"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "line"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "line"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "ForClause"
+        },
+        {
+          "type": "WordIter"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "ForClause"
+        },
+        {
+          "type": "CStyleLoop"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "UnaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "FuncDecl"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "in function"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Subshell"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "in"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "subshell"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "one"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "two"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "three"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CaseClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "ab"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "*"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "default"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "DeclClause"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "5"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "arr"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayExpr"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "one"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "two"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "three"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "arr"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "DeclClause"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-A"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "assoc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayExpr"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "key"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "TimeClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "timed"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CoprocClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "worker"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "coproc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "body"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "LetClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "z2 = 1 + 2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "c"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "d"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "e"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "f"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ProcSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cat"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ProcSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "procsub"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "TestClause"
+        },
+        {
+          "type": "BinaryTest"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "y"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "TestClause"
+        },
+        {
+          "type": "ParenTest"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "CmdSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "command"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "substitution"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cat"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "heredoc body\n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "piped"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "wc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-l"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "false"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "sleep"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "!/bin/bash",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": " A leading comment, for Comment coverage.",
+          "offset": 12
+        }
+      ]
+    },
+    {
+      "id": "grammar-boundaries-bash",
+      "setup": "source",
+      "mode": "force-boundaries",
+      "source": "#!/bin/bash\n# A leading comment, for Comment coverage.\necho \"hello $USER, you are ${USER:-nobody}\" 'and single quoted'\necho \"${USER:1:2}\" \"${USER/foo/bar}\"\n\nx=1\ny=$((x + 2))\nz=$(( (1 + 2) * 3 ))\n((x++))\n\nif [ -n \"$x\" ]; then\n  echo yes\nelif [ -z \"$x\" ]; then\n  echo no\nelse\n  echo maybe\nfi\n\nwhile read -r line; do\n  echo \"$line\"\ndone \u003c \"$0\"\n\nfor i in 1 2 3; do\n  echo \"$i\"\ndone\n\nfor ((i = 0; i \u003c 3; i++)); do\n  echo \"$i\"\ndone\n\ngreet() {\n  echo \"in function\"\n}\ngreet\n\n(echo in a subshell)\n\necho one \u0026\u0026 echo two || echo three\n\ncase \"$x\" in\n  a | b) echo ab ;;\n  *) echo default ;;\nesac\n\ndeclare -i n=5\narr=(one two three)\necho \"${arr[1]}\"\ndeclare -A assoc=([key]=value)\n\ntime echo timed\n\ncoproc worker { echo coproc body; }\n\nlet \"z2 = 1 + 2\"\n\necho ?(b)*(c)+(d)@(e)!(f)\n\ngreet \u003e(cat)\ngreet \u003c \u003c(echo procsub)\n\n[[ -n \"$x\" \u0026\u0026 -z \"$y\" ]]\n[[ (-n \"$x\") ]]\n\necho \"$(echo command substitution)\"\n\ncat \u003c\u003c'HEREDOC'\nheredoc body\nHEREDOC\n\necho piped | wc -l\n\n! false\n\nsleep 0 \u0026\n",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "hello "
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Lit",
+          "value": ", you are "
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "nobody"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "USER"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "foo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "bar"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "y"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "z"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "ParenArithm"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArithmCmd"
+        },
+        {
+          "type": "UnaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "yes"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-z"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "no"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "IfClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "maybe"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "WhileClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "read"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-r"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "line"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "line"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ForClause"
+        },
+        {
+          "type": "WordIter"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ForClause"
+        },
+        {
+          "type": "CStyleLoop"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "3"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "UnaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "FuncDecl"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "in function"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Subshell"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "in"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "subshell"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "one"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "two"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "three"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CaseClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "ab"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "*"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "default"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "DeclClause"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "5"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "arr"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayExpr"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "one"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "two"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "three"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "arr"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "1"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "DeclClause"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-A"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "assoc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ArrayExpr"
+        },
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "key"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "TimeClause"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "timed"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CoprocClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "worker"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "coproc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "body"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "LetClause"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "z2 = 1 + 2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "c"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "d"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "e"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "ExtGlob"
+        },
+        {
+          "type": "Lit",
+          "value": "f"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ProcSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cat"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "greet"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "ProcSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "procsub"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "TestClause"
+        },
+        {
+          "type": "BinaryTest"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "y"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "TestClause"
+        },
+        {
+          "type": "ParenTest"
+        },
+        {
+          "type": "UnaryTest"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "x"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "CmdSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "command"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "substitution"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cat"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "heredoc body\n"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "piped"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "wc"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-l"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "false"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "sleep"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "0"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[10].Cmd.Body.Cmd.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[10].Cmd.Body.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[10].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[11].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[12].Cmd.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[12].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[13].Cmd.X.Cmd.X.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[13].Cmd.X.Cmd.Y.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[13].Cmd.X.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[13].Cmd.Y.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[13].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[14].Cmd.Items[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[14].Cmd.Items[0].Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[14].Cmd.Items[1].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[14].Cmd.Items[1].Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[14].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[15].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[16].Cmd.Assigns[0].Array.Elems[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[16].Cmd.Assigns[0].Array.Elems[1].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[16].Cmd.Assigns[0].Array.Elems[2].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[16].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[17].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[18].Cmd.Args[1].Array.Elems[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[18].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[19].Cmd.Stmt.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[19].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[1].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[20].Cmd.Stmt.Cmd.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[20].Cmd.Stmt.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[20].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[21].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[22].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[23].Cmd.Args[1].Parts[0].Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[23].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[24].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[24].Redirs[0].Word.Parts[0].Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[25].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[26].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[27].Cmd.Args[1].Parts[0].Parts[0].Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[27].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[28].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[29].Cmd.X.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[29].Cmd.Y.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[29].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[2].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[30].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[31].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[3].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[4].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[5].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Cmd.Cond[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Cmd.Else.Cond[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Cmd.Else.Else.Then[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Cmd.Else.Then[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Cmd.Then[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[6].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[7].Cmd.Cond[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[7].Cmd.Do[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[7].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[8].Cmd.Do[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[8].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[9].Cmd.Do[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[9].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "grammar-zsh",
+      "setup": "source",
+      "source": "#!/bin/zsh\n# zsh-only fixture: FlagsArithm (subscript flags), unreachable in bash/mksh.\n# @see mvdan.cc/sh/v3/syntax filetests_test.go, `${signals[(i)QUIT]}`.\necho \"${signals[(i)QUIT]}\"\n",
+      "variant": 16,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "!/bin/zsh",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " zsh-only fixture: FlagsArithm (subscript flags), unreachable in bash/mksh.",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " @see mvdan.cc/sh/v3/syntax filetests_test.go, `${signals[(i)QUIT]}`.",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "signals"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "FlagsArithm"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "QUIT"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "!/bin/zsh",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": " zsh-only fixture: FlagsArithm (subscript flags), unreachable in bash/mksh.",
+          "offset": 11
+        },
+        {
+          "path": "$.Stmts[0].Comments[2]",
+          "text": " @see mvdan.cc/sh/v3/syntax filetests_test.go, `${signals[(i)QUIT]}`.",
+          "offset": 88
+        }
+      ]
+    },
+    {
+      "id": "grammar-boundaries-zsh",
+      "setup": "source",
+      "mode": "force-boundaries",
+      "source": "#!/bin/zsh\n# zsh-only fixture: FlagsArithm (subscript flags), unreachable in bash/mksh.\n# @see mvdan.cc/sh/v3/syntax filetests_test.go, `${signals[(i)QUIT]}`.\necho \"${signals[(i)QUIT]}\"\n",
+      "variant": 16,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "signals"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "FlagsArithm"
+        },
+        {
+          "type": "Lit",
+          "value": "i"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "QUIT"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "grammar-bats",
+      "setup": "source",
+      "source": "#!/usr/bin/env bats\n# bats-only fixture: TestDecl (`@test` declarations), unreachable outside bats.\n@test \"addition works\" {\n  result=\"$((2 + 2))\"\n  [ \"$result\" -eq 4 ]\n}\n",
+      "variant": 8,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "!/usr/bin/env bats",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " bats-only fixture: TestDecl (`@test` declarations), unreachable outside bats.",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "TestDecl"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "addition works"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "result"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "result"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-eq"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "4"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "!/usr/bin/env bats",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": " bats-only fixture: TestDecl (`@test` declarations), unreachable outside bats.",
+          "offset": 20
+        }
+      ]
+    },
+    {
+      "id": "grammar-boundaries-bats",
+      "setup": "source",
+      "mode": "force-boundaries",
+      "source": "#!/usr/bin/env bats\n# bats-only fixture: TestDecl (`@test` declarations), unreachable outside bats.\n@test \"addition works\" {\n  result=\"$((2 + 2))\"\n  [ \"$result\" -eq 4 ]\n}\n",
+      "variant": 8,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "TestDecl"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "Lit",
+          "value": "addition works"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Block"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "result"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ArithmExp"
+        },
+        {
+          "type": "BinaryArithm"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "2"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "boundary-probe",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "["
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "DblQuoted"
+        },
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "result"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "-eq"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "4"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Stmts[0].Cmd.Body.Cmd.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Cmd.Body.Cmd.Stmts[1].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Cmd.Body.Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "boundary-probe",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "unicode-comments",
+      "setup": "source",
+      "source": "# 前 🎉\nFOO=$(準備) printf '你好' \u003e結果 # 後\n# 終\n",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": " 前 🎉",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "FOO"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "CmdSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "準備"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "printf"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Redirect"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "結果"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " 後",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": " 終",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Last[0]",
+          "text": " 終",
+          "offset": 55
+        },
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": " 前 🎉",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": " 後",
+          "offset": 49
+        }
+      ]
+    },
+    {
+      "id": "prune-root",
+      "setup": "source",
+      "mode": "prune-root",
+      "source": "echo $(hidden) tail; other",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        }
+      ]
+    },
+    {
+      "id": "prune-nested",
+      "setup": "source",
+      "mode": "prune-nested",
+      "source": "echo $(hidden) tail; other",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "CmdSubst"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "tail"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "other"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "exit-false",
+      "setup": "source",
+      "mode": "exit-false",
+      "source": "echo $(hidden) tail; other",
+      "variant": 1,
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "echo"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "CmdSubst"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "hidden"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "tail"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "other"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "replace-before-range",
+      "setup": "call",
+      "mode": "replace-before-range",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "fresh"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "slot-replace",
+      "setup": "call",
+      "mode": "slot-replace",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "replacement"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "field-replace",
+      "setup": "call",
+      "mode": "field-replace",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "append-and-replace",
+      "setup": "call",
+      "mode": "append-and-replace",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "replacement"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "reenter",
+      "setup": "call",
+      "mode": "reenter",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "a"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "inner"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "b"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "assign-args",
+      "setup": "assign-before-args",
+      "mode": "assign-args",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "Lit",
+          "value": "A"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "seed"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "fresh"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "stmt-comments",
+      "setup": "stmt-comments",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "stmt-comments-copy",
+      "setup": "stmt-comments",
+      "mode": "comments-mutate",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "stmt-comments-move",
+      "setup": "stmt-comments",
+      "mode": "move-boundary",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "ignored",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "case-comments",
+      "setup": "case-comments",
+      "events": [
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "pattern"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        },
+        {
+          "path": "$.Last[0]",
+          "text": "last",
+          "offset": 50
+        }
+      ]
+    },
+    {
+      "id": "case-comments-copy",
+      "setup": "case-comments",
+      "mode": "comments-mutate",
+      "events": [
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "pattern"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        },
+        {
+          "path": "$.Last[0]",
+          "text": "last!",
+          "offset": 99
+        }
+      ]
+    },
+    {
+      "id": "case-comments-move",
+      "setup": "case-comments",
+      "mode": "move-boundary",
+      "events": [
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "ignored",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "pattern"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        },
+        {
+          "path": "$.Last[0]",
+          "text": "last",
+          "offset": 50
+        }
+      ]
+    },
+    {
+      "id": "array-comments",
+      "setup": "array-comments",
+      "events": [
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "index"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        }
+      ]
+    },
+    {
+      "id": "array-comments-copy",
+      "setup": "array-comments",
+      "mode": "comments-mutate",
+      "events": [
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "index"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        }
+      ]
+    },
+    {
+      "id": "array-comments-move",
+      "setup": "array-comments",
+      "mode": "move-boundary",
+      "events": [
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "ignored",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "index"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        }
+      ]
+    },
+    {
+      "id": "file-comments",
+      "setup": "file-comments",
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Last[0]",
+          "text": "last",
+          "offset": 40
+        },
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Stmts[0].Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "file-comments-copy",
+      "setup": "file-comments",
+      "mode": "comments-mutate",
+      "events": [
+        {
+          "type": "File"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Last[0]",
+          "text": "last!",
+          "offset": 99
+        },
+        {
+          "path": "$.Stmts[0].Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Stmts[0].Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Stmts[0].Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "panic-child",
+      "setup": "stmt-comments",
+      "mode": "panic-child",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "panic": "callback-child",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "panic-exit",
+      "setup": "stmt-comments",
+      "mode": "panic-exit",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "panic": "callback-exit",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "panic-child-and-deferred",
+      "setup": "stmt-comments",
+      "mode": "panic-child-and-deferred",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        }
+      ],
+      "panic": "callback-deferred",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "param-",
+      "setup": "param-aux",
+      "events": [
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "p"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "first"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "old-length"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "orig"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "old-with"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "fallback"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "param-aux-replace",
+      "setup": "param-aux",
+      "mode": "aux-replace",
+      "events": [
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "p"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "first"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "new-length"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "orig"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "new-with"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "fallback"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "param-aux-nil",
+      "setup": "param-aux",
+      "mode": "aux-nil",
+      "events": [
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "p"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "first"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference"
+    },
+    {
+      "id": "param-repl-nil",
+      "setup": "param-aux",
+      "mode": "repl-nil",
+      "events": [
+        {
+          "type": "ParamExp"
+        },
+        {
+          "type": "Lit",
+          "value": "p"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "first"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "old-length"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "orig"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference"
+    },
+    {
+      "id": "nil-parts",
+      "setup": "nil-parts",
+      "events": [
+        {
+          "type": "Word"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "panic": "syntax.Walk: unexpected node type \u003cnil\u003e"
+    },
+    {
+      "id": "nil-args",
+      "setup": "nil-args",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "TypedNil",
+          "kind": "Word"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference"
+    },
+    {
+      "id": "nil-required",
+      "setup": "nil-required",
+      "events": [
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "TypedNil",
+          "kind": "Stmt"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference"
+    },
+    {
+      "id": "empty-pattern-boundary",
+      "setup": "empty-pattern-boundary",
+      "events": [
+        {
+          "type": "CaseItem"
+        }
+      ],
+      "panic": "runtime error: index out of range [0] with length 0",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "nil-pattern-boundary",
+      "setup": "nil-pattern-boundary",
+      "events": [
+        {
+          "type": "CaseItem"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "empty-word-boundary",
+      "setup": "empty-word-boundary",
+      "events": [
+        {
+          "type": "Stmt"
+        }
+      ],
+      "panic": "runtime error: index out of range [-1]",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "nil-command-boundary",
+      "setup": "nil-command-boundary",
+      "events": [
+        {
+          "type": "Stmt"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference",
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        }
+      ]
+    },
+    {
+      "id": "optional-nil",
+      "setup": "optional-nil",
+      "events": [
+        {
+          "type": "Assign"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "typed-nil-Lit",
+      "setup": "typed-nil-Lit",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "Lit"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "typed-nil-Comment",
+      "setup": "typed-nil-Comment",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "Comment"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "typed-nil-SglQuoted",
+      "setup": "typed-nil-SglQuoted",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "SglQuoted"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "typed-nil-Word",
+      "setup": "typed-nil-Word",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "Word"
+        }
+      ],
+      "panic": "runtime error: invalid memory address or nil pointer dereference"
+    },
+    {
+      "id": "typed-nil-BraceExp",
+      "setup": "typed-nil-BraceExp",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "BraceExp"
+        }
+      ],
+      "panic": "syntax.Walk: unexpected node type *syntax.BraceExp"
+    },
+    {
+      "id": "brace",
+      "setup": "brace",
+      "events": [
+        {
+          "type": "BraceExp"
+        }
+      ],
+      "panic": "syntax.Walk: unexpected node type *syntax.BraceExp"
+    },
+    {
+      "id": "stmt-overflow",
+      "setup": "stmt-overflow",
+      "events": [
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 30
+        }
+      ]
+    },
+    {
+      "id": "case-recovered",
+      "setup": "case-recovered",
+      "events": [
+        {
+          "type": "CaseItem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "ignored",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "pattern"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "cmd"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "last",
+          "origin": "$.Last[0]"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 0
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        },
+        {
+          "path": "$.Last[0]",
+          "text": "last",
+          "offset": 50
+        }
+      ]
+    },
+    {
+      "id": "array-invalid",
+      "setup": "array-invalid",
+      "events": [
+        {
+          "type": "ArrayElem"
+        },
+        {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "index"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "value"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        }
+      ],
+      "comments": [
+        {
+          "path": "$.Comments[0]",
+          "text": "leading",
+          "offset": 20
+        },
+        {
+          "path": "$.Comments[1]",
+          "text": "trailing",
+          "offset": 30
+        },
+        {
+          "path": "$.Comments[2]",
+          "text": "ignored",
+          "offset": 40
+        }
+      ]
+    },
+    {
+      "id": "nil-parts-pruned",
+      "setup": "nil-parts",
+      "mode": "nil-false",
+      "events": [
+        {
+          "type": "Word"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Lit",
+          "value": "after"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "nil-args-pruned",
+      "setup": "nil-args",
+      "mode": "prune-typed-nil",
+      "events": [
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "TypedNil",
+          "kind": "Word"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "after"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "nil-required-pruned",
+      "setup": "nil-required",
+      "mode": "prune-typed-nil",
+      "events": [
+        {
+          "type": "BinaryCmd"
+        },
+        {
+          "type": "TypedNil",
+          "kind": "Stmt"
+        },
+        {
+          "type": "Stmt"
+        },
+        {
+          "type": "CallExpr"
+        },
+        {
+          "type": "Word"
+        },
+        {
+          "type": "Lit",
+          "value": "after"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "nil"
+        }
+      ]
+    },
+    {
+      "id": "typed-nil-pruned",
+      "setup": "typed-nil-Word",
+      "mode": "prune-root",
+      "events": [
+        {
+          "type": "TypedNil",
+          "kind": "Word"
+        }
+      ]
+    },
+    {
+      "id": "brace-pruned",
+      "setup": "brace",
+      "mode": "prune-root",
+      "events": [
+        {
+          "type": "BraceExp"
+        }
+      ]
+    },
+    {
+      "id": "cycle-pruned",
+      "setup": "cycle",
+      "mode": "prune-root",
+      "events": [
+        {
+          "type": "Block"
+        }
+      ]
+    }
+  ],
+  "storageProbes": [
+    {
+      "capacity": 2,
+      "mutation": "append then replace slot",
+      "trace": ["a", "b"],
+      "finalLength": 3
+    },
+    {
+      "capacity": 4,
+      "mutation": "append then replace slot",
+      "trace": ["a", "replacement"],
+      "finalLength": 3
+    },
+    {
+      "mutation": "replace slot then reslice to length one",
+      "trace": ["a", "replacement", "c"],
+      "finalLength": 1
+    },
+    {
+      "mutation": "replace active comment value slot",
+      "trace": ["before", "after"],
+      "finalLength": 1
+    }
+  ]
+}
