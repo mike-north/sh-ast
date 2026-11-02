@@ -22,8 +22,9 @@ reached. Consequently:
 
 - Replacing a not-yet-visited slot is supported and visits the replacement.
 - Appending is supported, but the active traversal ignores elements beyond its
-  captured length. Appending and then replacing an original future slot visits
-  that replacement, independent of any hypothetical Go slice capacity.
+  captured length. An appended object moved into an original future slot is
+  visited through that slot. Appending and then replacing an original future slot
+  visits that replacement, independent of any hypothetical Go slice capacity.
 - Replacing or clearing the owner's array field is supported; it does not retarget
   the active list. That list continues reading the original captured array.
 - A later or nested walk starts from the tree and arrays present at its own entry.
@@ -31,9 +32,11 @@ reached. Consequently:
   remain ordinary live edits visible to an outer traversal where reads remain.
 
 During an active list traversal, destructive structural edits of its captured
-array are outside the supported contract when they remove indices, create holes
-or shrink its extent: for example, truncation, `delete`, `pop`, `shift`, or a
-length-reducing `splice`. Keep every index in the captured extent present.
+array are outside the supported contract when they remove indices or create holes
+within the captured extent, or shrink the array below that extent. For example,
+truncation, `delete`, `pop`, `shift`, or a length-reducing `splice` can do this.
+Keep every index in the captured extent present; removing appended indices beyond
+that extent does not affect the active list.
 Length-preserving replacement or reordering (including `sort` or `reverse`) follows
 the same live-slot rule and can revisit an object moved into a later slot; Walk
 does not promise unique-object visitation. Replace slots or assign a new owner
@@ -49,9 +52,11 @@ comment loops instead visit value copies (including copied position/byte-string
 values), preserving the tested upstream copy and deferred-comment behavior.
 A replacement in a future comment slot is read before that occurrence is copied.
 
-There is no Go slice capacity, separate slice header, shared backing-store,
-reslicing, or Go value-slot address model. The contract preserves tested upstream
-order and control within these representation limits; it makes no unrestricted
+Ordinary JavaScript aliases remain live: multiple fields may refer to the same
+array or object, and mutations through either reference are observable. There is
+no separate model for Go slice capacity, distinct slice headers sharing backing
+storage, reslicing, or Go value-slot addresses. The contract preserves tested
+upstream order and control within these representation limits; it makes no unrestricted
 Go heap or storage-mutation parity claim. Printing reconstructs the actual tree
 present at the print call, including supported edits, independently of a previous
 walk's captured arrays. Original position snapshots remain tied to original

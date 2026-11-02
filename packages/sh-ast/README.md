@@ -70,8 +70,8 @@ Positions }`. `Positions.get(node)` reads immutable original bounds by node
   nested calls keep independent state. Specialized statement/item comment loops
   visit value copies; ordinary comment lists visit their stored objects. The
   array reference and initial length are captured when each list starts. Future
-  existing slots are read live; appended elements are ignored by that active
-  traversal. Replacing the owner's array field does not retarget an active list.
+  existing slots are read live; indices added beyond the captured extent are
+  ignored by that active traversal. Replacing the owner's array field does not retarget an active list.
   See the mutation limits below.
 - `printSync(node, options?)` reconstructs the current edited tree and collects a
   fresh upstream printer's output as `GoString`. Supported roots are File, Stmt,
@@ -109,22 +109,26 @@ Changes before a list starts are included in its captured reference and length.
 Pruning and synchronous nested walks retain their control behavior; nested walks
 see the tree at their own entry, while edits to shared objects remain live.
 
-Do not remove indices, leave holes, or shrink a captured array while it is being
-traversed: truncation, `delete`, `pop`, `shift`, or a length-reducing `splice` is
-outside the supported contract, including through aliases. No mutation detector
-or specific error/result is promised for those edits. Assign a new owner array
+Keep every index in an active list's captured extent present. Removing one,
+leaving a hole there, or shrinking below that extent is outside the supported
+contract, including through aliases. Truncation, `delete`, `pop`, `shift`, or a
+length-reducing `splice` can do this; removing appended indices beyond the captured
+extent does not affect the active list. No mutation detector or specific
+error/result is promised for those edits. Assign a new owner array
 instead; the active list keeps its original array and later walks see the new one.
 Length-preserving replacement or reordering, including `sort` and `reverse`,
 follows live slot reads and may revisit an object moved into a later slot. Walk
-does not promise to visit each object only once.
+does not promise to visit each object only once. An appended object moved into an
+original future slot is visited through that slot.
 
 Stored Comment callbacks receive JavaScript objects. Replacing a Comment slot
 leaves a retained callback object unchanged; it does not behave as a pointer to a
 Go value slot. Specialized Stmt/CaseItem/ArrayElem comment callbacks receive
 copies, so editing those callback values does not edit the original comments.
-Ordinary arrays do not represent Go slice capacity, separate headers, shared
-backing stores or reslicing. These limits preclude unrestricted Go storage
-mutation parity while preserving live field edits and upstream traversal control.
+Ordinary JavaScript aliases remain live; this interface does not clone shared
+arrays or objects. It does not model Go slice capacity, distinct slice headers
+sharing backing stores, or reslicing. These limits preclude unrestricted Go
+storage mutation parity while preserving live field edits and upstream traversal control.
 
 ## Editing and printing
 
