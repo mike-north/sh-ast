@@ -1,7 +1,9 @@
 //go:build js && wasm
 
-// sh-ast shim: parses shell source with mvdan/sh and returns a
-// typedjson-encoded AST.
+// sh-ast shim exposes two independent synchronous syntax protocols. process
+// retains the legacy typedjson tree consumed by normalization and analyze;
+// syntaxProcess transports complete upstream data and accepts raw source bytes.
+// Both share explicit alloc/free ownership and the same initialized Go runtime.
 //
 // The whole result envelope — including any error message — is marshaled with
 // Go's encoding/json, not a hand-rolled string escaper. A hand-rolled escaper
@@ -57,6 +59,7 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 
 	"eslint-sh-shim/internal/nodeencode"
+	"eslint-sh-shim/internal/syntaxbridge"
 )
 
 // parseErrorInfo carries a structured parse failure: the message mvdan
@@ -232,6 +235,17 @@ func process(text string, dialect string, filename string) uintptr {
 		return encodeResult(resultEnvelope{Error: &errorInfo{Message: err.Error()}})
 	}
 	return encodeFileResult(&buf)
+}
+
+// syntaxProcess exposes the faithful syntax protocol alongside the legacy
+// normalized-tree ABI. Each string crosses as a pointer/length pair; payload
+// remains raw bytes for parse and JSON for other operations. The returned buffer
+// is owned by the caller until free, just like process results. Keeping this
+// entry point separate prevents changes to legacy normalization and analyze.
+//
+//go:wasmexport syntaxProcess
+func syntaxProcess(operation string, payload string, options string) uintptr {
+	return pin(append(syntaxbridge.Process(operation, payload, options), 0))
 }
 
 func main() {
