@@ -72,9 +72,14 @@ build/checks, and an exact linked cold-lint probe. Final installed-candidate
 acceptance and canonical-binary receipt remain pending.
 
 Linux/amd64 Go 1.26.5 runs under Docker. The Binaryen version_131 Linux archive
-matched the repository's pinned SHA-256. Current local tests use a disposable
-Linux-built WASM candidate; canonical CI artifact verification and the final
-committed binary remain pending. The GitHub CLI release download failed with bad
+matched the repository's pinned SHA-256. The canonical Linux CI asset has now been retrieved from run `41384504946`,
+artifact `13115245005`, built from source head
+`66c35c07f1cf222ca6c8eacb40f48fb2f16cc92f`. The downloaded ZIP matches GitHub's
+SHA-256 `2f0c969cfe45b5861981bbd7286b11e78581a2be007727e7c399b824fe9604d2`.
+The extracted WASM SHA-256 is
+`dc3ab066216b87d4131672d54b1cb1f801948a8dbac6f167f485172de0eb3466`;
+it is byte-identical to the disposable Linux candidate. The committed binary
+is taken from the downloaded CI archive. The GitHub CLI release download failed with bad
 credentials, so the fixed public asset URL plus checksum verification was used.
 
 ## Integration and independent review
@@ -115,11 +120,19 @@ tests/vet, generator tests, and byte-identical schema regeneration pass. API
 reports and docs have been regenerated without TSDoc diagnostics. These checks
 use the disposable Linux-built candidate, not yet the canonical CI asset.
 
-Remaining: acquire and commit the canonical Linux CI artifact, rerun checks against
-that asset, then complete both exact candidate receipt paths. To obtain that
+Remaining: verify the canonical artifact correction in a fresh CI run and complete
+both exact candidate receipt paths. To obtain that
 artifact without committing a local build, the draft source branch initially
 retains the previous committed binary. The first CI comparison and runtime tests
 are expected to expose that stale binary; the upload step preserves CI's rebuilt
 asset for the subsequent correction. No stale-binary run is release acceptance. The minor changeset is
 drafted; no version command has run. The consumer requires ^0.4.0 and a real
 registry lockfile refresh after producer publication, which is outside this task. No final Release A acceptance or release publication is claimed here.
+
+Independent final targeted review covered the tagged codec, generated interface
+unions, and built public runtime. The original native reproducer retained its
+concrete dynamic type, successful Pos and expected End failure; public WASM
+Pos/failure/Pos reuse also passed. The reviewer ran 31 targeted runtime tests,
+native tests/vet, generator/type checks, and the ten corrected consumer diagnostic
+tests. No remaining defect was reported in the reviewed scope. Final CI and
+consumer artifact receipts are separate gates.
