@@ -56,6 +56,14 @@ import { nodeArray } from './node-helpers.js';
  *   package declines to claim a `static: true` text bash never actually
  *   produces.
  *
+ * Reason descriptions do not establish universal precedence among features.
+ * Whole-word `unsupported` preflight takes precedence even when a caller has
+ * already supplied a `BraceExp`: an escape crossing parts can invalidate the
+ * apparent quoting boundaries, and an escape-uncertain brace candidate remains
+ * uncertain. Independently quoted or fully protected literal siblings do not
+ * suppress a known `BraceExp`. After preflight, existing resolution order can
+ * select a triggering tilde or earlier glob before visiting that part.
+ *
  * This union may grow in a **minor** release — new mvdan/sh word-part node
  * types, or new statically-shaped-but-dynamic categories, can add new reason
  * strings without that being a breaking change. It is deliberately not

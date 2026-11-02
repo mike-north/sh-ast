@@ -74,3 +74,18 @@ unsupported. It does not depend on seeing braces first, and it preserves ordinar
 parsed escapes that remain within a Lit. Regression tests retain the exact
 reviewer cases and a matrix of Lit, single-quoted, double-quoted, empty-quoted,
 and expansion boundaries. No recursive grammar reconstruction is added.
+
+## Reason precedence for supplied BraceExp records
+
+An existing BraceExp does not bypass whole-word uncertainty preflight. A split
+escape can invalidate apparent quoting boundaries, and an independently
+escape-uncertain brace candidate still falls within the declared unsupported
+boundary. Both results remain non-static. Independently quoted, fully escaped,
+and ordinary escaped-literal siblings preserve the known brace reason.
+
+The reason descriptions identify why a word is not static; they do not promise
+that every present feature wins over other reasons. Existing triggering-tilde
+and earlier-glob resolution can precede a supplied BraceExp. Accordingly, the
+review suggestion to short-circuit before observation was rejected: it would
+bypass the approved unconditional split-escape guard. Tests pin the mixed
+records, source immutability, and unchanged ordinary reason ordering.

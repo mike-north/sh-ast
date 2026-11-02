@@ -139,3 +139,20 @@ This measures the cost of correctness: all 100 brace arguments now report
 non-static. Ordinary words use no WASM brace calls. The team paused heavy work
 for this collection, but unrelated host activity is uncontrolled. These are
 local analyzer timings, not end-to-end ESLint latency or a performance budget.
+
+## Review clarification without runtime changes
+
+A review overview suggested returning `brace` before whole-word preflight when
+an existing BraceExp is present. The accepted contract keeps unsupported
+preflight first. Nine additional cases pin mixed BraceExp/crossed-escape records,
+protected siblings, escaped-comma uncertainty, and existing tilde/glob ordering.
+The final focused suite has **67 cases**, and the full runtime suite has **793**;
+build/check/type/harness gates pass. API documentation was regenerated uncached.
+
+Only tests and documentation changed. The guard source and canonical WASM hashes
+remain those above. The emitted resolver now hashes to
+`f2d2a2bcd4d9a4fc51a9a9c2bc3dad6aa2f42e5e059eea9379e78b1c0f56960a`
+because TypeScript preserves the new comments. Parsing and printing the before
+and after JavaScript ASTs with comments removed produced identical executable
+text. The retained benchmark identifies its actual earlier emitted-file hash;
+no new timing claim is made for a different binary or runtime implementation.

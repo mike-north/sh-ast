@@ -235,6 +235,12 @@ ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses with
 `Variant: LangZsh`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
 `checkLang` gate that rejects extended globs under posix is never reached for zsh.
 
+Reason descriptions do not promise universal precedence. Whole-word `unsupported`
+preflight still applies when a constructed word already contains a `BraceExp`.
+Independently quoted or fully protected literal siblings preserve `brace`; an
+escape crossing parts or an escape-uncertain brace candidate remains unsupported.
+Existing tilde/glob resolution order also remains applicable.
+
 ### `[[ ... ]]` and `let` under posix: accepted by design
 
 `Variant: LangPOSIX` accepting `[[ a == b ]]` and `let x=1` is **intentional upstream behavior, not

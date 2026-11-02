@@ -8,7 +8,7 @@ import { enumerateCommands, resolveArgv0, resolveWord } from '../src/analyze/ind
 import { parseSync, parseWithPositionsSync, printSync } from '../src/index.js';
 import { LangBash, LangPOSIX } from '../generated/syntax-constants.js';
 import * as wasm from '../src/wasm-instance.js';
-import type { Word } from '../generated/syntax-types.js';
+import type { BraceExp, Word } from '../generated/syntax-types.js';
 
 /** Keep test inputs in ordinary argument grammar, including brace-looking tokens. */
 function argument(source: string, variant: number = LangBash): Word {
@@ -16,6 +16,11 @@ function argument(source: string, variant: number = LangBash): Word {
   const command = file.Stmts?.[0]?.Cmd;
   if (command?.Type !== 'CallExpr' || !command.Args?.[1]) throw new Error('missing test word');
   return command.Args[1];
+}
+
+/** A complete caller-constructed expansion with hand-defined literal alternatives. */
+function knownBrace(): BraceExp {
+  return { Type: 'BraceExp', Sequence: false, Elems: [argument('a'), argument('b')] };
 }
 
 describe('upstream-backed brace classification', () => {
@@ -162,6 +167,60 @@ describe('upstream-backed brace classification', () => {
     [String.raw`\\"ordinary"`, String.raw`\ordinary`],
   ])('keeps ordinary parsed escapes local to their literal record: %s', (source, text) => {
     expect(resolveWord(argument(source))).toEqual({ static: true, text });
+  });
+
+  it.each(['before', 'after'])(
+    'keeps crossed-part uncertainty when a known BraceExp is %s the escape',
+    (order) => {
+      const word = argument('ordinary');
+      const lit = word.Parts?.[0];
+      if (lit?.Type !== 'Lit') throw new Error('missing literal');
+      const brace = knownBrace();
+      word.Parts =
+        order === 'before'
+          ? [brace, { ...lit, Value: '\\' }, { ...lit, Value: 'x' }]
+          : [{ ...lit, Value: '\\' }, brace];
+      const before = structuredClone(word);
+      expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+      expect(word).toEqual(before);
+    },
+  );
+
+  it.each(['"{a,b}"', String.raw`\{a,b\}`, String.raw`a\ b`])(
+    'retains a known BraceExp with independently protected sibling %s',
+    (source) => {
+      const sibling = argument(source).Parts;
+      if (!sibling) throw new Error('missing sibling parts');
+      for (const Parts of [
+        [knownBrace(), ...sibling],
+        [...sibling, knownBrace()],
+      ]) {
+        const word: Word = { Type: 'Word', Parts };
+        const before = structuredClone(word);
+        expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
+        expect(word).toEqual(before);
+      }
+    },
+  );
+
+  it.each(['before', 'after'])(
+    'keeps whole-word uncertainty for an escaped-comma candidate %s a known BraceExp',
+    (order) => {
+      const word = argument(String.raw`{a\,b}`);
+      const sibling = word.Parts;
+      if (!sibling) throw new Error('missing sibling parts');
+      word.Parts = order === 'before' ? [...sibling, knownBrace()] : [knownBrace(), ...sibling];
+      expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+    },
+  );
+
+  it.each([
+    ['~', 'tilde'],
+    ['*', 'glob'],
+  ])('preserves ordinary %s precedence ahead of a known BraceExp', (source, reason) => {
+    const word = argument(source);
+    word.Parts = [...(word.Parts ?? []), knownBrace()];
+    expect(resolveWord(word)).toEqual({ static: false, reason });
   });
 
   it('preserves caller records, aliases, source positions and printed output', () => {
