@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InputError, parseSync } from '../src/syntax.js';
 import { ShInternalError } from '../src/errors.js';
 import { callSyntax } from '../src/wasm-instance.js';
-import { decodeWire, encodeWire } from '../src/syntax-wire.js';
+import { decodeWire, encodeWire, isSyntaxNode } from '../src/syntax-wire.js';
 
 vi.mock('../src/wasm-instance.js', () => ({ callSyntax: vi.fn() }));
 
@@ -72,5 +72,15 @@ describe('exact byte and integer adaptation', () => {
     expect(() => encodeWire({ absent: undefined })).toThrow(InputError);
     expect(() => encodeWire({ value: NaN })).toThrow(InputError);
     expect(() => encodeWire('\ud800')).toThrow(InputError);
+  });
+});
+
+/** A dynamic nil pointer retains its concrete Go interface type, unlike null. */
+describe('typed nil interface values', () => {
+  it('recognizes exact tags for Node implementers only', () => {
+    expect(isSyntaxNode({ Type: 'TypedNil', Kind: 'Word' })).toBe(true);
+    expect(isSyntaxNode({ Type: 'TypedNil', Kind: 'Slice' })).toBe(false);
+    expect(isSyntaxNode({ Type: 'TypedNil', Kind: 'toString' })).toBe(false);
+    expect(isSyntaxNode({ Type: 'TypedNil', Kind: 'Word', Value: '' })).toBe(false);
   });
 });

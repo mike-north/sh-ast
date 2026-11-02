@@ -1,12 +1,11 @@
 # Two minor releases
 
 This plan implements the [accepted direction](ARCHITECTURE.md#accepted-direction).
-All work below is proposed and unimplemented. The labels **Release A** and
-**Release B** intentionally have no numeric versions: the original checkout,
-remote history, and installed consumer are at different versions, documented in
-the [baseline assessment](FIDELITY-ASSESSMENT.md#declared-baseline-and-provenance).
-Assign two successive 0.x minors only after reconciling the release line. Neither
-release is 1.0.
+The work breakdown below remains the governing acceptance plan. Implementation
+and review evidence is tracked separately in [IMPLEMENTATION.md](IMPLEMENTATION.md).
+Remote main and the registry were reconciled at `0.3.1`; Release A targets the next
+minor, `0.4.0`, and Release B the following minor. Neither release is 1.0. No
+publication or release-tag action is part of candidate preparation.
 
 ## Release boundaries
 

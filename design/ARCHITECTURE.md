@@ -149,18 +149,37 @@ eventual implementations must preserve callback repetition, boolean stop control
 buffering/read-error behavior, parser reuse constraints, and error timing. A Promise
 is not a replacement for these protocols.
 
-## Decisions still needed
+## Implemented candidate decisions
 
-| Question                              | Recommendation                                                                                                                                                                                                    | Needed by                              |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| Public field naming and editing model | Preserve upstream field spelling; add a collision-safe discriminant for unions; use mutable records. Avoid a second normalized core model.                                                                        | A schema/codec contract                |
-| Source byte domain                    | Support bytes faithfully end to end; scope an explicit UTF-8-only first release only if the user accepts that limitation. Audit invalid UTF-8 field transport before estimating this work.                        | A codec and parse API                  |
-| Parser breadth                        | Whole-file parsing plus its four upstream options in A; inventory other syntax operations as deferred, without a full-package parity claim.                                                                       | A scope acceptance                     |
-| Existing `sh-ast/analyze`             | Propose moving interpretation helpers to a consumer-owned or separate package. No deletion or relocation is accepted yet. If retained temporarily, migrate it to the new data model with explicit separate scope. | A API migration                        |
-| Resource limits                       | Reconcile newer main's approximate depth guard with upstream fidelity. Preserve runtime safety, but label limits as adapter constraints and test false rejection; do not silently inherit or remove the guard.    | Implementation baseline reconciliation |
-| Position conversion helper            | Keep ESLint presentation in eslint-sh; decide whether a source-bound general UTF-16 helper is useful in sh-ast.                                                                                                   | A consumer adaptation                  |
+The implementation assignment delegated routine API choices to preserve the
+accepted direction. These are concrete candidate contracts, not claims of final
+release acceptance; evidence and remaining gates are in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
-Syntax is not execution: `analyze`'s static-word resolution and command context
-already interpret shell behavior beyond a direct syntax port. That is a product
-boundary mismatch to resolve, not authorization to remove useful code. The
-consumer currently re-exports `resolveWord`, so the decision includes that API.
+- Records use upstream field names, a `Type` discriminator, explicit null/default
+  values, and mutable fields. Derived bounds are independent `nodePos`/`nodeEnd`
+  operations on current data.
+- GoString preserves Unicode text or exact byte arrays. Bytes reach upstream
+  unchanged, including invalid-UTF-8 parse failures. Lone JS surrogates are
+  rejected before encoding.
+- Whole-file synchronous parsing exposes the four upstream controls. Other parser
+  protocols remain deferred. Go int/uint arguments accept bigint where needed;
+  position components/operators remain exact uint32 number domains.
+- Positions retain public overflow/recovery observations as six fields, including
+  `OffsetOverflow`. Reconstruction uses public upstream operations.
+- Interface values distinguish ordinary null from a concrete typed nil pointer,
+  using `TypedNil` tags restricted to actual implementer types. This matters even
+  for successful position operations: a long ParamExp with a typed nil Index can
+  return both bounds. A transport limitation must not turn that into rejection.
+- Analysis remains a separate subpath, migrated to the faithful model. Consumers
+  own their UTF-16 locations and traversal views; sh-ast exports no public Walk or
+  Print in this candidate.
+- The conservative nesting guard remains a documented, tested binding constraint.
+
+## Responsibility boundaries
+
+The faithful parser model is the source of truth for upstream syntax values.
+`sh-ast/analyze` retains useful syntactic interpretation as a separate subpath;
+its limitations cannot change parser output. The consumer owns source-coordinate
+projection and presentation-oriented traversal. The original planning questions
+are resolved by the candidate choices above, subject to their independent
+acceptance evidence and remaining release gates.

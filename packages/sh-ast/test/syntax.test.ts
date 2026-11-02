@@ -168,3 +168,21 @@ describe('precise upstream numeric domains', () => {
     expect(() => parseSync('echo', { RecoverErrors: 2n ** 63n })).toThrow(InputError);
   });
 });
+
+/** Upstream can ignore a typed nil interface child for one or both bounds. */
+describe('typed nil operation fidelity', () => {
+  it('retains successful bounds with an unused typed nil arithmetic child', () => {
+    const parameter = argsOf('echo ${x}')[1]?.Parts?.[0];
+    if (parameter?.Type !== 'ParamExp') throw new Error('Expected parameter');
+    Object.assign(parameter, { Index: { Type: 'TypedNil', Kind: 'Word' } });
+    expect(nodePos(parameter).Offset).toBe(5);
+    expect(nodeEnd(parameter).Offset).toBe(9);
+  });
+
+  it('rejects a typed nil whose concrete type does not implement the field interface', () => {
+    const parameter = argsOf('echo ${x}')[1]?.Parts?.[0];
+    if (parameter?.Type !== 'ParamExp') throw new Error('Expected parameter');
+    Object.assign(parameter, { Index: { Type: 'TypedNil', Kind: 'Comment' } });
+    expect(() => nodePos(parameter)).toThrow(InputError);
+  });
+});

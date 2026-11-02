@@ -1,5 +1,5 @@
-// Faithful syntax generation preserves the pinned upstream data model alongside
-// the older normalized projection. It owns declarations, numeric constants, and
+// Faithful syntax generation preserves the pinned upstream data model.
+// It owns declarations, numeric constants, and
 // field metadata; runtime parsing, derived bounds, and traversal live elsewhere.
 package main
 

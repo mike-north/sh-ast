@@ -50,8 +50,7 @@ let shimExports: ShimExports | undefined;
 
 /**
  * Instantiates the WASM shim synchronously in Node, exactly once, and
- * reuses the instance across parses (see design/ARCHITECTURE.md,
- * "Synchronous parse: solved, two mechanisms"). Node imposes no size limit
+ * reuses the instance across parses and position operations. Node imposes no size limit
  * on synchronous `WebAssembly.Module` compilation — that restriction is
  * browser-main-thread-only.
  */

@@ -1,59 +1,89 @@
 # sh-ast
 
-A synchronous, fully-typed shell AST for JavaScript and TypeScript. `sh-ast` parses shell scripts
-(bash, POSIX sh, mksh, zsh, and bats) using [mvdan/sh](https://github.com/mvdan/sh) — the Go
-shell parser used by `shfmt` and `shellcheck`-adjacent tooling — via a small Go/WASM shim, and
-normalizes the result into a plain-object AST with UTF-16-safe positions that's natural to
-consume from JS/TS (linters, formatters, codemods, static analysis, or anything else that needs
-to understand shell source structurally).
+A synchronous TypeScript interface to the `syntax` package of
+[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1**. Parsing returns
+mutable records preserving upstream fields, defaults, nulls, numeric operators,
+byte strings, and token positions. First use initializes WebAssembly synchronously
+in Node.js; no initialization promise is required.
 
 ```ts
-import { parseSync } from 'sh-ast';
+import { LangBash, nodeEnd, parseSync } from 'sh-ast';
 
-const file = parseSync('echo hi');
-file.stmts[0].cmd.type; // "CallExpr"
+const file = parseSync('echo hi', { Variant: LangBash, KeepComments: true });
+const command = file.Stmts?.[0]?.Cmd;
+if (command?.Type === 'CallExpr') {
+  console.log(command.Args?.[0]?.Parts); // upstream WordPart alternatives
+  console.log(nodeEnd(command).Offset); // exclusive byte offset
+}
 ```
 
-## Provenance
+## Public contract
 
-`sh-ast` was extracted from [`eslint-sh`](https://github.com/mike-north/eslint-sh) (as
-`@eslint-sh/bridge`) at commit
-[`bdd55b3`](https://github.com/mike-north/eslint-sh/commit/bdd55b3), where it was built as the
-parser core underneath an ESLint plugin for shell scripts. The full commit history predating the
-extraction lives in that repository. This package carries no ESLint dependency and exposes the
-same public API `@eslint-sh/bridge` did.
+- `parseSync(source, options?)` accepts a well-formed Unicode string or exact
+  `Uint8Array` bytes. Invalid UTF-8 reaches upstream and produces its parse error;
+  lone JavaScript surrogates are rejected before encoding.
+- `ParseOptions` contains `Filename`, `KeepComments`, `Variant`, `StopAt`, and
+  `RecoverErrors`. Defaults match upstream, including `KeepComments: false`.
+  `Variant` uses exported constants such as `LangBash` and `LangPOSIX`.
+- `File`, `Node`, and concrete records retain upstream spelling and a `Type`
+  discriminator. Every field is present; nil slices/pointers use `null`, while an
+  allocated empty slice is `[]`. `Slice`, `Replace`, and `Expansion` are auxiliary
+  records, not Nodes. Interface unions also admit `TypedNil<Kind>` with
+  `{ Type: 'TypedNil', Kind: 'Word' }` spelling: this preserves a Go interface
+  holding a nil pointer of a concrete type, distinct from an ordinary `null`
+  interface. A tag is allowed only where that concrete type implements the
+  declared interface; concrete pointer fields continue to use `null`.
+- `GoString` is `string | Uint8Array`: valid UTF-8 is text; other Go string bytes
+  remain bytes. Consumers must explicitly handle both representations.
+- `SyntaxPos` preserves `Offset`, `Line`, `Col`, `IsValid`, `IsRecovered`, and
+  `OffsetOverflow`. Offsets and columns count bytes; lines/columns are one-based.
+  Invalid, recovered, and overflow states remain distinct. No UTF-16 projection is
+  performed by this package.
+- `nodePos(node)` and `nodeEnd(node)` independently compute upstream bounds from
+  the current fields, including after edits. They do not return cached parse-time
+  bounds. Incomplete constructed nodes can support one bound but fail the other.
+- `newPos(offset, line, column)` preserves upstream clamping/overflow semantics.
+  Its uint64 inputs and the parser's Go int options accept safe integers or exact
+  `bigint`; stored position components and operator values are numbers.
+- Operator families have named numeric constants and a distinct raw uint32 path,
+  `rawOperator('RedirOperator', value)`, for unnamed upstream values. Representing
+  a value does not promise every upstream operation accepts it.
+- `SYNTAX_SCHEMA` and `SYNTAX_INTERFACES` are deeply frozen field/interface
+  metadata. Their order is not upstream Walk order.
 
-## Status
+`ParseError` and `LangError` preserve upstream fields, exact `Message` bytes, and
+any partial `File`. Their ordinary `Error.message` is a display string.
+`InputError` reports invalid binding inputs, upstream option constraints, or
+unsupported constructed nodes whose requested bound panics upstream.
+`ShInternalError` reports transport failures or unexpected upstream panics.
+All extend `ShAstError`. The conservative structural-depth guard throws
+`ShParseMaxDepthError` before potentially exhausting the WASM stack. It is a
+binding resource constraint and can reject deeply nested quoted or commented text.
 
-The proposed refocus into a faithful upstream syntax interface is documented in
-[the design collection](../../design/ARCHITECTURE.md), with a two-minor-release
-plan and explicit acceptance scenarios. It distinguishes accepted direction from
-proposed APIs and current implementation; the public API below describes the
-existing package.
+`sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
+command, and wrapper analysis consumes the faithful records; it does not define
+parser behavior or the core tree representation.
 
-The visitor-keys and child-type-schema tables, plus the `ShNodes.*` TypeScript typings, are
-generated from mvdan/sh's `syntax` package struct definitions by `tools/gen-visitor-keys` — see
-that tool's README for "The schema table is generated, not hand-written".
+## Migration from 0.3
 
-## Public API
+Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit
+null/default values. Replace dialect strings with numeric `Variant` constants,
+request comments explicitly, and handle structured errors and byte positions.
+The root no longer exports normalized `ShNode`/`ShNodes`, `range`/`loc`, `walk`, or
+`visitorKeys`. Consumers such as ESLint own their source-coordinate and traversal
+views. Whole-file parsing is the present scope; public upstream traversal and
+printing belong to the following minor release. Stateful/incremental parser
+protocols and full syntax-package parity are deferred.
 
-- `parseSync(text, options?)` — synchronous parse; throws `ShParseError` (with `.line`,
-  `.column`, `.filename`) on a shell syntax error.
-- `ParseOptions` — `{ dialect?, filename? }`; `dialect` is one of `bash | posix | mksh | bats |
-zsh`, mapped to mvdan/sh's `LangVariant` by string name.
-- `ShNode` / `ShFile` — normalized node shape (`type`, `range`, `loc`, plus lowercased fields
-  from mvdan/sh's tree).
-- `ShNodes` — generated, strongly-typed `ShNode` subtypes for every mvdan/sh node type (e.g.
-  `ShNodes.ShCallExprNode`, `ShNodes.ShDeclClauseNode`), plus union aliases (`ShAnyNode`,
-  `ShCommandNode`, `ShWordPartNode`, …). Additive and optional — `ShNode`'s index signature
-  remains the base contract.
-- `visitorKeys` — generated node-type → child-field-name table.
-- `walk(node, visit)` — visits every node in a normalized tree; discovers children structurally
-  rather than depending on `visitorKeys`.
+The [design collection](../../design/ARCHITECTURE.md) and
+[implementation evidence](../../design/IMPLEMENTATION.md) describe the release
+boundaries, concrete choices, and validation status. This package has no ESLint
+runtime dependency. It originated in
+[`eslint-sh`](https://github.com/mike-north/eslint-sh) at commit `bdd55b3`.
 
 ## Dialect enforcement
 
-`dialect` maps directly onto mvdan/sh's `LangVariant` (`LangBash`, `LangPOSIX`, `LangMirBSDKorn`,
+`Variant` accepts mvdan/sh's `LangVariant` (`LangBash`, `LangPOSIX`, `LangMirBSDKorn`,
 `LangBats`, `LangZsh`). mvdan/sh gates most dialect-specific syntax with a hard parse error
 (`checkLang` in its `syntax/parser.go`) when the requested dialect isn't in that construct's
 allowed set — but two dialect-specific keywords (`[[` test clauses and `let`) have **no such gate**:
@@ -85,12 +115,12 @@ post-processing pass, which `shim/main.go` does not invoke. `{a,b}` always parse
 
 \*\*\* zsh's lexer never tokenizes `@(` as an extended-glob opener at all — deliberately, to avoid
 ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses without error under
-`dialect: 'zsh'`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
+`Variant: LangZsh`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
 `checkLang` gate that rejects extended globs under posix is never reached for zsh.
 
 ### `[[ ... ]]` and `let` under posix: accepted by design
 
-`dialect: 'posix'` accepting `[[ a == b ]]` and `let x=1` is **intentional upstream behavior, not
+`Variant: LangPOSIX` accepting `[[ a == b ]]` and `let x=1` is **intentional upstream behavior, not
 a bridge bug**. POSIX sh has no `[[` test clause or `let` builtin as syntax — so mvdan/sh's parser
 doesn't special-case those keywords at all outside bash-like/mksh/zsh; it falls through to
 ordinary word/command parsing, exactly as a real POSIX-mode shell would tokenize `[[` as a command
@@ -100,114 +130,42 @@ either by an explicit `checkLang` gate or, for process substitution, after lexer
 operator inside `[[ a =~ b ]]` remains ordinary command text because POSIX mode never enters the
 test-clause parser.
 
-Concretely, under `dialect: 'posix'`:
+Concretely, under `Variant: LangPOSIX`:
 
 ```ts
-const file = parseSync('[[ a == b ]]', { dialect: 'posix' });
-file.stmts[0].cmd.type; // "CallExpr" — a command literally named "[[", not "TestClause"
+import { LangPOSIX, parseSync } from 'sh-ast';
+
+const file = parseSync('[[ a == b ]]', { Variant: LangPOSIX });
+file.Stmts?.[0]?.Cmd?.Type; // "CallExpr" — a command literally named "[[", not "TestClause"
 ```
 
 Evidence: mvdan/sh's own test suite (`syntax/filetests_test.go`) asserts this exact shape for
-`LangPOSIX`, and `shim/main.go` passes the requested dialect through to mvdan/sh's
-`LangVariant.Set` unmodified — the bridge does not special-case or mis-map `[[`.
+`LangPOSIX`, and the syntax bridge passes the requested numeric variant to mvdan/sh's
+`Variant` control — the bridge does not special-case or mis-map `[[`.
 
-## Regenerating the schema tables
+## Generated model
 
-After bumping the pinned mvdan/sh version (`shim/go.mod` _and_ `../../tools/gen-visitor-keys/go.mod`
-must move together):
-
-```sh
-pnpm run generate:sh-ast-schema
-```
-
-This regenerates `generated/visitor-keys.js(.d.ts)`, `generated/child-type-schema.js(.d.ts)`, and
-`generated/node-types.d.ts`, then formats them with Prettier. CI
-(`.github/workflows/gen-visitor-keys.yml`) reruns the same script and fails the build if the
-committed artifacts don't come back byte-identical — the drift gate for future mvdan/sh bumps.
-Re-run the kitchen-sink golden test (`test/kitchen-sink.test.ts`) afterward; it fails if the new
-mvdan/sh version adds a node type the fixtures don't yet exercise.
+The generator reads the pinned upstream struct definitions. Run
+`pnpm run generate:sh-ast-schema` after changing the matching pins in
+`shim/go.mod` and `../../tools/gen-visitor-keys/go.mod`. Faithful declarations,
+constants, and complete field metadata live in `generated/syntax-*`.
+Independent Go reflection tests, manually derived type assertions, and runtime
+fixtures check fidelity; regeneration alone checks only drift.
 
 ## The WASM shim
 
-`shim/main.go` parses with `mvdan.cc/sh/v3/syntax` and encodes the result with
-`shim/internal/nodeencode` — a performance fork of `mvdan.cc/sh/v3/syntax/typedjson`'s encode
-path (see that package's doc comment for why: typedjson's reflection-based encoder rebuilds an
-identical synthetic struct type per node _instance_ rather than once per node _type_, which
-dominated warm-parse latency — see "Performance" below) — so interface-typed nodes (`CallExpr`,
-`BinaryCmd`, …) carry a `Type` discriminator, exactly as upstream typedjson does (verified
-byte-identical in `shim/internal/nodeencode/encode_test.go`). The whole result envelope —
-including any error message — is marshaled with Go's `encoding/json`, so JSON-significant bytes
-in an error message (e.g. an unclosed-quote message containing `"`) survive the Go→JS boundary
-intact.
+The `syntaxProcess` linear-memory ABI transports exact byte payloads and a
+reversible record encoding. `shim/internal/syntaxwire` preserves all exported
+fields, nil/default values, arbitrary strings, and observable position behavior.
+`shim/internal/syntaxbridge` invokes upstream parsing and position operations.
+Private Go printing tests verify that reconstructed edited trees retain the
+information needed for the future public printer.
 
-The shim exposes a linear-memory ABI — `alloc`/`process`/`free` WASM exports plus the `mem`
-memory export — instead of a `syscall/js` global function. `wasm-instance.ts` writes UTF-8 bytes
-directly into WASM memory and reads the JSON result back with `TextDecoder`, avoiding
-`syscall/js`'s much more expensive per-call JS↔Go value marshaling (see "Performance" below).
-
-### Performance
-
-Local measurement (700-line/~9k-node fixture, warm instance, Apple M-series):
-
-| Stage                                 | Before (syscall/js + typedjson) | After (linear memory + nodeencode) |
-| ------------------------------------- | ------------------------------: | ---------------------------------: |
-| End-to-end warm `parseSync` (p50)     |                          ~97 ms |                             ~29 ms |
-| wasm call (parse + encode + transfer) |                          ~91 ms |                           ~23.5 ms |
-| `JSON.parse`                          |                           ~3 ms |                              ~3 ms |
-| `normalize`                           |                         ~2.5 ms |                            ~2.7 ms |
-| `sh-ast.wasm` size                    |                        ~4.10 MB |                           ~3.82 MB |
-
-The dominant fix was **not** the transport switch alone — profiling found `typedjson.Encode`'s
-`reflect.StructOf` call (rebuilding an identical synthetic struct type once per node _instance_)
-responsible for ~80ms of the ~90ms wasm call; `nodeencode`'s per-_type_ cache cut that to ~14ms.
-The linear-memory ABI switch and a hand-rolled envelope wrap (skipping a redundant
-`encoding/json.Marshal` re-compaction of the already-encoded AST bytes) account for the rest.
-
-**TinyGo**, evaluated for its ~4x smaller runtime, cannot run this shim: it compiles
-`reflect.StructOf` calls without error but panics at runtime with `unimplemented:
-reflect.StructOf()` the moment `nodeencode`/`typedjson`'s encoder runs (confirmed against
-TinyGo 0.41.1). Standard Go + `wasm-opt -Oz` (binaryen, pinned in CI) is the fallback:
-`sh-ast.wasm` is optimized after every build, for a ~7% size reduction (~4.09 MB → ~3.82 MB) with
-no behavior change. Neither path reaches a 1.5 MB stretch target.
-
-After editing `shim/main.go` or `shim/internal/nodeencode`, rebuild the committed
-`shim/sh-ast.wasm`:
-
-```sh
-cd shim
-GOOS=js GOARCH=wasm go build -buildvcs=false -trimpath -ldflags="-s -w -buildid=" -o sh-ast.wasm .
-wasm-opt -Oz --enable-bulk-memory-opt --enable-nontrapping-float-to-int sh-ast.wasm -o sh-ast.wasm
-```
-
-`wasm-opt` ships with [binaryen](https://github.com/WebAssembly/binaryen/releases) — CI installs
-a pinned release (see `.github/workflows/wasm-reproducibility.yml`'s `BINARYEN_VERSION`); install
-the same version locally (`brew install binaryen`, or download the pinned release directly) so
-your rebuild matches CI byte-for-byte. `--enable-bulk-memory-opt` and
-`--enable-nontrapping-float-to-int` tell `wasm-opt` to accept the two WASM proposal features
-Go's `js/wasm` target already emits (both broadly supported in Node and browsers since ~2020) —
-without them, `wasm-opt` rejects the input as invalid.
-
-The `-buildid=` flag blanks out Go's build-ID metadata (used only by the Go toolchain's own
-build cache, never read at runtime); without it, `-trimpath` alone is not enough for a
-byte-identical rebuild — the embedded build ID otherwise varies between build-cache states even
-with identical source and dependencies.
-
-`-buildvcs=false` is equally required: Go 1.18+ stamps binaries with `vcs.revision`/`vcs.time`/
-`vcs.modified` by default (`-buildvcs=auto`), reading whatever commit and dirty-state the
-checkout happens to be in at build time. That stamp isn't touched by `-s -w` (it lives outside
-the symbol table/DWARF that those flags strip), so two builds of _identical source_ differ
-whenever the checkout's commit or dirty-state differs — which is exactly what happens for a
-`pull_request`-triggered CI run (GitHub synthesizes a fresh merge commit, with its own SHA and
-timestamp, on every run) versus a `push`-triggered run (checks out the named branch commit
-as-is), and equally for a local checkout with any uncommitted changes elsewhere in the working
-tree. `-buildvcs=false` removes this source of non-determinism entirely; verified byte-for-byte
-identical across a native macOS/arm64 build, a `linux/amd64` build under Docker/QEMU emulation,
-and real `ubuntu-latest` CI runs triggered via `push`, `pull_request`, and `workflow_dispatch`.
-
-`wasm-opt -Oz` is a deterministic, version-pinned transform: rebuilding twice (Go build +
-wasm-opt) produces byte-identical output, verified locally and by CI's `rebuild-match` job.
-
-CI rebuilds the shim with a pinned Go toolchain (`shim/go.mod`) and a pinned `wasm-opt`
-(`.github/workflows/wasm-reproducibility.yml`), and fails if the output differs from the
-committed artifact. It also runs `shim/internal/nodeencode`'s Go test suite, which asserts the
-fork's output is byte-identical to upstream `typedjson.Encode`.
+The canonical binary is built by Linux/amd64 CI with the Go toolchain pinned in
+`shim/go.mod` and the checksum-pinned Binaryen version in
+`.github/workflows/wasm-reproducibility.yml`. Go build flags are
+`-buildvcs=false -trimpath -ldflags="-s -w -buildid="`; optimization uses
+`wasm-opt -Oz --enable-bulk-memory-opt --enable-nontrapping-float-to-int`.
+Use local builds for experiments. Commit the CI-produced artifact, then require
+CI to compare a fresh rebuild byte-for-byte with the committed binary. Historical
+normalized-parser benchmarks do not describe this interface's performance.

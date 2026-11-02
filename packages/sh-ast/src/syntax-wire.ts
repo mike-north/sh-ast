@@ -132,6 +132,20 @@ export function isSyntaxPos(value: unknown): value is SyntaxPos {
 }
 
 /**
+ * A Go interface can hold a nil pointer with a concrete dynamic type. Its tag
+ * preserves that type without inventing fields for a nonexistent record.
+ */
+function isTypedNil(value: unknown, implementers: readonly string[]): boolean {
+  return (
+    isRecord(value) &&
+    value.Type === 'TypedNil' &&
+    typeof value.Kind === 'string' &&
+    Object.keys(value).length === 2 &&
+    implementers.includes(value.Kind)
+  );
+}
+
+/**
  * Validates complete records against the pinned schema, including nil-bearing
  * boundaries. This is a boundary check, not a semantic shell interpretation.
  */
@@ -185,14 +199,15 @@ function matchesScalar(value: unknown, field: SyntaxFieldSchema, active: Set<obj
         typeof value.Type === 'string' &&
         field.type !== null &&
         Object.hasOwn(SYNTAX_INTERFACES, field.type) &&
-        SYNTAX_INTERFACES[field.type].includes(value.Type) &&
-        matchesRecord(value, active)
+        (isTypedNil(value, SYNTAX_INTERFACES[field.type]) ||
+          (SYNTAX_INTERFACES[field.type].includes(value.Type) && matchesRecord(value, active)))
       );
   }
 }
 
-/** Narrows only complete real syntax.Nodes; auxiliary records are not Nodes. @internal */
+/** Narrows complete syntax.Nodes or typed nil Node interfaces; auxiliaries are excluded. @internal */
 export function isSyntaxNode(value: unknown): value is Node {
+  if (isTypedNil(value, SYNTAX_INTERFACES.Node)) return true;
   return (
     isRecord(value) &&
     typeof value.Type === 'string' &&
