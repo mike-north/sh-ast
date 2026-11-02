@@ -109,14 +109,26 @@ export function isSyntaxPos(value: unknown): value is SyntaxPos {
   if (!isRecord(value)) return false;
   const uint = (item: unknown, maximum: number): boolean =>
     typeof item === 'number' && Number.isInteger(item) && item >= 0 && item <= maximum;
-  return (
-    Object.keys(value).length === 5 &&
+  const shape =
+    Object.keys(value).length === 6 &&
     uint(value.Offset, 0xffff_ffff - 11) &&
     uint(value.Line, 0x3_ffff) &&
     uint(value.Col, 0x3fff) &&
     typeof value.IsValid === 'boolean' &&
-    typeof value.IsRecovered === 'boolean'
-  );
+    typeof value.IsRecovered === 'boolean' &&
+    typeof value.OffsetOverflow === 'boolean';
+  if (!shape) return false;
+  if (value.IsRecovered) {
+    return (
+      value.OffsetOverflow === true &&
+      value.IsValid === false &&
+      value.Offset === 0 &&
+      value.Line === 0 &&
+      value.Col === 0
+    );
+  }
+  if (value.OffsetOverflow) return value.IsValid === false && value.Offset === 0;
+  return value.IsValid === (value.Line !== 0 || value.Col !== 0);
 }
 
 /**

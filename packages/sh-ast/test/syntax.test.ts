@@ -32,6 +32,7 @@ describe('upstream inputs and structured results', () => {
       Col: 1,
       IsValid: true,
       IsRecovered: false,
+      OffsetOverflow: false,
     });
   });
 
@@ -45,6 +46,7 @@ describe('upstream inputs and structured results', () => {
       Col: 13,
       IsValid: true,
       IsRecovered: false,
+      OffsetOverflow: false,
     });
     expect(nodeEnd(word)).toEqual({
       Offset: 18,
@@ -52,6 +54,7 @@ describe('upstream inputs and structured results', () => {
       Col: 19,
       IsValid: true,
       IsRecovered: false,
+      OffsetOverflow: false,
     });
     const stmt = parseSync('echo hi;').Stmts?.[0];
     expect(stmt?.Semicolon).toMatchObject({ Offset: 7, IsValid: true });
@@ -149,6 +152,7 @@ describe('precise upstream numeric domains', () => {
       Col: 0,
       IsValid: false,
       IsRecovered: false,
+      OffsetOverflow: false,
     });
     expect(newPos(2n ** 64n - 1n, 2n ** 18n, 2n ** 14n)).toEqual({
       Offset: 0xffff_ffff - 11,
@@ -156,6 +160,7 @@ describe('precise upstream numeric domains', () => {
       Col: 0,
       IsValid: false,
       IsRecovered: false,
+      OffsetOverflow: false,
     });
     expect(() => newPos(2n ** 64n, 1, 1)).toThrow(InputError);
     expect(() => newPos(-1, 1, 1)).toThrow(InputError);

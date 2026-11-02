@@ -1,107 +1,75 @@
 /**
- * Type-level coverage for the public API surface in design/PACKAGES.md
- * §`sh-ast`.
+ * Public entry-point contracts for the faithful syntax interface. Assertions
+ * describe caller capabilities and rejected misuse, rather than a generated
+ * schema's self-consistency.
  */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import {
-  parseSync,
+  InputError,
+  LangBash,
+  LangError,
+  ParseError,
+  RdrOut,
   ShAstError,
-  ShInternalError,
-  ShInvalidDialectError,
-  ShParseError,
-  ShParseMaxDepthError,
-  visitorKeys,
-  walk,
+  SYNTAX_SCHEMA,
+  newPos,
+  nodeEnd,
+  nodePos,
+  parseSync,
+  rawOperator,
+  type File,
+  type GoString,
+  type Node,
   type ParseOptions,
-  type ShellDialect,
-  type ShFile,
-  type ShNode,
-  type ShNodes,
+  type Redirect,
+  type SyntaxPos,
 } from '../src/index.js';
 
-expectType<ShFile>(parseSync('echo hi'));
-expectType<ShFile>(parseSync('echo hi', {}));
-expectType<ShFile>(parseSync('echo hi', { dialect: 'bash' }));
-expectType<ShFile>(parseSync('echo hi', { filename: 'a.sh' }));
+expectType<File>(parseSync('echo hi'));
+expectType<File>(parseSync(new Uint8Array([0x23]), { KeepComments: true }));
+expectType<File>(parseSync('echo', { Variant: LangBash, RecoverErrors: 2n, Filename: 'a.sh' }));
+expectAssignable<ParseOptions>({ StopAt: new Uint8Array([0xff]), KeepComments: false });
+expectError(parseSync('echo', { dialect: 'bash' }));
+expectError(parseSync('echo', { KeepComments: 'true' }));
+expectError(parseSync(42));
 
-expectAssignable<ShellDialect>('bash');
-expectAssignable<ShellDialect>('posix');
-expectAssignable<ShellDialect>('mksh');
-expectAssignable<ShellDialect>('bats');
-expectAssignable<ShellDialect>('zsh');
-// Not a recognized ShellDialect at the type level, even though the runtime
-// also rejects it at the value level (criterion 5's "unknown dialect throws").
-expectNotAssignable<ShellDialect>('fish');
-
-expectAssignable<ParseOptions>({});
-expectAssignable<ParseOptions>({ dialect: 'posix', filename: 'x.sh' });
-
-const err = new ShParseError('bad', { line: 1, column: 1, filename: 'a.sh' });
-expectType<string>(err.message);
-expectType<number>(err.line);
-expectType<number>(err.column);
-expectType<string>(err.filename);
-expectAssignable<Error>(err);
-expectAssignable<ShAstError>(err);
-expectType<'SH_AST_PARSE_ERROR'>(err.code);
-
-// The error taxonomy for https://github.com/mike-north/eslint-sh/issues/12:
-// stable `code` discriminators and a common `ShAstError` base, on top of
-// the usual `instanceof` narrowing.
-const invalidDialectError = new ShInvalidDialectError('fish', ['bash', 'posix']);
-expectType<'SH_AST_INVALID_DIALECT'>(invalidDialectError.code);
-expectType<string>(invalidDialectError.dialect);
-expectAssignable<Error>(invalidDialectError);
-expectAssignable<ShAstError>(invalidDialectError);
-// Not assignable to ShParseError's more specific shape — no .line/.column.
-expectNotAssignable<ShParseError>(invalidDialectError);
-
-const internalError = new ShInternalError('bridge: something unexpected happened');
-expectType<'SH_AST_INTERNAL'>(internalError.code);
-expectAssignable<Error>(internalError);
-expectAssignable<ShAstError>(internalError);
-expectNotAssignable<ShParseError>(internalError);
-
-const maxDepthError = new ShParseMaxDepthError(150, 151);
-expectType<'SH_AST_PARSE_MAX_DEPTH'>(maxDepthError.code);
-expectType<number>(maxDepthError.maxDepth);
-expectType<number>(maxDepthError.estimatedDepth);
-expectAssignable<Error>(maxDepthError);
-expectAssignable<ShAstError>(maxDepthError);
-expectNotAssignable<ShParseError>(maxDepthError);
-
-expectType<Readonly<Record<string, readonly string[]>>>(visitorKeys);
-
-expectType<(node: ShNode, visit: (node: ShNode, parent: ShNode | null) => void) => void>(walk);
-
-// The public node/position shape is readonly by contract, not convention.
 const file = parseSync('echo hi');
-expectError((file.stmts = []));
-expectError((file.stmts[0] = file));
-expectError((file.range[0] = 0));
-expectError((file.loc.start.line = 2));
-expectError((file.type = 'File'));
+expectType<GoString>(file.Name);
+file.Name = 'new.sh';
+file.Stmts = null;
+file.Stmts = [];
+expectError(file.stmts);
+expectError(file.Pos);
+expectError(file.End);
+expectError(file.nonexistentField);
+expectAssignable<Node>(file);
+expectType<SyntaxPos>(nodePos(file));
+expectType<SyntaxPos>(nodeEnd(file));
+expectType<SyntaxPos>(newPos(2n ** 64n - 1n, 1, 1));
+expectType<boolean>(nodePos(file).OffsetOverflow);
 
-/**
- * Generated per-node typings (design/PACKAGES.md: "Full node typings
- * generated alongside visitorKeys") — a couple of representative shapes,
- * including the `DeclClause.Variant` regression (criterion 4 of issue #6:
- * https://github.com/mike-north/eslint-sh/issues/6). Readonly throughout,
- * matching `ShNode`/`ShFile`'s "readonly by contract" typing above.
- */
-declare const declClause: ShNodes.ShDeclClauseNode;
-expectType<'DeclClause'>(declClause.type);
-expectAssignable<ShNode>(declClause);
-expectType<ShNodes.ShLitNode | undefined>(declClause.variant);
-expectError((declClause.variant = undefined));
+declare let redirect: Redirect;
+redirect.Op = RdrOut;
+redirect.Op = 0;
+redirect.Op = rawOperator('RedirOperator', 0xffffffff);
+expectError((redirect.Op = rawOperator('BinCmdOperator', 13)));
+expectError((redirect.Op = 1.5));
+expectError(rawOperator('UnknownFamily', 1));
+expectError((SYNTAX_SCHEMA.File.node = false));
+expectError((SYNTAX_SCHEMA.File.fields.Name.kind = 'boolean'));
 
-declare const callExpr: ShNodes.ShCallExprNode;
-expectType<'CallExpr'>(callExpr.type);
-expectType<readonly ShNodes.ShWordNode[]>(callExpr.args);
-expectError((callExpr.args = []));
+declare const parseError: ParseError;
+expectAssignable<ShAstError>(parseError);
+expectType<GoString>(parseError.Message);
+expectType<GoString>(parseError.Text);
+expectType<SyntaxPos>(parseError.Pos);
+expectType<boolean>(parseError.Incomplete);
+expectType<File | null>(parseError.File);
+expectError(parseError.column);
 
-declare const stmt: ShNodes.ShStmtNode;
-expectType<ShNodes.ShCommandNode | undefined>(stmt.cmd);
-
-expectAssignable<ShNodes.ShAnyNode>(declClause);
-expectAssignable<ShNodes.ShAnyNode>(callExpr);
+declare const languageError: LangError;
+expectAssignable<ShAstError>(languageError);
+expectType<readonly number[]>(languageError.Langs);
+expectType<number>(languageError.LangUsed);
+expectNotAssignable<ParseError>(languageError);
+expectAssignable<ShAstError>(new InputError('invalid operation input'));
