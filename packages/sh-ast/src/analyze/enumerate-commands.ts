@@ -400,9 +400,15 @@ function visitCommand(
     case 'CallExpr': {
       scanForHiddenCommands(cmd.Assigns, context, sites, depth);
       scanForHiddenCommands(cmd.Args, context, sites, depth);
-      const args = nodeArray(cmd.Args);
+      // Argument positions carry command-line meaning. A nil pointer is an
+      // unsupported argument, not permission to shift later words left.
+      const args = cmd.Args ?? [];
       if (args.length > 0) {
-        const argv = args.map((word) => resolveWord(word, { context: 'command-argument' }));
+        const argv = args.map((word): WordResolution =>
+          word === null
+            ? { static: false, reason: 'unsupported' }
+            : resolveWord(word, { context: 'command-argument' }),
+        );
         sites.push({ node: cmd, argv0: argv[0], argv, context });
       }
       return;

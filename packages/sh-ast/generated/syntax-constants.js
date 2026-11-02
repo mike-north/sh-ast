@@ -123,7 +123,7 @@ export const AndTest = 11;
 /**
  * Upstream RedirOperator constant AppAll. Its numeric value is preserved exactly.
  *
- * &>>
+ * &\>\>
  *
  * @public
  */
@@ -132,7 +132,7 @@ export const AppAll = 76;
 /**
  * Upstream RedirOperator constant AppAllClob. Its numeric value is preserved exactly.
  *
- * &>>| with `LangZsh`
+ * &\>\>| with `LangZsh`
  *
  * @public
  */
@@ -141,7 +141,7 @@ export const AppAllClob = 77;
 /**
  * Upstream RedirOperator constant AppClob. Its numeric value is preserved exactly.
  *
- * >>| with `LangZsh`
+ * \>\>| with `LangZsh`
  *
  * @public
  */
@@ -150,7 +150,7 @@ export const AppClob = 70;
 /**
  * Upstream RedirOperator constant AppOut. Its numeric value is preserved exactly.
  *
- * >>
+ * \>\>
  *
  * @public
  */
@@ -231,7 +231,7 @@ export const ClbOut = 69;
 /**
  * Upstream ProcOperator constant CmdIn. Its numeric value is preserved exactly.
  *
- * <(
+ * \<(
  *
  * @public
  */
@@ -249,7 +249,7 @@ export const CmdInTemp = 79;
 /**
  * Upstream ProcOperator constant CmdOut. Its numeric value is preserved exactly.
  *
- * >(
+ * \>(
  *
  * @public
  */
@@ -267,7 +267,7 @@ export const Comma = 98;
 /**
  * Upstream RedirOperator constant DashHdoc. Its numeric value is preserved exactly.
  *
- * <<-
+ * \<\<-
  *
  * @public
  */
@@ -303,7 +303,7 @@ export const DefaultUnsetOrNull = 84;
 /**
  * Upstream RedirOperator constant DplIn. Its numeric value is preserved exactly.
  *
- * <&
+ * \<&
  *
  * @public
  */
@@ -312,7 +312,7 @@ export const DplIn = 67;
 /**
  * Upstream RedirOperator constant DplOut. Its numeric value is preserved exactly.
  *
- * >&
+ * \>&
  *
  * @public
  */
@@ -357,7 +357,7 @@ export const Fallthrough = 36;
 /**
  * Upstream BinAritOperator constant Geq. Its numeric value is preserved exactly.
  *
- * >=
+ * \>=
  *
  * @public
  */
@@ -375,7 +375,7 @@ export const GlobExcept = 143;
 /**
  * Upstream GlobOperator constant GlobOne. Its numeric value is preserved exactly.
  *
- * @(
+ * \@(
  *
  * @public
  */
@@ -411,7 +411,7 @@ export const GlobZeroOrOne = 139;
 /**
  * Upstream BinAritOperator constant Gtr. Its numeric value is preserved exactly.
  *
- * >
+ * \>
  *
  * @public
  */
@@ -420,7 +420,7 @@ export const Gtr = 63;
 /**
  * Upstream RedirOperator constant Hdoc. Its numeric value is preserved exactly.
  *
- * <<
+ * \<\<
  *
  * @public
  */
@@ -522,7 +522,7 @@ export const LangZsh = 16;
 /**
  * Upstream BinAritOperator constant Leq. Its numeric value is preserved exactly.
  *
- * <=
+ * \<=
  *
  * @public
  */
@@ -549,7 +549,7 @@ export const LowerFirst = 98;
 /**
  * Upstream BinAritOperator constant Lss. Its numeric value is preserved exactly.
  *
- * <
+ * \<
  *
  * @public
  */
@@ -603,7 +603,7 @@ export const NamesPrefix = 43;
 /**
  * Upstream ParNamesOperator constant NamesPrefixWords. Its numeric value is preserved exactly.
  *
- * @
+ * \@
  *
  * @public
  */
@@ -684,7 +684,7 @@ export const OrTest = 12;
 /**
  * Upstream ParExpOperator constant OtherParamOps. Its numeric value is preserved exactly.
  *
- * @
+ * \@
  *
  * @public
  */
@@ -756,7 +756,7 @@ export const QuoAssgn = 52;
 /**
  * Upstream RedirOperator constant RdrAll. Its numeric value is preserved exactly.
  *
- * &>
+ * &\>
  *
  * @public
  */
@@ -765,7 +765,7 @@ export const RdrAll = 74;
 /**
  * Upstream RedirOperator constant RdrAllClob. Its numeric value is preserved exactly.
  *
- * &>| with `LangZsh`
+ * &\>| with `LangZsh`
  *
  * @public
  */
@@ -774,7 +774,7 @@ export const RdrAllClob = 75;
 /**
  * Upstream RedirOperator constant RdrClob. Its numeric value is preserved exactly.
  *
- * >|
+ * \>|
  *
  * @public
  */
@@ -783,7 +783,7 @@ export const RdrClob = 69;
 /**
  * Upstream RedirOperator constant RdrIn. Its numeric value is preserved exactly.
  *
- * <
+ * \<
  *
  * @public
  */
@@ -792,7 +792,7 @@ export const RdrIn = 65;
 /**
  * Upstream RedirOperator constant RdrInOut. Its numeric value is preserved exactly.
  *
- * <>
+ * \<\>
  *
  * @public
  */
@@ -801,7 +801,7 @@ export const RdrInOut = 66;
 /**
  * Upstream RedirOperator constant RdrOut. Its numeric value is preserved exactly.
  *
- * >
+ * \>
  *
  * @public
  */
@@ -882,7 +882,7 @@ export const ResumeKorn = 38;
 /**
  * Upstream BinAritOperator constant Shl. Its numeric value is preserved exactly.
  *
- * <<
+ * \<\<
  *
  * @public
  */
@@ -891,7 +891,7 @@ export const Shl = 71;
 /**
  * Upstream BinAritOperator constant ShlAssgn. Its numeric value is preserved exactly.
  *
- * <<=
+ * \<\<=
  *
  * @public
  */
@@ -900,7 +900,7 @@ export const ShlAssgn = 57;
 /**
  * Upstream BinAritOperator constant Shr. Its numeric value is preserved exactly.
  *
- * >>
+ * \>\>
  *
  * @public
  */
@@ -909,7 +909,7 @@ export const Shr = 64;
 /**
  * Upstream BinAritOperator constant ShrAssgn. Its numeric value is preserved exactly.
  *
- * >>=
+ * \>\>=
  *
  * @public
  */
@@ -954,7 +954,7 @@ export const TernQuest = 85;
 /**
  * Upstream BinTestOperator constant TsAfter. Its numeric value is preserved exactly.
  *
- * >
+ * \>
  *
  * @public
  */
@@ -963,7 +963,7 @@ export const TsAfter = 63;
 /**
  * Upstream BinTestOperator constant TsBefore. Its numeric value is preserved exactly.
  *
- * <
+ * \<
  *
  * @public
  */
@@ -1341,7 +1341,7 @@ export const UpperFirst = 96;
 /**
  * Upstream RedirOperator constant WordHdoc. Its numeric value is preserved exactly.
  *
- * <<<
+ * \<\<\<
  *
  * @public
  */

@@ -406,7 +406,7 @@ export interface Block {
 }
 
 /**
- * BraceExp represents a Bash brace expression, such as "{a,f}" or "{1..10}".
+ * BraceExp represents a Bash brace expression, such as "\{a,f\}" or "\{1..10\}".
  *
  * This node will only appear as a result of `SplitBraces`.
  *
@@ -424,7 +424,7 @@ export interface BraceExp {
    */
   Elems: (Word | null)[] | null;
   /**
-   * {x..y[..incr]} instead of {x,y[,...]}
+   * \{x..y[..incr]\} instead of \{x,y[,...]\}
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -613,7 +613,7 @@ export interface CmdSubst {
    */
   Left: SyntaxPos;
   /**
-   * mksh's ${|foo;}
+   * mksh's $\{|foo;\}
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -627,7 +627,7 @@ export interface CmdSubst {
    */
   Stmts: (Stmt | null)[] | null;
   /**
-   * mksh's ${ foo;}
+   * mksh's $\{ foo;\}
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -827,7 +827,7 @@ export interface File {
 
 /**
  * FlagsArithm represents zsh subscript flags attached to an arithmetic expression,
- * such as ${array[(flags)expr]}.
+ * such as $\{array[(flags)expr]\}.
  *
  * This node will only appear with `LangZsh`.
  *
@@ -864,7 +864,7 @@ export interface ForClause {
    */
   Type: 'ForClause';
   /**
-   * deprecated form with { } instead of do/done
+   * deprecated form with \{ \} instead of do/done
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -1079,37 +1079,37 @@ export interface ParamExp {
   /**
    * Only one of these is set at a time.
    * given how we've grown the number of booleans
-   * ${!a}
+   * $\{!a\}
    *
    * False is an explicit upstream value and is never omitted.
    */
   Excl: boolean;
   /**
-   * ${a:-b}, ${a#b}, etc
+   * $\{a:-b\}, $\{a#b\}, etc
    *
    * Null preserves the upstream absence of this component.
    */
   Exp: Expansion | null;
   /**
-   * ${(flags)a} with `LangZsh`
+   * $\{(flags)a\} with `LangZsh`
    *
    * Null preserves the upstream absence of this component.
    */
   Flags: Lit | null;
   /**
-   * ${a`i`}, ${a["k"]}, or a ${a[i,j]} slice with `LangZsh`
+   * $\{a`i`\}, $\{a["k"]\}, or a $\{a[i,j]\} slice with `LangZsh`
    *
    * Null preserves the upstream absence of this component.
    */
   Index: ArithmExpr | null;
   /**
-   * ${+a} with `LangZsh`
+   * $\{+a\} with `LangZsh`
    *
    * False is an explicit upstream value and is never omitted.
    */
   IsSet: boolean;
   /**
-   * ${#a}
+   * $\{#a\}
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -1118,13 +1118,13 @@ export interface ParamExp {
    * Only one of these is set at a time.
    * because it should be impossible for multiple to be set at once,
    * and a flat structure like this takes up more space.
-   * ${a:h2} with `LangZsh`
+   * $\{a:h2\} with `LangZsh`
    *
    * Ordered upstream entries. Null preserves a nil slice and differs from an empty array. Null entries preserve nil elements.
    */
   Modifiers: (Lit | null)[] | null;
   /**
-   * ${!prefix*} or ${!prefix@}
+   * $\{!prefix*\} or $\{!prefix\@\}
    *
    * Upstream operator value, preserving named tokens, zero, and explicitly represented raw uint32 values.
    */
@@ -1149,25 +1149,25 @@ export interface ParamExp {
    */
   Rbrace: SyntaxPos;
   /**
-   * ${a/x/y}
+   * $\{a/x/y\}
    *
    * Null preserves the upstream absence of this component.
    */
   Repl: Replace | null;
   /**
-   * $a instead of ${a}
+   * $a instead of $\{a\}
    *
    * False is an explicit upstream value and is never omitted.
    */
   Short: boolean;
   /**
-   * ${a:x:y}
+   * $\{a:x:y\}
    *
    * Null preserves the upstream absence of this component.
    */
   Slice: Slice | null;
   /**
-   * mksh's ${%a}
+   * mksh's $\{%a\}
    *
    * False is an explicit upstream value and is never omitted.
    */
@@ -1281,7 +1281,7 @@ export interface Redirect {
    */
   Hdoc: Word | null;
   /**
-   * fd>, or {varname}> in Bash
+   * fd\>, or \{varname\}\> in Bash
    *
    * Null preserves the upstream absence of this component.
    */
@@ -1295,7 +1295,7 @@ export interface Redirect {
    */
   OpPos: SyntaxPos;
   /**
-   * >word
+   * \>word
    *
    * Null preserves the upstream absence of this component.
    */
@@ -1436,7 +1436,7 @@ export interface Stmt {
    */
   Position: SyntaxPos;
   /**
-   * stmt >a <b
+   * stmt \>a \<b
    *
    * Ordered upstream entries. Null preserves a nil slice and differs from an empty array. Null entries preserve nil elements.
    */

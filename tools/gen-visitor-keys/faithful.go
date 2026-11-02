@@ -316,6 +316,16 @@ var goDocLink = regexp.MustCompile(`\[\*?([A-Za-z][A-Za-z0-9_.]*)\]`)
 // record, adding binding-specific invariants without narrating implementation.
 func writeSemanticComment(b *strings.Builder, indent, text, tag string) {
 	text = goDocLink.ReplaceAllString(strings.ReplaceAll(text, "*/", "* /"), "`$1`")
+	// Go prose contains shell punctuation with a different meaning in TSDoc.
+	// Preserve literal code spans while protecting prose from tag/HTML parsing.
+	parts := strings.Split(text, "`")
+	escaper := strings.NewReplacer("\\", "\\\\", "{", "\\{", "}", "\\}", "<", "\\<", ">", "\\>", "@", "\\@")
+	for i := range parts {
+		if i%2 == 0 {
+			parts[i] = escaper.Replace(parts[i])
+		}
+	}
+	text = strings.Join(parts, "`")
 	b.WriteString(indent + "/**\n")
 	for _, line := range strings.Split(text, "\n") {
 		b.WriteString(indent + " * " + line + "\n")

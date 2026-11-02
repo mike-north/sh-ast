@@ -3,7 +3,7 @@ import { SYNTAX_SCHEMA } from '../generated/syntax-schema.js';
 import type { Node, SyntaxPos } from '../generated/syntax-types.js';
 
 /** A position with no source identity, matching upstream's ordinary zero Pos. @internal */
-export const zeroPos: SyntaxPos = {
+const zeroPos: SyntaxPos = {
   Offset: 0,
   Line: 0,
   Col: 0,

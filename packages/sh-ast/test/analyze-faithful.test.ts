@@ -1,5 +1,6 @@
 /** Faithful analysis preserves caller-owned records and never invents Unicode text for bytes. */
 import { describe, expect, it } from 'vitest';
+import { parseSync } from '../src/index.js';
 import type { CallExpr, Lit, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { syntheticNode } from './analyze-fixtures.js';
 import { enumerateCommands, resolveArgv0, resolveWord } from '../src/analyze/index.js';
@@ -52,6 +53,22 @@ describe('analysis of faithful syntax records', () => {
     expect(
       resolveWord({ Type: 'Word', Parts: [syntheticNode('DblQuoted', { Parts: [null] })] }),
     ).toEqual({ static: false, reason: 'unsupported' });
+  });
+
+  it('preserves nil argument slots without inventing an effective command', () => {
+    const file = parseSync('sudo rm -- /safe');
+    const command = file.Stmts?.[0]?.Cmd;
+    if (command?.Type !== 'CallExpr' || !command.Args) throw new Error('Expected command');
+    command.Args.splice(1, 0, null);
+    const site = enumerateCommands(file)[0];
+    expect(site.argv).toEqual([
+      { static: true, text: 'sudo' },
+      { static: false, reason: 'unsupported' },
+      { static: true, text: 'rm' },
+      { static: true, text: '--' },
+      { static: true, text: '/safe' },
+    ]);
+    expect(resolveArgv0(site).effective.static).toBe(false);
   });
 
   it('preserves byte-valued function names in command contexts', () => {

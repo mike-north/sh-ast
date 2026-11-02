@@ -254,3 +254,14 @@ func TestFaithfulOperatorAliases(t *testing.T) {
 		t.Error("both upstream alias identity and canonical type alternative must survive")
 	}
 }
+
+// Shell punctuation is content, not TSDoc markup; literal code spans keep their
+// spelling while surrounding prose escapes tag and HTML delimiters.
+func TestSemanticCommentEscapesShellPunctuation(t *testing.T) {
+	var b strings.Builder
+	writeSemanticComment(&b, "", "${x} <input >output @name and `a<b` plus [*Word]", "public")
+	want := "/**\n * $\\{x\\} \\<input \\>output \\@name and `a<b` plus `Word`\n *\n * @public\n */\n"
+	if b.String() != want {
+		t.Fatalf("comment = %q, want %q", b.String(), want)
+	}
+}
