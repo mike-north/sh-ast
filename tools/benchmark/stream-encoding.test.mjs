@@ -132,6 +132,14 @@ test('freezing dependency closures copies runtime bytes and retains distinct tra
         peerDependencies: { dep: '1.0.0' },
       }),
     );
+    writeFileSync(
+      join(root, 'one', 'node_modules', 'dep', 'package.json'),
+      JSON.stringify({ name: 'dep', version: '1.0.0', exports: {} }),
+    );
+    make(join(root, 'one', 'node_modules', 'punycode'), 'punycode', '2.3.1');
+    const withBuiltinName = JSON.parse(readFileSync(peerManifest));
+    withBuiltinName.dependencies = { punycode: '2.3.1' };
+    writeFileSync(peerManifest, JSON.stringify(withBuiltinName));
     const frozen = freezeDependencies(
       { one: join(root, 'one'), two: join(root, 'two') },
       join(root, 'frozen'),
@@ -145,7 +153,7 @@ test('freezing dependency closures copies runtime bytes and retains distinct tra
       readFileSync(join(frozen.roots.two, 'node_modules', 'dep', 'index.js'), 'utf8'),
       /2.0.0/,
     );
-    assert.equal(frozen.packages.length, 4);
+    assert.equal(frozen.packages.length, 5);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

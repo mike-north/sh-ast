@@ -36,20 +36,16 @@ export function files(directory) {
 /** Resolve package roots through Node's actual dependency graph, including pnpm-linked versions. */
 function dependencyRoot(parent, name) {
   const require = createRequire(join(parent, 'package.json'));
-  let entry;
-  try {
-    entry = require.resolve(`${name}/package.json`);
-  } catch {
-    entry = require.resolve(name);
-  }
-  let path = dirname(realpathSync(entry));
-  while (path !== dirname(path)) {
+  // Type-only packages can intentionally export no runtime entry or package.json.
+  // Search Node's resolution directories instead of requiring such an export.
+  for (const directory of require.resolve.paths(`${name}/package.json`) ?? []) {
+    const path = join(directory, name);
     try {
-      if (JSON.parse(readFileSync(join(path, 'package.json'), 'utf8')).name === name) return path;
+      if (JSON.parse(readFileSync(join(path, 'package.json'), 'utf8')).name === name)
+        return realpathSync(path);
     } catch {
-      /* Parent directories need not be packages. */
+      /* A lookup directory need not contain this package. */
     }
-    path = dirname(path);
   }
   throw new Error(`Cannot resolve package root for ${name}`);
 }
