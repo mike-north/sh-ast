@@ -112,6 +112,18 @@ describe('upstream inputs and structured results', () => {
     expect(parseSync('echo', { Variant: 0 }).Type).toBe('File');
   });
 
+  it('preserves StopAt word-prefix and quoted-word semantics', () => {
+    const prefix = parseSync('echo one $$tail; ignored', { StopAt: '$$' }).Stmts?.[0]?.Cmd;
+    if (prefix?.Type !== 'CallExpr') throw new Error('Expected prefix call');
+    expect(prefix.Args).toHaveLength(2);
+    const quoted = parseSync("echo '$$' tail", { StopAt: '$$' }).Stmts?.[0]?.Cmd;
+    if (quoted?.Type !== 'CallExpr') throw new Error('Expected quoted call');
+    expect(quoted.Args).toHaveLength(3);
+    expect(quoted.Args?.[1]?.Parts?.[0]).toMatchObject({ Type: 'SglQuoted', Value: '$$' });
+    const insideWord = 'echo hi$$tail';
+    expect(nodeEnd(parseSync(insideWord, { StopAt: '$$' })).Offset).toBe(insideWord.length);
+  });
+
   it('does not invoke an unrelated node-bound method on partial edited nodes', () => {
     const command = parseSync('echo a && echo b').Stmts?.[0]?.Cmd;
     if (command?.Type !== 'BinaryCmd') throw new Error('Expected binary command');

@@ -112,27 +112,77 @@ credentials, so the fixed public asset URL plus checksum verification was used.
   consumer-focused tests and ten diagnostic checks passed against preliminary
   linked artifacts. Exact final artifact acceptance remains separate.
 
-## Remaining acceptance
+## Release A candidate outcome
 
-Typed-nil generated/public types are integrated as `1cd8e74`; final local build,
-check, and test pass, with 492 runtime tests plus complete tsd checks. Native Go
-tests/vet, generator tests, and byte-identical schema regeneration pass. API
-reports and docs have been regenerated without TSDoc diagnostics. These checks
-use the disposable Linux-built candidate, not yet the canonical CI asset.
+The implementation and exact local consumer acceptance are complete. This is a
+reviewable pre-release candidate, not authorization or evidence of publication.
+The package manifest remains 0.3.1; the minor changeset targets 0.4.0.
 
-Remaining: verify the canonical artifact correction in a fresh CI run and complete
-both exact candidate receipt paths. To obtain that
-artifact without committing a local build, the draft source branch initially
-retains the previous committed binary. The first CI comparison and runtime tests
-are expected to expose that stale binary; the upload step preserves CI's rebuilt
-asset for the subsequent correction. No stale-binary run is release acceptance. The minor changeset is
-drafted; no version command has run. The consumer requires ^0.4.0 and a real
-registry lockfile refresh after producer publication, which is outside this task. No final Release A acceptance or release publication is claimed here.
+Producer runtime/API code is frozen at `d1531f1a59c5f6a9bb6dbcab995c9ae7c72367d0`.
+That commit is clean, with empty source diff SHA-256
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+and no untracked source files. The packed candidate SHA-256 is
+`740110701a41a54608a948d7649d4c8ebffeb571df70e6d996facdfb9c40c16c`.
+Subsequent changes add tests and work records only; a final repack verifies the
+same tarball bytes. Producer build, check, full tsd, 499 runtime tests, native Go
+checks and independent generator checks pass. The final seven runtime checks
+close evidence gaps for StopAt prefix/quoted behavior and transport allocation
+cleanup; they passed existing production code and are not represented as fixes.
 
-Independent final targeted review covered the tagged codec, generated interface
-unions, and built public runtime. The original native reproducer retained its
-concrete dynamic type, successful Pos and expected End failure; public WASM
-Pos/failure/Pos reuse also passed. The reviewer ran 31 targeted runtime tests,
-native tests/vet, generator/type checks, and the ten corrected consumer diagnostic
-tests. No remaining defect was reported in the reviewed scope. Final CI and
-consumer artifact receipts are separate gates.
+At the frozen commit, GitHub CI run `41384741277`, WASM reproducibility run
+`41384741261`, and schema reproducibility run `41384741504` passed. The source-only
+bootstrap's stale-binary failures were expected and superseded by the canonical
+artifact commit; no bootstrap failure is represented as acceptance. Fresh CI is
+also required for the final test/work-record follow-up before handoff.
+
+Independent review covered the codec, public boundary, generated unions, analysis,
+and consumer adaptation. Exact regressions established nil argv-slot preservation,
+typed-nil dynamic type and separate Pos/End success/failure behavior, and overflow
+error-display handling. The final targeted reviewer ran 31 runtime tests, native
+tests/vet, generator/type checks and ten consumer diagnostics with no remaining
+reported defect in that scope. Copilot submitted a review, but its summary reports
+a documentation-only view and stale bootstrap context; it is not evidence of
+runtime review. Generated docs are isolated in commit `66c35c0`.
+
+Consumer code and evidence are in
+[draft eslint-sh PR 104](https://github.com/mike-north/eslint-sh/pull/104), head
+`52f1b79b222fb4ef85994bd9c00f924542d378ac`. Its configured candidate gate passed
+176 plugin tests and 3 umbrella tests, plus uncached build/check and documentation
+drift checks. The actual linked and npm-installed cold processes both validated
+all 70 runtime assets, the exact candidate hash, synchronous first lint, and a
+nested `candidate:hello` report. Their complete receipt and observations are
+committed under the consumer's `work-records/release-a-candidate-*.json`.
+The installed temporary directory is deleted only after verification.
+
+### Acceptance mapping
+
+| Gate  | Concrete evidence                                                                                                                                                                                                                        |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1    | `test/cold-start.test.ts` observes one module/instance and first return before a queued microtask; consumer linked/installed receipts observe real first lint.                                                                           |
+| A2    | `test/faithful-parse.test.ts`, `test/normalize.test.ts`, and `TestEncodeKeepsAllFieldsAndDistinguishesNilAndEmpty` cover explicit defaults, empty/comment-only programs, and nil versus empty.                                           |
+| A3    | `test/multibyte.test.ts`, `test/position-fields.test.ts`, native Unicode round trips, and consumer `faithful-language.test.ts` preserve bytes and independently project UTF-16.                                                          |
+| A4    | Generator reflection inventory covers all 46 records, six interfaces and 11 operator families; `test-d/node-types-scalar-fields.test-d.ts` preserves 44 scalar assertions; kitchen-sink/auxiliary and TypedNil tests cover alternatives. |
+| A5    | `TestPositionRoundTripPreservesAllPublicMethods`, parser recovery and public constructor tests compare recovery, saturation, overflow and ordering observations.                                                                         |
+| A6    | Full `test/dialect-matrix.test.ts`, `TestParseDefaultsAndOptionsMatchUpstream`, integer-boundary checks and public StopAt prefix/quoted-word assertions preserve input semantics.                                                        |
+| A7    | Native ParseError/LangError/byte tests and `test/syntax.test.ts` preserve partial File, complete structured fields and exact bytes.                                                                                                      |
+| A8    | Cold/warm/ABI/malformed-envelope tests plus six `test/wasm-memory-ownership.test.ts` cases prove allocation/exception cleanup, detached-view handling, and healthy reuse. The ownership ledger is independent of production bookkeeping. |
+| A9    | `TestRoundTripMatchesNativeStructsAndPrivatePrinting` and `TestEditedTreeRoundTripMatchesNativePrintingAndMeaning` compare independent upstream printing and reparsed edited meaning. No public printer is exposed.                      |
+| C1/C4 | Committed consumer linked/installed observations prove exact importer-relative asset identity and cold real lint for the same canonical tarball.                                                                                         |
+| C2    | Consumer integration, loops, comments/directives, source access and fatal error suites pass within the full configured 176-test gate.                                                                                                    |
+| C3    | Real `Linter.verify` asserts fix range `[17, 23]`; `verifyAndFix` preserves emoji, CJK, decomposed combining text, quotes and CRLF around the replacement.                                                                               |
+
+### Release and coverage boundaries
+
+- [Draft sh-ast PR 30](https://github.com/mike-north/sh-ast/pull/30) and the consumer
+  PR remain unmerged; nothing was published or tagged. Release B public Walk,
+  Print and tree-edit-to-ESLint-fix integration remain intentionally unimplemented.
+- Consumer manifest requires `^0.4.0`, which is unpublished. Its old lockfile is
+  deliberately not fabricated. Ordinary frozen registry installation/CI fails
+  with `ERR_PNPM_OUTDATED_LOCKFILE` until producer publication and a real lockfile
+  refresh. That is a release-order prerequisite, separate from the passing exact
+  candidate gate. The consumer PR is not ready to merge before it is resolved.
+- No blanket full-syntax-package, arbitrary Reader/incremental-parser, browser,
+  shell execution, or byte-identical public printing claim is made.
+- The original sh-ast checkout remains at `96d2a32` with its existing go.sum delta;
+  the original eslint-sh checkout remains at `7412616a` with its existing untracked
+  folders. Neither original checkout was modified by this work.

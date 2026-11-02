@@ -48,6 +48,9 @@ func TestParseDefaultsAndOptionsMatchUpstream(t *testing.T) {
 		{"defaults", "# comment\necho 🎉", `{}`, nil},
 		{"comments", "# comment\necho 🎉", `{"KeepComments":true}`, []syntax.ParserOption{syntax.KeepComments(true)}},
 		{"stop", "echo hi;$$ ignored", `{"StopAt":"$$"}`, []syntax.ParserOption{syntax.StopAt("$$")}},
+		{"stop-prefix", "echo one $$tail; ignored", `{"StopAt":"$$"}`, []syntax.ParserOption{syntax.StopAt("$$")}},
+		{"stop-quoted", "echo '$$' tail", `{"StopAt":"$$"}`, []syntax.ParserOption{syntax.StopAt("$$")}},
+		{"stop-inside-word", "echo hi$$tail", `{"StopAt":"$$"}`, []syntax.ParserOption{syntax.StopAt("$$")}},
 		{"recovery", "(foo |", `{"RecoverErrors":2}`, []syntax.ParserOption{syntax.RecoverErrors(2)}},
 		{"legacy-bash", "echo hi", `{"Variant":0}`, []syntax.ParserOption{syntax.Variant(0)}},
 	} {
