@@ -66,6 +66,31 @@ Any of these forms is recognized without a separate `WrapperSpec` field — the 
 </td></tr>
 <tr><td>
 
+[assignmentOperands?](./sh-ast-analyze.wrapperspec.assignmentoperands.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+'shell-identifier' \| 'env' \| 'sudo'
+
+
+</td><td>
+
+_(Optional)_ Assignment-operand scanning grammar, independent of the wrapper's name. Each preset defines both which static words are assignments and where option scanning stops; it does not model the utility's other options.
+
+- `'shell-identifier'`<!-- -->: the legacy ASCII `NAME=value` rule before `--`<!-- -->; options may resume after an assignment. - `'env'`<!-- -->: after options, consume words containing `=` (including after `--`<!-- -->). The first assignment ends option scanning permanently. Empty names (`=value`<!-- -->) produce `'ambiguous-assignment'` because GNU/glibc and BSD differ on whether they can be installed in the environment. - `'sudo'`<!-- -->: before `--`<!-- -->, consume words containing `=` unless they start with `/` or `=`<!-- -->; option scanning may resume after each assignment.
+
+Active option parsing always takes precedence over utility assignments: `--unset=NAME` is an option, whereas `env A=1 --unset=NAME cmd` treats that same word as an assignment. This field overrides the legacy [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) boolean when present.
+
+
+</td></tr>
+<tr><td>
+
 [names](./sh-ast-analyze.wrapperspec.names.md)
 
 
@@ -167,7 +192,7 @@ boolean
 
 </td><td>
 
-_(Optional)_ When `true`<!-- -->, a `NAME=value`<!-- -->-shaped operand (an unquoted identifier followed by `=`<!-- -->, e.g. `A=1`<!-- -->) appearing after the wrapper name is skipped — this is `env`<!-- -->'s and `sudo`<!-- -->'s own `VAR=val` \*operand\* mechanism (setting variables in the wrapped command's environment), which is a distinct, per-wrapper concept from the shell-level `CallExpr.Assigns` prefixes [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) counts.
+_(Optional)_ Legacy shorthand for [WrapperSpec.assignmentOperands](./sh-ast-analyze.wrapperspec.assignmentoperands.md)<!-- -->'s `'shell-identifier'` grammar: skip statically resolved `NAME=value` words with an ASCII shell identifier before `--`<!-- -->. Options may follow these operands. Quote removal has already happened during word resolution. An explicit `assignmentOperands` takes precedence, even when this is false. These operands never contribute to shell-prefix `assignmentsSkipped`<!-- -->.
 
 
 </td></tr>
