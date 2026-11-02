@@ -1,8 +1,8 @@
 // Package syntaxbridge owns synchronous syntax operations at the WASM boundary.
 // It preserves upstream parser options, partial results, errors, and computed
 // positions while keeping malformed transport distinct from shell syntax errors.
-// Printing is intentionally absent; syntaxwire's reverse path supports private
-// fidelity tests and current-tree bounds without publishing a printer operation.
+// Formatting reconstructs the caller's current records through syntaxwire;
+// source-bound observations and live operations remain separate responsibilities.
 package syntaxbridge
 
 import (
@@ -30,6 +30,8 @@ func Process(operation, payload, options string) (result []byte) {
 		return marshal(parse(payload, options))
 	case "parse-with-positions":
 		return marshal(parseWithPositions(payload, options))
+	case "print":
+		return marshal(printNode(payload, options))
 	case "bounds":
 		return marshal(bounds(payload))
 	case "pos":

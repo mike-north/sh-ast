@@ -6,6 +6,11 @@ mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
 
+Traversal uses ordinary TypeScript arrays with explicit mutation limits. The
+[accepted representation decision](../../design/WALK-MUTATION-DECISION.md) records
+which live edits are supported and why this interface does not model Go storage
+capacity, reslicing, or value-slot addresses.
+
 ```ts
 import { LangBash, nodeEnd, parseSync } from 'sh-ast';
 
@@ -58,15 +63,93 @@ Positions }`. `Positions.get(node)` reads immutable original bounds by node
   a value does not promise every upstream operation accepts it.
 - `SYNTAX_SCHEMA` and `SYNTAX_INTERFACES` are deeply frozen field/interface
   metadata. Their order is not upstream Walk order.
+- `walk(node, callback)` calls the callback synchronously on entry and with `null`
+  on exit. Return `false` on entry to prune that occurrence, including its exit;
+  exit boolean values do not control traversal. Every callback result must be a
+  boolean; Promises and other values throw `InputError`. Child reads happen live, and
+  nested calls keep independent state. Specialized statement/item comment loops
+  visit value copies; ordinary comment lists visit their stored objects. The
+  array reference and initial length are captured when each list starts. Future
+  existing slots are read live; indices added beyond the captured extent are
+  ignored by that active traversal. Replacing the owner's array field does not retarget an active list.
+  See the mutation limits below.
+- `printSync(node, options?)` reconstructs the current edited tree and collects a
+  fresh upstream printer's output as `GoString`. Supported roots are File, Stmt,
+  Word, Assign, Command and WordPart alternatives. Only File gets a guaranteed
+  final newline. Printing applies upstream formatting; it does not replay the
+  original source or promise source-byte identity.
+- `PrintOptions` exposes `Indent`, `BinaryNextLine`, `SwitchCaseIndent`,
+  `SpaceRedirects`, `KeepPadding`, `Minify`, `SingleLine`, and `FunctionNextLine`.
+  Indent accepts an exact uint64 as a safe number or bigint, with zero selecting
+  tabs. Boolean defaults are false. KeepPadding is upstream's best-effort,
+  deprecated option; Minify and SingleLine together return an upstream error.
 
 `ParseError` and `LangError` preserve upstream fields, exact `Message` bytes, and
 any partial `File`. Their ordinary `Error.message` is a display string.
 `InputError` reports invalid binding inputs, upstream option constraints, or
 unsupported constructed nodes whose requested bound panics upstream.
 `ShInternalError` reports transport failures or unexpected upstream panics.
+`PrintError` retains ordinary upstream printer failures, and `PrintPanicError`
+retains panics from printing representable inputs. `WalkPanicError` represents
+upstream-equivalent traversal panics; callback exceptions retain their identity.
 All extend `ShAstError`. The conservative structural-depth guard throws
 `ShParseMaxDepthError` before potentially exhausting the WASM stack. It is a
 binding resource constraint and can reject deeply nested quoted or commented text.
+Printing collects complete output; large trees or indentation widths can consume
+substantial memory and time. The parse guard does not bound arbitrary constructed
+printing inputs. No arbitrary writer, partial-output, or reusable-printer protocol
+is exposed.
+
+## Traversal mutation limits
+
+Supported edits preserve a node's kind and shape: change syntax fields, replace
+pointer children before their read, replace future existing list slots, append
+beyond an active list's captured extent, or assign a new array to the owner field.
+Changes before a list starts are included in its captured reference and length.
+Pruning and synchronous nested walks retain their control behavior; nested walks
+see the tree at their own entry, while edits to shared objects remain live.
+
+Keep every index in an active list's captured extent present. Removing one,
+leaving a hole there, or shrinking below that extent is outside the supported
+contract, including through aliases. Truncation, `delete`, `pop`, `shift`, or a
+length-reducing `splice` can do this; removing appended indices beyond the captured
+extent does not affect the active list. No mutation detector or specific
+error/result is promised for those edits. Assign a new owner array
+instead; the active list keeps its original array and later walks see the new one.
+Length-preserving replacement or reordering, including `sort` and `reverse`,
+follows live slot reads and may revisit an object moved into a later slot. Walk
+does not promise to visit each object only once. An appended object moved into an
+original future slot is visited through that slot.
+
+Stored Comment callbacks receive JavaScript objects. Replacing a Comment slot
+leaves a retained callback object unchanged; it does not behave as a pointer to a
+Go value slot. Specialized Stmt/CaseItem/ArrayElem comment callbacks receive
+copies, so editing those callback values does not edit the original comments.
+Ordinary JavaScript aliases remain live; this interface does not clone shared
+arrays or objects. It does not model Go slice capacity, distinct slice headers
+sharing backing stores, or reslicing. These limits preclude unrestricted Go
+storage mutation parity while preserving live field edits and upstream traversal control.
+
+## Editing and printing
+
+```ts
+import { parseSync, printSync, walk } from 'sh-ast';
+
+const file = parseSync("printf '%s\\n' 'old 🎉'\n", { KeepComments: true });
+walk(file, (node) => {
+  if (node?.Type === 'SglQuoted' && node.Value === 'old 🎉') {
+    node.Value = 'new 🎉';
+  }
+  return true;
+});
+const output = printSync(file);
+```
+
+This edits a field without replacing array storage. Node positions still describe
+their upstream token values; live `nodePos` and `nodeEnd` compute from current
+fields, while a separately captured parse snapshot remains tied to original
+source. Consumers such as ESLint can edit a separate tree and use printed output
+as a fix without mutating their original lint view or traversal cache.
 
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
 command, and wrapper analysis consumes the faithful records; it does not define
@@ -77,11 +160,12 @@ parser behavior or the core tree representation.
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit
 null/default values. Replace dialect strings with numeric `Variant` constants,
 request comments explicitly, and handle structured errors and byte positions.
-The root no longer exports normalized `ShNode`/`ShNodes`, `range`/`loc`, `walk`, or
-`visitorKeys`. Consumers such as ESLint own their source-coordinate and traversal
-views. Whole-file parsing is the present scope; public upstream traversal and
-printing belong to the following minor release. Stateful/incremental parser
-protocols and full syntax-package parity are deferred.
+The root no longer exports normalized `ShNode`/`ShNodes`, `range`/`loc`, or
+`visitorKeys`. The new walker uses entry/null-exit callbacks rather than the former
+structural helper's protocol. Consumers such as ESLint own their source-coordinate
+and traversal views. Whole-file parsing, collected printing and the live walker
+with the mutation limits above form this candidate's scope. Stateful/incremental parser protocols
+and full syntax-package parity are deferred.
 
 The [design collection](../../design/ARCHITECTURE.md) and
 [implementation evidence](../../design/IMPLEMENTATION.md) describe the release

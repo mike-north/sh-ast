@@ -897,6 +897,36 @@ export const Pow: 44;
 export const PowAssgn: 62;
 
 // @public
+export class PrintError extends ShAstError {
+    constructor(message: GoString);
+    readonly code = "SH_AST_SYNTAX_PRINT";
+    readonly Message: GoString;
+}
+
+// @public
+export interface PrintOptions {
+    BinaryNextLine?: boolean;
+    FunctionNextLine?: boolean;
+    Indent?: number | bigint;
+    // @deprecated
+    KeepPadding?: boolean;
+    Minify?: boolean;
+    SingleLine?: boolean;
+    SpaceRedirects?: boolean;
+    SwitchCaseIndent?: boolean;
+}
+
+// @public
+export class PrintPanicError extends ShAstError {
+    constructor(message: GoString);
+    readonly code = "SH_AST_SYNTAX_PRINT_PANIC";
+    readonly Message: GoString;
+}
+
+// @public
+export function printSync(node: Node_2, options?: PrintOptions): GoString;
+
+// @public
 export type ProcOperator =
 0 | typeof CmdIn | typeof CmdInTemp | typeof CmdOut | RawOperator<'ProcOperator'>;
 
@@ -1404,6 +1434,16 @@ export const UpperAll: 97;
 
 // @public
 export const UpperFirst: 96;
+
+// @public
+export function walk(node: Node_2, callback: (node: Node_2 | null) => boolean): void;
+
+// @public
+export class WalkPanicError extends ShAstError {
+    constructor(message: GoString);
+    readonly code = "SH_AST_WALK_PANIC";
+    readonly Message: GoString;
+}
 
 // @public
 export interface WhileClause {

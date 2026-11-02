@@ -1,6 +1,6 @@
 /**
  * A faithful synchronous interface to mvdan/sh syntax. The root exposes upstream
- * records, constants, parser controls and position operations. Consumer-specific
+ * records, constants, parser controls, traversal, printing and position operations. Consumer-specific
  * source views and semantic analysis are separate responsibilities.
  */
 import {
@@ -21,6 +21,10 @@ export {
   rawOperator,
 } from './syntax.js';
 export type { ParseOptions, ParsedFile, PositionSnapshot, NodePositions } from './syntax.js';
+export { printSync } from './syntax-print.js';
+export type { PrintOptions } from './syntax-print.js';
+export { PrintError, PrintPanicError } from './syntax-print-errors.js';
+export { walk, WalkPanicError } from './syntax-walk.js';
 export type * from '../generated/syntax-types.js';
 export * from '../generated/syntax-constants.js';
 export type { SyntaxFieldSchema, SyntaxRecordSchema } from '../generated/syntax-schema.js';

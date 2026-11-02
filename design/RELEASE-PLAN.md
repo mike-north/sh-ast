@@ -14,7 +14,7 @@ publication or release-tag action is part of candidate preparation.
 | User outcome               | Parse shell source synchronously on first use, inspect a complete and precisely typed upstream tree, and supply faithful parsing options.   | Traverse with upstream order/control; edit represented syntax and print it through upstream, enabling consumer fixes.           |
 | Required data              | All node/auxiliary fields, operator domains, comments, named positions, invalid/recovered state, partial results and structured errors.     | The same representation, accepted back as printer input; newly constructed/edited fields and positions have explicit contracts. |
 | Public operations proposed | Whole-file Parse and its KeepComments/Variant/StopAt/RecoverErrors controls; source/position/error types and required supporting constants. | Upstream-compatible Walk and Print, with all eight pinned Printer options and root restrictions.                                |
-| Exit evidence              | Acceptance A1-A9; independent codec round-trip proof including printing-relevant data; built-candidate real ESLint gate C1-C4.              | A gates remain green; B1-B5; real consumer AST edit/printed-fix/reparse C5.                                                     |
+| Exit evidence              | Acceptance A1-A9; independent codec round-trip proof including printing-relevant data; built-candidate real ESLint gate C1-C4.              | A gates remain green; B1-B6; real consumer AST edit/printed-fix/reparse C5.                                                     |
 | Deliberately outside scope | Public printer, new semantic analysis, interpreter/runner, browser platform expansion, blanket full-syntax-package parity claim.            | Interpreter/runner, shell execution, semantic optimizer, token-stream invention, source-byte-identical printing promise.        |
 
 Existing `walk` does not make Release B complete. Before A, decide whether to
@@ -47,7 +47,7 @@ actual contract. Completion requires the test outcome, not a checklist assertion
 | A4 Prove synchronous package behavior        | A2-A3                                     | First-use installed package test, repeated success/failure isolation, initializer observation, resource-limit policy, asset and memory-lifetime tests. Pass A1/A8. Record cold and warm timing separately.                                                                                                    |
 | A5 Migrate the consumer boundary             | A1-A4; analyze disposition                | In a separate eslint-sh change, adapt locations/errors/types/traversal and explicit comment retention. Add candidate injection/resolution assertions to both linked and packaged test paths. Pass C1-C4. No ESLint integration code added to sh-ast.                                                          |
 | A6 Assemble Release A                        | A1-A5                                     | Full package checks, generated-schema drift, canonical WASM check, complete docs/comments and migration notes, candidate receipt. Minor changeset only after numbering is reconciled; follow existing CI release process.                                                                                     |
-| B1 Specify and implement Walk                | A complete                                | Compare independent upstream traces, including pruning, nil exits, specialized comment order and auxiliary children. Pass B1-B2; migrate any callers of the former structural helper.                                                                                                                         |
+| B1 Specify and implement Walk                | A complete                                | Compare independent upstream traces, including pruning, nil exits, specialized comment order and auxiliary children. Pass B1-B2 and B6 under the [accepted ordinary-array mutation contract](WALK-MUTATION-DECISION.md); migrate any callers of the former structural helper.                                 |
 | B2 Implement Print bridge                    | A reversible data model                   | Validate inputs and reconstruct the actual edited Go tree. Implement all pinned Printer options and supported-root/error behavior. Pass B3-B4, including private recovery/position round trips established in A.                                                                                              |
 | B3 Prove editing and consumer fixes          | B1-B2                                     | Type-safe edit, Go-oracle print comparison, reparse structural meaning, real ESLint fix and stable second pass. Pass B5/C5.                                                                                                                                                                                   |
 | B4 Assemble Release B                        | B1-B3                                     | Repeat A regression and candidate gates against this exact build; update API/migration docs and the next minor changeset. No source-fidelity claim beyond tested upstream printer behavior.                                                                                                                   |
@@ -100,6 +100,28 @@ pin, toolchain, consumer commit/patch, dependency resolution in every test conte
 commands/exits, test names/results, cold/warm measurements, unexamined coverage,
 and known accepted adapter limits. A link command, passing registry test, or
 successful generation alone is not consumer acceptance.
+
+## Staged release preparation
+
+Release B is reviewed as a stacked candidate after the accepted Release A
+candidate. Its PR targets the Release A branch while that release is pending;
+the follow-on must not be merged into A before A's release is cut.
+
+Keep the B changeset text under `design/release-b/changeset.md`, outside active
+`.changeset`, until the normal release workflow has published A as 0.4.0 and
+consumed A's changeset. Then rebase or retarget B onto that actual released
+baseline, verify registry/version history, and activate the reviewed B changeset
+as a minor. The expected result is 0.5.0, never 1.0. Do not activate both minor
+changesets in one version operation: Changesets combines them into one minor.
+
+The corresponding consumer candidates follow the same two-stage order. Refresh
+each dependency lockfile from the real published producer artifact before ordinary
+registry CI and consumer release. Exact local candidate receipts prove candidate
+behavior, not publication or future registry integrity. After each rebase/version
+preparation, rerun generated/API/docs checks and exact package/consumer gates.
+
+The Release B implementation and outstanding gates are recorded separately in
+[IMPLEMENTATION-B.md](IMPLEMENTATION-B.md).
 
 This planning change implements none of A0-B4 and authorizes no publication. The
 next handoff is A0/A1, with the outstanding decisions in Architecture presented to
