@@ -72,3 +72,19 @@ func TestJSONStringsCannotTransportArbitraryGoStringBytes(t *testing.T) {
 		t.Fatal("the fixture must demonstrate why arbitrary Go strings need explicit byte transport")
 	}
 }
+
+// Five coordinate/state getters do not capture all public Pos behavior. An
+// overflowed offset may look like zero through those getters, while remaining
+// later than every valid position when used as the right operand of After.
+func TestOverflowPositionRequiresAnAdditionalPublicDistinction(t *testing.T) {
+	maximum := syntax.NewPos(^uint(0), 1, 1)
+	overflow := (&syntax.Comment{Hash: syntax.NewPos(maximum.Offset(), 262143, 16382), Text: "x"}).End()
+	zero := syntax.Pos{}
+	if overflow.Offset() != zero.Offset() || overflow.Line() != zero.Line() || overflow.Col() != zero.Col() || overflow.IsValid() != zero.IsValid() || overflow.IsRecovered() != zero.IsRecovered() {
+		t.Fatal("fixture must collide under the five coordinate/state observations")
+	}
+	if !maximum.After(zero) || maximum.After(overflow) {
+		t.Fatal("After must distinguish ordinary zero from the overflowed right operand")
+	}
+	t.Log("same five fields, but maximum.After(zero)=true and maximum.After(overflow)=false")
+}

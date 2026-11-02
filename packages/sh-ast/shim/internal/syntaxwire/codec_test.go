@@ -241,3 +241,66 @@ func TestDecodeRejectsContradictoryPositionsAndInvalidByteStrings(t *testing.T) 
 		}
 	}
 }
+
+// Public comparisons, including an invalid position on After's right side, are
+// the oracle. Go's hidden words need not be identical when all exposed behavior
+// agrees; collapsing offset overflow to an ordinary invalid zero does not agree.
+func TestPositionRoundTripPreservesAllPublicMethods(t *testing.T) {
+	file, err := syntax.NewParser(syntax.RecoverErrors(2)).Parse(strings.NewReader("(foo |"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	maximum := syntax.NewPos(^uint(0), 1, 1).Offset()
+	fixtures := []struct {
+		name     string
+		position syntax.Pos
+		overflow bool
+	}{
+		{"zero", syntax.Pos{}, false},
+		{"invalid-offset", syntax.NewPos(7, 0, 0), false},
+		{"invalid-maximum-offset", syntax.NewPos(maximum, 0, 0), false},
+		{"origin", syntax.NewPos(0, 1, 1), false},
+		{"line-only", syntax.NewPos(3, 1, 0), false},
+		{"column-only", syntax.NewPos(3, 0, 1), false},
+		{"maximum", syntax.NewPos(maximum, 1, 1), false},
+		{"recovered", file.Stmts[0].Cmd.(*syntax.Subshell).Rparen, true},
+		{"overflow", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 1)}).End(), true},
+		{"column-carry", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 16383)}).End(), true},
+		{"wrapped-zero", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16382), Text: "x"}).End(), true},
+		{"wrapped-one", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16383), Text: "x"}).End(), true},
+	}
+	for _, fixture := range fixtures {
+		t.Run(fixture.name, func(t *testing.T) {
+			encoded, err := Encode(&syntax.Lit{ValuePos: fixture.position})
+			if err != nil {
+				t.Fatal(err)
+			}
+			value, err := ReadJSON(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			positionRecord := value.(map[string]any)["ValuePos"].(map[string]any)
+			if positionRecord["OffsetOverflow"] != fixture.overflow {
+				t.Errorf("overflow distinction lost: %#v", positionRecord)
+			}
+			decoded, err := DecodeNode(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			actual := decoded.(*syntax.Lit).ValuePos
+			if ObservePosition(actual) != ObservePosition(fixture.position) || actual.String() != fixture.position.String() {
+				t.Fatal("position getters or String changed")
+			}
+			for _, other := range fixtures {
+				if actual.After(other.position) != fixture.position.After(other.position) || other.position.After(actual) != other.position.After(fixture.position) {
+					t.Fatalf("After changed against %s", other.name)
+				}
+			}
+			derived := (&syntax.Comment{Hash: actual, Text: "x"}).End()
+			wanted := (&syntax.Comment{Hash: fixture.position, Text: "x"}).End()
+			if ObservePosition(derived) != ObservePosition(wanted) {
+				t.Fatal("subsequent upstream position arithmetic changed")
+			}
+		})
+	}
+}

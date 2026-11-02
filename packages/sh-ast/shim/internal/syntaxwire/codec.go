@@ -19,19 +19,35 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
-// Position is the observable state of a syntax.Pos. Invalid coordinates are not
-// automatically zero; recovery is a separate upstream state with no coordinates.
+// Position preserves the public behavior of a syntax.Pos. Invalid coordinates are
+// not automatically zero. OffsetOverflow distinguishes out-of-range offsets from
+// ordinary invalid values: the five direct getters alone do not preserve After.
+// This is observational equivalence, not a promise about Go's private words or ==.
 type Position struct {
-	Offset      uint `json:"Offset"`
-	Line        uint `json:"Line"`
-	Col         uint `json:"Col"`
-	IsValid     bool `json:"IsValid"`
+	// Offset is the upstream byte offset, including zero when an offset is hidden.
+	Offset uint `json:"Offset"`
+	// Line retains upstream numbering and zero on line overflow or missing data.
+	Line uint `json:"Line"`
+	// Col counts bytes and retains zero on column overflow or missing data.
+	Col uint `json:"Col"`
+	// IsValid reports whether upstream considers the position useful.
+	IsValid bool `json:"IsValid"`
+	// IsRecovered distinguishes the parser's synthesized missing-token position.
 	IsRecovered bool `json:"IsRecovered"`
+	// OffsetOverflow means the hidden offset exceeds the valid offset range. This
+	// includes the recovered sentinel; every valid position compares before it.
+	OffsetOverflow bool `json:"OffsetOverflow"`
 }
 
-// ObservePosition preserves all public coordinate and state observations.
+// maximumPosition is a valid rightmost position obtained through NewPos's public
+// saturation behavior. Its After comparison exposes hidden overflow without
+// reading or manipulating the private representation of Pos.
+var maximumPosition = syntax.NewPos(^uint(0), 1, 1)
+
+// ObservePosition preserves coordinates, state, String, and After behavior.
 func ObservePosition(p syntax.Pos) Position {
-	return Position{p.Offset(), p.Line(), p.Col(), p.IsValid(), p.IsRecovered()}
+	overflow := !p.IsValid() && p.Offset() == 0 && !maximumPosition.After(p)
+	return Position{p.Offset(), p.Line(), p.Col(), p.IsValid(), p.IsRecovered(), overflow}
 }
 
 // String represents a Go string without assuming valid UTF-8. Ordinary strings
@@ -364,8 +380,8 @@ func readUint32(value any) (uint64, error) {
 // or recovered value. It rejects contradictory state rather than normalizing it.
 func readPosition(value any) (syntax.Pos, error) {
 	obj, ok := value.(map[string]any)
-	if !ok || len(obj) != 5 {
-		return syntax.Pos{}, fmt.Errorf("position requires Offset, Line, Col, IsValid, IsRecovered")
+	if !ok || len(obj) != 6 {
+		return syntax.Pos{}, fmt.Errorf("position requires Offset, Line, Col, IsValid, IsRecovered, OffsetOverflow")
 	}
 	offset, err := readUint32(obj["Offset"])
 	if err != nil {
@@ -387,18 +403,47 @@ func readPosition(value any) (syntax.Pos, error) {
 	if !ok {
 		return syntax.Pos{}, fmt.Errorf("IsRecovered must be boolean")
 	}
+	overflow, ok := obj["OffsetOverflow"].(bool)
+	if !ok {
+		return syntax.Pos{}, fmt.Errorf("OffsetOverflow must be boolean")
+	}
 	var position syntax.Pos
 	if recovered {
 		position, err = recoveredPosition()
+	} else if overflow {
+		position = overflowPosition(uint(line), uint(column))
 	} else {
 		position = syntax.NewPos(uint(offset), uint(line), uint(column))
 	}
 	if err != nil {
 		return syntax.Pos{}, err
 	}
-	expected := Position{uint(offset), uint(line), uint(column), valid, recovered}
+	expected := Position{uint(offset), uint(line), uint(column), valid, recovered, overflow}
 	if ObservePosition(position) != expected {
 		return syntax.Pos{}, fmt.Errorf("position observations are inconsistent with upstream state")
 	}
 	return position, nil
+}
+
+// overflowPosition reconstructs an observationally equivalent non-recovered
+// position using only NewPos and Comment.End. The pinned public coordinate
+// behavior has 18-bit lines and 14-bit columns. Advancing past the maximum offset
+// preserves those coordinates while making the offset hidden and After false.
+// A two-byte advance at coordinate wrap avoids accidentally creating the exact
+// recovered sentinel. Once invalid, upstream position arithmetic leaves it alone.
+func overflowPosition(line, column uint) syntax.Pos {
+	const lineMax = (1 << 18) - 1
+	const columnMax = (1 << 14) - 1
+	var start syntax.Pos
+	text := ""
+	switch {
+	case line == 0 && column <= 1:
+		start = syntax.NewPos(maximumPosition.Offset(), lineMax, columnMax-1+column)
+		text = "x"
+	case column > 0:
+		start = syntax.NewPos(maximumPosition.Offset(), line, column-1)
+	default:
+		start = syntax.NewPos(maximumPosition.Offset(), line-1, columnMax)
+	}
+	return (&syntax.Comment{Hash: start, Text: text}).End()
 }
