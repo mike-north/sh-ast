@@ -101,6 +101,28 @@ commands/exits, test names/results, cold/warm measurements, unexamined coverage,
 and known accepted adapter limits. A link command, passing registry test, or
 successful generation alone is not consumer acceptance.
 
+## Staged release preparation
+
+Release B is reviewed as a stacked candidate after the accepted Release A
+candidate. Its PR targets the Release A branch while that release is pending;
+the follow-on must not be merged into A before A's release is cut.
+
+Keep the B changeset text under `design/release-b/changeset.md`, outside active
+`.changeset`, until the normal release workflow has published A as 0.4.0 and
+consumed A's changeset. Then rebase or retarget B onto that actual released
+baseline, verify registry/version history, and activate the reviewed B changeset
+as a minor. The expected result is 0.5.0, never 1.0. Do not activate both minor
+changesets in one version operation: Changesets combines them into one minor.
+
+The corresponding consumer candidates follow the same two-stage order. Refresh
+each dependency lockfile from the real published producer artifact before ordinary
+registry CI and consumer release. Exact local candidate receipts prove candidate
+behavior, not publication or future registry integrity. After each rebase/version
+preparation, rerun generated/API/docs checks and exact package/consumer gates.
+
+The Release B implementation and outstanding gates are recorded separately in
+[IMPLEMENTATION-B.md](IMPLEMENTATION-B.md).
+
 This planning change implements none of A0-B4 and authorizes no publication. The
 next handoff is A0/A1, with the outstanding decisions in Architecture presented to
 the strategic supervisor for resolution.
