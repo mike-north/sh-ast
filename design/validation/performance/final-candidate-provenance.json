@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "6e29227f20aa4d6fa26205bd95a134fd198b4948",
+  "sourcePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceUntrackedFiles": {},
+  "tarballPath": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/snapshot-release-a-candidate/sh-ast-0.3.1.tgz",
+  "tarballSha256": "2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009",
+  "wasmSha256": "a9603b3c9d939e2bca2b093cd7bdbd7ee77fa55a5e882c56db275a7ecb943e4c",
+  "canonicalWorkflowRun": 41387546090,
+  "canonicalArtifactId": 13116495391,
+  "canonicalArtifactZipSha256": "b0def4acfbd561c63927c50582f6583c52d66ff965b1b2c22917688040b07b34"
+}

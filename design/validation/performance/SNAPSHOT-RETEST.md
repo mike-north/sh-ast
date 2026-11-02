@@ -1,5 +1,9 @@
 # Independent position-snapshot correction retest
 
+**Preliminary measurements, superseded for final acceptance.** See
+[the exact canonical-backed candidate retest](FINAL-CANONICAL-RETEST.md).
+Original observations below are preserved.
+
 ## Outcome
 
 The measured repeated-subtree transport defect is removed. Every fixture now

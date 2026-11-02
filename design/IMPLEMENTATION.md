@@ -186,8 +186,8 @@ across all ten fixtures and 120 measured lints. The representative warm median i
 77.2 ms (baseline 22.2 ms); the deeply nested median is 32.2 ms (baseline 4.7 ms).
 The repeated-subtree defect is removed, while residual baseline overhead remains
 explicit. See the [independent retest](validation/performance/SNAPSHOT-RETEST.md)
-and retained raw measurements. Fresh canonical CI asset receipt and new
-linked/installed final-candidate receipts are still required before acceptance.
+and retained raw measurements. The canonical CI artifact has now been received and verified (details below);
+both final linked/installed receipts are complete (see corrected candidate outcome below).
 
 ### Acceptance mapping
 
@@ -203,7 +203,7 @@ linked/installed final-candidate receipts are still required before acceptance.
 | A8    | Cold/warm/ABI/malformed-envelope tests plus six `test/wasm-memory-ownership.test.ts` cases prove allocation/exception cleanup, detached-view handling, and healthy reuse. The ownership ledger is independent of production bookkeeping. |
 | A9    | `TestRoundTripMatchesNativeStructsAndPrivatePrinting` and `TestEditedTreeRoundTripMatchesNativePrintingAndMeaning` compare independent upstream printing and reparsed edited meaning. No public printer is exposed.                      |
 | C1/C4 | Committed consumer linked/installed observations prove exact importer-relative asset identity and cold real lint for the same canonical tarball.                                                                                         |
-| C2    | Consumer integration, loops, comments/directives, source access and fatal error suites pass within the full configured 176-test gate.                                                                                                    |
+| C2    | Consumer integration, loops, comments/directives, source access and fatal error suites pass within the full configured 180-test gate.                                                                                                    |
 | C3    | Real `Linter.verify` asserts fix range `[17, 23]`; `verifyAndFix` preserves emoji, CJK, decomposed combining text, quotes and CRLF around the replacement.                                                                               |
 
 ### Release and coverage boundaries
@@ -221,3 +221,71 @@ linked/installed final-candidate receipts are still required before acceptance.
 - The original sh-ast checkout remains at `96d2a32` with its existing go.sum delta;
   the original eslint-sh checkout remains at `7412616a` with its existing untracked
   folders. Neither original checkout was modified by this work.
+
+## Corrected candidate identity
+
+The corrected runtime/API candidate is frozen at
+`6e29227f20aa4d6fa26205bd95a134fd198b4948`, with no untracked source and empty
+source diff SHA-256
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+Its tarball SHA-256 is
+`2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009`.
+The canonical WASM SHA-256 is
+`a9603b3c9d939e2bca2b093cd7bdbd7ee77fa55a5e882c56db275a7ecb943e4c`.
+
+The WASM came from GitHub run `41387546090`, artifact `13116495391`, built at
+source head `678d7066ba13fad35f612f297c33864803eabc39`. The downloaded ZIP matched
+GitHub's digest
+`b0def4acfbd561c63927c50582f6583c52d66ff965b1b2c22917688040b07b34`; its sole
+entry was `sh-ast.wasm`. The extracted bytes match the preliminary Linux build
+used for independent review. The source-only run's expected old-binary mismatch
+is not a passing reproducibility result. At frozen candidate `6e29227`, CI run
+`41387675812`, WASM reproducibility `41387675862`, schema reproducibility
+`41387676005`, and the review-presence gate `41387675827` all passed.
+Uncached build/check, full tsd and all 516 runtime tests pass with the canonical
+artifact. API docs include the new snapshot contract in separate commit `678d706`.
+
+The independent [exact-package retest](validation/performance/FINAL-CANONICAL-RETEST.md)
+confirmed all 120 lints preserve traversal and all ten fixtures use one parse
+with zero per-node position calls. Final warm medians are 81.4 ms for 500 lines
+and 32.6 ms for 64 nested loops, versus baseline 22.2 ms and 4.7 ms. Residual
+overhead remains 3.7x/6.9x. The benchmark used the exact final tarball and unchanged
+consumer runtime `2a0f260`. Both final linked/installed receipts now pass.
+A consumer Copilot review now exists: it reports no blocking correctness defect
+and suggests optionally replacing per-code-point TextEncoder allocation with
+arithmetic UTF-8 lengths. This is a deferred performance improvement, not a claim
+that the residual baseline gap has been eliminated.
+
+## Corrected Release A outcome
+
+Release A is implemented, independently reviewed, and verified as a distinct
+pre-release candidate. Producer runtime is frozen at `6e29227`; later commits
+contain evidence only. Consumer runtime is frozen at `2a0f260`, with final receipt
+assertions and evidence in `84a85e6efdd236165879104a4e52fb68377f7381`. No publication, release tag, merge, or
+Release B public traversal/printing has occurred.
+
+The exact candidate gate passes 180 plugin tests, 3 umbrella tests, and the 2-test
+documentation harness, plus uncached build/check and docs drift. Both fresh linked
+and npm-installed consumer processes independently verify all 74 package assets,
+the producer commit, empty source diff, and tarball hash. Each first real lint is
+synchronous, reports nested `candidate:hello`, and observes exactly
+`operations: ['parse-with-positions']`. The operation assertions first failed for
+missing observation output, then passed with the shared real-WASM observer. The
+separate deeply nested operation regression had already failed before the runtime
+snapshot migration and passes afterward.
+
+The consumer records are committed as
+`work-records/release-a-snapshot-candidate-provenance.json`,
+`work-records/release-a-snapshot-candidate-receipt.json`, and
+`work-records/release-a-snapshot-candidate-observations.json`. A copy of the final
+observations and provenance is retained alongside the producer performance report.
+The earlier non-snapshot receipts remain clearly superseded historical evidence.
+
+No substantive correctness or architecture blocker remains in the reviewed scope.
+Residual latency versus 0.3.1 and Copilot's optional coordinate-allocation suggestion
+remain documented limitations. The consumer suggestion was explicitly deferred
+in review reply `4438875781`, not silently counted as fixed. Before consumer merge
+and release, publish producer 0.4.0 through its normal authorized release workflow,
+refresh the consumer lockfile from the real registry package, and rerun ordinary
+consumer CI. Its current registry/frozen-lock failure remains an expected release
+ordering prerequisite; the exact candidate gate does not conceal it.

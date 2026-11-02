@@ -1,0 +1,13 @@
+{
+  "comparedRuntimeAssets": 21,
+  "added": [],
+  "removed": [],
+  "changed": [
+    {
+      "path": "dist/syntax-snapshot.js",
+      "preliminarySha256": "3132988a75dc3efe5b97e372eefe98322154c98b9b154b47e6fa9735510232ef",
+      "finalSha256": "224183ccb48d9b1ff93e7f734f3322c9fd2aba54ae9b8deb6628d173ee81ad3a"
+    }
+  ],
+  "sameWasm": true
+}

@@ -3,8 +3,8 @@
 **Historical pre-correction evidence.** The repeated-subtree defect measured here
 was corrected in a preliminary snapshot candidate. Original measurements and
 artifacts remain unchanged. See [the independent correction retest](SNAPSHOT-RETEST.md)
-for current results, residual overhead, exact candidate identity, and remaining
-canonical-build verification.
+for preliminary results and [the final canonical-backed retest](FINAL-CANONICAL-RETEST.md)
+for exact final-candidate measurements and residual overhead.
 
 ## Finding
 
