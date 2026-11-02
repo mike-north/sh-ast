@@ -221,10 +221,11 @@ brace-expansion parts are found, without changing the caller's tree. A bare Word
 dialect or shell-option state, so this conservative observation also applies to POSIX-parsed
 records; it does not assert that POSIX sh performs brace expansion.
 
-Quoted or fully escaped opening braces remain literal. Brace candidates containing other
+Quoted or fully escaped opening braces within one literal part remain literal. Brace candidates containing other
 backslashes report `unsupported`: pinned upstream's escape handling differs from Bash, and
 analysis does not guess through that discrepancy. For example, `\{a,b\}` remains static,
-while `a{b\,c}` is conservatively unsupported. Malformed or singleton unescaped forms such as
+while `a{b\,c}` is conservatively unsupported. A backslash crossing adjacent
+word-part boundaries in a brace-containing constructed word is also unsupported. Malformed or singleton unescaped forms such as
 `a{b` and `{a}` remain static. See [the brace-classification decision](../../design/BRACE-CLASSIFICATION-DECISION.md).
 
 \*\*\* zsh's lexer never tokenizes `@(` as an extended-glob opener at all — deliberately, to avoid

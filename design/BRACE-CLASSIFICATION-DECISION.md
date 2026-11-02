@@ -24,7 +24,11 @@ For a candidate with backslash uncertainty it reports `unsupported`. A narrow
 lexical prerequisite can prove no expansion is possible when there is no
 unescaped opening brace in any top-level literal: quotes protect their own
 contents, and each backslash protects the following character. This preserves
-static results for fully escaped openings and odd backslash parity. An even
+static results for fully escaped openings and odd backslash parity within a
+literal part. Adjacent literal records concatenate, so parity is carried across
+their boundaries. When a backslash escape itself crosses a part boundary in a
+brace-containing word, the analyzer reports unsupported: per-part unquoting
+cannot independently establish the resulting static text. An even
 backslash run exposes an opening brace, but the candidate remains unsupported
 because of the upstream escape discrepancy. Mixed quoted parts remain in the
 Word sent to upstream; no textual flattening invents adjacency or syntax.

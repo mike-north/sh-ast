@@ -86,6 +86,53 @@ describe('upstream-backed brace classification', () => {
     expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
   });
 
+  it('declines escape uncertainty when backslash parity crosses adjacent Lit parts', () => {
+    const word = argument('{a,b}');
+    const lit = word.Parts?.[0];
+    if (lit?.Type !== 'Lit') throw new Error('missing literal');
+    word.Parts = [
+      { ...lit, Value: '\\' },
+      { ...lit, Value: '\\{a,b}' },
+    ];
+    expect(printSync(word)).toBe(String.raw`\\{a,b}`);
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+  });
+
+  it.each([
+    ['\\', '{a,b}'],
+    ['\\', '\\', '{a,b}'],
+    ['\\', '\\', '\\', '{a,b}'],
+    ['{a', '\\', ',b}'],
+    ['{a,b', '\\', '}'],
+    ['{a,', '\\', '{b,c}}'],
+  ])('declines a brace word with an escape crossing literal boundaries: %j', (...values) => {
+    const word = argument('{a,b}');
+    const lit = word.Parts?.[0];
+    if (lit?.Type !== 'Lit') throw new Error('missing literal');
+    word.Parts = values.map((Value) => ({ ...lit, Value }));
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+  });
+
+  it.each([
+    ['{', 'a', ',', 'b', '}'],
+    ['{a,', '{b', ',c}', '}'],
+  ])('recognizes braces across split delimiters: %j', (...values) => {
+    const word = argument('{a,b}');
+    const lit = word.Parts?.[0];
+    if (lit?.Type !== 'Lit') throw new Error('missing literal');
+    word.Parts = values.map((Value) => ({ ...lit, Value }));
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
+  });
+
+  it('keeps quoted part boundaries while recognizing surrounding split literals', () => {
+    const word = argument('{a,"b"}');
+    const first = word.Parts?.[0];
+    if (first?.Type !== 'Lit' || !word.Parts) throw new Error('missing literal');
+    word.Parts = [{ ...first, Value: '{' }, { ...first, Value: 'a,' }, ...word.Parts.slice(1)];
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'brace' });
+    expect(printSync(word)).toBe('{a,"b"}');
+  });
+
   it('preserves caller records, aliases, source positions and printed output', () => {
     const parsed = parseWithPositionsSync('echo x{🎉,"中"}y');
     const command = parsed.File.Stmts?.[0]?.Cmd;

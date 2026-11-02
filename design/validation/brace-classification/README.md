@@ -45,7 +45,9 @@ rounds on Node 22.22.1. Team agents paused builds/tests during collection, thoug
 unrelated host activity was not controlled. The baseline uses source at
 `3fecd43`, compiled with TypeScript ES2022, and its committed canonical WASM;
 the candidate uses local darwin/arm64 Go 1.26.5 plus wasm-opt 131 output. The
-candidate is preliminary host-built evidence, not canonical CI verification.
+candidate is the pre-review implementation at `e08e12b`; it is preliminary
+host-built evidence, not a measurement of the corrected adjacent-Lit classifier
+or canonical CI verification.
 
 | Workload (100 commands) | Before round medians | After round medians | Median paired change |
 | ----------------------- | -------------------- | ------------------- | -------------------- |
@@ -84,3 +86,15 @@ cases, type tests, and benchmark harness tests), and shim `go test ./...`.
 API documentation was regenerated without Nx cache. These runtime tests used
 the local candidate WASM; the source PR must adopt the exact Linux CI artifact
 and pass validation again before acceptance. No local WASM is committed.
+
+## Review regression
+
+Independent review found that the first classifier reset backslash parity at
+each Lit. The exact constructed Word with Parts values `"\\"` and
+`"\\{a,b}"` printed two backslashes before the brace expansion but returned a
+false static value. The named `declines escape uncertainty when backslash parity
+crosses adjacent Lit parts` test failed on that implementation and passes after
+carrying lexical state across adjacent literals. Broader boundary tests also
+failed for one- and three-backslash splits before the conservative
+escape-crosses-part guard. All 47 focused cases now pass, including delimiter
+splits, nested expansions and quoted-part boundaries.

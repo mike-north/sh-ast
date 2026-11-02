@@ -13,22 +13,6 @@ import { callSyntax } from '../wasm-instance.js';
 export type BraceObservation = boolean | 'unsupported';
 
 /**
- * A brace needs an unescaped opening in a top-level literal. Quoted parts never
- * supply delimiters; backslash pairs protect each other, so an even-length run
- * exposes the following opening. This is a necessary condition, not a parser.
- */
-function hasUnescapedOpening(raw: string): boolean {
-  for (let index = 0; index < raw.length; index++) {
-    if (raw[index] === '\\') {
-      index++;
-    } else if (raw[index] === '{') {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Reports current word content, never an identity cache. Go reconstructs an
  * isolated Word before SplitBraces mutates it. v3.13.1's SplitBraces mishandles
  * escapes, so candidates containing backslashes remain unknown instead of
@@ -38,11 +22,35 @@ function hasUnescapedOpening(raw: string): boolean {
 export function observeBraces(word: Word): BraceObservation {
   let candidate = false;
   let escaped = false;
+  let literalOpening = false;
+  let escapeCrossesPart = false;
+  // Adjacent literal records concatenate without a quote boundary. Carry the
+  // backslash state across them: two one-backslash records expose the next
+  // opening just as two backslashes in one Lit do. Nonliteral parts protect
+  // their own content and break this unquoted lexical run.
+  let protectedNext = false;
   for (const part of word.Parts ?? []) {
-    if (part?.Type !== 'Lit' || typeof part.Value !== 'string') continue;
-    candidate ||= hasUnescapedOpening(part.Value);
-    escaped ||= part.Value.includes('\\');
+    escapeCrossesPart ||= protectedNext;
+    if (part?.Type !== 'Lit' || typeof part.Value !== 'string') {
+      protectedNext = false;
+      continue;
+    }
+    for (const character of part.Value) {
+      literalOpening ||= character === '{';
+      if (protectedNext) {
+        protectedNext = false;
+      } else if (character === '\\') {
+        protectedNext = true;
+        escaped = true;
+      } else if (character === '{') {
+        candidate = true;
+      }
+    }
   }
+  // A split escape also crosses the analyzer's per-part unquoting boundary.
+  // Do not infer static text for such constructed records, even when combined
+  // parity would protect every opening. This avoids repairing another grammar.
+  if (escapeCrossesPart && literalOpening) return 'unsupported';
   if (!candidate) return false;
   if (escaped) return 'unsupported';
   const response = decodeWire(
