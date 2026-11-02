@@ -2,7 +2,7 @@
  * Synchronous live dispatch of mvdan/sh's Walk case ordering. Child reads
  * occur when upstream reaches them; no precomputed trace or subtree transfer can
  * hide callback edits. Ordinary JavaScript arrays retain their own object identity;
- * Distinct Go slice headers, capacity and value-slot addresses over shared backing
+ * distinct Go slice headers, capacity and value-slot addresses over shared backing
  * storage are not represented. Ordinary JavaScript aliases remain shared.
  * Positional work is limited to live comment placement.
  *
