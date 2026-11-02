@@ -15,7 +15,7 @@ export interface Argv0Resolution {
 }
 
 // @public
-export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command';
+export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command' | 'ambiguous-assignment';
 
 // @public
 export interface Argv0UnresolvedWord {
@@ -1144,6 +1144,7 @@ export type WordResolutionReason = 'expansion' | 'tilde' | 'glob' | 'brace' | 'l
 // @public
 export interface WrapperSpec {
     readonly argFlags?: readonly string[];
+    readonly assignmentOperands?: 'shell-identifier' | 'env' | 'sudo';
     readonly names: readonly string[];
     readonly noArgFlagPattern?: RegExp;
     readonly noArgFlags?: readonly string[];

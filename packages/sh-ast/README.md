@@ -155,6 +155,19 @@ as a fix without mutating their original lint view or traversal cache.
 command, and wrapper analysis consumes the faithful records; it does not define
 parser behavior or the core tree representation.
 
+`resolveArgv0` follows only documented wrapper grammars. The default `env` and
+`sudo` entries accept assignment names beyond shell identifiers, such as `A-B`
+or `名`. `env` recognizes assignments after `--` and ends option scanning at its
+first assignment; `sudo` permits options between assignments, excludes names
+beginning with `/` or `=`, and stops recognizing assignments after `--`. An empty
+`env` assignment name (`=value`) reports `ambiguous-assignment`, since supported
+implementations differ. These are syntactic facts, not execution guarantees.
+Custom tables can choose `WrapperSpec.assignmentOperands` (`'shell-identifier'`,
+`'env'`, or `'sudo'`); this explicit grammar overrides `skipAssignmentOperands`.
+Existing `skipAssignmentOperands: true` tables retain their ASCII shell-identifier
+rule before `--`. Wrapper assignment operands do not change `assignmentsSkipped`,
+which counts only shell-level prefixes.
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

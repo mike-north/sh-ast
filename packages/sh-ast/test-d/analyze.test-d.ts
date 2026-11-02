@@ -335,3 +335,11 @@ expectError<WrapperSpec>({ names: ['env'], noArgFlags: 'env' });
 expectError<WrapperSpec>({ names: ['env'], unresolvableFlags: 'env' });
 expectError<WrapperSpec>({ names: ['env'], stopsChainFlags: 'env' });
 expectError<WrapperSpec>({ names: ['env'], positionalOperandsBeforeCommand: '1' });
+
+// Utility grammars are explicit opt-ins; legacy caller tables remain valid.
+expectAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'env' });
+expectAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'sudo' });
+expectAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'shell-identifier' });
+expectNotAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: true });
+expectNotAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'anything' });
+expectAssignable<Argv0UnresolvedReason>('ambiguous-assignment');

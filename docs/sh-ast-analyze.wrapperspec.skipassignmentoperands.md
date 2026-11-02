@@ -4,7 +4,7 @@
 
 ## WrapperSpec.skipAssignmentOperands property
 
-When `true`<!-- -->, a `NAME=value`<!-- -->-shaped operand (an unquoted identifier followed by `=`<!-- -->, e.g. `A=1`<!-- -->) appearing after the wrapper name is skipped — this is `env`<!-- -->'s and `sudo`<!-- -->'s own `VAR=val` \*operand\* mechanism (setting variables in the wrapped command's environment), which is a distinct, per-wrapper concept from the shell-level `CallExpr.Assigns` prefixes [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) counts.
+Legacy shorthand for [WrapperSpec.assignmentOperands](./sh-ast-analyze.wrapperspec.assignmentoperands.md)<!-- -->'s `'shell-identifier'` grammar: skip statically resolved `NAME=value` words with an ASCII shell identifier before `--`<!-- -->. Options may follow these operands. Quote removal has already happened during word resolution. An explicit `assignmentOperands` takes precedence, even when this is false. These operands never contribute to shell-prefix `assignmentsSkipped`<!-- -->.
 
 **Signature:**
 

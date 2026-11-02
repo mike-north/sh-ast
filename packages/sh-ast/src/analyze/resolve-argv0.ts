@@ -1,3 +1,8 @@
+/**
+ * Resolves command-word provenance through caller-configurable wrapper grammars.
+ * Only statically known operands may be skipped; syntax facts never imply that
+ * a command is safe, permitted, installed, or guaranteed to execute successfully.
+ */
 import { ShAnalyzeInvalidWrapperSpecError } from '../errors.js';
 import { deepFreeze } from '../deep-freeze.js';
 import { nodeArray } from './node-helpers.js';
@@ -49,15 +54,35 @@ export interface WrapperSpec {
   readonly names: readonly string[];
 
   /**
-   * When `true`, a `NAME=value`-shaped operand (an unquoted identifier
-   * followed by `=`, e.g. `A=1`) appearing after the wrapper name is
-   * skipped — this is `env`'s and `sudo`'s own `VAR=val` *operand*
-   * mechanism (setting variables in the wrapped command's environment),
-   * which is a distinct, per-wrapper concept from the shell-level
-   * `CallExpr.Assigns` prefixes {@link Argv0Resolution.assignmentsSkipped}
-   * counts.
+   * Legacy shorthand for {@link WrapperSpec.assignmentOperands}'s
+   * `'shell-identifier'` grammar: skip statically resolved `NAME=value`
+   * words with an ASCII shell identifier before `--`. Options may follow
+   * these operands. Quote removal has already happened during word resolution.
+   * An explicit `assignmentOperands` takes precedence, even when this is false.
+   * These operands never contribute to shell-prefix `assignmentsSkipped`.
    */
   readonly skipAssignmentOperands?: boolean;
+
+  /**
+   * Assignment-operand scanning grammar, independent of the wrapper's name.
+   * Each preset defines both which static words are assignments and where
+   * option scanning stops; it does not model the utility's other options.
+   *
+   * - `'shell-identifier'`: the legacy ASCII `NAME=value` rule before `--`;
+   *   options may resume after an assignment.
+   * - `'env'`: after options, consume words containing `=` (including after
+   *   `--`). The first assignment ends option scanning permanently. Empty
+   *   names (`=value`) produce `'ambiguous-assignment'` because GNU/glibc
+   *   and BSD differ on whether they can be installed in the environment.
+   * - `'sudo'`: before `--`, consume words containing `=` unless they start
+   *   with `/` or `=`; option scanning may resume after each assignment.
+   *
+   * Active option parsing always takes precedence over utility assignments:
+   * `--unset=NAME` is an option, whereas `env A=1 --unset=NAME cmd` treats
+   * that same word as an assignment. This field overrides the legacy
+   * {@link WrapperSpec.skipAssignmentOperands} boolean when present.
+   */
+  readonly assignmentOperands?: 'shell-identifier' | 'env' | 'sudo';
 
   /** Exact flag tokens that take no operand of their own (e.g. `-i`, `-c`). */
   readonly noArgFlags?: readonly string[];
@@ -194,7 +219,11 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // `argFlags` entry — see `unresolvableFlags` below.
   {
     names: ['env'],
-    skipAssignmentOperands: true,
+    // GNU env v9.8 src/env.c and FreeBSD releng/14.3 usr.bin/env/env.c
+    // scan strchr(word, '=') after getopt; options never resume afterward.
+    // https://github.com/coreutils/coreutils/blob/v9.8/src/env.c#L797
+    // https://github.com/freebsd/freebsd-src/blob/releng/14.3/usr.bin/env/env.c#L188
+    assignmentOperands: 'env',
     noArgFlags: ['-i', '--ignore-environment', '-0', '--null', '-v', '--debug'],
     argFlags: ['-u', '--unset', '-C', '--chdir'],
     // GNU env(1) `-S`/`--split-string=S`: processes and splits `S` into
@@ -276,7 +305,10 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // environment-setting mechanism, "similar to env" per sudo(8).
   {
     names: ['sudo'],
-    skipAssignmentOperands: true,
+    // is_envar rejects '/' and '=' prefixes; !got_end_of_args prevents
+    // assignments after --, while the enclosing loop resumes getopt.
+    // https://github.com/sudo-project/sudo/blob/v1.9.17p2/src/parse_args.c#L263
+    assignmentOperands: 'sudo',
     noArgFlags: ['-A', '-b', '-E', '-H', '-k', '-n', '-P', '-S'],
     argFlags: ['-g', '-p', '-u'],
   },
@@ -321,6 +353,11 @@ export interface ResolveArgv0Options {
  *   the real command rather than naming it as a separate word (e.g.
  *   `env -S 'rm -rf /'` — see {@link WrapperSpec.unresolvableFlags}'s doc
  *   comment).
+ * - `'ambiguous-assignment'` — a statically known assignment operand whose
+ *   acceptance differs across supported utility implementations, such as
+ *   `env =value cmd` (GNU/glibc accepts an empty name; BSD rejects it).
+ *   Neither the following command nor the operand itself is guessed as
+ *   the effective command.
  *
  * This union may grow in a **minor** release (mirroring
  * `WordResolutionReason`'s and `CommandContext`'s semver policy in
@@ -330,7 +367,7 @@ export interface ResolveArgv0Options {
  *
  * @public
  */
-export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command';
+export type Argv0UnresolvedReason = 'unknown-flag' | 'embedded-command' | 'ambiguous-assignment';
 
 /**
  * A word position {@link resolveArgv0} could not resolve to either a known
@@ -502,7 +539,11 @@ function findWrapperSpec(wrappers: readonly WrapperSpec[], text: string): Wrappe
 type AdvanceResult =
   | { readonly kind: 'next'; readonly index: number }
   | { readonly kind: 'truncated' }
-  | { readonly kind: 'unresolvable'; readonly reason: Argv0UnresolvedReason };
+  | {
+      readonly kind: 'unresolvable';
+      readonly reason: Argv0UnresolvedReason;
+      readonly index: number;
+    };
 
 /**
  * Walks `argv` forward from `startIndex`, skipping every word this `spec`
@@ -519,7 +560,8 @@ type AdvanceResult =
  *   `argv` with no wrapped-command word found (a malformed or truncated
  *   invocation, e.g. bare `env` with nothing else, or `sudo -u` with no
  *   operand for `-u`).
- * - `{ kind: 'unresolvable', reason }` — a *statically known* word that
+ * - `{ kind: 'unresolvable', reason, index }` — identifies the exact
+ *   triggering word: an ambiguous assignment, or a *statically known* word that
  *   looks like a flag for this wrapper (unquoted, unescaped `-` prefix,
  *   not `--`) but matches none of `spec`'s recognized flag/operand shapes,
  *   or matches one of `spec.unresolvableFlags` (see
@@ -532,7 +574,7 @@ type AdvanceResult =
  * A literal `--` (the standard getopt(3)/getopt_long(3) end-of-options
  * marker — POSIX Utility Syntax Guidelines, guideline 10) is skipped like
  * any other recognized token, but — critically — everything *after* it is
- * no longer eligible for **any** flag/operand recognition at all
+ * no longer eligible for **any** flag recognition at all
  * (`noArgFlags`, `noArgFlagPattern`, `argFlags` in every form,
  * `unresolvableFlags`, `stopsChainFlags`, or the generic
  * flag-shape/`'unknown-flag'` check): once options end, a later word that
@@ -542,10 +584,10 @@ type AdvanceResult =
  * `--` for every wrapper here. A wrapper's mandatory positional operand
  * (e.g. `timeout`'s `DURATION`) is a distinct, non-flag concept and is
  * still consumed normally after `--` — only *flag* recognition stops.
- * `VAR=val` operand recognition (`skipAssignmentOperands`) is likewise
- * unaffected by `--`, matching GNU env(1)'s own two-phase argument
- * scanning (option parsing, then a separate `NAME=value` scan over
- * whatever's left) — `--` only ever disables *option* (flag) parsing.
+ * Assignment recognition follows the explicit grammar: `env` scans
+ * assignments even after `--` and stops option parsing at its first
+ * assignment; `sudo` and the legacy shell-identifier grammar recognize
+ * assignments only before `--` and allow later options.
  */
 function advancePastWrapperOperands(
   argv: readonly WordResolution[],
@@ -555,6 +597,9 @@ function advancePastWrapperOperands(
   let index = startIndex;
   let positionalSeen = 0;
   let optionsEnded = false;
+  const assignmentGrammar =
+    spec.assignmentOperands ??
+    (spec.skipAssignmentOperands === true ? 'shell-identifier' : undefined);
   const requiredPositional = spec.positionalOperandsBeforeCommand ?? 0;
   while (index < argv.length) {
     // `index < argv.length` just checked above, so this is a real element.
@@ -572,7 +617,26 @@ function advancePastWrapperOperands(
       index += 1;
       continue;
     }
-    if (!optionsEnded && spec.skipAssignmentOperands === true && isAssignmentShapedText(text)) {
+    // An '=' in an active option (e.g. --unset=NAME) does not make it an
+    // assignment. After env's option phase, however, even '-x=y' is one.
+    const canRecognizeAssignment =
+      (assignmentGrammar === 'env' || !optionsEnded) &&
+      (assignmentGrammar === 'shell-identifier' || optionsEnded || !looksLikeFlag(text));
+    if (canRecognizeAssignment && assignmentGrammar === 'env' && text.startsWith('=')) {
+      // glibc putenv accepts an empty name, while FreeBSD setenv rejects
+      // it. The grammar therefore cannot identify a portable invocation.
+      return { kind: 'unresolvable', reason: 'ambiguous-assignment', index };
+    }
+    const isAssignment =
+      assignmentGrammar === 'shell-identifier'
+        ? isAssignmentShapedText(text)
+        : text.includes('=') &&
+          (assignmentGrammar === 'env' ||
+            (assignmentGrammar === 'sudo' && !text.startsWith('/') && !text.startsWith('=')));
+    if (canRecognizeAssignment && isAssignment) {
+      if (assignmentGrammar === 'env') {
+        optionsEnded = true;
+      }
       index += 1;
       continue;
     }
@@ -581,7 +645,7 @@ function advancePastWrapperOperands(
         spec.unresolvableFlags !== undefined &&
         matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
       ) {
-        return { kind: 'unresolvable', reason: 'embedded-command' };
+        return { kind: 'unresolvable', reason: 'embedded-command', index };
       }
       if (
         spec.stopsChainFlags !== undefined &&
@@ -629,7 +693,7 @@ function advancePastWrapperOperands(
       // None of this applies once `optionsEnded` — see this function's
       // doc comment.
       if (looksLikeFlag(text)) {
-        return { kind: 'unresolvable', reason: 'unknown-flag' };
+        return { kind: 'unresolvable', reason: 'unknown-flag', index };
       }
     }
     if (positionalSeen < requiredPositional) {
@@ -688,6 +752,18 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
   ) {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.skipAssignmentOperands must be a boolean when present`,
+    );
+  }
+  // JavaScript callers can bypass the declared union; validate raw boundary data.
+  const assignmentOperands: unknown = spec.assignmentOperands;
+  if (
+    assignmentOperands !== undefined &&
+    assignmentOperands !== 'shell-identifier' &&
+    assignmentOperands !== 'env' &&
+    assignmentOperands !== 'sudo'
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.assignmentOperands must be shell-identifier, env, or sudo when present`,
     );
   }
   if (spec.noArgFlagPattern !== undefined && !(spec.noArgFlagPattern instanceof RegExp)) {
