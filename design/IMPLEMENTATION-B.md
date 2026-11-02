@@ -46,9 +46,9 @@ The initial contracts below are implementation targets, not completion claims.
 ## Work and evidence
 
 Independent workstreams own traversal, the printing bridge, and the isolated
-consumer fix scenario. Each writes behavioral tests first. Integrated review,
-canonical Linux WASM verification, all Release A gates, linked and installed exact
-candidate receipts, and bounded traversal/print/fix measurements remain pending.
+consumer fix scenario. Each wrote behavioral tests first. Integrated implementation
+and review are recorded below, together with canonical consumer receipts and
+bounded measurements.
 
 Release B remains provisional until the storage-identity decision and final
 canonical/consumer gates are complete. Implemented evidence follows.
@@ -60,8 +60,11 @@ skip the independent Linux builder for the required stacked B PR. The bounded
 configuration test `design/validation/release-b/stacked-pr-workflows.rb` first
 failed all four validation workflows for base `codex/faithful-syntax-release-plan`.
 It now passes after removing their PR-base filters. Main-only push triggers and
-the publication workflow remain unchanged. A real stacked PR run must still
-confirm the event and canonical artifact; the configuration test is not that proof.
+the publication workflow remain unchanged. Stacked PR 31 triggered the real Linux
+builder at run 41392692403, which uploaded artifact 13118106999 before failing the
+expected comparison against the preceding Release A binary. Schema CI passed.
+The downloaded artifact is now committed. The subsequent Linux comparison run
+41392911617 passed on `345dc64`, as did CI 41392911252 and schema run 41392911400.
 
 ## Integrated implementation and review
 
@@ -96,11 +99,70 @@ slot observed through a retained callback pointer. The parent chat owns the huma
 question. Neither the ordinary-array recommendation nor passing ordinary-field
 edit tests is acceptance of complete Go storage fidelity.
 
-The current Linux optimized WASM is disposable local evidence, SHA-256
+## Canonical candidate
+
+Draft [PR 31](https://github.com/mike-north/sh-ast/pull/31) is based on the
+unchanged Release A branch. Commit `345dc64afc31fc2d4a002bba3052a78623501ca5`
+adopts the exact independent Linux CI artifact from
+[run 41392692403](https://github.com/mike-north/sh-ast/actions/runs/41392692403).
+Artifact 13118106999's ZIP SHA-256 is
+`3670c5149531c727dfeec679dc2d2e05ef142388df268fd1ccffad658e53c629`.
+The verified archive contains only `sh-ast.wasm`; its 4,436,577 bytes hash to
 `fd1ee7cd380abac985c4732a0a4e831a671b3907b6af83ba0e0e1c6ffe3ffad4`.
-It is not yet a canonical CI artifact. The initial print-only package passed
-both linked and installed actual-ESLint printing diagnostics (six cases in each),
-with exact asset checks and original-view isolation. Final public-Walk C5,
-matching linked/installed integrated receipts, bounded performance measurements,
-and canonical CI verification remain pending. No final Release B acceptance is
-claimed.
+Those bytes match the disposable local test binary exactly, but the committed
+bytes came from CI. Uncached build/check and all 653 runtime tests plus tsd passed
+after replacement.
+
+The clean candidate package from `345dc64` has SHA-256
+`ba0b721a37c5548b9645e9681d06d7adc749a8a5796424f58f73e5a5673a2888`.
+Its source diff and untracked inventory are empty. It is byte-identical to the
+integrated preliminary tarball; only source provenance changed from a local
+binary patch to a committed independent artifact. Package version remains 0.3.1
+until the separate staged version operations, so identity is established by hashes,
+not the manifest version. The full upstream BSD notice is present in the tarball.
+
+Canonical commit `345dc64` passes [CI](https://github.com/mike-north/sh-ast/actions/runs/41392911252),
+[schema reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911400),
+and [Linux WASM reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911617).
+Copilot review was requested; its presence gate remains pending. No final Release B
+acceptance is claimed while the storage representation decision remains unresolved.
+
+## Consumer fix and bounded performance evidence
+
+The separate consumer B branch validates the exact canonical tarball above. Both
+linked and fresh npm-installed plugin importers verify all 98 code-asset hashes.
+The final canonical receipt pair and eleven C5/API cases were rerun together
+(16 focused cases). The complete configured suite passes 191 plugin tests,
+three umbrella tests and two documentation-drift harness cases, with uncached
+build and full checks.
+
+The real ESLint whole-File fix edits a separately parsed tree through public Walk,
+prints it, applies the replacement, reparses the intended printf argument and
+unchanged format, and stabilizes on a second pass. The original lint tree, source
+view, snapshot and traversal caches retain their original associations. Additional
+Word replacement cases preserve surrounding comments, heredoc, operators and
+Unicode/CRLF; an identical quoted argument in an unrelated command is unchanged.
+
+Four retained fixtures were measured in 36 fresh subprocesses and 144 samples.
+Walk/print first samples start after parsing; fix first samples start with a cold
+parser. Imports are outside the timed interval. Three first and nine warm samples
+per fixture/mode supply medians. Representative-50 warm walk/print/fix medians
+were 0.309/35.532/232.878 ms; nested-64 were 0.067/6.482/76.120 ms. The test rule
+includes its own isolation observation capture, so these are not minimum
+production-rule latencies. There is no A printing baseline or latency threshold.
+
+Every Walk sample made zero bridge calls; each print made one; each fix made
+exactly five (two source-view parses, two editable parses and one print), with
+no per-node bounds operations. All intended edits, fixture markers and stable
+second passes were checked. Original raw timing observations retain provisional
+source labels and are reused only after proving whole-tarball and all-asset byte
+identity with the canonical candidate. An independent read-only reviewer recomputed
+all sample counts, medians and operation sequences and checked C5 isolation and
+canonical receipt coherence; no actionable finding remained. Receipt probes record
+eight operations because they include verification beyond the five timed fix
+operations. No timing test was rerun by that review.
+
+The consumer retains a `^0.5.0` dependency floor. Its historical registry lockfile
+cannot provide an unpublished candidate. Local exact-artifact override tests do
+not establish a passing frozen registry installation; updating that lock remains
+a publication-order prerequisite, separate from the storage-model decision.
