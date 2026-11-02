@@ -1,7 +1,10 @@
 /**
  * Synchronous live dispatch of mvdan/sh's Walk case ordering. Child reads
  * occur when upstream reaches them; no precomputed trace or subtree transfer can
- * hide callback edits. Positional work is limited to live comment placement.
+ * hide callback edits. Ordinary JavaScript arrays retain their own object identity;
+ * Distinct Go slice headers, capacity and value-slot addresses over shared backing
+ * storage are not represented. Ordinary JavaScript aliases remain shared.
+ * Positional work is limited to live comment placement.
  *
  * Adapted from mvdan.cc/sh/v3 v3.13.1 syntax/walk.go, copyright Daniel Martí.
  * The upstream BSD license is retained in syntax-walk-license.ts.
@@ -24,16 +27,28 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * synchronously; other results produce InputError. Callback exceptions retain their identity,
  * and upstream deferred comment callbacks still run during exception unwinding.
  *
- * Children and later fields are read live. List traversal captures the array
- * reference and starting length while reading its future slots when reached.
- * Value comments on Stmt, CaseItem and ArrayElem are copied, while comments in
- * Last/CondLast/ThenLast/DoLast retain their stored identities. Reentrant walks
- * maintain independent traversal state.
+ * Children and later fields are read live. Each list captures its array reference
+ * and length when traversal reaches that list, then reads existing later slots
+ * when reached. Replacing or reordering later slots is observed and can cause
+ * a node to be skipped or revisited. Indices added beyond the captured extent
+ * are not visited by that active list. Replacing the owner's array field does not
+ * redirect an active list, but a later walk or print sees the current field.
+ * Changes made before a list is reached are observed when it starts.
  *
- * Array identity and length describe JavaScript storage; the records do not
- * encode Go slice capacity, resliced backing storage, or addresses of value
- * slots. Those distinctions can affect callbacks which mutate array structure
- * or replace a Comment slot while retaining its previous callback value.
+ * Supported edits preserve each node's Type (and TypedNil.Kind), required field
+ * shapes and every index within each active list's captured extent. Leaving
+ * holes or shrinking an array below that extent (for example through truncation,
+ * deletion, or length-reducing splice/shift) is outside the mutation contract.
+ * These are not runtime validation rules. Ordinary JavaScript object and array
+ * aliases remain shared; the binding does not model distinct Go slice headers or
+ * capacity-dependent allocation over shared backing storage.
+ *
+ * Comments on Stmt, CaseItem and ArrayElem are copied before their callbacks,
+ * including position and byte-string values; editing a copy does not edit the
+ * stored comment. Last/CondLast/ThenLast/DoLast callbacks receive the stored
+ * JavaScript Comment object. Replacing its array slot leaves any previously
+ * retained callback object unchanged: there is no Go value-slot pointer identity.
+ * Reentrant walks maintain independent traversal state.
  * @public
  */
 export function walk(node: Node, callback: (node: Node | null) => boolean): void {
@@ -64,8 +79,10 @@ function optional(node: Node | null, callback: ICallback): void {
   }
 }
 /**
- * A range captures storage identity and initial length, then reads each element
- * when reached. Replacing the owner's field cannot redirect an active range.
+ * Captures one ordinary array and its initial extent when this list is reached.
+ * Later existing slots are read live; appends and owner-field replacements cannot
+ * extend or redirect the active list. Removing indices within its captured
+ * extent is unsupported.
  */
 function list(
   nodes: readonly (Node | null)[] | null,
@@ -85,7 +102,11 @@ function list(
     }
   }
 }
-/** walkComments passes addresses of existing values, not the copies used by item loops. */
+/**
+ * Visits stored JavaScript Comment objects, unlike the copies used by item loops.
+ * Later slot replacement is read live, but retained objects do not become Go
+ * pointers to replacement values. The active array and extent remain captured.
+ */
 function comments(nodes: readonly Comment[] | null, callback: ICallback): void {
   if (nodes === null) {
     return;

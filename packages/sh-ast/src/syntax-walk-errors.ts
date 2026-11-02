@@ -11,9 +11,13 @@ export class WalkPanicError extends ShAstError {
   /** Stable discriminator for traversal panics. @public */
   readonly code = 'SH_AST_WALK_PANIC';
 
+  /** Exact upstream panic bytes; Error.message is only a display rendering. @public */
+  readonly Message: GoString;
+
   /** Retains the upstream panic text separately from its display rendering. @public */
-  constructor(readonly Message: GoString) {
-    super(typeof Message === 'string' ? Message : new TextDecoder().decode(Message));
+  constructor(message: GoString) {
+    super(typeof message === 'string' ? message : new TextDecoder().decode(message));
+    this.Message = message;
     this.name = 'WalkPanicError';
   }
 }
