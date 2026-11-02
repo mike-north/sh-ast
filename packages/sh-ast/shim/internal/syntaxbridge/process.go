@@ -30,6 +30,10 @@ func Process(operation, payload, options string) (result []byte) {
 		return marshal(parse(payload, options))
 	case "bounds":
 		return marshal(bounds(payload))
+	case "pos":
+		return marshal(nodePosition(payload, syntax.Node.Pos))
+	case "end":
+		return marshal(nodePosition(payload, syntax.Node.End))
 	case "newpos":
 		return marshal(newPosition(payload))
 	default:
@@ -243,6 +247,22 @@ func bounds(payload string) (result map[string]any) {
 		return errorResponse("InputError", err.Error())
 	}
 	return map[string]any{"Pos": syntaxwire.ObservePosition(node.Pos()), "End": syntaxwire.ObservePosition(node.End())}
+}
+
+// nodePosition invokes exactly the requested upstream method. A partial tree can
+// have a usable start without a usable end, or vice versa; computing both would
+// add a constraint that the caller's chosen upstream operation does not have.
+func nodePosition(payload string, read func(syntax.Node) syntax.Pos) (result map[string]any) {
+	node, err := syntaxwire.DecodeNode([]byte(payload))
+	if err != nil {
+		return errorResponse("InputError", err.Error())
+	}
+	defer func() {
+		if failure := recover(); failure != nil {
+			result = errorResponse("InputError", fmt.Sprintf("upstream node position: %v", failure))
+		}
+	}()
+	return map[string]any{"Position": syntaxwire.ObservePosition(read(node))}
 }
 
 // newPosition preserves NewPos's saturation/overflow behavior; validation checks

@@ -198,3 +198,51 @@ func TestBoundsRejectInvalidTreeAndUnsupportedOperations(t *testing.T) {
 		t.Fatal("public printer must remain absent")
 	}
 }
+
+// Node.Pos and Node.End are independent upstream operations. Partial editable
+// records may support one while the other's missing child causes a panic.
+func TestIndividualPositionsDoNotInvokeTheUnrequestedMethod(t *testing.T) {
+	file, err := syntax.NewParser().Parse(strings.NewReader("echo left && echo right"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	complete := file.Stmts[0].Cmd.(*syntax.BinaryCmd)
+	for _, fixture := range []struct {
+		name, operation, unsupported string
+		node                         *syntax.BinaryCmd
+		want                         syntax.Pos
+	}{
+		{"start-only", "pos", "end", &syntax.BinaryCmd{X: complete.X}, complete.X.Pos()},
+		{"end-only", "end", "pos", &syntax.BinaryCmd{Y: complete.Y}, complete.Y.End()},
+	} {
+		t.Run(fixture.name, func(t *testing.T) {
+			encoded, err := syntaxwire.Encode(fixture.node)
+			if err != nil {
+				t.Fatal(err)
+			}
+			result := response(t, fixture.operation, string(encoded), `{}`)
+			if result["Error"] != nil {
+				t.Fatalf("unrelated missing child rejected %s: %#v", fixture.operation, result["Error"])
+			}
+			position := result["Position"].(map[string]any)
+			want, _ := syntaxwire.ReadJSON(mustJSON(t, syntaxwire.ObservePosition(fixture.want)))
+			if !reflect.DeepEqual(position, want) {
+				t.Fatalf("position changed: got %#v want %#v", position, want)
+			}
+			failure := response(t, fixture.unsupported, string(encoded), `{}`)["Error"].(map[string]any)
+			if failure["Kind"] != "InputError" {
+				t.Fatalf("unsupported method did not report its own input failure: %#v", failure)
+			}
+		})
+	}
+}
+
+// mustJSON keeps observation comparisons on the wire's number representation.
+func mustJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return encoded
+}
