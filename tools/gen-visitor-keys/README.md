@@ -10,6 +10,15 @@ artifacts `sh-ast` consumes from `packages/sh-ast/generated/`:
   table for struct-typed children that mvdan's `typedjson` package leaves undiscriminated
 - `node-types.d.ts` — `ShNode` subtypes for every node type, plus per-interface union aliases
   (`ShCommandNode`, `ShWordPartNode`, …) and an `ShAnyNode`/`ShNodeTypeName` union of everything
+- `syntax-types.d.ts` — complete mutable records with upstream field names, precise
+  interface unions, explicit null/default values, and all token positions. `Node`
+  excludes auxiliary structs; bounds remain operations on the current tree.
+- `syntax-constants.js` / `syntax-constants.d.ts` — exact upstream operator and
+  language constants. Operator families retain zero and branded raw uint32 values
+  without widening ordinary named-token usage to unrestricted numbers.
+- `syntax-schema.js` / `syntax-schema.d.ts` — complete field descriptors and true
+  node membership for validating and adapting the faithful data model. Their
+  deterministic field order is not an upstream traversal order.
 
 See `design/ARCHITECTURE.md`, "The schema table is generated, not hand-written", for why this
 exists: the tables are two projections of the same information (mvdan/sh's node struct
@@ -40,6 +49,23 @@ mvdan/sh version bump.
   `go/packages`' `Package.Module.Version` — a fact about the pinned dependency (`go.sum`), not a
   timestamp or VCS stamp.
 - No wall-clock time, hostname, or build-machine detail appears anywhere in the output.
+
+## Faithful schema validation
+
+Run `go -C tools/gen-visitor-keys test ./...` from the repository root. The faithful
+schema tests use a separately enumerated inventory of the actual pinned Go structs
+and reflection over their fields and interface implementations. Representative
+operator constants come from compiled upstream values. This checks completeness
+independently of the production generator's `go/types` classifier, rather than
+comparing generated tables only with one another. Type-level tests in
+`packages/sh-ast/test-d/syntax.test-d.ts` additionally exercise mutable records,
+explicit nil values, absent-field errors, and operator-family distinctions.
+
+The faithful projection fails generation on an unsupported exported field type or
+a discriminator collision. It does not quietly omit new upstream data behind an
+index signature. Upstream semantic comments and their license accompany the
+generated declarations; runtime validation still owns numeric ranges and coherent
+position values.
 
 ## Known gap: `BraceExp` is unreachable
 

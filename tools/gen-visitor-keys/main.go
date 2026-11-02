@@ -9,6 +9,9 @@
 //   - generated/position-fields.js(.d.ts)   — per-node-type fields whose Go
 //     type is `syntax.Pos` — see issue #8, "replace the bare-name POS_KEYS
 //     denylist with generated per-(type,field) position data"
+//   - generated/syntax-types.d.ts          — complete faithful syntax records
+//   - generated/syntax-constants.js(.d.ts) — exact operator/language values
+//   - generated/syntax-schema.js(.d.ts)    — complete field reflection metadata
 //
 // See design/ARCHITECTURE.md, "The schema table is generated, not
 // hand-written", and design/PACKAGES.md's `tools/gen-visitor-keys` entry.
@@ -185,6 +188,19 @@ func main() {
 	writeFile(filepath.Join(*outDir, "node-types.d.ts"), renderNodeTypesDTS(nodeTypes, implementers, version))
 	writeFile(filepath.Join(*outDir, "position-fields.js"), renderPositionFieldsJS(nodeTypes, version))
 	writeFile(filepath.Join(*outDir, "position-fields.d.ts"), renderPositionFieldsDTS(version))
+
+	// The faithful data model is a separate projection: unlike normalization,
+	// it must preserve every upstream field and distinguish nodes from auxiliary
+	// records. Both projections share the same pinned compiler type information.
+	faithful, err := buildFaithfulSchema(loaded)
+	if err != nil {
+		log.Fatalf("gen-visitor-keys: faithful schema: %v", err)
+	}
+	writeFile(filepath.Join(*outDir, "syntax-types.d.ts"), renderFaithfulTypes(faithful, version))
+	writeFile(filepath.Join(*outDir, "syntax-constants.js"), renderFaithfulConstantsJS(faithful, version))
+	writeFile(filepath.Join(*outDir, "syntax-constants.d.ts"), renderFaithfulConstantsDTS(faithful, version))
+	writeFile(filepath.Join(*outDir, "syntax-schema.js"), renderFaithfulSchemaJS(faithful, version))
+	writeFile(filepath.Join(*outDir, "syntax-schema.d.ts"), renderFaithfulSchemaDTS(faithful, version))
 }
 
 func writeFile(path, contents string) {
