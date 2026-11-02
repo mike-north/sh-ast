@@ -54,13 +54,19 @@ Tests were added before implementation. On unchanged source, 26 failed and 18
 passed. After implementation, all 44 and the existing 86 argv0 tests passed.
 Type tests cover allowed presets, invalid presets, and the new unresolved reason.
 
-Full validation used Node 22.13.0 and pnpm 11.12.0: `pnpm build`, `pnpm check`,
+Full validation used Node 22.22.1 and pnpm 11.12.0 with
+`NODENV_VERSION=22.22.1` (`pnpm exec node --version` verified the child runtime):
+`pnpm build`, `pnpm check`,
 and `pnpm test` passed (710 runtime tests plus tsd). API reports and docs were
 regenerated with `NX_SKIP_NX_CACHE=true`; the generated declaration includes the
 grammar property and unresolved reason, and the generated property page includes
 all three grammar contracts. The committed WASM is unchanged. Generated API/docs
 retain their existing CRLF convention (`git -c core.whitespace=cr-at-eol diff
 --check` passes).
+
+An earlier validation run prepended a Node 22.13.0 binary directory to `PATH`,
+but the nodenv pnpm shim selected Node 24.14.0. That run also passed; the explicit
+nodenv selection above is the verified Node 22 result.
 
 ## Limits
 
