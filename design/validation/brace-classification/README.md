@@ -83,9 +83,9 @@ printed output` and `observes current edits` guard isolation and freshness.
 
 Local validation passed: `pnpm build`, `pnpm check`, `pnpm test` (703 runtime
 cases, type tests, and benchmark harness tests), and shim `go test ./...`.
-API documentation was regenerated without Nx cache. These runtime tests used
-the local candidate WASM; the source PR must adopt the exact Linux CI artifact
-and pass validation again before acceptance. No local WASM is committed.
+API documentation was regenerated without Nx cache. Those initial runtime tests
+used the local candidate WASM. The final candidate below adopts the exact Linux
+CI artifact and repeats validation. No locally built WASM is committed.
 
 ## Review regression
 
@@ -106,3 +106,36 @@ the final guard, then passed after every unquoted escape crossing a part boundar
 became unsupported. This was an existing composed-record analyzer limitation
 that the first candidate inherited, not a new parser-output regression. All
 58 focused tests pass; parsed ordinary escape cases remain static.
+
+## Final canonical validation
+
+The candidate was rebased onto `38d2be19ad7964be6e332fe48cfcf812594215fd`,
+including the wrapper-assignment and in-place decoder changes. It adopts the
+exact Linux artifact from source commit `03ec289b1c98541cc3c64445f39daaf7ddf73190`,
+run [41529513788](https://github.com/mike-north/sh-ast/actions/runs/41529513788),
+artifact 13181386622. The downloaded archive matched its GitHub SHA-256 digest;
+only the sole `sh-ast.wasm` member was read. Full provenance and extracted binary
+hash are in `canonical-artifact.json`. Shim sources are unchanged since that
+build; subsequent CI rebuild-match verifies the composed commit.
+
+With that canonical binary and the independently reviewed final guard
+(`e9a40934aed06aba39e567e312ae23c892ecbabf191bec9d8bf63d32c7d37f10`), uncached
+Node 22.22.1 build, check, and test passed: **784 runtime tests**, type tests,
+benchmark harness tests, and the Go suite. The final guard has 58 focused cases.
+
+`canonical-comparison.json` supersedes the exploratory timings above. Six
+alternating fresh-process rounds used identical latest-main wrapper/decoder
+code on both sides, original resolver/WASM for the baseline, and the corrected
+resolver plus canonical observation WASM for the candidate. Every round checks
+100 effective `echo` commands and the expected zero/100 dynamic argument count.
+Relevant JS executable hashes and WASM hashes are retained alongside raw samples.
+
+| Workload (100 commands) | Before round medians | After round medians | Median paired change |
+| ----------------------- | -------------------- | ------------------- | -------------------- |
+| Ordinary                | 5.065–5.388 ms       | 5.217–5.555 ms      | +0.146 ms            |
+| Brace-heavy             | 5.050–5.390 ms       | 7.108–7.984 ms      | +2.137 ms            |
+
+This measures the cost of correctness: all 100 brace arguments now report
+non-static. Ordinary words use no WASM brace calls. The team paused heavy work
+for this collection, but unrelated host activity is uncontrolled. These are
+local analyzer timings, not end-to-end ESLint latency or a performance budget.
