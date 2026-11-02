@@ -5,12 +5,11 @@
 // syntaxProcess transports complete upstream data and accepts raw source bytes.
 // Both share explicit alloc/free ownership and the same initialized Go runtime.
 //
-// The whole result envelope — including any error message — is marshaled with
-// Go's encoding/json, not a hand-rolled string escaper. A hand-rolled escaper
-// that only handles `"`, `\`, and `\n` corrupts any other JSON-significant
-// byte (e.g. other control characters) that shows up in a parse error
-// message; encoding/json.Marshal escapes the full JSON string grammar
-// correctly. This is the fix for the spike's escaper bug.
+// The faithful syntax response streams structure directly, preserving the
+// original encoding/json bytes and declaration-order observation metadata.
+// JSON strings use encoding/json whenever escaping is needed, including HTML,
+// controls and Unicode separators; arbitrary Go bytes use explicit Bytes records.
+// The legacy protocol and small error envelopes retain encoding/json marshaling.
 //
 // # ABI: linear-memory exports, not syscall/js
 //
