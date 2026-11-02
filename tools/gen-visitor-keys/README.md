@@ -4,12 +4,6 @@ A Go program that reads mvdan/sh's `syntax` package types — via `go/packages` 
 compiler type information, not a regex scrape of `syntax/nodes.go`) — and emits the checked-in
 artifacts `sh-ast` consumes from `packages/sh-ast/generated/`:
 
-- `visitor-keys.js` / `visitor-keys.d.ts` — per-node-type traversal keys (lowercased field names,
-  matching the normalizer's output shape)
-- `child-type-schema.js` / `child-type-schema.d.ts` — the `(parentType, fieldName) -> childType`
-  table for struct-typed children that mvdan's `typedjson` package leaves undiscriminated
-- `node-types.d.ts` — `ShNode` subtypes for every node type, plus per-interface union aliases
-  (`ShCommandNode`, `ShWordPartNode`, …) and an `ShAnyNode`/`ShNodeTypeName` union of everything
 - `syntax-types.d.ts` — complete mutable records with upstream field names, precise
   interface unions, explicit null/default values, and all token positions. `Node`
   excludes auxiliary structs; bounds remain operations on the current tree.
@@ -20,10 +14,9 @@ artifacts `sh-ast` consumes from `packages/sh-ast/generated/`:
   node membership for validating and adapting the faithful data model. Their
   deterministic field order is not an upstream traversal order.
 
-See `design/ARCHITECTURE.md`, "The schema table is generated, not hand-written", for why this
-exists: the tables are two projections of the same information (mvdan/sh's node struct
-definitions) and a hand-written subset was already bitten by a missing entry
-(`DeclClause.Variant`).
+The five generated files form one complete data model. Node interface membership,
+auxiliary records, scalar defaults, token positions, and operator identities all
+come from the same pinned upstream package. There is no normalized projection.
 
 ## Running it
 
@@ -57,7 +50,8 @@ schema tests use a separately enumerated inventory of the actual pinned Go struc
 and reflection over their fields and interface implementations. Representative
 operator constants come from compiled upstream values. This checks completeness
 independently of the production generator's `go/types` classifier, rather than
-comparing generated tables only with one another. Type-level tests in
+comparing generated tables only with one another. A separate command-level test
+checks that generation emits exactly the five supported artifacts. Type-level tests in
 `packages/sh-ast/test-d/syntax.test-d.ts` additionally exercise mutable records,
 explicit nil values, absent-field errors, and operator-family distinctions.
 
