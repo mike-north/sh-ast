@@ -1,5 +1,10 @@
 # Staged Release B changeset
 
+Activated as `.changeset/faithful-traversal-printing.md` after the normal workflow
+published sh-ast 0.4.0 on 2026-11-02 and consumed the A changeset. The preparation
+instructions and reviewed note below are retained as the staging record. See
+[release execution](../validation/release-execution.md).
+
 This is reviewed release-note content, intentionally outside the active changeset
 directory. Activate only after the Release A 0.4.0 release is published and its
 changeset consumed, following [the staged procedure](../RELEASE-PLAN.md#staged-release-preparation).

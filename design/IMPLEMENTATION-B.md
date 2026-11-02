@@ -3,9 +3,15 @@
 This follow-on implements [B1-B4](RELEASE-PLAN.md#implementation-sequence) and
 [B1-B6/C5 acceptance](ACCEPTANCE.md#release-b-owned-by-sh-ast). Release A's
 [accepted candidate evidence](IMPLEMENTATION.md) remains a separate record.
-Publication, release tags, and merges are not authorized by this assignment.
+The implementation assignment originally stopped before publication, release tags,
+and merges. The subsequent authorized release execution is recorded in
+[the release execution record](validation/release-execution.md); historical
+candidate observations below retain their original boundaries and dates.
 
 ## Exact separation and release order
+
+This section records the initial stacked preparation. See the release execution
+record for the current integration baseline and publication state.
 
 - Producer integration starts at Release A head
   `290f15841e36a17e7e11a4a818992d5d203dd122`, branch
