@@ -4,6 +4,8 @@
 
 ## WalkPanicError.Message property
 
+Exact upstream panic bytes; Error.message is only a display rendering.
+
 **Signature:**
 
 ```typescript

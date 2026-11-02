@@ -1440,9 +1440,8 @@ export function walk(node: Node_2, callback: (node: Node_2 | null) => boolean): 
 
 // @public
 export class WalkPanicError extends ShAstError {
-    constructor(Message: GoString);
+    constructor(message: GoString);
     readonly code = "SH_AST_WALK_PANIC";
-    // (undocumented)
     readonly Message: GoString;
 }
 

@@ -260,9 +260,11 @@ Represents an unnamed value in an upstream uint32 operator family. Named constan
 
 Walks synchronously using the pinned upstream case ordering. Each accepted entry is followed by its children and a null exit. Returning false prunes the entry without an exit; boolean exit return values are ignored. Every callback must return a boolean synchronously; other results produce InputError. Callback exceptions retain their identity, and upstream deferred comment callbacks still run during exception unwinding.
 
-Children and later fields are read live. List traversal captures the array reference and starting length while reading its future slots when reached. Value comments on Stmt, CaseItem and ArrayElem are copied, while comments in Last/CondLast/ThenLast/DoLast retain their stored identities. Reentrant walks maintain independent traversal state.
+Children and later fields are read live. Each list captures its array reference and length when traversal reaches that list, then reads existing later slots when reached. Replacing or reordering later slots is observed and can cause a node to be skipped or revisited. Indices added beyond the captured extent are not visited by that active list. Replacing the owner's array field does not redirect an active list, but a later walk or print sees the current field. Changes made before a list is reached are observed when it starts.
 
-Array identity and length describe JavaScript storage; the records do not encode Go slice capacity, resliced backing storage, or addresses of value slots. Those distinctions can affect callbacks which mutate array structure or replace a Comment slot while retaining its previous callback value.
+Supported edits preserve each node's Type (and TypedNil.Kind), required field shapes and every index within each active list's captured extent. Leaving holes or shrinking an array below that extent (for example through truncation, deletion, or length-reducing splice/shift) is outside the mutation contract. These are not runtime validation rules. Ordinary JavaScript object and array aliases remain shared; the binding does not model distinct Go slice headers or capacity-dependent allocation over shared backing storage.
+
+Comments on Stmt, CaseItem and ArrayElem are copied before their callbacks, including position and byte-string values; editing a copy does not edit the stored comment. Last/CondLast/ThenLast/DoLast callbacks receive the stored JavaScript Comment object. Replacing its array slot leaves any previously retained callback object unchanged: there is no Go value-slot pointer identity. Reentrant walks maintain independent traversal state.
 
 
 </td></tr>

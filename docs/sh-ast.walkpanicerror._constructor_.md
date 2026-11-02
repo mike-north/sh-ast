@@ -9,7 +9,7 @@ Retains the upstream panic text separately from its display rendering.
 **Signature:**
 
 ```typescript
-constructor(Message: GoString);
+constructor(message: GoString);
 ```
 
 ## Parameters
@@ -32,7 +32,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-Message
+message
 
 
 </td><td>

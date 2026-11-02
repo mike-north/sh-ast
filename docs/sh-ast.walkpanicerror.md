@@ -33,7 +33,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[(constructor)(Message)](./sh-ast.walkpanicerror._constructor_.md)
+[(constructor)(message)](./sh-ast.walkpanicerror._constructor_.md)
 
 
 </td><td>
@@ -107,6 +107,8 @@ Stable discriminator for traversal panics.
 
 
 </td><td>
+
+Exact upstream panic bytes; Error.message is only a display rendering.
 
 
 </td></tr>
