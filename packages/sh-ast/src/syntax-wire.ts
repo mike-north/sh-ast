@@ -76,6 +76,8 @@ export function encodeWire(value: unknown): string {
 /**
  * Restores byte-bearing Go values. Ordinary syntax fields retain their spelling,
  * nulls, defaults, and ordering; no source location or synthetic node is added.
+ * JSON.parse owns a fresh graph, so restoration replaces byte tags in that graph
+ * without copying its ordinary records and arrays or touching caller-owned data.
  * @internal
  */
 export function decodeWire(text: string): unknown {
@@ -86,15 +88,37 @@ export function decodeWire(text: string): unknown {
     throw new ShInternalError(`Invalid syntax bridge JSON: ${String(cause)}`);
   }
   const visit = (item: unknown): unknown => {
-    if (Array.isArray(item)) return item.map(visit);
+    if (Array.isArray(item)) {
+      for (let index = 0; index < item.length; index++) {
+        const child: unknown = item[index];
+        const restored = visit(child);
+        if (restored !== child) item[index] = restored;
+      }
+      return item;
+    }
     if (!isRecord(item)) return item;
-    if (Object.keys(item).length === 1 && typeof item.Bytes === 'string') {
+    const keys = Object.keys(item);
+    if (keys.length === 1 && typeof item.Bytes === 'string') {
       const bytes = Buffer.from(item.Bytes, 'base64');
       if (bytes.toString('base64') !== item.Bytes)
         throw new ShInternalError('Invalid base64 in syntax bridge response');
       return new Uint8Array(bytes);
     }
-    return Object.fromEntries(Object.entries(item).map(([key, child]) => [key, visit(child)]));
+    for (const key of keys) {
+      const child = item[key];
+      const restored = visit(child);
+      if (restored !== child) {
+        // JSON keys, including __proto__, remain own data properties. Defining a
+        // replacement cannot invoke a prototype setter or change the record shape.
+        Object.defineProperty(item, key, {
+          value: restored,
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
+      }
+    }
+    return item;
   };
   return visit(parsed);
 }
