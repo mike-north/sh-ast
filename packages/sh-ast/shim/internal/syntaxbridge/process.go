@@ -30,6 +30,8 @@ func Process(operation, payload, options string) (result []byte) {
 		return marshal(parse(payload, options))
 	case "parse-with-positions":
 		return marshal(parseWithPositions(payload, options))
+	case "word-braces":
+		return marshal(wordBraces(payload))
 	case "print":
 		return marshal(printNode(payload, options))
 	case "bounds":
