@@ -45,7 +45,8 @@ import { nodeArray } from './node-helpers.js';
  *   all, so e.g. `$"hi $x"` reports `'locale'`, never `'expansion'`.
  * - `'unsupported'` — a brace candidate contains backslashes whose handling
  *   differs between pinned mvdan/sh and Bash (rather than guessing through
- *   that discrepancy), a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
+ *   that discrepancy), an unquoted backslash escape crosses word-part
+ *   boundaries in a caller-constructed word, a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
  *   rather than Unicode text, or the word contains a `$'...'` (ANSI-C quoted) `\u`/`\U`
  *   escape whose value has no corresponding Unicode character (greater than
  *   `U+10FFFF`, e.g. `$'\UFFFFFFFF'`): real bash's output for this case is

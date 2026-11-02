@@ -22,7 +22,6 @@ export type BraceObservation = boolean | 'unsupported';
 export function observeBraces(word: Word): BraceObservation {
   let candidate = false;
   let escaped = false;
-  let literalOpening = false;
   let escapeCrossesPart = false;
   // Adjacent literal records concatenate without a quote boundary. Carry the
   // backslash state across them: two one-backslash records expose the next
@@ -36,7 +35,6 @@ export function observeBraces(word: Word): BraceObservation {
       continue;
     }
     for (const character of part.Value) {
-      literalOpening ||= character === '{';
       if (protectedNext) {
         protectedNext = false;
       } else if (character === '\\') {
@@ -47,10 +45,11 @@ export function observeBraces(word: Word): BraceObservation {
       }
     }
   }
-  // A split escape also crosses the analyzer's per-part unquoting boundary.
-  // Do not infer static text for such constructed records, even when combined
-  // parity would protect every opening. This avoids repairing another grammar.
-  if (escapeCrossesPart && literalOpening) return 'unsupported';
+  // A split escape crosses the analyzer's per-part unquoting boundary. It can
+  // expose syntax inside a following quoted part, so uncertainty must not
+  // depend on finding a literal brace first. Decline every such constructed
+  // word instead of rebuilding shell tokenization or claiming static text.
+  if (escapeCrossesPart) return 'unsupported';
   if (!candidate) return false;
   if (escaped) return 'unsupported';
   const response = decodeWire(

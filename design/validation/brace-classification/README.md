@@ -98,3 +98,11 @@ carrying lexical state across adjacent literals. Broader boundary tests also
 failed for one- and three-backslash splits before the conservative
 escape-crosses-part guard. All 47 focused cases now pass, including delimiter
 splits, nested expansions and quoted-part boundaries.
+
+A second review fixture used Parts `[Lit('\\'), DblQuoted('{a,b}'),
+Lit('\\'), DblQuoted('x')]`. It exposed quoted braces without any top-level
+literal opening. The exact test and seven boundary-matrix cases failed before
+the final guard, then passed after every unquoted escape crossing a part boundary
+became unsupported. This was an existing composed-record analyzer limitation
+that the first candidate inherited, not a new parser-output regression. All
+58 focused tests pass; parsed ordinary escape cases remain static.

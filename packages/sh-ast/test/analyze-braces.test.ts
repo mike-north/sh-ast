@@ -133,6 +133,37 @@ describe('upstream-backed brace classification', () => {
     expect(printSync(word)).toBe('{a,"b"}');
   });
 
+  it('declines an unquoted escape crossing into a quoted brace part', () => {
+    const word = argument('ordinary');
+    const lit = word.Parts?.[0];
+    const braceQuote = argument('"{a,b}"').Parts?.[0];
+    const suffixQuote = argument('"x"').Parts?.[0];
+    if (lit?.Type !== 'Lit' || !braceQuote || !suffixQuote) throw new Error('missing test parts');
+    word.Parts = [{ ...lit, Value: '\\' }, braceQuote, { ...lit, Value: '\\' }, suffixQuote];
+    expect(printSync(word)).toBe(String.raw`\"{a,b}"\"x"`);
+    expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+  });
+
+  it.each(['"{a,b}"', "'{a,b}'", '"ordinary"', "'ordinary'", '""', '$x', 'ordinary'])(
+    'declines an escape crossing into %s',
+    (source) => {
+      const word = argument('ordinary');
+      const lit = word.Parts?.[0];
+      const following = argument(source).Parts;
+      if (lit?.Type !== 'Lit' || !following) throw new Error('missing test parts');
+      word.Parts = [{ ...lit, Value: '\\' }, ...following];
+      expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+    },
+  );
+
+  it.each([
+    [String.raw`a\ b`, 'a b'],
+    [String.raw`a\"b`, 'a"b'],
+    [String.raw`\\"ordinary"`, String.raw`\ordinary`],
+  ])('keeps ordinary parsed escapes local to their literal record: %s', (source, text) => {
+    expect(resolveWord(argument(source))).toEqual({ static: true, text });
+  });
+
   it('preserves caller records, aliases, source positions and printed output', () => {
     const parsed = parseWithPositionsSync('echo x{🎉,"中"}y');
     const command = parsed.File.Stmts?.[0]?.Cmd;

@@ -26,9 +26,11 @@ unescaped opening brace in any top-level literal: quotes protect their own
 contents, and each backslash protects the following character. This preserves
 static results for fully escaped openings and odd backslash parity within a
 literal part. Adjacent literal records concatenate, so parity is carried across
-their boundaries. When a backslash escape itself crosses a part boundary in a
-brace-containing word, the analyzer reports unsupported: per-part unquoting
-cannot independently establish the resulting static text. An even
+their boundaries. Any unquoted backslash escape crossing a part boundary
+reports unsupported, even when no top-level literal brace is present. Such a
+split can expose syntax inside a following quoted part; per-part unquoting
+cannot independently establish the resulting static text. This is a deliberate
+conservative boundary for caller-constructed records, not another tokenizer. An even
 backslash run exposes an opening brace, but the candidate remains unsupported
 because of the upstream escape discrepancy. Mixed quoted parts remain in the
 Word sent to upstream; no textual flattening invents adjacency or syntax.
@@ -59,3 +61,16 @@ compare the transport observation with the pinned upstream operation and
 assert its malformed-word behavior. The probe compares actual Bash output and
 upstream expansion only to document the discrepancy; no runtime expansion or
 shell execution is part of the library.
+
+## Composed-record review boundary
+
+Review exercised complete mutable Words, not only parser-produced shapes.
+The existing analyzer could falsely report static text when an unquoted escape
+was split across Lit or quoted parts. The first brace classifier inherited that
+limitation by applying its prerequisite independently to each Lit; a later
+brace-only guard still missed quoted content exposed by a split escape. The
+accepted boundary rejects every unquoted escape crossing a part boundary as
+unsupported. It does not depend on seeing braces first, and it preserves ordinary
+parsed escapes that remain within a Lit. Regression tests retain the exact
+reviewer cases and a matrix of Lit, single-quoted, double-quoted, empty-quoted,
+and expansion boundaries. No recursive grammar reconstruction is added.
