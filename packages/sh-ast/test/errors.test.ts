@@ -1,111 +1,69 @@
-/**
- * Tests for the error taxonomy introduced by
- * https://github.com/mike-north/eslint-sh/issues/12 (criteria 1, 3, 5).
- * Criterion 2 (malformed shim envelope -> `ShInternalError`) lives in
- * `test/parse-envelope-guard.test.ts`, reusing that file's `vi.mock`
- * scaffolding for the WASM shim boundary.
- *
- * @see design/ARCHITECTURE.md — serialization contract, parse errors and dialects
- * @see design/PACKAGES.md §`sh-ast` — the public API under test
- */
+/** Error families distinguish caller input, source grammar, dialect gates and bridge defects. */
 import { describe, expect, it } from 'vitest';
 import {
+  InputError,
+  LangError,
+  LangPOSIX,
+  ParseError,
   ShAstError,
   ShInternalError,
-  ShInvalidDialectError,
-  ShParseError,
   parseSync,
 } from '../src/index.js';
 
-describe('ShInvalidDialectError — criterion 1: unrecognized dialect', () => {
-  it('throws ShInvalidDialectError with code "SH_AST_INVALID_DIALECT" and .dialect === "fish"', () => {
-    expect.assertions(4);
-    try {
-      parseSync('echo hi', { dialect: 'fish' as never });
-    } catch (error) {
-      expect(error).toBeInstanceOf(ShInvalidDialectError);
-      const invalidDialectError = error as ShInvalidDialectError;
-      expect(invalidDialectError.code).toBe('SH_AST_INVALID_DIALECT');
-      expect(invalidDialectError.dialect).toBe('fish');
-      // The design decision requires the supported dialects to be listed in
-      // the message; spot-check a couple rather than asserting the exact
-      // wording.
-      expect(invalidDialectError.message).toContain('bash');
-    }
-  });
+/** Returns a thrown error so every taxonomy assertion examines the same failure. */
+function failure(source: string, options: Parameters<typeof parseSync>[1]): unknown {
+  try {
+    parseSync(source, options);
+  } catch (error) {
+    return error;
+  }
+  throw new Error('Fixture unexpectedly parsed');
+}
 
-  it('is an instance of the common ShAstError base (instanceof + code both work)', () => {
-    expect.assertions(1);
-    try {
-      parseSync('echo hi', { dialect: 'fish' as never });
-    } catch (error) {
-      expect(error).toBeInstanceOf(ShAstError);
-    }
+describe('error taxonomy', () => {
+  it('invalid numeric variants are input errors with no source position', () => {
+    const error = failure('echo hi', { Variant: -1 });
+    expect(error).toBeInstanceOf(InputError);
+    expect(error).toBeInstanceOf(ShAstError);
+    expect(error).toMatchObject({ code: 'SH_AST_SYNTAX_INPUT', name: 'InputError' });
+    expect(error).not.toBeInstanceOf(ParseError);
+    expect(error).not.toBeInstanceOf(LangError);
+    expect(error).not.toBeInstanceOf(ShInternalError);
+    expect(error).not.toHaveProperty('Pos');
   });
-
-  it('criterion 5 (negative): ShInvalidDialectError is NOT an instance of ShParseError', () => {
-    expect.assertions(1);
-    try {
-      parseSync('echo hi', { dialect: 'fish' as never });
-    } catch (error) {
-      expect(error).not.toBeInstanceOf(ShParseError);
-    }
+  it('grammar errors preserve structured upstream data and a stable discriminator', () => {
+    const error = failure('if true; then\n', { Filename: 'b.sh' });
+    expect(error).toBeInstanceOf(ParseError);
+    expect(error).toBeInstanceOf(ShAstError);
+    expect(error).toMatchObject({
+      code: 'SH_AST_SYNTAX_PARSE',
+      Filename: 'b.sh',
+      Pos: { Line: 1, Col: 10, Offset: 9 },
+      Incomplete: true,
+    });
+    expect(error).not.toBeInstanceOf(InputError);
+    expect(error).not.toBeInstanceOf(ShInternalError);
+    expect(error).not.toBeInstanceOf(LangError);
   });
-
-  it('criterion 5 (negative): ShInvalidDialectError is NOT an instance of ShInternalError', () => {
-    expect.assertions(1);
-    try {
-      parseSync('echo hi', { dialect: 'fish' as never });
-    } catch (error) {
-      expect(error).not.toBeInstanceOf(ShInternalError);
-    }
+  it('dialect rejection preserves the rejected feature and selected variant', () => {
+    const error = failure('a=(1 2 3)', { Variant: LangPOSIX });
+    expect(error).toBeInstanceOf(LangError);
+    expect(error).toBeInstanceOf(ShAstError);
+    expect(error).toMatchObject({
+      code: 'SH_AST_SYNTAX_LANG',
+      Feature: 'arrays',
+      LangUsed: LangPOSIX,
+    });
+    expect(error).not.toBeInstanceOf(ParseError);
+    expect(error).not.toBeInstanceOf(InputError);
+    expect(error).not.toBeInstanceOf(ShInternalError);
   });
-});
-
-describe('ShParseError — criterion 3: stable code discriminator', () => {
-  it('exposes code === "SH_AST_PARSE_ERROR" alongside the existing .line/.column/.filename fields', () => {
-    expect.assertions(5);
-    try {
-      parseSync('if true; then\n', { filename: 'b.sh' });
-    } catch (error) {
-      expect(error).toBeInstanceOf(ShParseError);
-      const parseError = error as ShParseError;
-      expect(parseError.code).toBe('SH_AST_PARSE_ERROR');
-      // The existing fields (design decision: "without breaking its existing
-      // fields") must still be present and correctly populated.
-      expect(parseError.line).toBe(1);
-      expect(parseError.column).toBe(10);
-      expect(parseError.filename).toBe('b.sh');
-    }
-  });
-
-  it('criterion 5 (negative): ShParseError is NOT an instance of ShInvalidDialectError or ShInternalError', () => {
-    expect.assertions(2);
-    try {
-      parseSync('if true; then\n', { filename: 'b.sh' });
-    } catch (error) {
-      expect(error).not.toBeInstanceOf(ShInvalidDialectError);
-      expect(error).not.toBeInstanceOf(ShInternalError);
-    }
-  });
-
-  it('is an instance of the common ShAstError base', () => {
-    expect.assertions(1);
-    try {
-      parseSync('if true; then\n', { filename: 'b.sh' });
-    } catch (error) {
-      expect(error).toBeInstanceOf(ShAstError);
-    }
-  });
-});
-
-describe('ShInternalError — criterion 5 (negative): wrong-type checks', () => {
-  it('a directly constructed ShInternalError is not an instance of ShParseError or ShInvalidDialectError', () => {
-    const internalError = new ShInternalError('bridge: something unexpected happened');
-    expect(internalError).not.toBeInstanceOf(ShParseError);
-    expect(internalError).not.toBeInstanceOf(ShInvalidDialectError);
-    expect(internalError).toBeInstanceOf(ShAstError);
-    expect(internalError.code).toBe('SH_AST_INTERNAL');
-    expect(internalError.name).toBe('ShInternalError');
+  it('internal bridge errors retain their own family', () => {
+    const error = new ShInternalError('Malformed bridge response');
+    expect(error).toBeInstanceOf(ShAstError);
+    expect(error).toMatchObject({ code: 'SH_AST_INTERNAL', name: 'ShInternalError' });
+    expect(error).not.toBeInstanceOf(ParseError);
+    expect(error).not.toBeInstanceOf(LangError);
+    expect(error).not.toBeInstanceOf(InputError);
   });
 });

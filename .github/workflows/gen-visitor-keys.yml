@@ -18,6 +18,8 @@ jobs:
         with:
           go-version-file: tools/gen-visitor-keys/go.mod
       - run: pnpm install --frozen-lockfile
+      - name: Verify schema against independent upstream observations
+        run: go -C tools/gen-visitor-keys test ./...
       - name: Verify the generator and the WASM shim pin the same mvdan/sh version
         run: |
           shim_version="$(grep -o 'mvdan\.cc/sh/v3 v[0-9.]*' packages/sh-ast/shim/go.mod)"
@@ -26,7 +28,7 @@ jobs:
             echo "::error::packages/sh-ast/shim/go.mod pins $shim_version but tools/gen-visitor-keys/go.mod pins $gen_version — the generated schema and the WASM parser must be built from the same mvdan/sh version." >&2
             exit 1
           fi
-      - name: Regenerate visitor-keys/child-type-schema/node-types
+      - name: Regenerate faithful syntax types, constants, and field metadata
         run: pnpm run generate:sh-ast-schema
       - name: Verify regeneration matches the committed artifacts
         run: |

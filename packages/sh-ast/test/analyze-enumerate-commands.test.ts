@@ -10,10 +10,9 @@
  *      redirection target) — the `describe('enumerateCommands — criterion 2
  *      ...')` block.
  *   3. Completeness backstop against an independent oracle — `describe('...
- *      criterion 3 ...')`, which walks the kitchen-sink fixtures using the
- *      *raw generated* `visitorKeys` table (`../generated/visitor-keys.js`)
- *      to count `CallExpr` nodes, deliberately not reusing `enumerateCommands`'
- *      own descent or `walk()`'s structural discovery.
+ *      criterion 3 ...')`, which walks the kitchen-sink fixtures through generic
+ *      record properties to count `CallExpr` records, independently of the
+ *      grammar-aware context descent.
  *   4. Source-order guarantee — `describe('... criterion 4 ...')`.
  *
  * All expected `CommandContext` values below are hand-derived from the
@@ -31,8 +30,11 @@ import type { CommandContext, CommandSite } from '../src/analyze/index.js';
 import { enumerateCommands } from '../src/analyze/index.js';
 import { ShAnalyzeMaxDepthError } from '../src/index.js';
 import { parseSync } from '../src/index.js';
-import type { ShellDialect, ShNode } from '../src/index.js';
-import { visitorKeys as rawGeneratedVisitorKeys } from '../generated/visitor-keys.js';
+import type { Node, Stmt } from '../generated/syntax-types.js';
+import { LangBash, LangBats, LangZsh, Pipe, AndStmt } from '../generated/syntax-constants.js';
+import { syntheticNode } from './analyze-fixtures.js';
+import { nodePos, nodeEnd } from '../src/index.js';
+import type { BinCmdOperator } from '../generated/syntax-constants.js';
 
 function fixture(name: string): string {
   return readFileSync(fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url)), 'utf8');
@@ -51,21 +53,19 @@ function assertDefined<T>(value: T | undefined, message: string): T {
 }
 
 /** `enumerateCommands` on `src`, plus the exact source text of each site's `CallExpr`. */
-function siteTexts(src: string, dialect?: ShellDialect): readonly string[] {
-  const file = parseSync(src, dialect ? { dialect } : undefined);
-  return enumerateCommands(file).map((site) => src.slice(site.node.range[0], site.node.range[1]));
+function siteTexts(src: string, dialect?: number): readonly string[] {
+  const file = parseSync(src, dialect ? { Variant: dialect } : undefined);
+  return enumerateCommands(file).map((site) => sourceText(src, site.node));
 }
 
-function enumerate(src: string, dialect?: ShellDialect): readonly CommandSite[] {
-  const file = parseSync(src, dialect ? { dialect } : undefined);
+function enumerate(src: string, dialect?: number): readonly CommandSite[] {
+  const file = parseSync(src, dialect ? { Variant: dialect } : undefined);
   return enumerateCommands(file);
 }
 
 /** Finds the (unique) site whose `CallExpr` source text is exactly `text`. */
 function siteFor(sites: readonly CommandSite[], src: string, text: string): CommandSite {
-  const matches = sites.filter(
-    (site) => src.slice(site.node.range[0], site.node.range[1]) === text,
-  );
+  const matches = sites.filter((site) => sourceText(src, site.node) === text);
   expect(
     matches,
     `expected exactly one site for ${JSON.stringify(text)}, found ${String(matches.length)}`,
@@ -81,22 +81,15 @@ function siteFor(sites: readonly CommandSite[], src: string, text: string): Comm
 // ever sees the tree (verified: `parseSync` on a real 900+-stage pipeline
 // or 900+-deep nested-subshell source string hits its own
 // `RangeError: Maximum call stack size exceeded` well before this module's
-// depth guard would). These tests therefore build the `ShNode` tree
+// depth guard would). These tests therefore build the `Node` tree
 // directly — bypassing `parseSync` entirely — mirroring the pattern
 // `analyze-resolve-word.test.ts` uses for other real-parser-unreachable
 // shapes.
 
-const SYNTHETIC_LOC: ShNode['loc'] = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
-
-/** Builds a minimal, otherwise-empty synthetic `ShNode` of the given `type`. */
-function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> = {}): ShNode {
-  return { type, range: [0, 0], loc: SYNTHETIC_LOC, ...fields };
-}
-
-function syntheticCallStmt(name: string): ShNode {
+function syntheticCallStmt(name: string): Stmt {
   return syntheticNode('Stmt', {
-    cmd: syntheticNode('CallExpr', {
-      args: [syntheticNode('Word', { parts: [syntheticNode('Lit', { value: name })] })],
+    Cmd: syntheticNode('CallExpr', {
+      Args: [syntheticNode('Word', { Parts: [syntheticNode('Lit', { Value: name })] })],
     }),
   });
 }
@@ -108,21 +101,21 @@ function syntheticCallStmt(name: string): ShNode {
  * comments for the shape). `op` is the raw `BinCmdOperator` token value —
  * `13` for `|` (pipeline), `11` for `&&`.
  */
-function syntheticBinaryChain(n: number, op: number): ShNode {
+function syntheticBinaryChain(n: number, op: BinCmdOperator): Stmt {
   let acc = syntheticCallStmt('c0');
   for (let i = 1; i < n; i += 1) {
     acc = syntheticNode('Stmt', {
-      cmd: syntheticNode('BinaryCmd', { op, x: acc, y: syntheticCallStmt(`c${String(i)}`) }),
+      Cmd: syntheticNode('BinaryCmd', { Op: op, X: acc, Y: syntheticCallStmt(`c${String(i)}`) }),
     });
   }
   return acc;
 }
 
 /** `n` levels of `Subshell`-in-`Subshell` nesting around a single inner `CallExpr`. */
-function syntheticNestedSubshells(n: number): ShNode {
+function syntheticNestedSubshells(n: number): Stmt {
   let acc = syntheticCallStmt('inner');
   for (let i = 0; i < n; i += 1) {
-    acc = syntheticNode('Stmt', { cmd: syntheticNode('Subshell', { stmts: [acc] }) });
+    acc = syntheticNode('Stmt', { Cmd: syntheticNode('Subshell', { Stmts: [acc] }) });
   }
   return acc;
 }
@@ -131,12 +124,7 @@ describe('enumerateCommands — criterion 1: compound coverage (one context kind
   it("'and'/'or'/'pipeline': `a && b || c | d` yields 4 sites with correct contexts", () => {
     const src = 'a && b || c | d';
     const sites = enumerate(src);
-    expect(sites.map((s) => src.slice(s.node.range[0], s.node.range[1]))).toEqual([
-      'a',
-      'b',
-      'c',
-      'd',
-    ]);
+    expect(sites.map((s) => sourceText(src, s.node))).toEqual(['a', 'b', 'c', 'd']);
 
     const contextOf = (text: string): readonly CommandContext[] =>
       siteFor(sites, src, text).context;
@@ -294,8 +282,8 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
   });
 
   // The four tests below each pin one `scanForHiddenCommands` call site in
-  // `visitCommand`'s switch — `CaseClause.word`, `ForClause.loop`,
-  // `TestClause.x`, `ArithmCmd.x` — that the review's mutation-testing pass
+  // `visitCommand`'s switch — `CaseClause.Word`, `ForClause.Loop`,
+  // `TestClause.X`, `ArithmCmd.X` — that the review's mutation-testing pass
   // found had *no* test that would fail if that specific call were removed
   // (each site's hidden command still happened to be found by some *other*
   // in-scope scan, or the branch's other coverage masked the omission).
@@ -303,7 +291,7 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
   // `scanForHiddenCommands(...)` line and re-running these four tests
   // fails exactly the matching one, with `sub` missing from the result.
 
-  it('finds a command hidden inside a `case` subject (CaseClause.word)', () => {
+  it('finds a command hidden inside a `case` subject (CaseClause.Word)', () => {
     const src = 'case $(sub) in x) : ;; esac';
     const sites = enumerate(src);
     const contextOf = (text: string): readonly CommandContext[] =>
@@ -312,7 +300,7 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
     expect(contextOf('sub')).toEqual([{ kind: 'cmdSubst' }]);
   });
 
-  it('finds a command hidden inside a `for` loop word list (ForClause.loop)', () => {
+  it('finds a command hidden inside a `for` loop word list (ForClause.Loop)', () => {
     const src = 'for i in $(sub); do :; done';
     const sites = enumerate(src);
     const contextOf = (text: string): readonly CommandContext[] =>
@@ -321,14 +309,14 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
     expect(contextOf('sub')).toEqual([{ kind: 'cmdSubst' }]);
   });
 
-  it('finds a command hidden inside a `[[ ]]` test operand (TestClause.x)', () => {
+  it('finds a command hidden inside a `[[ ]]` test operand (TestClause.X)', () => {
     const src = '[[ $(sub) = x ]]';
     expect(siteTexts(src)).toEqual(['sub']);
     const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
     expect(site.context).toEqual([{ kind: 'cmdSubst' }]);
   });
 
-  it('finds a command hidden inside a `(( ))` arithmetic operand (ArithmCmd.x)', () => {
+  it('finds a command hidden inside a `(( ))` arithmetic operand (ArithmCmd.X)', () => {
     const src = '(( $(sub) ))';
     expect(siteTexts(src)).toEqual(['sub']);
     const site = assertDefined(enumerate(src)[0], 'unreachable — expected exactly 1 site');
@@ -338,15 +326,9 @@ describe('enumerateCommands — criterion 2: hidden-command coverage (one test p
 
 describe('enumerateCommands — criterion 3: completeness backstop (independent oracle)', () => {
   /**
-   * Counts `CallExpr` nodes by walking the tree using the *raw generated*
-   * `visitorKeys` table (`generated/visitor-keys.js`, produced by
-   * `tools/gen-visitor-keys` from mvdan/sh's own struct definitions) —
-   * deliberately a different traversal mechanism than both
-   * `enumerateCommands`' hand-written context-aware descent (the thing
-   * under test) and `walk()`'s structural discovery (used elsewhere in
-   * this test suite/repo). If `enumerateCommands` silently skips a
-   * CallExpr-bearing corner of the grammar, this count and
-   * `enumerateCommands(...).length` diverge.
+   * Counts `CallExpr` records through a generic property traversal, including
+   * auxiliary records. This independent structural oracle catches invocation
+   * sites omitted by the analyzer's grammar-aware context descent.
    *
    * Excludes a `CallExpr` with zero `args` (mvdan/sh's representation of an
    * assignment-only statement, e.g. `x=1` — the kitchen-sink fixtures
@@ -359,46 +341,41 @@ describe('enumerateCommands — criterion 3: completeness backstop (independent 
    * independent: it would still catch, for example, a `CallExpr` dropped
    * from inside a `<(...)` or a loop body.
    */
-  function countCallExprViaGeneratedVisitorKeys(node: ShNode): number {
+  function countCallExprStructurally(node: Node): number {
     const isInvocation =
-      node.type === 'CallExpr' && Array.isArray(node.args) && node.args.length > 0;
+      node.Type === 'CallExpr' && Array.isArray(node.Args) && node.Args.length > 0;
     let count = isInvocation ? 1 : 0;
-    const keys: readonly string[] =
-      (rawGeneratedVisitorKeys as Readonly<Record<string, readonly string[]>>)[node.type] ?? [];
-    for (const key of keys) {
-      const value = node[key];
+    for (const value of Object.values(node)) {
       if (Array.isArray(value)) {
         for (const child of value) {
-          if (isNode(child)) count += countCallExprViaGeneratedVisitorKeys(child);
+          if (isNode(child)) count += countCallExprStructurally(child);
         }
       } else if (isNode(value)) {
-        count += countCallExprViaGeneratedVisitorKeys(value);
+        count += countCallExprStructurally(value);
       }
     }
     return count;
   }
 
-  function isNode(value: unknown): value is ShNode {
-    return (
-      typeof value === 'object' && value !== null && typeof (value as ShNode).type === 'string'
-    );
+  function isNode(value: unknown): value is Node {
+    return typeof value === 'object' && value !== null && typeof (value as Node).Type === 'string';
   }
 
   const fixtures: {
     readonly label: string;
-    readonly dialect: ShellDialect;
+    readonly dialect: number;
     readonly file: string;
   }[] = [
-    { label: 'bash', dialect: 'bash', file: 'kitchen-sink.bash.sh' },
-    { label: 'zsh', dialect: 'zsh', file: 'kitchen-sink.zsh.sh' },
-    { label: 'bats', dialect: 'bats', file: 'kitchen-sink.bats.sh' },
+    { label: 'bash', dialect: LangBash, file: 'kitchen-sink.bash.sh' },
+    { label: 'zsh', dialect: LangZsh, file: 'kitchen-sink.zsh.sh' },
+    { label: 'bats', dialect: LangBats, file: 'kitchen-sink.bats.sh' },
   ];
 
   it.each(fixtures)(
     'finds exactly as many command sites as there are CallExpr nodes in the $label kitchen-sink fixture',
     ({ dialect, file }) => {
-      const parsed = parseSync(fixture(file), { dialect });
-      const expectedCount = countCallExprViaGeneratedVisitorKeys(parsed);
+      const parsed = parseSync(fixture(file), { Variant: dialect });
+      const expectedCount = countCallExprStructurally(parsed);
       expect(expectedCount).toBeGreaterThan(0);
       expect(enumerateCommands(parsed)).toHaveLength(expectedCount);
     },
@@ -425,7 +402,7 @@ describe('enumerateCommands — criterion 4: source-order guarantee', () => {
 
   it('returns a redirection-target substitution in its true source position, not after the command that structurally owns it', () => {
     // The ProcSubst is discovered while scanning the Stmt's redirs, which
-    // this module processes structurally *before* dispatching into `.cmd`
+    // this module processes structurally *before* dispatching into `.Cmd`
     // — but it is positioned *after* `cmd` in the source, so a naive
     // traversal-order return (without the final range-sort) would still
     // happen to get this right; this test pins the *guarantee* rather than
@@ -437,18 +414,7 @@ describe('enumerateCommands — criterion 4: source-order guarantee', () => {
 
 describe('enumerateCommands — negative/edge cases', () => {
   it('an empty script (a File with no statements) yields no command sites', () => {
-    // `parseSync` itself cannot produce a `File` with zero statements for
-    // fully blank/comment-only source (a pre-existing normalizer
-    // limitation unrelated to this module — see design/ARCHITECTURE.md's
-    // serialization contract discussion), so this constructs the shape
-    // `enumerateCommands` actually depends on directly, to test the
-    // contract at its own boundary rather than at parseSync's.
-    const emptyFile: ShNode = {
-      type: 'File',
-      range: [0, 0],
-      loc: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
-      stmts: [],
-    };
+    const emptyFile = parseSync('');
     expect(enumerateCommands(emptyFile)).toEqual([]);
   });
 
@@ -527,7 +493,7 @@ describe('enumerateCommands — multibyte fidelity', () => {
     const sites = enumerate(src);
     expect(sites).toHaveLength(1);
     const site = assertDefined(sites[0], 'unreachable — length checked above');
-    expect(src.slice(site.node.range[0], site.node.range[1])).toBe(src);
+    expect(sourceText(src, site.node)).toBe(src);
     expect(site.argv).toHaveLength(2);
     expect(site.argv[1]).toEqual({ static: true, text: '你好🎉' });
   });
@@ -570,7 +536,7 @@ describe('enumerateCommands — stack safety: long linear chains traverse iterat
   // too — proving chain length is fully decoupled from the depth guard,
   // not just "large enough to not crash yet".
   it('a 5,000-stage pipeline enumerates every stage without a stack overflow', () => {
-    const chain = syntheticBinaryChain(5000, 13 /* BIN_CMD_OP_PIPE */);
+    const chain = syntheticBinaryChain(5000, Pipe);
     const sites = enumerateCommands(chain);
     expect(sites).toHaveLength(5000);
     expect(sites[0]?.argv0).toEqual({ static: true, text: 'c0' });
@@ -580,7 +546,7 @@ describe('enumerateCommands — stack safety: long linear chains traverse iterat
   });
 
   it('a 5,000-link && chain enumerates every link without a stack overflow', () => {
-    const chain = syntheticBinaryChain(5000, 11 /* BIN_CMD_OP_AND */);
+    const chain = syntheticBinaryChain(5000, AndStmt);
     const sites = enumerateCommands(chain);
     expect(sites).toHaveLength(5000);
     // The leftmost operand of a left-nested &&-chain inherits the
@@ -596,9 +562,9 @@ describe('enumerateCommands — stack safety: long linear chains traverse iterat
     // Guards against a design that accidentally grows the depth counter
     // per pipeline stage (which would make a long pipeline inside even
     // modest real nesting spuriously trip MAX_STRUCTURAL_DEPTH).
-    let tree = syntheticBinaryChain(5000, 13 /* BIN_CMD_OP_PIPE */);
+    let tree = syntheticBinaryChain(5000, Pipe);
     for (let i = 0; i < 50; i += 1) {
-      tree = syntheticNode('Stmt', { cmd: syntheticNode('Subshell', { stmts: [tree] }) });
+      tree = syntheticNode('Stmt', { Cmd: syntheticNode('Subshell', { Stmts: [tree] }) });
     }
     const sites = enumerateCommands(tree);
     expect(sites).toHaveLength(5000);
@@ -640,3 +606,10 @@ describe('enumerateCommands — stack safety: defensive depth guard for genuine 
     expect(sites[0]?.context).toHaveLength(10);
   });
 });
+
+/** Position observations count UTF-8 bytes, so source extraction must use bytes too. */
+function sourceText(source: string, node: Node): string {
+  return new TextDecoder().decode(
+    new TextEncoder().encode(source).slice(nodePos(node).Offset, nodeEnd(node).Offset),
+  );
+}

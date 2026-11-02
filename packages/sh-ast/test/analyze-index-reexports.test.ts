@@ -1,7 +1,7 @@
 /**
  * Tests for https://github.com/mike-north/sh-ast/issues/23: `sh-ast/analyze`
  * re-exports the shared base error class (`ShAstError`) and the base AST
- * types (`ShNode`, `Position`) that the subpath's public surface consumes
+ * types (`Node`, `SyntaxPos`) that the subpath's public surface consumes
  * and exposes, so a consumer of the analyze subpath can catch/reference them
  * without also importing from the root `sh-ast` entry point.
  *
@@ -14,13 +14,8 @@ import {
   ShAstError,
   enumerateCommands,
 } from 'sh-ast/analyze';
-import type { ShNode } from 'sh-ast/analyze';
-
-const SYNTHETIC_LOC = { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } };
-
-function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> = {}): ShNode {
-  return { type, range: [0, 0], loc: SYNTHETIC_LOC, ...fields };
-}
+import type { Stmt } from 'sh-ast/analyze';
+import { syntheticNode } from './analyze-fixtures.js';
 
 /**
  * A synthetic, hand-built tree of `n` nested `Subshell` frames — mirrors
@@ -28,14 +23,14 @@ function syntheticNode(type: string, fields: Readonly<Record<string, unknown>> =
  * helper, bypassing `parseSync` (and its own, unrelated depth guard)
  * entirely so this test exercises only `enumerateCommands`'s guard.
  */
-function syntheticNestedSubshells(n: number): ShNode {
+function syntheticNestedSubshells(n: number): Stmt {
   let acc = syntheticNode('Stmt', {
-    cmd: syntheticNode('CallExpr', {
-      args: [syntheticNode('Word', { parts: [syntheticNode('Lit', { value: 'inner' })] })],
+    Cmd: syntheticNode('CallExpr', {
+      Args: [syntheticNode('Word', { Parts: [syntheticNode('Lit', { Value: 'inner' })] })],
     }),
   });
   for (let i = 0; i < n; i += 1) {
-    acc = syntheticNode('Stmt', { cmd: syntheticNode('Subshell', { stmts: [acc] }) });
+    acc = syntheticNode('Stmt', { Cmd: syntheticNode('Subshell', { Stmts: [acc] }) });
   }
   return acc;
 }

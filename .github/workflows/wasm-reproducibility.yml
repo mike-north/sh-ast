@@ -36,6 +36,15 @@ jobs:
           cp sh-ast.wasm /tmp/sh-ast.committed.wasm
           GOOS=js GOARCH=wasm go build -buildvcs=false -trimpath -ldflags="-s -w -buildid=" -o /tmp/sh-ast.rebuilt.wasm .
           wasm-opt -Oz --enable-bulk-memory-opt --enable-nontrapping-float-to-int /tmp/sh-ast.rebuilt.wasm -o sh-ast.wasm
+      # Preserve the independent Linux output even when the source change makes
+      # the previous committed binary stale. Maintainers can commit this exact
+      # artifact and rerun the comparison without trusting a local host build.
+      - name: Upload canonical Linux WASM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sh-ast-linux-amd64-wasm
+          path: packages/sh-ast/shim/sh-ast.wasm
+          if-no-files-found: error
       - name: Verify rebuild matches the committed artifact
         run: |
           if ! cmp -s sh-ast.wasm /tmp/sh-ast.committed.wasm; then

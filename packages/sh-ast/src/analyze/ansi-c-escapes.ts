@@ -2,7 +2,7 @@
  * Decodes `$'...'` (Bash ANSI-C Quoting) escape sequences.
  *
  * mvdan/sh's parser does **not** perform this decoding: for a `SglQuoted`
- * word part with `dollar: true`, the normalized `value` field is the raw,
+ * word part with `Dollar: true`, the upstream `Value` field is the raw,
  * un-decoded source text between the quotes (verified empirically against
  * mvdan.cc/sh/v3 v3.13.1 — see `test/analyze-resolve-word.test.ts`'s module
  * comment for how this was confirmed). This module fills that gap using the

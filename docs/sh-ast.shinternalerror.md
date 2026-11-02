@@ -4,7 +4,7 @@
 
 ## ShInternalError class
 
-Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never happen given a correctly-behaving WASM shim: a malformed result envelope, an unexpected root node type, or any other shim contract violation. Distinct from [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md) and [ShParseError](./sh-ast.shparseerror.md)<!-- -->, both of which indicate a foreseeable, actionable user mistake rather than an internal defect.
+Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never happen given a correctly-behaving WASM shim: a malformed result envelope, an unexpected root node type, or any other shim contract violation. Distinct from [InputError](./sh-ast.inputerror.md) and [ParseError](./sh-ast.parseerror.md)<!-- -->, both of which indicate a foreseeable, actionable user mistake rather than an internal defect.
 
 **Signature:**
 

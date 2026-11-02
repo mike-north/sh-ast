@@ -1,0 +1,13 @@
+--- preliminary/dist/syntax-snapshot.js
++++ final/dist/syntax-snapshot.js
+@@ -37,7 +37,9 @@
+                 continue;
+             const child = value[name];
+             if (Array.isArray(child)) {
+-                child.forEach((item, index) => visit(item, [...path, name, index]));
++                child.forEach((item, index) => {
++                    visit(item, [...path, name, index]);
++                });
+             }
+             else {
+                 visit(child, [...path, name]);

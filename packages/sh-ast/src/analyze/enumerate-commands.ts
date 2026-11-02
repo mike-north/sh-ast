@@ -1,6 +1,16 @@
+/** Enumerates invocations on caller-owned faithful records while retaining syntactic contexts. */
+import { AndStmt, OrStmt, Pipe, PipeAll } from '../../generated/syntax-constants.js';
+import { nodePos } from '../syntax.js';
 import { ShAnalyzeMaxDepthError } from '../errors.js';
-import type { ShNode } from '../types.js';
-import { isShNodeShape, nodeArray, stringField } from './node-helpers.js';
+import type {
+  BinaryCmd,
+  CallExpr,
+  GoString,
+  IfClause,
+  Node,
+  Stmt,
+} from '../../generated/syntax-types.js';
+import { isSyntaxNode, nodeArray } from './node-helpers.js';
 import { resolveWord } from './resolve-word.js';
 import type { WordResolution } from './resolve-word.js';
 
@@ -23,10 +33,10 @@ import type { WordResolution } from './resolve-word.js';
  *   `ProcSubst` (`<(...)`/`>(...)`) reached from *any* word-bearing
  *   position (an argument, a redirection target, a case subject, a loop's
  *   word list, an assignment value, a test/arithmetic operand, …) — not
- *   only from `CallExpr.args`.
+ *   only from `CallExpr.Args`.
  * - `'if'` (`branch: 'cond' | 'then' | 'else'`) — inside an `IfClause`'s
  *   condition, then-branch, or else-branch (mvdan/sh nests `elif` chains as
- *   `IfClause.else` pointing to another `IfClause`, so an `elif`'s own
+ *   `IfClause.Else` pointing to another `IfClause`, so an `elif`'s own
  *   condition/then are reached through an `{kind:'if',branch:'else'}` frame
  *   first, then their own `'cond'`/`'then'` frame — reflecting the real
  *   nesting rather than collapsing it).
@@ -69,7 +79,7 @@ export type CommandContext =
   | { readonly kind: 'if'; readonly branch: 'then' | 'else' | 'cond' }
   | { readonly kind: 'case' }
   | { readonly kind: 'loop'; readonly role: 'body' | 'cond' }
-  | { readonly kind: 'function'; readonly name: string }
+  | { readonly kind: 'function'; readonly name: GoString }
   | { readonly kind: 'background' }
   | { readonly kind: 'negated' }
   | { readonly kind: 'coproc' };
@@ -86,7 +96,7 @@ export type CommandContext =
  */
 export interface CommandSite {
   /** The `CallExpr` node this site was found at. */
-  readonly node: ShNode;
+  readonly node: CallExpr;
   /**
    * `resolveWord` applied to the first word (`argv[0]`), with
    * `{ context: 'command-argument' }` — every `CallExpr` word is an
@@ -102,24 +112,8 @@ export interface CommandSite {
   readonly context: readonly CommandContext[];
 }
 
-/**
- * mvdan/sh v3.13.1's `syntax.BinCmdOperator` token values for `BinaryCmd.Op`
- * — `AndStmt` (`&&`), `OrStmt` (`||`), `Pipe` (`|`), `PipeAll` (`|&`). These
- * are not part of any documented wire contract (`normalize()` copies
- * mvdan/sh's raw numeric token straight through — see design/ARCHITECTURE.md
- * open question 4), so they're pinned here by empirical observation against
- * this bridge's own shim rather than derived from an upstream constant, and
- * locked in by a canary test (`enumerate-commands.test.ts`, "binary command
- * operator identification") that would fail loudly if a future mvdan/sh
- * version renumbered them.
- */
-const BIN_CMD_OP_AND = 11;
-const BIN_CMD_OP_OR = 12;
-const BIN_CMD_OP_PIPE = 13;
-const BIN_CMD_OP_PIPE_ALL = 14;
-
 function isPipeOp(op: unknown): boolean {
-  return op === BIN_CMD_OP_PIPE || op === BIN_CMD_OP_PIPE_ALL;
+  return op === Pipe || op === PipeAll;
 }
 
 /**
@@ -192,19 +186,19 @@ function scanForHiddenCommands(
     for (const item of value) scanForHiddenCommands(item, context, sites, depth);
     return;
   }
-  if (!isShNodeShape(value)) return;
-  if (value.type === 'CmdSubst') {
+  if (typeof value !== 'object' || value === null || value instanceof Uint8Array) return;
+  if (isSyntaxNode(value) && value.Type === 'CmdSubst') {
     visitStmtList(
-      nodeArray(value.stmts),
+      nodeArray(value.Stmts),
       pushContext(context, { kind: 'cmdSubst' }),
       sites,
       depth + 1,
     );
     return;
   }
-  if (value.type === 'ProcSubst') {
+  if (isSyntaxNode(value) && value.Type === 'ProcSubst') {
     visitStmtList(
-      nodeArray(value.stmts),
+      nodeArray(value.Stmts),
       pushContext(context, { kind: 'procSubst' }),
       sites,
       depth + 1,
@@ -217,7 +211,7 @@ function scanForHiddenCommands(
 }
 
 function visitStmtList(
-  stmts: readonly ShNode[],
+  stmts: readonly Stmt[],
   context: readonly CommandContext[],
   sites: CommandSite[],
   depth: number,
@@ -234,7 +228,7 @@ function visitStmtList(
  * than recursing further.
  */
 function visitStmt(
-  stmt: ShNode,
+  stmt: Stmt,
   context: readonly CommandContext[],
   sites: CommandSite[],
   depth: number,
@@ -243,11 +237,11 @@ function visitStmt(
     throw new ShAnalyzeMaxDepthError(MAX_STRUCTURAL_DEPTH);
   }
   let stmtContext = context;
-  if (stmt.negated === true) stmtContext = pushContext(stmtContext, { kind: 'negated' });
-  if (stmt.background === true) stmtContext = pushContext(stmtContext, { kind: 'background' });
-  scanForHiddenCommands(stmt.redirs, stmtContext, sites, depth);
-  const cmd = stmt.cmd;
-  if (isShNodeShape(cmd)) visitCommand(cmd, stmtContext, sites, depth);
+  if (stmt.Negated) stmtContext = pushContext(stmtContext, { kind: 'negated' });
+  if (stmt.Background) stmtContext = pushContext(stmtContext, { kind: 'background' });
+  scanForHiddenCommands(stmt.Redirs, stmtContext, sites, depth);
+  const cmd = stmt.Cmd;
+  if (isSyntaxNode(cmd)) visitCommand(cmd, stmtContext, sites, depth);
 }
 
 /**
@@ -268,17 +262,17 @@ function visitStmt(
  * pipeline (this bridge doesn't distinguish "stderr also piped" in
  * {@link CommandContext} — only stage position).
  */
-function flattenPipelineStages(cmd: ShNode): ShNode[] {
-  const stages: ShNode[] = [];
-  const workStack: unknown[] = [cmd.y, cmd.x];
+function flattenPipelineStages(cmd: BinaryCmd): Stmt[] {
+  const stages: Stmt[] = [];
+  const workStack: (Stmt | null)[] = [cmd.Y, cmd.X];
   while (workStack.length > 0) {
     const operandStmt = workStack.pop();
-    if (!isShNodeShape(operandStmt)) continue;
-    const innerCmd = operandStmt.cmd;
-    if (isShNodeShape(innerCmd) && innerCmd.type === 'BinaryCmd' && isPipeOp(innerCmd.op)) {
+    if (!isSyntaxNode(operandStmt)) continue;
+    const innerCmd = operandStmt.Cmd;
+    if (isSyntaxNode(innerCmd) && innerCmd.Type === 'BinaryCmd' && isPipeOp(innerCmd.Op)) {
       // Push `y` then `x` so `x` — the side that keeps the chain going in
       // the left-associative case — is popped (processed) first.
-      workStack.push(innerCmd.y, innerCmd.x);
+      workStack.push(innerCmd.Y, innerCmd.X);
     } else {
       stages.push(operandStmt);
     }
@@ -313,12 +307,12 @@ function flattenPipelineStages(cmd: ShNode): ShNode[] {
  * treatment, for the same reason).
  */
 function visitBinaryCmd(
-  cmd: ShNode,
+  cmd: BinaryCmd,
   context: readonly CommandContext[],
   sites: CommandSite[],
   depth: number,
 ): void {
-  const op = cmd.op;
+  const op = cmd.Op;
   if (isPipeOp(op)) {
     const stages = flattenPipelineStages(cmd);
     stages.forEach((stage, index) => {
@@ -327,32 +321,32 @@ function visitBinaryCmd(
     return;
   }
   interface RightOperand {
-    readonly stmt: ShNode;
+    readonly stmt: Stmt;
     readonly frame: CommandContext | undefined;
   }
   const rightOperands: RightOperand[] = [];
-  let spine: ShNode = cmd;
+  let spine: BinaryCmd = cmd;
   for (;;) {
-    const spineOp = spine.op;
+    const spineOp = spine.Op;
     const frame: CommandContext | undefined =
-      spineOp === BIN_CMD_OP_AND
+      spineOp === AndStmt
         ? { kind: 'and', side: 'right' }
-        : spineOp === BIN_CMD_OP_OR
+        : spineOp === OrStmt
           ? { kind: 'or', side: 'right' }
           : undefined;
-    const y = spine.y;
-    if (isShNodeShape(y)) rightOperands.push({ stmt: y, frame });
-    const x = spine.x;
-    if (!isShNodeShape(x)) break;
-    const innerCmd = x.cmd;
-    if (isShNodeShape(innerCmd) && innerCmd.type === 'BinaryCmd' && !isPipeOp(innerCmd.op)) {
+    const y = spine.Y;
+    if (isSyntaxNode(y)) rightOperands.push({ stmt: y, frame });
+    const x = spine.X;
+    if (!isSyntaxNode(x)) break;
+    const innerCmd = x.Cmd;
+    if (isSyntaxNode(innerCmd) && innerCmd.Type === 'BinaryCmd' && !isPipeOp(innerCmd.Op)) {
       spine = innerCmd;
       continue;
     }
     // `x` is the leftmost operand: not a further same-family BinaryCmd
     // link, so this is where the spine walk ends — visit it with the
     // *outer* (unmodified) context, exactly as the original recursive
-    // implementation visited `cmd.x`.
+    // implementation visited `cmd.X`.
     visitStmt(x, context, sites, depth + 1);
     break;
   }
@@ -362,25 +356,25 @@ function visitBinaryCmd(
 }
 
 function visitIfClause(
-  clause: ShNode,
+  clause: IfClause,
   context: readonly CommandContext[],
   sites: CommandSite[],
   depth: number,
 ): void {
   visitStmtList(
-    nodeArray(clause.cond),
+    nodeArray(clause.Cond),
     pushContext(context, { kind: 'if', branch: 'cond' }),
     sites,
     depth,
   );
   visitStmtList(
-    nodeArray(clause.then),
+    nodeArray(clause.Then),
     pushContext(context, { kind: 'if', branch: 'then' }),
     sites,
     depth,
   );
-  const elseClause = clause.else;
-  if (isShNodeShape(elseClause)) {
+  const elseClause = clause.Else;
+  if (isSyntaxNode(elseClause)) {
     // A chained `elif` — mvdan/sh models it as `IfClause.Else` pointing to
     // another `IfClause` — is one more genuine level of nesting than
     // `cond`/`then` above, so it gets its own `depth + 1` (a long `elif`
@@ -397,18 +391,24 @@ function visitIfClause(
 }
 
 function visitCommand(
-  cmd: ShNode,
+  cmd: Node,
   context: readonly CommandContext[],
   sites: CommandSite[],
   depth: number,
 ): void {
-  switch (cmd.type) {
+  switch (cmd.Type) {
     case 'CallExpr': {
-      scanForHiddenCommands(cmd.assigns, context, sites, depth);
-      scanForHiddenCommands(cmd.args, context, sites, depth);
-      const args = nodeArray(cmd.args);
+      scanForHiddenCommands(cmd.Assigns, context, sites, depth);
+      scanForHiddenCommands(cmd.Args, context, sites, depth);
+      // Argument positions carry command-line meaning. A nil pointer is an
+      // unsupported argument, not permission to shift later words left.
+      const args = cmd.Args ?? [];
       if (args.length > 0) {
-        const argv = args.map((word) => resolveWord(word, { context: 'command-argument' }));
+        const argv = args.map((word): WordResolution =>
+          word === null
+            ? { static: false, reason: 'unsupported' }
+            : resolveWord(word, { context: 'command-argument' }),
+        );
         sites.push({ node: cmd, argv0: argv[0], argv, context });
       }
       return;
@@ -420,11 +420,11 @@ function visitCommand(
       // Transparent grouping (`{ ...; }`) — no context frame, but still one
       // genuine level of structural nesting for depth-guard purposes (a
       // pathological `{ { { ... } } }` chain must still trip the guard).
-      visitStmtList(nodeArray(cmd.stmts), context, sites, depth + 1);
+      visitStmtList(nodeArray(cmd.Stmts), context, sites, depth + 1);
       return;
     case 'Subshell':
       visitStmtList(
-        nodeArray(cmd.stmts),
+        nodeArray(cmd.Stmts),
         pushContext(context, { kind: 'subshell' }),
         sites,
         depth + 1,
@@ -434,11 +434,11 @@ function visitCommand(
       visitIfClause(cmd, context, sites, depth + 1);
       return;
     case 'CaseClause': {
-      scanForHiddenCommands(cmd.word, context, sites, depth);
-      for (const item of nodeArray(cmd.items)) {
-        scanForHiddenCommands(item.patterns, context, sites, depth);
+      scanForHiddenCommands(cmd.Word, context, sites, depth);
+      for (const item of nodeArray(cmd.Items)) {
+        scanForHiddenCommands(item.Patterns, context, sites, depth);
         visitStmtList(
-          nodeArray(item.stmts),
+          nodeArray(item.Stmts),
           pushContext(context, { kind: 'case' }),
           sites,
           depth + 1,
@@ -447,9 +447,9 @@ function visitCommand(
       return;
     }
     case 'ForClause': {
-      scanForHiddenCommands(cmd.loop, context, sites, depth);
+      scanForHiddenCommands(cmd.Loop, context, sites, depth);
       visitStmtList(
-        nodeArray(cmd.do),
+        nodeArray(cmd.Do),
         pushContext(context, { kind: 'loop', role: 'body' }),
         sites,
         depth + 1,
@@ -458,13 +458,13 @@ function visitCommand(
     }
     case 'WhileClause': {
       visitStmtList(
-        nodeArray(cmd.cond),
+        nodeArray(cmd.Cond),
         pushContext(context, { kind: 'loop', role: 'cond' }),
         sites,
         depth + 1,
       );
       visitStmtList(
-        nodeArray(cmd.do),
+        nodeArray(cmd.Do),
         pushContext(context, { kind: 'loop', role: 'body' }),
         sites,
         depth + 1,
@@ -472,10 +472,10 @@ function visitCommand(
       return;
     }
     case 'FuncDecl': {
-      const nameNode = cmd.name;
-      const nameText = isShNodeShape(nameNode) ? stringField(nameNode, 'value') : '';
-      const body = cmd.body;
-      if (isShNodeShape(body)) {
+      const nameNode = cmd.Name;
+      const nameText = nameNode?.Value ?? '';
+      const body = cmd.Body;
+      if (isSyntaxNode(body)) {
         visitStmt(
           body,
           pushContext(context, { kind: 'function', name: nameText }),
@@ -486,36 +486,36 @@ function visitCommand(
       return;
     }
     case 'CoprocClause': {
-      scanForHiddenCommands(cmd.name, context, sites, depth);
-      const stmt = cmd.stmt;
-      if (isShNodeShape(stmt)) {
+      scanForHiddenCommands(cmd.Name, context, sites, depth);
+      const stmt = cmd.Stmt;
+      if (isSyntaxNode(stmt)) {
         visitStmt(stmt, pushContext(context, { kind: 'coproc' }), sites, depth + 1);
       }
       return;
     }
     case 'DeclClause':
-      scanForHiddenCommands(cmd.args, context, sites, depth);
+      scanForHiddenCommands(cmd.Args, context, sites, depth);
       return;
     case 'LetClause':
-      scanForHiddenCommands(cmd.exprs, context, sites, depth);
+      scanForHiddenCommands(cmd.Exprs, context, sites, depth);
       return;
     case 'TestClause':
-      scanForHiddenCommands(cmd.x, context, sites, depth);
+      scanForHiddenCommands(cmd.X, context, sites, depth);
       return;
     case 'ArithmCmd':
-      scanForHiddenCommands(cmd.x, context, sites, depth);
+      scanForHiddenCommands(cmd.X, context, sites, depth);
       return;
     case 'TestDecl': {
-      scanForHiddenCommands(cmd.description, context, sites, depth);
-      const body = cmd.body;
-      if (isShNodeShape(body)) visitStmt(body, context, sites, depth + 1);
+      scanForHiddenCommands(cmd.Description, context, sites, depth);
+      const body = cmd.Body;
+      if (isSyntaxNode(body)) visitStmt(body, context, sites, depth + 1);
       return;
     }
     case 'TimeClause': {
       // Transparent (`time cmd`) — no context frame, but still one genuine
       // level of structural nesting for depth-guard purposes.
-      const stmt = cmd.stmt;
-      if (isShNodeShape(stmt)) visitStmt(stmt, context, sites, depth + 1);
+      const stmt = cmd.Stmt;
+      if (isSyntaxNode(stmt)) visitStmt(stmt, context, sites, depth + 1);
       return;
     }
     default:
@@ -537,14 +537,14 @@ function visitCommand(
  * `CmdSubst`/`ProcSubst` nested inside words, wherever those words occur
  * (arguments, redirection targets, case subjects/patterns, loop word
  * lists, assignment values, test/arithmetic operands, …), not only inside
- * `CallExpr.args`.
+ * `CallExpr.Args`.
  *
  * An assignment-only `CallExpr` (`FOO=bar`, `args` empty) has no first word
  * to resolve and is not itself a command invocation — no program runs — so
  * it produces no {@link CommandSite}; any command substitution nested in
  * its assigned value (`FOO=$(sub)`) is still found and reported.
  *
- * Results are sorted by source position (`node.range[0]`), so nested
+ * Results are sorted by source position (`nodePos(node).Offset`), so nested
  * command substitutions and out-of-structural-order redirection targets
  * still come back in source order regardless of traversal order.
  *
@@ -556,14 +556,9 @@ function visitCommand(
  * traversed iteratively and never risks a stack overflow or trips the
  * nesting-depth guard below, regardless of how many stages/links it has.
  *
- * @param root - Any `ShNode` — typically a `File` from `parseSync`, but any
- * subtree (a `Stmt`, a `Command`, or even a bare `Word`) is handled. Note
- * `parseSync` itself already refuses (via its own `ShParseMaxDepthError`) any
- * input whose estimated nesting exceeds *its* limit before ever producing a
- * tree — see `parse-depth-guard.ts` — so a `root` sourced from `parseSync`
- * has already passed that earlier, lower-level line of defense; this
- * module's own guard below remains a second, independent backstop for
- * trees built or mutated some other way.
+ * @param root - Any `Node` — typically a `File` from `parseSync`, but any
+ * subtree (a `Stmt`, a `Command`, or even a bare `Word`) is handled.
+ * The depth guard also applies to caller-built or mutated trees.
  * @throws {@link ShAnalyzeMaxDepthError} if `root`'s genuinely nested
  * structure (subshells within subshells, chained command/process
  * substitutions, deeply nested `if`/`case`/loop/function/`time`/`{ }`
@@ -573,14 +568,17 @@ function visitCommand(
  * it as `deny`.
  * @public
  */
-export function enumerateCommands(root: ShNode): CommandSite[] {
+export function enumerateCommands(root: Node): CommandSite[] {
   const sites: CommandSite[] = [];
-  if (root.type === 'File') {
-    visitStmtList(nodeArray(root.stmts), [], sites, 0);
-  } else if (root.type === 'Stmt') {
+  if (root.Type === 'File') {
+    visitStmtList(nodeArray(root.Stmts), [], sites, 0);
+  } else if (root.Type === 'Stmt') {
     visitStmt(root, [], sites, 0);
   } else {
     visitCommand(root, [], sites, 0);
   }
-  return [...sites].sort((a, b) => a.node.range[0] - b.node.range[0]);
+  return sites
+    .map((site) => ({ site, offset: nodePos(site.node).Offset }))
+    .sort((a, b) => a.offset - b.offset)
+    .map(({ site }) => site);
 }

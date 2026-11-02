@@ -19,6 +19,39 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[InputError](./sh-ast.inputerror.md)
+
+
+</td><td>
+
+An argument cannot be represented by the binding or violates an upstream operation's input constraint. It is distinct from malformed shell source.
+
+
+</td></tr>
+<tr><td>
+
+[LangError](./sh-ast.langerror.md)
+
+
+</td><td>
+
+A syntax feature rejected for the selected upstream language variant.
+
+
+</td></tr>
+<tr><td>
+
+[ParseError](./sh-ast.parseerror.md)
+
+
+</td><td>
+
+A source grammar error reported by mvdan/sh, with the partial parsed file.
+
+
+</td></tr>
+<tr><td>
+
 [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)
 
 
@@ -48,29 +81,7 @@ Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely
 
 </td><td>
 
-Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never happen given a correctly-behaving WASM shim: a malformed result envelope, an unexpected root node type, or any other shim contract violation. Distinct from [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md) and [ShParseError](./sh-ast.shparseerror.md)<!-- -->, both of which indicate a foreseeable, actionable user mistake rather than an internal defect.
-
-
-</td></tr>
-<tr><td>
-
-[ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)
-
-
-</td><td>
-
-Thrown by [parseSync()](./sh-ast.parsesync.md) when [ParseOptions.dialect](./sh-ast.parseoptions.dialect.md) is not one of the supported [ShellDialect](./sh-ast.shelldialect.md) values. Carries the rejected value as `.dialect`<!-- -->; `.message` lists the supported dialects. A foreseeable, actionable user mistake — never an instance of [ShParseError](./sh-ast.shparseerror.md)<!-- -->.
-
-
-</td></tr>
-<tr><td>
-
-[ShParseError](./sh-ast.shparseerror.md)
-
-
-</td><td>
-
-Thrown by [parseSync()](./sh-ast.parsesync.md) when shell source fails to parse. Carries the real position mvdan/sh reported — never 1:1 placeholders: `.line` is 1-based exactly as mvdan/sh reports it, and `.column` is converted to UTF-16 code units so it agrees with [ShNode.loc](./sh-ast.shnode.loc.md)<!-- -->'s columns (mvdan/sh itself reports `column` as a byte count on the source line — see [ShParseErrorInfo.column](./sh-ast.shparseerrorinfo.column.md)<!-- -->). The unconverted, raw byte-column position appears only inside `.message`<!-- -->, mvdan/sh's own formatted string, verbatim.
+Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never happen given a correctly-behaving WASM shim: a malformed result envelope, an unexpected root node type, or any other shim contract violation. Distinct from [InputError](./sh-ast.inputerror.md) and [ParseError](./sh-ast.parseerror.md)<!-- -->, both of which indicate a foreseeable, actionable user mistake rather than an internal defect.
 
 
 </td></tr>
@@ -109,9 +120,7 @@ Description
 
 </td><td>
 
-Common base class for every error this package throws — originally just [parseSync](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShInternalError](./sh-ast.shinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)<!-- -->).
-
-Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry point (see \#23) — every subclass thrown by `sh-ast/analyze`<!-- -->'s own functions extends this, so a consumer of that subpath alone can `catch`<!-- -->/reference the base without also importing from root.
+Common base for every package failure, including upstream syntax errors and analysis errors. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
 
 
 </td></tr>
@@ -132,29 +141,67 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[parseSync(text, options)](./sh-ast.parsesync.md)
+[newPos(offset, line, column)](./sh-ast.newpos.md)
 
 
 </td><td>
 
-Synchronously parses shell source into a normalized AST.
-
-The first call instantiates the WASM shim synchronously (Node-only); the instance is reused across subsequent calls, so repeated calls do not re-instantiate (see design/ARCHITECTURE.md).
-
-Throws [ShParseError](./sh-ast.shparseerror.md) on a shell syntax error, carrying the position mvdan/sh reported: `.line` is 1-based exactly as mvdan/sh reports it; `.column` is converted to UTF-16 code units so it agrees with [ShNode.loc](./sh-ast.shnode.loc.md)<!-- -->'s columns (mvdan/sh itself reports `column` as a byte count — see [ShParseErrorInfo.column](./sh-ast.shparseerrorinfo.column.md)<!-- -->). That unconverted, raw position appears only inside `.message`<!-- -->, which is mvdan/sh's own formatted string, verbatim. Throws [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md) when [ParseOptions.dialect](./sh-ast.parseoptions.dialect.md) is not a supported dialect. Throws [ShInternalError](./sh-ast.shinternalerror.md) for failures that should never happen given a correctly-behaving shim (malformed envelope, unexpected root node type, shim contract violations). Throws [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md) if `text`<!-- -->'s conservatively estimated structural nesting depth exceeds the limit this bridge accepts — checked, and thrown, \*before\* `text` is ever handed to the WASM shim, since mvdan/sh's own parser has no recovery path for exhausting its stack on pathological nesting (see that error's doc comment and `parse-depth-guard.ts`<!-- -->).
+Constructs an upstream position. uint64 arguments use bigint when outside the safe-number range; upstream clamps offsets and zeroes overflowing line/column values. The binding does not replace those rules with its own range policy.
 
 
 </td></tr>
 <tr><td>
 
-[walk(node, visit)](./sh-ast.walk.md)
+[nodeEnd(node)](./sh-ast.nodeend.md)
 
 
 </td><td>
 
-Visits every node in a normalized tree, pre-order (parent before children), starting at `node`<!-- -->.
+Computes a node's ending position using upstream's End method, including recovered/invalid behavior and changes to text or child nodes.
 
-Children are discovered structurally: any field on a visited node whose value is itself a normalized node (or an array of normalized nodes) is treated as a child. This is deliberately not driven off [visitorKeys](./sh-ast.visitorkeys.md) — the spike's hand-written visitor-keys table missed `DeclClause.Variant` (see design/ARCHITECTURE.md) and silently under-walked the tree, and `visitorKeys` remains hand-maintained pending a schema generator (tracked separately). Walking structurally means this function's completeness never depends on that table's accuracy.
+
+</td></tr>
+<tr><td>
+
+[nodePos(node)](./sh-ast.nodepos.md)
+
+
+</td><td>
+
+Computes a node's starting position from its current fields using upstream's Pos method. No cached parse-time position can override subsequent tree edits.
+
+
+</td></tr>
+<tr><td>
+
+[parseSync(source, options)](./sh-ast.parsesync.md)
+
+
+</td><td>
+
+Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction.
+
+
+</td></tr>
+<tr><td>
+
+[parseWithPositionsSync(source, options)](./sh-ast.parsewithpositionssync.md)
+
+
+</td><td>
+
+Parses once while observing every real node's upstream bounds in Go. The separate immutable lookup describes this original parse; it never replaces live nodePos/nodeEnd or tracks edits. Source adapters avoid reconstructing each descendant subtree just to display the original source locations.
+
+
+</td></tr>
+<tr><td>
+
+[rawOperator(family, value)](./sh-ast.rawoperator.md)
+
+
+</td><td>
+
+Represents an unnamed value in an upstream uint32 operator family. Named constants remain precise literal unions; this explicit path preserves other Go values without claiming an operation such as Print accepts them.
 
 
 </td></tr>
@@ -175,84 +222,733 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[ArithmCmd](./sh-ast.arithmcmd.md)
+
+
+</td><td>
+
+ArithmCmd represents an arithmetic command.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArithmExp](./sh-ast.arithmexp.md)
+
+
+</td><td>
+
+ArithmExp represents an arithmetic expansion.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArrayElem](./sh-ast.arrayelem.md)
+
+
+</td><td>
+
+ArrayElem represents a Bash array element.
+
+Index can be nil; for example, declare -a x=(value). Value can be nil; for example, declare -A x=(`index`<!-- -->=). Finally, neither can be nil; for example, declare -A x=(`index`<!-- -->=value)
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArrayExpr](./sh-ast.arrayexpr.md)
+
+
+</td><td>
+
+ArrayExpr represents a Bash array expression.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Assign](./sh-ast.assign.md)
+
+
+</td><td>
+
+Assign represents an assignment to a variable.
+
+Here and elsewhere, Index can mean either an index expression into an indexed array, or a string key into an associative array.
+
+If Index is non-nil, the value will be a word and not an array as nested arrays are not allowed.
+
+If Naked is true and Name is nil, the assignment is part of a `DeclClause` and the argument (in the Value field) will be evaluated at run-time. This includes parameter expansions, which may expand to assignments or options.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryArithm](./sh-ast.binaryarithm.md)
+
+
+</td><td>
+
+BinaryArithm represents a binary arithmetic expression.
+
+If Op is any assign operator, X will be a word with a single `Lit` whose value is a valid name.
+
+Ternary operators like "a ? b : c" are fit into this structure. Thus, if Op==`TernQuest`<!-- -->, Y will be a `BinaryArithm` with Op==`TernColon`<!-- -->. `TernColon` does not appear in any other scenario.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryCmd](./sh-ast.binarycmd.md)
+
+
+</td><td>
+
+BinaryCmd represents a binary expression between two statements.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryTest](./sh-ast.binarytest.md)
+
+
+</td><td>
+
+BinaryTest represents a binary test expression.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Block](./sh-ast.block.md)
+
+
+</td><td>
+
+Block represents a series of commands that should be executed in a nested scope. It is essentially a list of statements within curly braces.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BraceExp](./sh-ast.braceexp.md)
+
+
+</td><td>
+
+BraceExp represents a Bash brace expression, such as "<!-- -->{<!-- -->a,f<!-- -->}<!-- -->" or "<!-- -->{<!-- -->1..10<!-- -->}<!-- -->".
+
+This node will only appear as a result of `SplitBraces`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CallExpr](./sh-ast.callexpr.md)
+
+
+</td><td>
+
+CallExpr represents a command execution or function call, otherwise known as a "simple command".
+
+If Args is empty, Assigns apply to the shell environment. Otherwise, they are variables that cannot be arrays and which only apply to the call.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CaseClause](./sh-ast.caseclause.md)
+
+
+</td><td>
+
+CaseClause represents a case (switch) clause.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CaseItem](./sh-ast.caseitem.md)
+
+
+</td><td>
+
+CaseItem represents a pattern list (case) within a `CaseClause`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CmdSubst](./sh-ast.cmdsubst.md)
+
+
+</td><td>
+
+CmdSubst represents a command substitution.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Comment\_2](./sh-ast.comment_2.md)
+
+
+</td><td>
+
+Comment represents a single comment on a single line.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CoprocClause](./sh-ast.coprocclause.md)
+
+
+</td><td>
+
+CoprocClause represents a Bash coproc clause.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CStyleLoop](./sh-ast.cstyleloop.md)
+
+
+</td><td>
+
+CStyleLoop represents the behavior of a for clause similar to the C language.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[DblQuoted](./sh-ast.dblquoted.md)
+
+
+</td><td>
+
+DblQuoted represents a list of nodes within double quotes.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[DeclClause](./sh-ast.declclause.md)
+
+
+</td><td>
+
+DeclClause represents a Bash declare clause.
+
+Args can contain a mix of regular and naked assignments. The naked assignments can represent either options or variable names.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Expansion](./sh-ast.expansion.md)
+
+
+</td><td>
+
+Expansion represents string manipulation in a `ParamExp` other than those covered by `Replace`<!-- -->.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
+
+
+</td></tr>
+<tr><td>
+
+[ExtGlob](./sh-ast.extglob.md)
+
+
+</td><td>
+
+ExtGlob represents a Bash extended globbing expression. Note that these are parsed independently of whether or not `shopt -s extglob` has been used, as the parser runs statically and independently of any interpreter.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[File\_2](./sh-ast.file_2.md)
+
+
+</td><td>
+
+File represents a shell source file.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[FlagsArithm](./sh-ast.flagsarithm.md)
+
+
+</td><td>
+
+FlagsArithm represents zsh subscript flags attached to an arithmetic expression, such as $<!-- -->{<!-- -->array\[(flags)expr\]<!-- -->}<!-- -->.
+
+This node will only appear with `LangZsh`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ForClause](./sh-ast.forclause.md)
+
+
+</td><td>
+
+ForClause represents a for or a select clause. The latter is only present in Bash.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[FuncDecl](./sh-ast.funcdecl.md)
+
+
+</td><td>
+
+FuncDecl represents the declaration of a function.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[IfClause](./sh-ast.ifclause.md)
+
+
+</td><td>
+
+IfClause represents an if statement.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[LetClause](./sh-ast.letclause.md)
+
+
+</td><td>
+
+LetClause represents a Bash let clause.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Lit](./sh-ast.lit.md)
+
+
+</td><td>
+
+Lit represents a string literal.
+
+Note that a parsed string literal may not appear as-is in the original source code, as it is possible to split literals by escaping newlines. The splitting is lost, but the end position is not.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[NodePositions](./sh-ast.nodepositions.md)
+
+
+</td><td>
+
+A node's upstream bounds as observed during parsing. These values refer to the original source, even when the corresponding syntax record is later edited.
+
+
+</td></tr>
+<tr><td>
+
+[ParamExp](./sh-ast.paramexp.md)
+
+
+</td><td>
+
+ParamExp represents a parameter expansion.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParenArithm](./sh-ast.parenarithm.md)
+
+
+</td><td>
+
+ParenArithm represents an arithmetic expression within parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParenTest](./sh-ast.parentest.md)
+
+
+</td><td>
+
+ParenTest represents a test expression within parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParsedFile](./sh-ast.parsedfile.md)
+
+
+</td><td>
+
+Mutable upstream syntax together with a separate source-bound position view. Editing File never updates Positions; source consumers can retain original spans while transformations query live nodePos/nodeEnd as needed.
+
+
+</td></tr>
+<tr><td>
+
 [ParseOptions](./sh-ast.parseoptions.md)
 
 
 </td><td>
 
-Options accepted by [parseSync()](./sh-ast.parsesync.md)<!-- -->.
+Whole-file parser inputs corresponding to upstream controls. Defaults match NewParser; in particular comments are retained only when KeepComments is true. Numeric int arguments accept bigint because Go's WASM int is signed 64-bit.
 
 
 </td></tr>
 <tr><td>
 
-[Position](./sh-ast.position.md)
+[PositionSnapshot](./sh-ast.positionsnapshot.md)
 
 
 </td><td>
 
-A 1-based line/column position. Columns are UTF-16 code units, matching JavaScript string indexing (see [ShNode.range](./sh-ast.shnode.range.md)<!-- -->).
+Identity-based lookup of the original parse's bounds. A new or copied node has no observation. The index never calls WASM or recalculates edited node bounds.
 
 
 </td></tr>
 <tr><td>
 
-[ShFile](./sh-ast.shfile.md)
+[ProcSubst](./sh-ast.procsubst.md)
 
 
 </td><td>
 
-The root node of a parsed shell script.
+ProcSubst represents a Bash process substitution.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
 
 
 </td></tr>
 <tr><td>
 
-[ShNode](./sh-ast.shnode.md)
+[Redirect](./sh-ast.redirect.md)
 
 
 </td><td>
 
-A normalized AST node produced by [parseSync](./sh-ast.parsesync.md)<!-- -->.
+Redirect represents an input/output redirection.
 
-`range` and `loc` are expressed in UTF-16 code units, so `code.slice(node.range[0], node.range[1])` reproduces the node's exact source text — even though mvdan/sh itself reports byte offsets and byte-counting columns internally (see design/ARCHITECTURE.md's "Serialization contract"). Every other field copied over from mvdan/sh's typedjson tree keeps its original value but with the field name lowercased (`Stmts` becomes `stmts`<!-- -->, `CondLast` becomes `condlast`<!-- -->, etc.).
-
-Also re-exported from `sh-ast/analyze` (see \#23) — the subpath's public surface consumes and exposes `ShNode`<!-- -->, so a consumer can reference the type without also importing from the root `sh-ast` entry point.
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
 
 
 </td></tr>
 <tr><td>
 
-[ShParseErrorInfo](./sh-ast.shparseerrorinfo.md)
+[Replace](./sh-ast.replace.md)
 
 
 </td><td>
 
-Position info attached to a [ShParseError](./sh-ast.shparseerror.md)<!-- -->.
+Replace represents a search and replace expression inside a `ParamExp`<!-- -->.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
 
 
 </td></tr>
-</tbody></table>
+<tr><td>
 
-## Namespaces
-
-<table><thead><tr><th>
-
-Namespace
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[ShNodes](./sh-ast.shnodes.md)
+[SglQuoted](./sh-ast.sglquoted.md)
 
 
 </td><td>
+
+SglQuoted represents a string within single quotes.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Slice](./sh-ast.slice.md)
+
+
+</td><td>
+
+Slice represents a character slicing expression inside a `ParamExp`<!-- -->.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->. `LangZsh` uses a `BinaryArithm` with `Comma` in `ParamExp.Index` instead.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
+
+
+</td></tr>
+<tr><td>
+
+[Stmt](./sh-ast.stmt.md)
+
+
+</td><td>
+
+Stmt represents a statement, also known as a "complete command". It is compromised of a command and other components that may come before or after it.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Subshell](./sh-ast.subshell.md)
+
+
+</td><td>
+
+Subshell represents a series of commands that should be executed in a nested shell environment.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[SyntaxFieldSchema](./sh-ast.syntaxfieldschema.md)
+
+
+</td><td>
+
+A field's upstream value kind and nil-bearing boundaries. Null type names identify scalar/position kinds; other names identify concrete Go types.
+
+
+</td></tr>
+<tr><td>
+
+[SyntaxPos](./sh-ast.syntaxpos.md)
+
+
+</td><td>
+
+The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid, IsRecovered, and OffsetOverflow retain distinctions that coordinates alone cannot express. Token positions are data; node bounds are derived operations.
+
+
+</td></tr>
+<tr><td>
+
+[SyntaxRecordSchema](./sh-ast.syntaxrecordschema.md)
+
+
+</td><td>
+
+Complete data fields and real syntax.Node membership.
+
+
+</td></tr>
+<tr><td>
+
+[TestClause](./sh-ast.testclause.md)
+
+
+</td><td>
+
+TestClause represents a Bash extended test clause.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TestDecl](./sh-ast.testdecl.md)
+
+
+</td><td>
+
+TestDecl represents the declaration of a Bats test function.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TimeClause](./sh-ast.timeclause.md)
+
+
+</td><td>
+
+TimeClause represents a Bash time clause. PosixFormat corresponds to the -p flag.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TypedNil](./sh-ast.typednil.md)
+
+
+</td><td>
+
+An upstream interface containing a nil pointer of a concrete syntax.Node kind. This differs from a nil interface (null): the concrete Go type remains observable and can affect operations. Only interface-valued positions admit this tag; concrete pointer fields use null. No record fields or node bounds are stored on the tag.
+
+
+</td></tr>
+<tr><td>
+
+[UnaryArithm](./sh-ast.unaryarithm.md)
+
+
+</td><td>
+
+UnaryArithm represents an unary arithmetic expression. The unary operator may come before or after the sub-expression.
+
+If Op is `Inc` or `Dec`<!-- -->, X will be a word with a single `Lit` whose value is a valid name.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[UnaryTest](./sh-ast.unarytest.md)
+
+
+</td><td>
+
+UnaryTest represents a unary test expression. The unary operator may come before or after the sub-expression.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[WhileClause](./sh-ast.whileclause.md)
+
+
+</td><td>
+
+WhileClause represents a while or an until clause.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Word](./sh-ast.word.md)
+
+
+</td><td>
+
+Word represents a shell word, containing one or more word parts contiguous to each other. The word is delimited by word boundaries, such as spaces, newlines, semicolons, or parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[WordIter](./sh-ast.worditer.md)
+
+
+</td><td>
+
+WordIter represents the iteration of a variable over a series of words in a for clause. If InPos is an invalid position, the "in" token was missing, so the iteration is over the shell's positional parameters.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
 
 
 </td></tr>
@@ -273,16 +969,1954 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[visitorKeys](./sh-ast.visitorkeys.md)
+[Add](./sh-ast.add.md)
 
 
 </td><td>
 
-Maps each normalized node `type` to the field names (lowercased, matching the normalized node shape produced by `normalize`<!-- -->) whose values hold child nodes.
+Upstream BinAritOperator constant Add. Its numeric value is preserved exactly.
 
-Generated from mvdan/sh's `syntax` package struct definitions by `tools/gen-visitor-keys` (see design/ARCHITECTURE.md, "The schema table is generated, not hand-written") — this module only re-exports the generated table under the public name, frozen. [walk()](./sh-ast.walk.md) does not depend on this table for correctness — it discovers children structurally — so any gap here (there shouldn't be one; the kitchen-sink golden test guards it) affects only external consumers that choose to traverse via this table.
++
 
-Frozen (including each per-type field-name array) so immutability of this shared, module-scoped table is a contract, not just a convention any importer happens to honor.
+
+</td></tr>
+<tr><td>
+
+[AddAssgn](./sh-ast.addassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant AddAssgn. Its numeric value is preserved exactly.
+
++=
+
+
+</td></tr>
+<tr><td>
+
+[AlternateUnset](./sh-ast.alternateunset.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant AlternateUnset. Its numeric value is preserved exactly.
+
++
+
+
+</td></tr>
+<tr><td>
+
+[AlternateUnsetOrNull](./sh-ast.alternateunsetornull.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant AlternateUnsetOrNull. Its numeric value is preserved exactly.
+
+:+
+
+
+</td></tr>
+<tr><td>
+
+[And](./sh-ast.and.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant And. Its numeric value is preserved exactly.
+
+&amp;
+
+
+</td></tr>
+<tr><td>
+
+[AndArit](./sh-ast.andarit.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant AndArit. Its numeric value is preserved exactly.
+
+&amp;&amp;
+
+
+</td></tr>
+<tr><td>
+
+[AndAssgn](./sh-ast.andassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant AndAssgn. Its numeric value is preserved exactly.
+
+&amp;=
+
+
+</td></tr>
+<tr><td>
+
+[AndBoolAssgn](./sh-ast.andboolassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant AndBoolAssgn. Its numeric value is preserved exactly.
+
+&amp;&amp;=
+
+
+</td></tr>
+<tr><td>
+
+[AndStmt](./sh-ast.andstmt.md)
+
+
+</td><td>
+
+Upstream BinCmdOperator constant AndStmt. Its numeric value is preserved exactly.
+
+&amp;&amp;
+
+
+</td></tr>
+<tr><td>
+
+[AndTest](./sh-ast.andtest.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant AndTest. Its numeric value is preserved exactly.
+
+&amp;&amp;
+
+
+</td></tr>
+<tr><td>
+
+[AppAll](./sh-ast.appall.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant AppAll. Its numeric value is preserved exactly.
+
+&amp;<!-- -->&gt;<!-- -->&gt;
+
+
+</td></tr>
+<tr><td>
+
+[AppAllClob](./sh-ast.appallclob.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant AppAllClob. Its numeric value is preserved exactly.
+
+&amp;<!-- -->&gt;<!-- -->&gt;<!-- -->\| with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[AppClob](./sh-ast.appclob.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant AppClob. Its numeric value is preserved exactly.
+
+&gt;<!-- -->&gt;<!-- -->\| with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[AppOut](./sh-ast.appout.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant AppOut. Its numeric value is preserved exactly.
+
+&gt;<!-- -->&gt;
+
+
+</td></tr>
+<tr><td>
+
+[ArrayExclude](./sh-ast.arrayexclude.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant ArrayExclude. Its numeric value is preserved exactly.
+
+:\| with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[ArrayIntersect](./sh-ast.arrayintersect.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant ArrayIntersect. Its numeric value is preserved exactly.
+
+:\* with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[Assgn](./sh-ast.assgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Assgn. Its numeric value is preserved exactly.
+
+=
+
+
+</td></tr>
+<tr><td>
+
+[AssignUnset](./sh-ast.assignunset.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant AssignUnset. Its numeric value is preserved exactly.
+
+=
+
+
+</td></tr>
+<tr><td>
+
+[AssignUnsetOrNull](./sh-ast.assignunsetornull.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant AssignUnsetOrNull. Its numeric value is preserved exactly.
+
+:=
+
+
+</td></tr>
+<tr><td>
+
+[BitNegation](./sh-ast.bitnegation.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant BitNegation. Its numeric value is preserved exactly.
+
+\~
+
+
+</td></tr>
+<tr><td>
+
+[Break](./sh-ast.break.md)
+
+
+</td><td>
+
+Upstream CaseOperator constant Break. Its numeric value is preserved exactly.
+
+;;
+
+
+</td></tr>
+<tr><td>
+
+[ClbOut](./sh-ast.clbout.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant ClbOut. Its numeric value is preserved exactly.
+
+Deprecated: use `RdrClob`
+
+
+</td></tr>
+<tr><td>
+
+[CmdIn](./sh-ast.cmdin.md)
+
+
+</td><td>
+
+Upstream ProcOperator constant CmdIn. Its numeric value is preserved exactly.
+
+&lt;<!-- -->(
+
+
+</td></tr>
+<tr><td>
+
+[CmdInTemp](./sh-ast.cmdintemp.md)
+
+
+</td><td>
+
+Upstream ProcOperator constant CmdInTemp. Its numeric value is preserved exactly.
+
+=(
+
+
+</td></tr>
+<tr><td>
+
+[CmdOut](./sh-ast.cmdout.md)
+
+
+</td><td>
+
+Upstream ProcOperator constant CmdOut. Its numeric value is preserved exactly.
+
+&gt;<!-- -->(
+
+
+</td></tr>
+<tr><td>
+
+[Comma](./sh-ast.comma.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Comma. Its numeric value is preserved exactly.
+
+,
+
+
+</td></tr>
+<tr><td>
+
+[DashHdoc](./sh-ast.dashhdoc.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant DashHdoc. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&lt;<!-- -->-
+
+
+</td></tr>
+<tr><td>
+
+[Dec](./sh-ast.dec.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant Dec. Its numeric value is preserved exactly.
+
+--
+
+
+</td></tr>
+<tr><td>
+
+[DefaultUnset](./sh-ast.defaultunset.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant DefaultUnset. Its numeric value is preserved exactly.
+
+-
+
+
+</td></tr>
+<tr><td>
+
+[DefaultUnsetOrNull](./sh-ast.defaultunsetornull.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant DefaultUnsetOrNull. Its numeric value is preserved exactly.
+
+:-
+
+
+</td></tr>
+<tr><td>
+
+[DplIn](./sh-ast.dplin.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant DplIn. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&amp;
+
+
+</td></tr>
+<tr><td>
+
+[DplOut](./sh-ast.dplout.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant DplOut. Its numeric value is preserved exactly.
+
+&gt;<!-- -->&amp;
+
+
+</td></tr>
+<tr><td>
+
+[Eql](./sh-ast.eql.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Eql. Its numeric value is preserved exactly.
+
+==
+
+
+</td></tr>
+<tr><td>
+
+[ErrorUnset](./sh-ast.errorunset.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant ErrorUnset. Its numeric value is preserved exactly.
+
+?
+
+
+</td></tr>
+<tr><td>
+
+[ErrorUnsetOrNull](./sh-ast.errorunsetornull.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant ErrorUnsetOrNull. Its numeric value is preserved exactly.
+
+:?
+
+
+</td></tr>
+<tr><td>
+
+[Fallthrough](./sh-ast.fallthrough.md)
+
+
+</td><td>
+
+Upstream CaseOperator constant Fallthrough. Its numeric value is preserved exactly.
+
+;&amp;
+
+
+</td></tr>
+<tr><td>
+
+[Geq](./sh-ast.geq.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Geq. Its numeric value is preserved exactly.
+
+&gt;<!-- -->=
+
+
+</td></tr>
+<tr><td>
+
+[GlobExcept](./sh-ast.globexcept.md)
+
+
+</td><td>
+
+Upstream GlobOperator constant GlobExcept. Its numeric value is preserved exactly.
+
+!(
+
+
+</td></tr>
+<tr><td>
+
+[GlobOne](./sh-ast.globone.md)
+
+
+</td><td>
+
+Upstream GlobOperator constant GlobOne. Its numeric value is preserved exactly.
+
+@<!-- -->(
+
+
+</td></tr>
+<tr><td>
+
+[GlobOneOrMore](./sh-ast.globoneormore.md)
+
+
+</td><td>
+
+Upstream GlobOperator constant GlobOneOrMore. Its numeric value is preserved exactly.
+
++(
+
+
+</td></tr>
+<tr><td>
+
+[GlobZeroOrMore](./sh-ast.globzeroormore.md)
+
+
+</td><td>
+
+Upstream GlobOperator constant GlobZeroOrMore. Its numeric value is preserved exactly.
+
+\*(
+
+
+</td></tr>
+<tr><td>
+
+[GlobZeroOrOne](./sh-ast.globzeroorone.md)
+
+
+</td><td>
+
+Upstream GlobOperator constant GlobZeroOrOne. Its numeric value is preserved exactly.
+
+?(
+
+
+</td></tr>
+<tr><td>
+
+[Gtr](./sh-ast.gtr.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Gtr. Its numeric value is preserved exactly.
+
+&gt;
+
+
+</td></tr>
+<tr><td>
+
+[Hdoc](./sh-ast.hdoc.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant Hdoc. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&lt;
+
+
+</td></tr>
+<tr><td>
+
+[Inc](./sh-ast.inc.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant Inc. Its numeric value is preserved exactly.
+
+++
+
+
+</td></tr>
+<tr><td>
+
+[LangAuto](./sh-ast.langauto.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangAuto. Its numeric value is preserved exactly.
+
+LangAuto corresponds to automatic language detection, commonly used by end-user applications like shfmt, which can guess a file's language variant given its filename or shebang.
+
+At this time, `Variant` does not support LangAuto.
+
+
+</td></tr>
+<tr><td>
+
+[LangBash](./sh-ast.langbash.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangBash. Its numeric value is preserved exactly.
+
+LangBash corresponds to the GNU Bash language, as described in its manual at https://www.gnu.org/software/bash/manual/bash.html.
+
+We currently follow Bash version 5.2.
+
+Its string representation is "bash".
+
+
+</td></tr>
+<tr><td>
+
+[LangBats](./sh-ast.langbats.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangBats. Its numeric value is preserved exactly.
+
+LangBats corresponds to the Bash Automated Testing System language, as described at https://github.com/bats-core/bats-core. Note that it's just a small extension of the Bash language.
+
+Its string representation is "bats".
+
+
+</td></tr>
+<tr><td>
+
+[LangMirBSDKorn](./sh-ast.langmirbsdkorn.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangMirBSDKorn. Its numeric value is preserved exactly.
+
+LangMirBSDKorn corresponds to the MirBSD Korn Shell, also known as mksh, as described at http://www.mirbsd.org/htman/i386/man1/mksh.htm. Note that it shares some features with Bash, due to the shared ancestry that is ksh.
+
+We currently follow mksh version 59.
+
+Its string representation is "mksh".
+
+
+</td></tr>
+<tr><td>
+
+[LangPOSIX](./sh-ast.langposix.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangPOSIX. Its numeric value is preserved exactly.
+
+LangPOSIX corresponds to the POSIX Shell language, as described at https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3\_chap02.html.
+
+Its string representation is "posix" or "sh".
+
+
+</td></tr>
+<tr><td>
+
+[LangZsh](./sh-ast.langzsh.md)
+
+
+</td><td>
+
+Upstream LangVariant constant LangZsh. Its numeric value is preserved exactly.
+
+LangZsh corresponds to the Z shell, as described at https://www.zsh.org/.
+
+Note that its support in the syntax package is experimental and incomplete for now. See https://github.com/mvdan/sh/issues/120.
+
+We currently follow Zsh version 5.9.
+
+Its string representation is "zsh".
+
+
+</td></tr>
+<tr><td>
+
+[Leq](./sh-ast.leq.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Leq. Its numeric value is preserved exactly.
+
+&lt;<!-- -->=
+
+
+</td></tr>
+<tr><td>
+
+[LowerAll](./sh-ast.lowerall.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant LowerAll. Its numeric value is preserved exactly.
+
+,,
+
+
+</td></tr>
+<tr><td>
+
+[LowerFirst](./sh-ast.lowerfirst.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant LowerFirst. Its numeric value is preserved exactly.
+
+,
+
+
+</td></tr>
+<tr><td>
+
+[Lss](./sh-ast.lss.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Lss. Its numeric value is preserved exactly.
+
+&lt;
+
+
+</td></tr>
+<tr><td>
+
+[MatchEmpty](./sh-ast.matchempty.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant MatchEmpty. Its numeric value is preserved exactly.
+
+:\# with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[Minus](./sh-ast.minus.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant Minus. Its numeric value is preserved exactly.
+
+-
+
+
+</td></tr>
+<tr><td>
+
+[Mul](./sh-ast.mul.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Mul. Its numeric value is preserved exactly.
+
+\*
+
+
+</td></tr>
+<tr><td>
+
+[MulAssgn](./sh-ast.mulassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant MulAssgn. Its numeric value is preserved exactly.
+
+\*=
+
+
+</td></tr>
+<tr><td>
+
+[NamesPrefix](./sh-ast.namesprefix.md)
+
+
+</td><td>
+
+Upstream ParNamesOperator constant NamesPrefix. Its numeric value is preserved exactly.
+
+\*
+
+
+</td></tr>
+<tr><td>
+
+[NamesPrefixWords](./sh-ast.namesprefixwords.md)
+
+
+</td><td>
+
+Upstream ParNamesOperator constant NamesPrefixWords. Its numeric value is preserved exactly.
+
+@
+
+
+</td></tr>
+<tr><td>
+
+[Neq](./sh-ast.neq.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Neq. Its numeric value is preserved exactly.
+
+!=
+
+
+</td></tr>
+<tr><td>
+
+[Not](./sh-ast.not.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant Not. Its numeric value is preserved exactly.
+
+!
+
+
+</td></tr>
+<tr><td>
+
+[Or](./sh-ast.or.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Or. Its numeric value is preserved exactly.
+
+\|
+
+
+</td></tr>
+<tr><td>
+
+[OrArit](./sh-ast.orarit.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant OrArit. Its numeric value is preserved exactly.
+
+\|\|
+
+
+</td></tr>
+<tr><td>
+
+[OrAssgn](./sh-ast.orassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant OrAssgn. Its numeric value is preserved exactly.
+
+\|=
+
+
+</td></tr>
+<tr><td>
+
+[OrBoolAssgn](./sh-ast.orboolassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant OrBoolAssgn. Its numeric value is preserved exactly.
+
+\|\|=
+
+
+</td></tr>
+<tr><td>
+
+[OrStmt](./sh-ast.orstmt.md)
+
+
+</td><td>
+
+Upstream BinCmdOperator constant OrStmt. Its numeric value is preserved exactly.
+
+\|\|
+
+
+</td></tr>
+<tr><td>
+
+[OrTest](./sh-ast.ortest.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant OrTest. Its numeric value is preserved exactly.
+
+\|\|
+
+
+</td></tr>
+<tr><td>
+
+[OtherParamOps](./sh-ast.otherparamops.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant OtherParamOps. Its numeric value is preserved exactly.
+
+@
+
+
+</td></tr>
+<tr><td>
+
+[Pipe](./sh-ast.pipe.md)
+
+
+</td><td>
+
+Upstream BinCmdOperator constant Pipe. Its numeric value is preserved exactly.
+
+\|
+
+
+</td></tr>
+<tr><td>
+
+[PipeAll](./sh-ast.pipeall.md)
+
+
+</td><td>
+
+Upstream BinCmdOperator constant PipeAll. Its numeric value is preserved exactly.
+
+\|&amp;
+
+
+</td></tr>
+<tr><td>
+
+[Plus](./sh-ast.plus.md)
+
+
+</td><td>
+
+Upstream UnAritOperator constant Plus. Its numeric value is preserved exactly.
+
++
+
+
+</td></tr>
+<tr><td>
+
+[Pow](./sh-ast.pow.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Pow. Its numeric value is preserved exactly.
+
+\*\*
+
+
+</td></tr>
+<tr><td>
+
+[PowAssgn](./sh-ast.powassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant PowAssgn. Its numeric value is preserved exactly.
+
+\*\*=
+
+
+</td></tr>
+<tr><td>
+
+[Quo](./sh-ast.quo.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Quo. Its numeric value is preserved exactly.
+
+/
+
+
+</td></tr>
+<tr><td>
+
+[QuoAssgn](./sh-ast.quoassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant QuoAssgn. Its numeric value is preserved exactly.
+
+/=
+
+
+</td></tr>
+<tr><td>
+
+[RdrAll](./sh-ast.rdrall.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrAll. Its numeric value is preserved exactly.
+
+&amp;<!-- -->&gt;
+
+
+</td></tr>
+<tr><td>
+
+[RdrAllClob](./sh-ast.rdrallclob.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrAllClob. Its numeric value is preserved exactly.
+
+&amp;<!-- -->&gt;<!-- -->\| with `LangZsh`
+
+
+</td></tr>
+<tr><td>
+
+[RdrClob](./sh-ast.rdrclob.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrClob. Its numeric value is preserved exactly.
+
+&gt;<!-- -->\|
+
+
+</td></tr>
+<tr><td>
+
+[RdrIn](./sh-ast.rdrin.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrIn. Its numeric value is preserved exactly.
+
+&lt;
+
+
+</td></tr>
+<tr><td>
+
+[RdrInOut](./sh-ast.rdrinout.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrInOut. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&gt;
+
+
+</td></tr>
+<tr><td>
+
+[RdrOut](./sh-ast.rdrout.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant RdrOut. Its numeric value is preserved exactly.
+
+&gt;
+
+
+</td></tr>
+<tr><td>
+
+[Rem](./sh-ast.rem.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Rem. Its numeric value is preserved exactly.
+
+%
+
+
+</td></tr>
+<tr><td>
+
+[RemAssgn](./sh-ast.remassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant RemAssgn. Its numeric value is preserved exactly.
+
+%=
+
+
+</td></tr>
+<tr><td>
+
+[RemLargePrefix](./sh-ast.remlargeprefix.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant RemLargePrefix. Its numeric value is preserved exactly.
+
+\#\#
+
+
+</td></tr>
+<tr><td>
+
+[RemLargeSuffix](./sh-ast.remlargesuffix.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant RemLargeSuffix. Its numeric value is preserved exactly.
+
+%%
+
+
+</td></tr>
+<tr><td>
+
+[RemSmallPrefix](./sh-ast.remsmallprefix.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant RemSmallPrefix. Its numeric value is preserved exactly.
+
+\#
+
+
+</td></tr>
+<tr><td>
+
+[RemSmallSuffix](./sh-ast.remsmallsuffix.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant RemSmallSuffix. Its numeric value is preserved exactly.
+
+%
+
+
+</td></tr>
+<tr><td>
+
+[Resume](./sh-ast.resume.md)
+
+
+</td><td>
+
+Upstream CaseOperator constant Resume. Its numeric value is preserved exactly.
+
+;;&amp;
+
+
+</td></tr>
+<tr><td>
+
+[ResumeKorn](./sh-ast.resumekorn.md)
+
+
+</td><td>
+
+Upstream CaseOperator constant ResumeKorn. Its numeric value is preserved exactly.
+
+;\|
+
+
+</td></tr>
+<tr><td>
+
+[Shl](./sh-ast.shl.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Shl. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&lt;
+
+
+</td></tr>
+<tr><td>
+
+[ShlAssgn](./sh-ast.shlassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant ShlAssgn. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&lt;<!-- -->=
+
+
+</td></tr>
+<tr><td>
+
+[Shr](./sh-ast.shr.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Shr. Its numeric value is preserved exactly.
+
+&gt;<!-- -->&gt;
+
+
+</td></tr>
+<tr><td>
+
+[ShrAssgn](./sh-ast.shrassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant ShrAssgn. Its numeric value is preserved exactly.
+
+&gt;<!-- -->&gt;<!-- -->=
+
+
+</td></tr>
+<tr><td>
+
+[Sub](./sh-ast.sub.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Sub. Its numeric value is preserved exactly.
+
+-
+
+
+</td></tr>
+<tr><td>
+
+[SubAssgn](./sh-ast.subassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant SubAssgn. Its numeric value is preserved exactly.
+
+-=
+
+
+</td></tr>
+<tr><td>
+
+[SYNTAX\_INTERFACES](./sh-ast.syntax_interfaces.md)
+
+
+</td><td>
+
+Concrete alternatives for upstream syntax interfaces. Auxiliary records are absent from Node; consumers must preserve that distinction in their adapters.
+
+
+</td></tr>
+<tr><td>
+
+[SYNTAX\_SCHEMA](./sh-ast.syntax_schema.md)
+
+
+</td><td>
+
+Complete upstream field metadata for validating or adapting syntax records. Metadata order is not the upstream Walk visitation order. Shared records are deeply frozen even though the syntax values they describe are mutable.
+
+
+</td></tr>
+<tr><td>
+
+[TernColon](./sh-ast.terncolon.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant TernColon. Its numeric value is preserved exactly.
+
+:
+
+
+</td></tr>
+<tr><td>
+
+[TernQuest](./sh-ast.ternquest.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant TernQuest. Its numeric value is preserved exactly.
+
+?
+
+
+</td></tr>
+<tr><td>
+
+[TsAfter](./sh-ast.tsafter.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsAfter. Its numeric value is preserved exactly.
+
+&gt;
+
+
+</td></tr>
+<tr><td>
+
+[TsBefore](./sh-ast.tsbefore.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsBefore. Its numeric value is preserved exactly.
+
+&lt;
+
+
+</td></tr>
+<tr><td>
+
+[TsBlckSp](./sh-ast.tsblcksp.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsBlckSp. Its numeric value is preserved exactly.
+
+-b
+
+
+</td></tr>
+<tr><td>
+
+[TsCharSp](./sh-ast.tscharsp.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsCharSp. Its numeric value is preserved exactly.
+
+-c
+
+
+</td></tr>
+<tr><td>
+
+[TsDevIno](./sh-ast.tsdevino.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsDevIno. Its numeric value is preserved exactly.
+
+-ef
+
+
+</td></tr>
+<tr><td>
+
+[TsDirect](./sh-ast.tsdirect.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsDirect. Its numeric value is preserved exactly.
+
+-d
+
+
+</td></tr>
+<tr><td>
+
+[TsEmpStr](./sh-ast.tsempstr.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsEmpStr. Its numeric value is preserved exactly.
+
+-z
+
+
+</td></tr>
+<tr><td>
+
+[TsEql](./sh-ast.tseql.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsEql. Its numeric value is preserved exactly.
+
+-eq
+
+
+</td></tr>
+<tr><td>
+
+[TsExec](./sh-ast.tsexec.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsExec. Its numeric value is preserved exactly.
+
+-x
+
+
+</td></tr>
+<tr><td>
+
+[TsExists](./sh-ast.tsexists.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsExists. Its numeric value is preserved exactly.
+
+-e
+
+
+</td></tr>
+<tr><td>
+
+[TsFdTerm](./sh-ast.tsfdterm.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsFdTerm. Its numeric value is preserved exactly.
+
+-t
+
+
+</td></tr>
+<tr><td>
+
+[TsGeq](./sh-ast.tsgeq.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsGeq. Its numeric value is preserved exactly.
+
+-ge
+
+
+</td></tr>
+<tr><td>
+
+[TsGIDSet](./sh-ast.tsgidset.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsGIDSet. Its numeric value is preserved exactly.
+
+-g
+
+
+</td></tr>
+<tr><td>
+
+[TsGrpOwn](./sh-ast.tsgrpown.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsGrpOwn. Its numeric value is preserved exactly.
+
+-G
+
+
+</td></tr>
+<tr><td>
+
+[TsGtr](./sh-ast.tsgtr.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsGtr. Its numeric value is preserved exactly.
+
+-gt
+
+
+</td></tr>
+<tr><td>
+
+[TsLeq](./sh-ast.tsleq.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsLeq. Its numeric value is preserved exactly.
+
+-le
+
+
+</td></tr>
+<tr><td>
+
+[TsLss](./sh-ast.tslss.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsLss. Its numeric value is preserved exactly.
+
+-lt
+
+
+</td></tr>
+<tr><td>
+
+[TsMatch](./sh-ast.tsmatch.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsMatch. Its numeric value is preserved exactly.
+
+==
+
+
+</td></tr>
+<tr><td>
+
+[TsMatchShort](./sh-ast.tsmatchshort.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsMatchShort. Its numeric value is preserved exactly.
+
+=
+
+
+</td></tr>
+<tr><td>
+
+[TsModif](./sh-ast.tsmodif.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsModif. Its numeric value is preserved exactly.
+
+-N
+
+
+</td></tr>
+<tr><td>
+
+[TsNempStr](./sh-ast.tsnempstr.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsNempStr. Its numeric value is preserved exactly.
+
+-n
+
+
+</td></tr>
+<tr><td>
+
+[TsNeq](./sh-ast.tsneq.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsNeq. Its numeric value is preserved exactly.
+
+-ne
+
+
+</td></tr>
+<tr><td>
+
+[TsNewer](./sh-ast.tsnewer.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsNewer. Its numeric value is preserved exactly.
+
+-nt
+
+
+</td></tr>
+<tr><td>
+
+[TsNmPipe](./sh-ast.tsnmpipe.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsNmPipe. Its numeric value is preserved exactly.
+
+-p
+
+
+</td></tr>
+<tr><td>
+
+[TsNoEmpty](./sh-ast.tsnoempty.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsNoEmpty. Its numeric value is preserved exactly.
+
+-s
+
+
+</td></tr>
+<tr><td>
+
+[TsNoMatch](./sh-ast.tsnomatch.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsNoMatch. Its numeric value is preserved exactly.
+
+!=
+
+
+</td></tr>
+<tr><td>
+
+[TsNot](./sh-ast.tsnot.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsNot. Its numeric value is preserved exactly.
+
+!
+
+
+</td></tr>
+<tr><td>
+
+[TsOlder](./sh-ast.tsolder.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsOlder. Its numeric value is preserved exactly.
+
+-ot
+
+
+</td></tr>
+<tr><td>
+
+[TsOptSet](./sh-ast.tsoptset.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsOptSet. Its numeric value is preserved exactly.
+
+-o
+
+
+</td></tr>
+<tr><td>
+
+[TsParen](./sh-ast.tsparen.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsParen. Its numeric value is preserved exactly.
+
+(
+
+
+</td></tr>
+<tr><td>
+
+[TsRead](./sh-ast.tsread.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsRead. Its numeric value is preserved exactly.
+
+-r
+
+
+</td></tr>
+<tr><td>
+
+[TsRefVar](./sh-ast.tsrefvar.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsRefVar. Its numeric value is preserved exactly.
+
+-R
+
+
+</td></tr>
+<tr><td>
+
+[TsRegFile](./sh-ast.tsregfile.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsRegFile. Its numeric value is preserved exactly.
+
+-f
+
+
+</td></tr>
+<tr><td>
+
+[TsReMatch](./sh-ast.tsrematch.md)
+
+
+</td><td>
+
+Upstream BinTestOperator constant TsReMatch. Its numeric value is preserved exactly.
+
+=\~
+
+
+</td></tr>
+<tr><td>
+
+[TsSmbLink](./sh-ast.tssmblink.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsSmbLink. Its numeric value is preserved exactly.
+
+-L
+
+
+</td></tr>
+<tr><td>
+
+[TsSocket](./sh-ast.tssocket.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsSocket. Its numeric value is preserved exactly.
+
+-S
+
+
+</td></tr>
+<tr><td>
+
+[TsSticky](./sh-ast.tssticky.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsSticky. Its numeric value is preserved exactly.
+
+-k
+
+
+</td></tr>
+<tr><td>
+
+[TsUIDSet](./sh-ast.tsuidset.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsUIDSet. Its numeric value is preserved exactly.
+
+-u
+
+
+</td></tr>
+<tr><td>
+
+[TsUsrOwn](./sh-ast.tsusrown.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsUsrOwn. Its numeric value is preserved exactly.
+
+-O
+
+
+</td></tr>
+<tr><td>
+
+[TsVarSet](./sh-ast.tsvarset.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsVarSet. Its numeric value is preserved exactly.
+
+-v
+
+
+</td></tr>
+<tr><td>
+
+[TsWrite](./sh-ast.tswrite.md)
+
+
+</td><td>
+
+Upstream UnTestOperator constant TsWrite. Its numeric value is preserved exactly.
+
+-w
+
+
+</td></tr>
+<tr><td>
+
+[UpperAll](./sh-ast.upperall.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant UpperAll. Its numeric value is preserved exactly.
+
+^^
+
+
+</td></tr>
+<tr><td>
+
+[UpperFirst](./sh-ast.upperfirst.md)
+
+
+</td><td>
+
+Upstream ParExpOperator constant UpperFirst. Its numeric value is preserved exactly.
+
+^
+
+
+</td></tr>
+<tr><td>
+
+[WordHdoc](./sh-ast.wordhdoc.md)
+
+
+</td><td>
+
+Upstream RedirOperator constant WordHdoc. Its numeric value is preserved exactly.
+
+&lt;<!-- -->&lt;<!-- -->&lt;
+
+
+</td></tr>
+<tr><td>
+
+[Xor](./sh-ast.xor.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant Xor. Its numeric value is preserved exactly.
+
+^
+
+
+</td></tr>
+<tr><td>
+
+[XorAssgn](./sh-ast.xorassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant XorAssgn. Its numeric value is preserved exactly.
+
+^=
+
+
+</td></tr>
+<tr><td>
+
+[XorBool](./sh-ast.xorbool.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant XorBool. Its numeric value is preserved exactly.
+
+^^
+
+
+</td></tr>
+<tr><td>
+
+[XorBoolAssgn](./sh-ast.xorboolassgn.md)
+
+
+</td><td>
+
+Upstream BinAritOperator constant XorBoolAssgn. Its numeric value is preserved exactly.
+
+^^=
 
 
 </td></tr>
@@ -303,12 +2937,232 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[ShellDialect](./sh-ast.shelldialect.md)
+[ArithmExpr](./sh-ast.arithmexpr.md)
 
 
 </td><td>
 
-Shell dialect (mvdan/sh `LangVariant`<!-- -->) to parse against. Mapped to `LangVariant` by string name via `LangVariant.Set()` — never by numeric value, since the bit-flag encoding of `LangVariant` is not a stable contract across mvdan/sh versions. See design/ARCHITECTURE.md, "Parse errors and dialects".
+The concrete records and typed nil pointers accepted by upstream syntax.ArithmExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[BinAritOperator](./sh-ast.binaritoperator.md)
+
+
+</td><td>
+
+The upstream BinAritOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[BinCmdOperator](./sh-ast.bincmdoperator.md)
+
+
+</td><td>
+
+The upstream BinCmdOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[BinTestOperator](./sh-ast.bintestoperator.md)
+
+
+</td><td>
+
+The upstream BinTestOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[CaseOperator](./sh-ast.caseoperator.md)
+
+
+</td><td>
+
+The upstream CaseOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[Command](./sh-ast.command.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Command. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[GlobOperator](./sh-ast.globoperator.md)
+
+
+</td><td>
+
+The upstream GlobOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[GoString](./sh-ast.gostring.md)
+
+
+</td><td>
+
+A Go string's exact bytes. Valid UTF-8 is represented as a JavaScript string; other bytes use Uint8Array. String inputs must not contain unpaired surrogates, which have no faithful UTF-8 representation.
+
+
+</td></tr>
+<tr><td>
+
+[LangVariant](./sh-ast.langvariant.md)
+
+
+</td><td>
+
+Known upstream language variant values, including legacy zero and LangAuto. Each operation retains its own constraints: the parser Variant option rejects LangAuto even though the language-value type includes it.
+
+
+</td></tr>
+<tr><td>
+
+[Loop](./sh-ast.loop.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Loop. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[Node\_2](./sh-ast.node_2.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Node. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[OperatorFamily](./sh-ast.operatorfamily.md)
+
+
+</td><td>
+
+The upstream uint32 operator families. A family name identifies the Go named type, not the spelling of one token.
+
+
+</td></tr>
+<tr><td>
+
+[ParExpOperator](./sh-ast.parexpoperator.md)
+
+
+</td><td>
+
+The upstream ParExpOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[ParNamesOperator](./sh-ast.parnamesoperator.md)
+
+
+</td><td>
+
+The upstream ParNamesOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[ProcOperator](./sh-ast.procoperator.md)
+
+
+</td><td>
+
+The upstream ProcOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[RawOperator](./sh-ast.rawoperator.md)
+
+
+</td><td>
+
+An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
+
+
+</td></tr>
+<tr><td>
+
+[RedirOperator](./sh-ast.rediroperator.md)
+
+
+</td><td>
+
+The upstream RedirOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[TestExpr](./sh-ast.testexpr.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.TestExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[UnAritOperator](./sh-ast.unaritoperator.md)
+
+
+</td><td>
+
+The upstream UnAritOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[UnTestOperator](./sh-ast.untestoperator.md)
+
+
+</td><td>
+
+The upstream UnTestOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[WordPart](./sh-ast.wordpart.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.WordPart. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
 
 
 </td></tr>

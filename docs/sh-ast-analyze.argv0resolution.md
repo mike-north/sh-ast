@@ -52,7 +52,7 @@ number
 
 </td><td>
 
-The number of `VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.assigns`<!-- -->, e.g. the `FOO=bar` in `FOO=bar rm x`<!-- -->) that were skipped to reach argv0. This is a distinct mechanism from a wrapper's own `VAR=val` \*operands\* (e.g. `env`<!-- -->'s or `sudo`<!-- -->'s, see [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md)<!-- -->) — always exactly `CommandSite.node.assigns`<!-- -->'s length, independent of the wrapper chain found afterward.
+The number of `VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.Assigns`<!-- -->, e.g. the `FOO=bar` in `FOO=bar rm x`<!-- -->) that were skipped to reach argv0. This is a distinct mechanism from a wrapper's own `VAR=val` \*operands\* (e.g. `env`<!-- -->'s or `sudo`<!-- -->'s, see [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md)<!-- -->) — always exactly `CommandSite.node.Assigns`<!-- -->'s length, independent of the wrapper chain found afterward.
 
 
 </td></tr>

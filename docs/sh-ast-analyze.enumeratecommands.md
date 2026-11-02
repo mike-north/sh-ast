@@ -4,11 +4,11 @@
 
 ## enumerateCommands() function
 
-Enumerates every command invocation (`CallExpr`<!-- -->) reachable from `root`<!-- -->, with its resolved words ([resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->) and the path used to reach it ([CommandContext](./sh-ast-analyze.commandcontext.md)<!-- -->). Descends everywhere a command can occur: statement lists, both sides of `&&`<!-- -->/`||`<!-- -->/pipelines, subshells/blocks, if/case branches \*and\* conditions, loop bodies \*and\* conditions, function bodies, background/negated/coproc statements, and — critically — `CmdSubst`<!-- -->/`ProcSubst` nested inside words, wherever those words occur (arguments, redirection targets, case subjects/patterns, loop word lists, assignment values, test/arithmetic operands, …), not only inside `CallExpr.args`<!-- -->.
+Enumerates every command invocation (`CallExpr`<!-- -->) reachable from `root`<!-- -->, with its resolved words ([resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->) and the path used to reach it ([CommandContext](./sh-ast-analyze.commandcontext.md)<!-- -->). Descends everywhere a command can occur: statement lists, both sides of `&&`<!-- -->/`||`<!-- -->/pipelines, subshells/blocks, if/case branches \*and\* conditions, loop bodies \*and\* conditions, function bodies, background/negated/coproc statements, and — critically — `CmdSubst`<!-- -->/`ProcSubst` nested inside words, wherever those words occur (arguments, redirection targets, case subjects/patterns, loop word lists, assignment values, test/arithmetic operands, …), not only inside `CallExpr.Args`<!-- -->.
 
 An assignment-only `CallExpr` (`FOO=bar`<!-- -->, `args` empty) has no first word to resolve and is not itself a command invocation — no program runs — so it produces no [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->; any command substitution nested in its assigned value (`FOO=$(sub)`<!-- -->) is still found and reported.
 
-Results are sorted by source position (`node.range[0]`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
+Results are sorted by source position (`nodePos(node).Offset`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
 
 Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no command/wrapper allowlist or denylist, no dataflow. A statically unknown `argv0` (`static: false`<!-- -->) is a normal, expected result.
 
@@ -17,7 +17,7 @@ A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any re
 **Signature:**
 
 ```typescript
-export declare function enumerateCommands(root: ShNode): CommandSite[];
+export declare function enumerateCommands(root: Node): CommandSite[];
 ```
 
 ## Parameters
@@ -45,12 +45,12 @@ root
 
 </td><td>
 
-[ShNode](./sh-ast-analyze.shnode.md)
+[Node](./sh-ast-analyze.node_2.md)
 
 
 </td><td>
 
-Any `ShNode` — typically a `File` from `parseSync`<!-- -->, but any subtree (a `Stmt`<!-- -->, a `Command`<!-- -->, or even a bare `Word`<!-- -->) is handled. Note `parseSync` itself already refuses (via its own `ShParseMaxDepthError`<!-- -->) any input whose estimated nesting exceeds \*its\* limit before ever producing a tree — see `parse-depth-guard.ts` — so a `root` sourced from `parseSync` has already passed that earlier, lower-level line of defense; this module's own guard below remains a second, independent backstop for trees built or mutated some other way.
+Any `Node` — typically a `File` from `parseSync`<!-- -->, but any subtree (a `Stmt`<!-- -->, a `Command`<!-- -->, or even a bare `Word`<!-- -->) is handled. The depth guard also applies to caller-built or mutated trees.
 
 
 </td></tr>

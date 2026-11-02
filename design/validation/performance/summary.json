@@ -1,0 +1,346 @@
+[
+  {
+    "fixture": "representative-1",
+    "baseline": {
+      "coldMedianMs": 29.539874999999995,
+      "warmMedianMs": 1.0522079999999931,
+      "nodes": 68
+    },
+    "candidate": {
+      "coldMedianMs": 54.150999999999996,
+      "warmMedianMs": 17.428708,
+      "nodes": 68
+    },
+    "lines": 10,
+    "bytes": 260,
+    "dimensions": {
+      "functions": 1,
+      "forLoops": 1,
+      "ifClauses": 1,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 68,
+        "end": 68
+      },
+      "payloadBytes": {
+        "parse": 260,
+        "pos": 147354,
+        "end": 147354
+      }
+    },
+    "warmRatio": 16.563937928622586
+  },
+  {
+    "fixture": "representative-5",
+    "baseline": {
+      "coldMedianMs": 33.788625,
+      "warmMedianMs": 2.9954170000000033,
+      "nodes": 336
+    },
+    "candidate": {
+      "coldMedianMs": 124.57691700000001,
+      "warmMedianMs": 81.50329199999999,
+      "nodes": 336
+    },
+    "lines": 50,
+    "bytes": 1300,
+    "dimensions": {
+      "functions": 5,
+      "forLoops": 5,
+      "ifClauses": 5,
+      "commandSubstitutions": 5,
+      "pipelineLinks": 5
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 336,
+        "end": 336
+      },
+      "payloadBytes": {
+        "parse": 1300,
+        "pos": 742137,
+        "end": 742137
+      }
+    },
+    "warmRatio": 27.20933078766659
+  },
+  {
+    "fixture": "representative-20",
+    "baseline": {
+      "coldMedianMs": 42.85887499999999,
+      "warmMedianMs": 9.903707999999995,
+      "nodes": 1341
+    },
+    "candidate": {
+      "coldMedianMs": 372.788666,
+      "warmMedianMs": 312.260666,
+      "nodes": 1341
+    },
+    "lines": 200,
+    "bytes": 5230,
+    "dimensions": {
+      "functions": 20,
+      "forLoops": 20,
+      "ifClauses": 20,
+      "commandSubstitutions": 20,
+      "pipelineLinks": 20
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 1341,
+        "end": 1341
+      },
+      "payloadBytes": {
+        "parse": 5230,
+        "pos": 2991754,
+        "end": 2991754
+      }
+    },
+    "warmRatio": 31.52967211876604
+  },
+  {
+    "fixture": "representative-50",
+    "baseline": {
+      "coldMedianMs": 60.89,
+      "warmMedianMs": 22.242458,
+      "nodes": 3351
+    },
+    "candidate": {
+      "coldMedianMs": 862.7909579999999,
+      "warmMedianMs": 790.2856250000001,
+      "nodes": 3351
+    },
+    "lines": 500,
+    "bytes": 13120,
+    "dimensions": {
+      "functions": 50,
+      "forLoops": 50,
+      "ifClauses": 50,
+      "commandSubstitutions": 50,
+      "pipelineLinks": 50
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 3351,
+        "end": 3351
+      },
+      "payloadBytes": {
+        "parse": 13120,
+        "pos": 7510918,
+        "end": 7510918
+      }
+    },
+    "warmRatio": 35.530498697581
+  },
+  {
+    "fixture": "nested-2",
+    "baseline": {
+      "coldMedianMs": 29.933415999999994,
+      "warmMedianMs": 0.9064999999999941,
+      "nodes": 64
+    },
+    "candidate": {
+      "coldMedianMs": 51.260875,
+      "warmMedianMs": 16.643083999999988,
+      "nodes": 64
+    },
+    "lines": 10,
+    "bytes": 232,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 2,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 64,
+        "end": 64
+      },
+      "payloadBytes": {
+        "parse": 232,
+        "pos": 134144,
+        "end": 134144
+      }
+    },
+    "warmRatio": 18.35971759514627
+  },
+  {
+    "fixture": "nested-4",
+    "baseline": {
+      "coldMedianMs": 30.020292000000012,
+      "warmMedianMs": 1.0018749999999983,
+      "nodes": 80
+    },
+    "candidate": {
+      "coldMedianMs": 60.43525,
+      "warmMedianMs": 23.029334000000006,
+      "nodes": 80
+    },
+    "lines": 14,
+    "bytes": 292,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 4,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 80,
+        "end": 80
+      },
+      "payloadBytes": {
+        "parse": 292,
+        "pos": 200760,
+        "end": 200760
+      }
+    },
+    "warmRatio": 22.986234809731798
+  },
+  {
+    "fixture": "nested-8",
+    "baseline": {
+      "coldMedianMs": 30.159208000000007,
+      "warmMedianMs": 1.44716600000001,
+      "nodes": 112
+    },
+    "candidate": {
+      "coldMedianMs": 80.308917,
+      "warmMedianMs": 40.57329100000001,
+      "nodes": 112
+    },
+    "lines": 22,
+    "bytes": 412,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 8,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 112,
+        "end": 112
+      },
+      "payloadBytes": {
+        "parse": 412,
+        "pos": 373345,
+        "end": 373345
+      }
+    },
+    "warmRatio": 28.036376614707457
+  },
+  {
+    "fixture": "nested-16",
+    "baseline": {
+      "coldMedianMs": 31.153499999999994,
+      "warmMedianMs": 1.7892080000000021,
+      "nodes": 176
+    },
+    "candidate": {
+      "coldMedianMs": 129.976167,
+      "warmMedianMs": 86.98512500000001,
+      "nodes": 176
+    },
+    "lines": 38,
+    "bytes": 658,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 16,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 176,
+        "end": 176
+      },
+      "payloadBytes": {
+        "parse": 658,
+        "pos": 871757,
+        "end": 871757
+      }
+    },
+    "warmRatio": 48.61655268699889
+  },
+  {
+    "fixture": "nested-32",
+    "baseline": {
+      "coldMedianMs": 33.321082999999994,
+      "warmMedianMs": 2.6372089999999986,
+      "nodes": 304
+    },
+    "candidate": {
+      "coldMedianMs": 282.33783400000004,
+      "warmMedianMs": 236.11683299999993,
+      "nodes": 304
+    },
+    "lines": 70,
+    "bytes": 1154,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 32,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 304,
+        "end": 304
+      },
+      "payloadBytes": {
+        "parse": 1154,
+        "pos": 2483733,
+        "end": 2483733
+      }
+    },
+    "warmRatio": 89.53284817395969
+  },
+  {
+    "fixture": "nested-64",
+    "baseline": {
+      "coldMedianMs": 36.937709,
+      "warmMedianMs": 4.701250000000002,
+      "nodes": 560
+    },
+    "candidate": {
+      "coldMedianMs": 830.102583,
+      "warmMedianMs": 763.2905830000002,
+      "nodes": 560
+    },
+    "lines": 134,
+    "bytes": 2146,
+    "dimensions": {
+      "functions": 1,
+      "nestedForLoops": 64,
+      "commandSubstitutions": 1,
+      "pipelineLinks": 1
+    },
+    "transport": {
+      "calls": {
+        "parse": 1,
+        "pos": 560,
+        "end": 560
+      },
+      "payloadBytes": {
+        "parse": 2146,
+        "pos": 8200987,
+        "end": 8200987
+      }
+    },
+    "warmRatio": 162.3590710981122
+  }
+]

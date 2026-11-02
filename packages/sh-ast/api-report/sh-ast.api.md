@@ -5,802 +5,676 @@
 ```ts
 
 // @public
-export interface ParseOptions {
-    readonly dialect?: ShellDialect;
-    readonly filename?: string;
+export const Add: 81;
+
+// @public
+export const AddAssgn: 49;
+
+// @public
+export const AlternateUnset: 81;
+
+// @public
+export const AlternateUnsetOrNull: 82;
+
+// @public
+export const And: 10;
+
+// @public
+export const AndArit: 11;
+
+// @public
+export const AndAssgn: 54;
+
+// @public
+export const AndBoolAssgn: 59;
+
+// @public
+export const AndStmt: 11;
+
+// @public
+export const AndTest: 11;
+
+// @public
+export const AppAll: 76;
+
+// @public
+export const AppAllClob: 77;
+
+// @public
+export const AppClob: 70;
+
+// @public
+export const AppOut: 64;
+
+// @public
+export interface ArithmCmd {
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'ArithmCmd';
+    Unsigned: boolean;
+    X: ArithmExpr | null;
 }
 
 // @public
-export function parseSync(text: string, options?: ParseOptions): ShFile;
-
-// @public
-export interface Position {
-    // (undocumented)
-    readonly column: number;
-    // (undocumented)
-    readonly line: number;
+export interface ArithmExp {
+    Bracket: boolean;
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'ArithmExp';
+    Unsigned: boolean;
+    X: ArithmExpr | null;
 }
 
 // @public
-export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
-    constructor(message: string);
-    // (undocumented)
-    readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
+export type ArithmExpr =
+| BinaryArithm
+| FlagsArithm
+| ParenArithm
+| UnaryArithm
+| Word
+| TypedNil<'BinaryArithm' | 'FlagsArithm' | 'ParenArithm' | 'UnaryArithm' | 'Word'>;
+
+// @public
+export interface ArrayElem {
+    Comments: Comment_2[] | null;
+    Index: ArithmExpr | null;
+    Type: 'ArrayElem';
+    Value: Word | null;
 }
 
 // @public
-export class ShAnalyzeMaxDepthError extends ShAstError {
-    constructor(maxDepth: number);
-    // (undocumented)
-    readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
-    readonly maxDepth: number;
+export const ArrayExclude: 94;
+
+// @public
+export interface ArrayExpr {
+    Elems: (ArrayElem | null)[] | null;
+    Last: Comment_2[] | null;
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ArrayExpr';
 }
 
 // @public
-type ShAnyNode =
-| ShArithmCmdNode
-| ShArithmExpNode
-| ShArrayElemNode
-| ShArrayExprNode
-| ShAssignNode
-| ShBinaryArithmNode
-| ShBinaryCmdNode
-| ShBinaryTestNode
-| ShBlockNode
-| ShBraceExpNode
-| ShCStyleLoopNode
-| ShCallExprNode
-| ShCaseClauseNode
-| ShCaseItemNode
-| ShCmdSubstNode
-| ShCommentNode
-| ShCoprocClauseNode
-| ShDblQuotedNode
-| ShDeclClauseNode
-| ShExpansionNode
-| ShExtGlobNode
-| ShFileNode
-| ShFlagsArithmNode
-| ShForClauseNode
-| ShFuncDeclNode
-| ShIfClauseNode
-| ShLetClauseNode
-| ShLitNode
-| ShParamExpNode
-| ShParenArithmNode
-| ShParenTestNode
-| ShProcSubstNode
-| ShRedirectNode
-| ShReplaceNode
-| ShSglQuotedNode
-| ShSliceNode
-| ShStmtNode
-| ShSubshellNode
-| ShTestClauseNode
-| ShTestDeclNode
-| ShTimeClauseNode
-| ShUnaryArithmNode
-| ShUnaryTestNode
-| ShWhileClauseNode
-| ShWordNode
-| ShWordIterNode;
+export const ArrayIntersect: 95;
 
 // @public
-interface ShArithmCmdNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ArithmCmd';
-    // (undocumented)
-    readonly unsigned?: boolean;
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
+export const Assgn: 87;
+
+// @public
+export interface Assign {
+    Append: boolean;
+    Array: ArrayExpr | null;
+    Index: ArithmExpr | null;
+    Naked: boolean;
+    Name: Lit | null;
+    Type: 'Assign';
+    Value: Word | null;
 }
 
 // @public
-interface ShArithmExpNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly bracket?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ArithmExp';
-    // (undocumented)
-    readonly unsigned?: boolean;
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
+export const AssignUnset: 87;
+
+// @public
+export const AssignUnsetOrNull: 88;
+
+// @public
+export type BinAritOperator =
+| 0
+| typeof Add
+| typeof AddAssgn
+| typeof And
+| typeof AndArit
+| typeof AndAssgn
+| typeof AndBoolAssgn
+| typeof Assgn
+| typeof Comma
+| typeof Eql
+| typeof Geq
+| typeof Gtr
+| typeof Leq
+| typeof Lss
+| typeof Mul
+| typeof MulAssgn
+| typeof Neq
+| typeof Or
+| typeof OrArit
+| typeof OrAssgn
+| typeof OrBoolAssgn
+| typeof Pow
+| typeof PowAssgn
+| typeof Quo
+| typeof QuoAssgn
+| typeof Rem
+| typeof RemAssgn
+| typeof Shl
+| typeof ShlAssgn
+| typeof Shr
+| typeof ShrAssgn
+| typeof Sub
+| typeof SubAssgn
+| typeof TernColon
+| typeof TernQuest
+| typeof Xor
+| typeof XorAssgn
+| typeof XorBool
+| typeof XorBoolAssgn
+| RawOperator<'BinAritOperator'>;
+
+// @public
+export interface BinaryArithm {
+    Op: BinAritOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryArithm';
+    X: ArithmExpr | null;
+    Y: ArithmExpr | null;
 }
 
 // @public
-type ShArithmExprNode =
-ShBinaryArithmNode | ShFlagsArithmNode | ShParenArithmNode | ShUnaryArithmNode | ShWordNode;
-
-// @public
-interface ShArrayElemNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly comments: readonly ShCommentNode[];
-    // (undocumented)
-    readonly index?: ShArithmExprNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ArrayElem';
-    // (undocumented)
-    readonly value?: ShWordNode;
+export interface BinaryCmd {
+    Op: BinCmdOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryCmd';
+    X: Stmt | null;
+    Y: Stmt | null;
 }
 
 // @public
-interface ShArrayExprNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly elems: readonly ShArrayElemNode[];
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ArrayExpr';
+export interface BinaryTest {
+    Op: BinTestOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryTest';
+    X: TestExpr | null;
+    Y: TestExpr | null;
 }
 
 // @public
-interface ShAssignNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly append?: boolean;
-    // (undocumented)
-    readonly array?: ShArrayExprNode;
-    // (undocumented)
-    readonly index?: ShArithmExprNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly naked?: boolean;
-    // (undocumented)
-    readonly name?: ShLitNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Assign';
-    // (undocumented)
-    readonly value?: ShWordNode;
+export type BinCmdOperator =
+0 | typeof AndStmt | typeof OrStmt | typeof Pipe | typeof PipeAll | RawOperator<'BinCmdOperator'>;
+
+// @public
+export type BinTestOperator =
+| 0
+| typeof AndTest
+| typeof OrTest
+| typeof TsAfter
+| typeof TsBefore
+| typeof TsDevIno
+| typeof TsEql
+| typeof TsGeq
+| typeof TsGtr
+| typeof TsLeq
+| typeof TsLss
+| typeof TsMatch
+| typeof TsMatchShort
+| typeof TsNeq
+| typeof TsNewer
+| typeof TsNoMatch
+| typeof TsOlder
+| typeof TsReMatch
+| RawOperator<'BinTestOperator'>;
+
+// @public
+export const BitNegation: 40;
+
+// @public
+export interface Block {
+    Last: Comment_2[] | null;
+    Lbrace: SyntaxPos;
+    Rbrace: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'Block';
 }
 
 // @public
-export abstract class ShAstError extends Error {
-    abstract readonly code: string;
+export interface BraceExp {
+    Elems: (Word | null)[] | null;
+    Sequence: boolean;
+    Type: 'BraceExp';
 }
 
 // @public
-interface ShBinaryArithmNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'BinaryArithm';
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
-    // (undocumented)
-    readonly y?: ShArithmExprNode;
+export const Break: 35;
+
+// @public
+export interface CallExpr {
+    Args: (Word | null)[] | null;
+    Assigns: (Assign | null)[] | null;
+    Type: 'CallExpr';
 }
 
 // @public
-interface ShBinaryCmdNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'BinaryCmd';
-    // (undocumented)
-    readonly x?: ShStmtNode;
-    // (undocumented)
-    readonly y?: ShStmtNode;
+export interface CaseClause {
+    Braces: boolean;
+    Case: SyntaxPos;
+    Esac: SyntaxPos;
+    In: SyntaxPos;
+    Items: (CaseItem | null)[] | null;
+    Last: Comment_2[] | null;
+    Type: 'CaseClause';
+    Word: Word | null;
 }
 
 // @public
-interface ShBinaryTestNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'BinaryTest';
-    // (undocumented)
-    readonly x?: ShTestExprNode;
-    // (undocumented)
-    readonly y?: ShTestExprNode;
+export interface CaseItem {
+    Comments: Comment_2[] | null;
+    Last: Comment_2[] | null;
+    Op: CaseOperator;
+    OpPos: SyntaxPos;
+    Patterns: (Word | null)[] | null;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'CaseItem';
 }
 
 // @public
-interface ShBlockNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly type: 'Block';
+export type CaseOperator =
+| 0
+| typeof Break
+| typeof Fallthrough
+| typeof Resume
+| typeof ResumeKorn
+| RawOperator<'CaseOperator'>;
+
+// @public
+export const ClbOut: 69;
+
+// @public
+export const CmdIn: 78;
+
+// @public
+export const CmdInTemp: 79;
+
+// @public
+export const CmdOut: 80;
+
+// @public
+export interface CmdSubst {
+    Backquotes: boolean;
+    Last: Comment_2[] | null;
+    Left: SyntaxPos;
+    ReplyVar: boolean;
+    Right: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    TempFile: boolean;
+    Type: 'CmdSubst';
 }
 
 // @public
-interface ShBraceExpNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly elems: readonly ShWordNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly sequence?: boolean;
-    // (undocumented)
-    readonly type: 'BraceExp';
+export const Comma: 98;
+
+// @public
+export type Command =
+| ArithmCmd
+| BinaryCmd
+| Block
+| CallExpr
+| CaseClause
+| CoprocClause
+| DeclClause
+| ForClause
+| FuncDecl
+| IfClause
+| LetClause
+| Subshell
+| TestClause
+| TestDecl
+| TimeClause
+| WhileClause
+| TypedNil<
+| 'ArithmCmd'
+| 'BinaryCmd'
+| 'Block'
+| 'CallExpr'
+| 'CaseClause'
+| 'CoprocClause'
+| 'DeclClause'
+| 'ForClause'
+| 'FuncDecl'
+| 'IfClause'
+| 'LetClause'
+| 'Subshell'
+| 'TestClause'
+| 'TestDecl'
+| 'TimeClause'
+| 'WhileClause'
+>;
+
+// @public
+interface Comment_2 {
+    Hash: SyntaxPos;
+    Text: GoString;
+    Type: 'Comment';
+}
+export { Comment_2 as Comment }
+
+// @public
+export interface CoprocClause {
+    Coproc: SyntaxPos;
+    Name: Word | null;
+    Stmt: Stmt | null;
+    Type: 'CoprocClause';
 }
 
 // @public
-interface ShCallExprNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly args: readonly ShWordNode[];
-    // (undocumented)
-    readonly assigns: readonly ShAssignNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'CallExpr';
+export interface CStyleLoop {
+    Cond: ArithmExpr | null;
+    Init: ArithmExpr | null;
+    Lparen: SyntaxPos;
+    Post: ArithmExpr | null;
+    Rparen: SyntaxPos;
+    Type: 'CStyleLoop';
 }
 
 // @public
-interface ShCaseClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly braces?: boolean;
-    // (undocumented)
-    readonly items: readonly ShCaseItemNode[];
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'CaseClause';
-    // (undocumented)
-    readonly word?: ShWordNode;
+export const DashHdoc: 72;
+
+// @public
+export interface DblQuoted {
+    Dollar: boolean;
+    Left: SyntaxPos;
+    Parts: (WordPart | null)[] | null;
+    Right: SyntaxPos;
+    Type: 'DblQuoted';
 }
 
 // @public
-interface ShCaseItemNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly comments: readonly ShCommentNode[];
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly patterns: readonly ShWordNode[];
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly type: 'CaseItem';
+export const Dec: 42;
+
+// @public
+export interface DeclClause {
+    Args: (Assign | null)[] | null;
+    Type: 'DeclClause';
+    Variant: Lit | null;
 }
 
 // @public
-interface ShCmdSubstNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly backquotes?: boolean;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly replyvar?: boolean;
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly tempfile?: boolean;
-    // (undocumented)
-    readonly type: 'CmdSubst';
+export const DefaultUnset: 83;
+
+// @public
+export const DefaultUnsetOrNull: 84;
+
+// @public
+export const DplIn: 67;
+
+// @public
+export const DplOut: 68;
+
+// @public
+export const Eql: 45;
+
+// @public
+export const ErrorUnset: 85;
+
+// @public
+export const ErrorUnsetOrNull: 86;
+
+// @public
+export interface Expansion {
+    Op: ParExpOperator;
+    Type: 'Expansion';
+    Word: Word | null;
 }
 
 // @public
-type ShCommandNode =
-| ShArithmCmdNode
-| ShBinaryCmdNode
-| ShBlockNode
-| ShCallExprNode
-| ShCaseClauseNode
-| ShCoprocClauseNode
-| ShDeclClauseNode
-| ShForClauseNode
-| ShFuncDeclNode
-| ShIfClauseNode
-| ShLetClauseNode
-| ShSubshellNode
-| ShTestClauseNode
-| ShTestDeclNode
-| ShTimeClauseNode
-| ShWhileClauseNode;
-
-// @public
-interface ShCommentNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly text?: string;
-    // (undocumented)
-    readonly type: 'Comment';
+export interface ExtGlob {
+    Op: GlobOperator;
+    OpPos: SyntaxPos;
+    Pattern: Lit | null;
+    Type: 'ExtGlob';
 }
 
 // @public
-interface ShCoprocClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly name?: ShWordNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmt?: ShStmtNode;
-    // (undocumented)
-    readonly type: 'CoprocClause';
+export const Fallthrough: 36;
+
+// @public
+interface File_2 {
+    Last: Comment_2[] | null;
+    Name: GoString;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'File';
+}
+export { File_2 as File }
+
+// @public
+export interface FlagsArithm {
+    Flags: Lit | null;
+    Type: 'FlagsArithm';
+    X: ArithmExpr | null;
 }
 
 // @public
-interface ShCStyleLoopNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly cond?: ShArithmExprNode;
-    // (undocumented)
-    readonly init?: ShArithmExprNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly post?: ShArithmExprNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'CStyleLoop';
+export interface ForClause {
+    Braces: boolean;
+    Do: (Stmt | null)[] | null;
+    DoLast: Comment_2[] | null;
+    DonePos: SyntaxPos;
+    DoPos: SyntaxPos;
+    ForPos: SyntaxPos;
+    Loop: Loop | null;
+    Select: boolean;
+    Type: 'ForClause';
 }
 
 // @public
-interface ShDblQuotedNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly dollar?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly parts: readonly ShWordPartNode[];
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'DblQuoted';
+export interface FuncDecl {
+    Body: Stmt | null;
+    Name: Lit | null;
+    Names: (Lit | null)[] | null;
+    Parens: boolean;
+    Position: SyntaxPos;
+    RsrvWord: boolean;
+    Type: 'FuncDecl';
 }
 
 // @public
-interface ShDeclClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly args: readonly ShAssignNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'DeclClause';
-    // (undocumented)
-    readonly variant?: ShLitNode;
+export const Geq: 48;
+
+// @public
+export const GlobExcept: 143;
+
+// @public
+export const GlobOne: 142;
+
+// @public
+export const GlobOneOrMore: 141;
+
+// @public
+export type GlobOperator =
+| 0
+| typeof GlobExcept
+| typeof GlobOne
+| typeof GlobOneOrMore
+| typeof GlobZeroOrMore
+| typeof GlobZeroOrOne
+| RawOperator<'GlobOperator'>;
+
+// @public
+export const GlobZeroOrMore: 140;
+
+// @public
+export const GlobZeroOrOne: 139;
+
+// @public
+export type GoString = string | Uint8Array;
+
+// @public
+export const Gtr: 63;
+
+// @public
+export const Hdoc: 71;
+
+// @public
+export interface IfClause {
+    Cond: (Stmt | null)[] | null;
+    CondLast: Comment_2[] | null;
+    Else: IfClause | null;
+    FiPos: SyntaxPos;
+    Last: Comment_2[] | null;
+    Position: SyntaxPos;
+    Then: (Stmt | null)[] | null;
+    ThenLast: Comment_2[] | null;
+    ThenPos: SyntaxPos;
+    Type: 'IfClause';
 }
 
 // @public
-export type ShellDialect = 'bash' | 'posix' | 'mksh' | 'bats' | 'zsh';
+export const Inc: 41;
 
 // @public
-interface ShExpansionNode {
+export class InputError extends ShAstError {
+    constructor(Message: GoString);
+    readonly code = "SH_AST_SYNTAX_INPUT";
     // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Expansion';
-    // (undocumented)
-    readonly word?: ShWordNode;
+    readonly Message: GoString;
 }
 
 // @public
-interface ShExtGlobNode {
+export const LangAuto: 32;
+
+// @public
+export const LangBash: 1;
+
+// @public
+export const LangBats: 8;
+
+// @public
+export class LangError extends ShAstError {
+    constructor(Message: GoString, Filename: GoString, Pos: SyntaxPos, Feature: GoString, Langs: readonly number[], LangUsed: number, File: File_2 | null);
+    readonly code = "SH_AST_SYNTAX_LANG";
     // (undocumented)
-    [field: string]: unknown;
+    readonly Feature: GoString;
     // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
+    readonly File: File_2 | null;
     // (undocumented)
-    readonly op?: number;
+    readonly Filename: GoString;
     // (undocumented)
-    readonly pattern?: ShLitNode;
+    readonly Langs: readonly number[];
     // (undocumented)
-    readonly range: readonly [number, number];
+    readonly LangUsed: number;
     // (undocumented)
-    readonly type: 'ExtGlob';
+    readonly Message: GoString;
+    // (undocumented)
+    readonly Pos: SyntaxPos;
 }
 
 // @public
-export interface ShFile extends ShNode {
-    // (undocumented)
-    readonly stmts: readonly ShNode[];
-    // (undocumented)
-    readonly type: 'File';
+export const LangMirBSDKorn: 4;
+
+// @public
+export const LangPOSIX: 2;
+
+// @public
+export type LangVariant =
+| 0
+| typeof LangAuto
+| typeof LangBash
+| typeof LangBats
+| typeof LangMirBSDKorn
+| typeof LangPOSIX
+| typeof LangZsh;
+
+// @public
+export const LangZsh: 16;
+
+// @public
+export const Leq: 47;
+
+// @public
+export interface LetClause {
+    Exprs: (ArithmExpr | null)[] | null;
+    Let: SyntaxPos;
+    Type: 'LetClause';
 }
 
 // @public
-interface ShFileNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly name?: string;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly type: 'File';
+export interface Lit {
+    Type: 'Lit';
+    Value: GoString;
+    ValueEnd: SyntaxPos;
+    ValuePos: SyntaxPos;
 }
 
 // @public
-interface ShFlagsArithmNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly flags?: ShLitNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'FlagsArithm';
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
-}
+export type Loop = CStyleLoop | WordIter | TypedNil<'CStyleLoop' | 'WordIter'>;
 
 // @public
-interface ShForClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly braces?: boolean;
-    // (undocumented)
-    readonly do: readonly ShStmtNode[];
-    // (undocumented)
-    readonly dolast: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly loop?: ShLoopNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly select?: boolean;
-    // (undocumented)
-    readonly type: 'ForClause';
-}
+export const LowerAll: 99;
 
 // @public
-interface ShFuncDeclNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly body?: ShStmtNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly name?: ShLitNode;
-    // (undocumented)
-    readonly names: readonly ShLitNode[];
-    // (undocumented)
-    readonly parens?: boolean;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly rsrvword?: boolean;
-    // (undocumented)
-    readonly type: 'FuncDecl';
-}
+export const LowerFirst: 98;
 
 // @public
-interface ShIfClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly cond: readonly ShStmtNode[];
-    // (undocumented)
-    readonly condlast: readonly ShCommentNode[];
-    // (undocumented)
-    readonly else?: ShIfClauseNode;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly then: readonly ShStmtNode[];
-    // (undocumented)
-    readonly thenlast: readonly ShCommentNode[];
-    // (undocumented)
-    readonly type: 'IfClause';
-}
+export const Lss: 65;
 
 // @public
-export class ShInternalError extends ShAstError {
-    constructor(message: string);
-    // (undocumented)
-    readonly code = "SH_AST_INTERNAL";
-}
+export const MatchEmpty: 93;
 
 // @public
-export class ShInvalidDialectError extends ShAstError {
-    constructor(dialect: string, supportedDialects: readonly ShellDialect[]);
-    // (undocumented)
-    readonly code = "SH_AST_INVALID_DIALECT";
-    readonly dialect: string;
-}
+export const Minus: 83;
 
 // @public
-interface ShLetClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly exprs: readonly ShArithmExprNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'LetClause';
-}
+export const Mul: 43;
 
 // @public
-interface ShLitNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Lit';
-    // (undocumented)
-    readonly value?: string;
-}
+export const MulAssgn: 51;
 
 // @public
-type ShLoopNode = ShCStyleLoopNode | ShWordIterNode;
+export const NamesPrefix: 43;
 
 // @public
-export interface ShNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: Position;
-        readonly end: Position;
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: string;
-}
-
-declare namespace ShNodes {
-    export {
-        ShArithmCmdNode,
-        ShArithmExpNode,
-        ShArrayElemNode,
-        ShArrayExprNode,
-        ShAssignNode,
-        ShBinaryArithmNode,
-        ShBinaryCmdNode,
-        ShBinaryTestNode,
-        ShBlockNode,
-        ShBraceExpNode,
-        ShCStyleLoopNode,
-        ShCallExprNode,
-        ShCaseClauseNode,
-        ShCaseItemNode,
-        ShCmdSubstNode,
-        ShCommentNode,
-        ShCoprocClauseNode,
-        ShDblQuotedNode,
-        ShDeclClauseNode,
-        ShExpansionNode,
-        ShExtGlobNode,
-        ShFileNode,
-        ShFlagsArithmNode,
-        ShForClauseNode,
-        ShFuncDeclNode,
-        ShIfClauseNode,
-        ShLetClauseNode,
-        ShLitNode,
-        ShParamExpNode,
-        ShParenArithmNode,
-        ShParenTestNode,
-        ShProcSubstNode,
-        ShRedirectNode,
-        ShReplaceNode,
-        ShSglQuotedNode,
-        ShSliceNode,
-        ShStmtNode,
-        ShSubshellNode,
-        ShTestClauseNode,
-        ShTestDeclNode,
-        ShTimeClauseNode,
-        ShUnaryArithmNode,
-        ShUnaryTestNode,
-        ShWhileClauseNode,
-        ShWordNode,
-        ShWordIterNode,
-        ShArithmExprNode,
-        ShCommandNode,
-        ShLoopNode,
-        ShTestExprNode,
-        ShWordPartNode,
-        ShAnyNode,
-        ShNodeTypeName
-    }
-}
+export const NamesPrefixWords: 100;
 
 // @public
-type ShNodeTypeName =
+export const Neq: 46;
+
+// @public
+export function newPos(offset: number | bigint, line: number | bigint, column: number | bigint): SyntaxPos;
+
+// @public
+type Node_2 =
+| ArithmCmd
+| ArithmExp
+| ArrayElem
+| ArrayExpr
+| Assign
+| BinaryArithm
+| BinaryCmd
+| BinaryTest
+| Block
+| BraceExp
+| CStyleLoop
+| CallExpr
+| CaseClause
+| CaseItem
+| CmdSubst
+| Comment_2
+| CoprocClause
+| DblQuoted
+| DeclClause
+| ExtGlob
+| File_2
+| FlagsArithm
+| ForClause
+| FuncDecl
+| IfClause
+| LetClause
+| Lit
+| ParamExp
+| ParenArithm
+| ParenTest
+| ProcSubst
+| Redirect
+| SglQuoted
+| Stmt
+| Subshell
+| TestClause
+| TestDecl
+| TimeClause
+| UnaryArithm
+| UnaryTest
+| WhileClause
+| Word
+| WordIter
+| TypedNil<
 | 'ArithmCmd'
 | 'ArithmExp'
 | 'ArrayElem'
@@ -820,7 +694,6 @@ type ShNodeTypeName =
 | 'CoprocClause'
 | 'DblQuoted'
 | 'DeclClause'
-| 'Expansion'
 | 'ExtGlob'
 | 'File'
 | 'FlagsArithm'
@@ -834,9 +707,7 @@ type ShNodeTypeName =
 | 'ParenTest'
 | 'ProcSubst'
 | 'Redirect'
-| 'Replace'
 | 'SglQuoted'
-| 'Slice'
 | 'Stmt'
 | 'Subshell'
 | 'TestClause'
@@ -846,104 +717,334 @@ type ShNodeTypeName =
 | 'UnaryTest'
 | 'WhileClause'
 | 'Word'
-| 'WordIter';
+| 'WordIter'
+>;
+export { Node_2 as Node }
 
 // @public
-interface ShParamExpNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly excl?: boolean;
-    // (undocumented)
-    readonly exp?: ShExpansionNode;
-    // (undocumented)
-    readonly flags?: ShLitNode;
-    // (undocumented)
-    readonly index?: ShArithmExprNode;
-    // (undocumented)
-    readonly isset?: boolean;
-    // (undocumented)
-    readonly length?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly modifiers: readonly ShLitNode[];
-    // (undocumented)
-    readonly names?: number;
-    // (undocumented)
-    readonly nestedparam?: ShWordPartNode;
-    // (undocumented)
-    readonly param?: ShLitNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly repl?: ShReplaceNode;
-    // (undocumented)
-    readonly short?: boolean;
-    // (undocumented)
-    readonly slice?: ShSliceNode;
-    // (undocumented)
-    readonly type: 'ParamExp';
-    // (undocumented)
-    readonly width?: boolean;
+export function nodeEnd(node: Node_2): SyntaxPos;
+
+// @public
+export function nodePos(node: Node_2): SyntaxPos;
+
+// @public
+export interface NodePositions {
+    readonly End: Readonly<SyntaxPos>;
+    readonly Pos: Readonly<SyntaxPos>;
 }
 
 // @public
-interface ShParenArithmNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ParenArithm';
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
+export const Not: 39;
+
+// @public
+export type OperatorFamily =
+| 'BinAritOperator'
+| 'BinCmdOperator'
+| 'BinTestOperator'
+| 'CaseOperator'
+| 'GlobOperator'
+| 'ParExpOperator'
+| 'ParNamesOperator'
+| 'ProcOperator'
+| 'RedirOperator'
+| 'UnAritOperator'
+| 'UnTestOperator';
+
+// @public
+export const Or: 13;
+
+// @public
+export const OrArit: 12;
+
+// @public
+export const OrAssgn: 55;
+
+// @public
+export const OrBoolAssgn: 60;
+
+// @public
+export const OrStmt: 12;
+
+// @public
+export const OrTest: 12;
+
+// @public
+export const OtherParamOps: 100;
+
+// @public
+export interface ParamExp {
+    Dollar: SyntaxPos;
+    Excl: boolean;
+    Exp: Expansion | null;
+    Flags: Lit | null;
+    Index: ArithmExpr | null;
+    IsSet: boolean;
+    Length: boolean;
+    Modifiers: (Lit | null)[] | null;
+    Names: ParNamesOperator;
+    NestedParam: WordPart | null;
+    Param: Lit | null;
+    Rbrace: SyntaxPos;
+    Repl: Replace | null;
+    Short: boolean;
+    Slice: Slice | null;
+    Type: 'ParamExp';
+    Width: boolean;
 }
 
 // @public
-interface ShParenTestNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'ParenTest';
-    // (undocumented)
-    readonly x?: ShTestExprNode;
+export interface ParenArithm {
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ParenArithm';
+    X: ArithmExpr | null;
 }
 
 // @public
-export class ShParseError extends ShAstError {
-    constructor(message: string, info: ShParseErrorInfo);
-    // (undocumented)
-    readonly code = "SH_AST_PARSE_ERROR";
-    // (undocumented)
-    readonly column: number;
-    // (undocumented)
-    readonly filename: string;
-    // (undocumented)
-    readonly line: number;
+export interface ParenTest {
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ParenTest';
+    X: TestExpr | null;
 }
 
 // @public
-export interface ShParseErrorInfo {
-    column: number;
-    filename: string;
-    line: number;
+export type ParExpOperator =
+| 0
+| typeof AlternateUnset
+| typeof AlternateUnsetOrNull
+| typeof ArrayExclude
+| typeof ArrayIntersect
+| typeof AssignUnset
+| typeof AssignUnsetOrNull
+| typeof DefaultUnset
+| typeof DefaultUnsetOrNull
+| typeof ErrorUnset
+| typeof ErrorUnsetOrNull
+| typeof LowerAll
+| typeof LowerFirst
+| typeof MatchEmpty
+| typeof OtherParamOps
+| typeof RemLargePrefix
+| typeof RemLargeSuffix
+| typeof RemSmallPrefix
+| typeof RemSmallSuffix
+| typeof UpperAll
+| typeof UpperFirst
+| RawOperator<'ParExpOperator'>;
+
+// @public
+export type ParNamesOperator =
+0 | typeof NamesPrefix | typeof NamesPrefixWords | RawOperator<'ParNamesOperator'>;
+
+// @public
+export interface ParsedFile {
+    readonly File: File_2;
+    readonly Positions: PositionSnapshot;
 }
+
+// @public
+export class ParseError extends ShAstError {
+    constructor(Message: GoString, Filename: GoString, Pos: SyntaxPos, Text: GoString, Incomplete: boolean, File: File_2 | null);
+    readonly code = "SH_AST_SYNTAX_PARSE";
+    // (undocumented)
+    readonly File: File_2 | null;
+    // (undocumented)
+    readonly Filename: GoString;
+    // (undocumented)
+    readonly Incomplete: boolean;
+    // (undocumented)
+    readonly Message: GoString;
+    // (undocumented)
+    readonly Pos: SyntaxPos;
+    // (undocumented)
+    readonly Text: GoString;
+}
+
+// @public
+export interface ParseOptions {
+    Filename?: GoString;
+    KeepComments?: boolean;
+    RecoverErrors?: number | bigint;
+    StopAt?: GoString;
+    Variant?: number | bigint;
+}
+
+// @public
+export function parseSync(source: string | Uint8Array, options?: ParseOptions): File_2;
+
+// @public
+export function parseWithPositionsSync(source: string | Uint8Array, options?: ParseOptions): ParsedFile;
+
+// @public
+export const Pipe: 13;
+
+// @public
+export const PipeAll: 14;
+
+// @public
+export const Plus: 81;
+
+// @public
+export interface PositionSnapshot {
+    get(node: Node_2): NodePositions | undefined;
+}
+
+// @public
+export const Pow: 44;
+
+// @public
+export const PowAssgn: 62;
+
+// @public
+export type ProcOperator =
+0 | typeof CmdIn | typeof CmdInTemp | typeof CmdOut | RawOperator<'ProcOperator'>;
+
+// @public
+export interface ProcSubst {
+    Last: Comment_2[] | null;
+    Op: ProcOperator;
+    OpPos: SyntaxPos;
+    Rparen: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'ProcSubst';
+}
+
+// @public
+export const Quo: 101;
+
+// @public
+export const QuoAssgn: 52;
+
+// @public
+export type RawOperator<Family extends OperatorFamily> = number & {
+    readonly __shAstOperatorFamily: Family;
+};
+
+// @public
+export function rawOperator<Family extends OperatorFamily>(family: Family, value: number): RawOperator<Family>;
+
+// @public
+export const RdrAll: 74;
+
+// @public
+export const RdrAllClob: 75;
+
+// @public
+export const RdrClob: 69;
+
+// @public
+export const RdrIn: 65;
+
+// @public
+export const RdrInOut: 66;
+
+// @public
+export const RdrOut: 63;
+
+// @public
+export interface Redirect {
+    Hdoc: Word | null;
+    N: Lit | null;
+    Op: RedirOperator;
+    OpPos: SyntaxPos;
+    Type: 'Redirect';
+    Word: Word | null;
+}
+
+// @public
+export type RedirOperator =
+| 0
+| typeof AppAll
+| typeof AppAllClob
+| typeof AppClob
+| typeof AppOut
+| typeof DashHdoc
+| typeof DplIn
+| typeof DplOut
+| typeof Hdoc
+| typeof RdrAll
+| typeof RdrAllClob
+| typeof RdrClob
+| typeof RdrIn
+| typeof RdrInOut
+| typeof RdrOut
+| typeof WordHdoc
+| RawOperator<'RedirOperator'>;
+
+// @public
+export const Rem: 89;
+
+// @public
+export const RemAssgn: 53;
+
+// @public
+export const RemLargePrefix: 92;
+
+// @public
+export const RemLargeSuffix: 90;
+
+// @public
+export const RemSmallPrefix: 91;
+
+// @public
+export const RemSmallSuffix: 89;
+
+// @public
+export interface Replace {
+    All: boolean;
+    Orig: Word | null;
+    Type: 'Replace';
+    With: Word | null;
+}
+
+// @public
+export const Resume: 37;
+
+// @public
+export const ResumeKorn: 38;
+
+// @public
+export interface SglQuoted {
+    Dollar: boolean;
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'SglQuoted';
+    Value: GoString;
+}
+
+// @public
+export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
+}
+
+// @public
+export class ShAnalyzeMaxDepthError extends ShAstError {
+    constructor(maxDepth: number);
+    // (undocumented)
+    readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
+    readonly maxDepth: number;
+}
+
+// @public
+export abstract class ShAstError extends Error {
+    abstract readonly code: string;
+}
+
+// @public
+export class ShInternalError extends ShAstError {
+    constructor(message: string);
+    // (undocumented)
+    readonly code = "SH_AST_INTERNAL";
+}
+
+// @public
+export const Shl: 71;
+
+// @public
+export const ShlAssgn: 57;
 
 // @public
 export class ShParseMaxDepthError extends ShAstError {
@@ -955,332 +1056,419 @@ export class ShParseMaxDepthError extends ShAstError {
 }
 
 // @public
-interface ShProcSubstNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly type: 'ProcSubst';
+export const Shr: 64;
+
+// @public
+export const ShrAssgn: 58;
+
+// @public
+export interface Slice {
+    Length: ArithmExpr | null;
+    Offset: ArithmExpr | null;
+    Type: 'Slice';
 }
 
 // @public
-interface ShRedirectNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly hdoc?: ShWordNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly n?: ShLitNode;
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Redirect';
-    // (undocumented)
-    readonly word?: ShWordNode;
+export interface Stmt {
+    Background: boolean;
+    Cmd: Command | null;
+    Comments: Comment_2[] | null;
+    Coprocess: boolean;
+    Disown: boolean;
+    Negated: boolean;
+    Position: SyntaxPos;
+    Redirs: (Redirect | null)[] | null;
+    Semicolon: SyntaxPos;
+    Type: 'Stmt';
 }
 
 // @public
-interface ShReplaceNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly all?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly orig?: ShWordNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Replace';
-    // (undocumented)
-    readonly with?: ShWordNode;
+export const Sub: 83;
+
+// @public
+export const SubAssgn: 50;
+
+// @public
+export interface Subshell {
+    Last: Comment_2[] | null;
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'Subshell';
 }
 
 // @public
-interface ShSglQuotedNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly dollar?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'SglQuoted';
-    // (undocumented)
-    readonly value?: string;
+export const SYNTAX_INTERFACES: Readonly<Readonly<Record<string, readonly string[]>>>;
+
+// @public
+export const SYNTAX_SCHEMA: Readonly<Readonly<Record<string, SyntaxRecordSchema>>>;
+
+// @public
+export interface SyntaxFieldSchema {
+    readonly elementNullable: boolean;
+    readonly kind: 'boolean' | 'string' | 'position' | 'operator' | 'struct' | 'interface';
+    readonly nullable: boolean;
+    readonly slice: boolean;
+    readonly type: string | null;
 }
 
 // @public
-interface ShSliceNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly length?: ShArithmExprNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly offset?: ShArithmExprNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Slice';
+export interface SyntaxPos {
+    Col: number;
+    IsRecovered: boolean;
+    IsValid: boolean;
+    Line: number;
+    Offset: number;
+    OffsetOverflow: boolean;
 }
 
 // @public
-interface ShStmtNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly background?: boolean;
-    // (undocumented)
-    readonly cmd?: ShCommandNode;
-    // (undocumented)
-    readonly comments: readonly ShCommentNode[];
-    // (undocumented)
-    readonly coprocess?: boolean;
-    // (undocumented)
-    readonly disown?: boolean;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly negated?: boolean;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly redirs: readonly ShRedirectNode[];
-    // (undocumented)
-    readonly type: 'Stmt';
+export interface SyntaxRecordSchema {
+    readonly fields: Readonly<Record<string, SyntaxFieldSchema>>;
+    readonly node: boolean;
 }
 
 // @public
-interface ShSubshellNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly last: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmts: readonly ShStmtNode[];
-    // (undocumented)
-    readonly type: 'Subshell';
+export const TernColon: 104;
+
+// @public
+export const TernQuest: 85;
+
+// @public
+export interface TestClause {
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'TestClause';
+    X: TestExpr | null;
 }
 
 // @public
-interface ShTestClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'TestClause';
-    // (undocumented)
-    readonly x?: ShTestExprNode;
+export interface TestDecl {
+    Body: Stmt | null;
+    Description: Word | null;
+    Position: SyntaxPos;
+    Type: 'TestDecl';
 }
 
 // @public
-interface ShTestDeclNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly body?: ShStmtNode;
-    // (undocumented)
-    readonly description?: ShWordNode;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'TestDecl';
+export type TestExpr =
+| BinaryTest
+| ParenTest
+| UnaryTest
+| Word
+| TypedNil<'BinaryTest' | 'ParenTest' | 'UnaryTest' | 'Word'>;
+
+// @public
+export interface TimeClause {
+    PosixFormat: boolean;
+    Stmt: Stmt | null;
+    Time: SyntaxPos;
+    Type: 'TimeClause';
 }
 
 // @public
-type ShTestExprNode = ShBinaryTestNode | ShParenTestNode | ShUnaryTestNode | ShWordNode;
+export const TsAfter: 63;
 
 // @public
-interface ShTimeClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly posixformat?: boolean;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly stmt?: ShStmtNode;
-    // (undocumented)
-    readonly type: 'TimeClause';
+export const TsBefore: 65;
+
+// @public
+export const TsBlckSp: 109;
+
+// @public
+export const TsCharSp: 108;
+
+// @public
+export const TsDevIno: 132;
+
+// @public
+export const TsDirect: 107;
+
+// @public
+export const TsEmpStr: 124;
+
+// @public
+export const TsEql: 133;
+
+// @public
+export const TsExec: 121;
+
+// @public
+export const TsExists: 105;
+
+// @public
+export const TsFdTerm: 123;
+
+// @public
+export const TsGeq: 136;
+
+// @public
+export const TsGIDSet: 114;
+
+// @public
+export const TsGrpOwn: 116;
+
+// @public
+export const TsGtr: 138;
+
+// @public
+export const TsLeq: 135;
+
+// @public
+export const TsLss: 137;
+
+// @public
+export const TsMatch: 45;
+
+// @public
+export const TsMatchShort: 87;
+
+// @public
+export const TsModif: 118;
+
+// @public
+export const TsNempStr: 125;
+
+// @public
+export const TsNeq: 134;
+
+// @public
+export const TsNewer: 130;
+
+// @public
+export const TsNmPipe: 110;
+
+// @public
+export const TsNoEmpty: 122;
+
+// @public
+export const TsNoMatch: 46;
+
+// @public
+export const TsNot: 39;
+
+// @public
+export const TsOlder: 131;
+
+// @public
+export const TsOptSet: 126;
+
+// @public
+export const TsParen: 27;
+
+// @public
+export const TsRead: 119;
+
+// @public
+export const TsRefVar: 128;
+
+// @public
+export const TsRegFile: 106;
+
+// @public
+export const TsReMatch: 129;
+
+// @public
+export const TsSmbLink: 112;
+
+// @public
+export const TsSocket: 111;
+
+// @public
+export const TsSticky: 113;
+
+// @public
+export const TsUIDSet: 115;
+
+// @public
+export const TsUsrOwn: 117;
+
+// @public
+export const TsVarSet: 127;
+
+// @public
+export const TsWrite: 120;
+
+// @public
+export interface TypedNil<
+ConcreteKind extends
+| 'ArithmCmd'
+| 'ArithmExp'
+| 'ArrayElem'
+| 'ArrayExpr'
+| 'Assign'
+| 'BinaryArithm'
+| 'BinaryCmd'
+| 'BinaryTest'
+| 'Block'
+| 'BraceExp'
+| 'CStyleLoop'
+| 'CallExpr'
+| 'CaseClause'
+| 'CaseItem'
+| 'CmdSubst'
+| 'Comment'
+| 'CoprocClause'
+| 'DblQuoted'
+| 'DeclClause'
+| 'ExtGlob'
+| 'File'
+| 'FlagsArithm'
+| 'ForClause'
+| 'FuncDecl'
+| 'IfClause'
+| 'LetClause'
+| 'Lit'
+| 'ParamExp'
+| 'ParenArithm'
+| 'ParenTest'
+| 'ProcSubst'
+| 'Redirect'
+| 'SglQuoted'
+| 'Stmt'
+| 'Subshell'
+| 'TestClause'
+| 'TestDecl'
+| 'TimeClause'
+| 'UnaryArithm'
+| 'UnaryTest'
+| 'WhileClause'
+| 'Word'
+| 'WordIter',
+> {
+    Kind: ConcreteKind;
+    Type: 'TypedNil';
 }
 
 // @public
-interface ShUnaryArithmNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly post?: boolean;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'UnaryArithm';
-    // (undocumented)
-    readonly x?: ShArithmExprNode;
+export type UnAritOperator =
+| 0
+| typeof BitNegation
+| typeof Dec
+| typeof Inc
+| typeof Minus
+| typeof Not
+| typeof Plus
+| RawOperator<'UnAritOperator'>;
+
+// @public
+export interface UnaryArithm {
+    Op: UnAritOperator;
+    OpPos: SyntaxPos;
+    Post: boolean;
+    Type: 'UnaryArithm';
+    X: ArithmExpr | null;
 }
 
 // @public
-interface ShUnaryTestNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly op?: number;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'UnaryTest';
-    // (undocumented)
-    readonly x?: ShTestExprNode;
+export interface UnaryTest {
+    Op: UnTestOperator;
+    OpPos: SyntaxPos;
+    Type: 'UnaryTest';
+    X: TestExpr | null;
 }
 
 // @public
-interface ShWhileClauseNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly cond: readonly ShStmtNode[];
-    // (undocumented)
-    readonly condlast: readonly ShCommentNode[];
-    // (undocumented)
-    readonly do: readonly ShStmtNode[];
-    // (undocumented)
-    readonly dolast: readonly ShCommentNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'WhileClause';
-    // (undocumented)
-    readonly until?: boolean;
+export type UnTestOperator =
+| 0
+| typeof TsBlckSp
+| typeof TsCharSp
+| typeof TsDirect
+| typeof TsEmpStr
+| typeof TsExec
+| typeof TsExists
+| typeof TsFdTerm
+| typeof TsGIDSet
+| typeof TsGrpOwn
+| typeof TsModif
+| typeof TsNempStr
+| typeof TsNmPipe
+| typeof TsNoEmpty
+| typeof TsNot
+| typeof TsOptSet
+| typeof TsParen
+| typeof TsRead
+| typeof TsRefVar
+| typeof TsRegFile
+| typeof TsSmbLink
+| typeof TsSocket
+| typeof TsSticky
+| typeof TsUIDSet
+| typeof TsUsrOwn
+| typeof TsVarSet
+| typeof TsWrite
+| RawOperator<'UnTestOperator'>;
+
+// @public
+export const UpperAll: 97;
+
+// @public
+export const UpperFirst: 96;
+
+// @public
+export interface WhileClause {
+    Cond: (Stmt | null)[] | null;
+    CondLast: Comment_2[] | null;
+    Do: (Stmt | null)[] | null;
+    DoLast: Comment_2[] | null;
+    DonePos: SyntaxPos;
+    DoPos: SyntaxPos;
+    Type: 'WhileClause';
+    Until: boolean;
+    WhilePos: SyntaxPos;
 }
 
 // @public
-interface ShWordIterNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly items: readonly ShWordNode[];
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly name?: ShLitNode;
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'WordIter';
+export interface Word {
+    Parts: (WordPart | null)[] | null;
+    Type: 'Word';
 }
 
 // @public
-interface ShWordNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: { readonly line: number; readonly column: number };
-        readonly end: { readonly line: number; readonly column: number };
-    };
-    // (undocumented)
-    readonly parts: readonly ShWordPartNode[];
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: 'Word';
+export const WordHdoc: 73;
+
+// @public
+export interface WordIter {
+    InPos: SyntaxPos;
+    Items: (Word | null)[] | null;
+    Name: Lit | null;
+    Type: 'WordIter';
 }
 
 // @public
-type ShWordPartNode =
-| ShArithmExpNode
-| ShBraceExpNode
-| ShCmdSubstNode
-| ShDblQuotedNode
-| ShExtGlobNode
-| ShLitNode
-| ShParamExpNode
-| ShProcSubstNode
-| ShSglQuotedNode;
+export type WordPart =
+| ArithmExp
+| BraceExp
+| CmdSubst
+| DblQuoted
+| ExtGlob
+| Lit
+| ParamExp
+| ProcSubst
+| SglQuoted
+| TypedNil<
+| 'ArithmExp'
+| 'BraceExp'
+| 'CmdSubst'
+| 'DblQuoted'
+| 'ExtGlob'
+| 'Lit'
+| 'ParamExp'
+| 'ProcSubst'
+| 'SglQuoted'
+>;
 
 // @public
-export const visitorKeys: Readonly<Record<string, readonly string[]>>;
+export const Xor: 96;
 
 // @public
-export function walk(node: ShNode, visit: (node: ShNode, parent: ShNode | null) => void): void;
+export const XorAssgn: 56;
+
+// @public
+export const XorBool: 97;
+
+// @public
+export const XorBoolAssgn: 61;
 
 // (No @packageDocumentation comment for this package)
 

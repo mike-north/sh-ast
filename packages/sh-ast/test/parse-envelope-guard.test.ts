@@ -1,134 +1,46 @@
 /**
- * Regression test for the `isResultEnvelope` type guard in `src/parse.ts`.
- *
- * The guard originally only checked `typeof value === 'object' && value !==
- * null`, which accepts arrays (`typeof [] === 'object'` in JS) as a valid
- * result envelope. A shim payload of `[]` or `[1, 2]` would then pass
- * through `isResultEnvelope` unrejected and fail later with a confusing
- * "neither a file nor an error" message (or worse, silently read `undefined`
- * off array indices) instead of the clear "unexpected payload shape" error.
- * The guard now also rejects arrays and non-plain objects up front.
- *
- * The last `describe` block below also covers criterion 2 of
- * https://github.com/mike-north/eslint-sh/issues/12: a malformed envelope
- * must throw `ShInternalError` (not a bare `Error`), reusing this
- * file's `vi.mock` scaffolding for the WASM shim boundary.
- *
- * @see design/ARCHITECTURE.md — serialization contract between the WASM
- *   shim and `parseSync`
+ * Malformed bridge responses must fail as internal defects before callers see
+ * partial or falsely typed records. Complete nil-bearing files are valid.
  */
 import { describe, expect, it, vi } from 'vitest';
+import { ParseError, ShInternalError, parseSync } from '../src/index.js';
 
-const callParse = vi.fn<(text: string, dialect: string, filename: string) => string>();
+/** Replaces only the transport, so public response validation remains under test. */
+const callSyntax = vi.hoisted(() => vi.fn<(...args: unknown[]) => string>());
+vi.mock('../src/wasm-instance.js', () => ({ callSyntax }));
 
-vi.mock('../src/wasm-instance.js', () => ({
-  callParse: (text: string, dialect: string, filename: string) =>
-    callParse(text, dialect, filename),
-}));
-
-describe('parseSync — regression: isResultEnvelope must reject arrays', () => {
-  it('throws the payload-shape error when the shim returns a JSON array', async () => {
-    callParse.mockReturnValueOnce('[]');
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: WASM shim returned an unexpected payload shape',
-    );
-  });
-
-  it('throws the payload-shape error when the shim returns a JSON array with elements', async () => {
-    callParse.mockReturnValueOnce('[1,2,3]');
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: WASM shim returned an unexpected payload shape',
-    );
-  });
-
-  it('throws the payload-shape error when the shim returns a non-object JSON value', async () => {
-    callParse.mockReturnValueOnce('"just a string"');
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: WASM shim returned an unexpected payload shape',
-    );
-  });
-
-  it('throws the payload-shape error when the shim returns null', async () => {
-    callParse.mockReturnValueOnce('null');
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: WASM shim returned an unexpected payload shape',
-    );
-  });
-});
-
-describe('parseSync — regression: an envelope with neither file, parseError, nor error', () => {
-  it('throws the "neither a file nor an error" error for an empty envelope', async () => {
-    // `isResultEnvelope({})` is true — every envelope field is optional —
-    // so `{}` reaches the dedicated "neither a file nor an error" branch
-    // rather than the "unexpected payload shape" one above.
-    callParse.mockReturnValueOnce('{}');
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: WASM shim returned neither a file nor an error',
-    );
-  });
-});
-
-describe('parseSync — regression: asShFile validates the normalized root, not just node.type', () => {
-  // A minimal raw node shape that satisfies `normalize`'s `isRawNode` check
-  // (a JsonValue object with well-formed Pos/End fields); each test tweaks
-  // just the field the guard under test cares about.
-  const pos = { Offset: 0, Line: 1, Col: 1 };
-
-  it('throws when the root node has type "File" but no "stmts" field at all', async () => {
-    callParse.mockReturnValueOnce(
-      JSON.stringify({
-        file: { Pos: pos, End: pos },
-      }),
-    );
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: expected root node to have an array "stmts" field',
-    );
-  });
-
-  it('throws when the root node\'s "stmts" field is present but not an array', async () => {
-    callParse.mockReturnValueOnce(
-      JSON.stringify({
-        file: { Pos: pos, End: pos, Stmts: 'not-an-array' },
-      }),
-    );
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: expected root node to have an array "stmts" field',
-    );
-  });
-
-  it('throws when the root node has a type other than "File" (previously untested branch)', async () => {
-    callParse.mockReturnValueOnce(
-      JSON.stringify({
-        file: { Type: 'NotFile', Pos: pos, End: pos },
-      }),
-    );
-    const { parseSync } = await import('../src/index.js');
-    expect(() => parseSync('echo hi')).toThrow(
-      'bridge: expected root node of type "File", got "NotFile"',
-    );
-  });
-});
-
-describe('parseSync — criterion 2: malformed shim envelope throws ShInternalError', () => {
-  it('throws ShInternalError (code "SH_AST_INTERNAL") when the shim returns a JSON array', async () => {
-    expect.assertions(3);
-    callParse.mockReturnValueOnce('[]');
-    const { parseSync, ShInternalError } = await import('../src/index.js');
+describe('syntax response guard', () => {
+  it.each(['[]', '[1,2,3]', '"just a string"', 'null', '42', 'true', '{'])(
+    'rejects malformed or non-record JSON: %s',
+    (response) => {
+      callSyntax.mockReturnValueOnce(response);
+      expect(() => parseSync('echo hi')).toThrow(ShInternalError);
+    },
+  );
+  it.each([
+    {},
+    { File: { Type: 'File' } },
+    { File: { Type: 'File', Name: '', Stmts: [{}], Last: null } },
+    { File: { Type: 'File', Name: '', Stmts: 'not-an-array', Last: null } },
+    { File: { Type: 'NotFile', Name: '', Stmts: null, Last: null } },
+    { Error: {} },
+    { Error: { Kind: 'ParseError', Message: 'bad' }, File: null },
+    { Error: { Kind: 'NotAnError', Message: 'bad' }, File: null },
+  ])('rejects incomplete or wrong records: %j', (response) => {
+    callSyntax.mockReturnValueOnce(JSON.stringify(response));
+    let failure: unknown;
     try {
       parseSync('echo hi');
     } catch (error) {
-      expect(error).toBeInstanceOf(ShInternalError);
-      expect((error as InstanceType<typeof ShInternalError>).code).toBe('SH_AST_INTERNAL');
-      // criterion 5 (negative): a malformed-envelope error is not a parse error
-      const { ShParseError } = await import('../src/index.js');
-      expect(error).not.toBeInstanceOf(ShParseError);
+      failure = error;
     }
+    expect(failure).toBeInstanceOf(ShInternalError);
+    expect(failure).toMatchObject({ code: 'SH_AST_INTERNAL' });
+    expect(failure).not.toBeInstanceOf(ParseError);
+  });
+  it('accepts a complete empty file with nil statement/comment slices', () => {
+    const File = { Type: 'File', Name: '', Stmts: null, Last: null };
+    callSyntax.mockReturnValueOnce(JSON.stringify({ File }));
+    expect(parseSync('')).toEqual(File);
   });
 });

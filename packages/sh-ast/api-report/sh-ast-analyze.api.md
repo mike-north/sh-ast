@@ -26,6 +26,329 @@ export interface Argv0UnresolvedWord {
 }
 
 // @public
+export interface ArithmCmd {
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'ArithmCmd';
+    Unsigned: boolean;
+    X: ArithmExpr | null;
+}
+
+// @public
+export interface ArithmExp {
+    Bracket: boolean;
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'ArithmExp';
+    Unsigned: boolean;
+    X: ArithmExpr | null;
+}
+
+// @public
+export type ArithmExpr =
+| BinaryArithm
+| FlagsArithm
+| ParenArithm
+| UnaryArithm
+| Word
+| TypedNil<'BinaryArithm' | 'FlagsArithm' | 'ParenArithm' | 'UnaryArithm' | 'Word'>;
+
+// @public
+export interface ArrayElem {
+    Comments: Comment_2[] | null;
+    Index: ArithmExpr | null;
+    Type: 'ArrayElem';
+    Value: Word | null;
+}
+
+// @public
+export interface ArrayExpr {
+    Elems: (ArrayElem | null)[] | null;
+    Last: Comment_2[] | null;
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ArrayExpr';
+}
+
+// @public
+export interface Assign {
+    Append: boolean;
+    Array: ArrayExpr | null;
+    Index: ArithmExpr | null;
+    Naked: boolean;
+    Name: Lit | null;
+    Type: 'Assign';
+    Value: Word | null;
+}
+
+// Warning: (ae-forgotten-export) The symbol "Add" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AddAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "And" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AndArit" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AndAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AndBoolAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Assgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Comma" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Eql" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Geq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Gtr" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Leq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Lss" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Mul" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "MulAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Neq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Or" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OrArit" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OrAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OrBoolAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Pow" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "PowAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Quo" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "QuoAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Rem" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RemAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Shl" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ShlAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Shr" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ShrAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Sub" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "SubAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TernColon" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TernQuest" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Xor" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "XorAssgn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "XorBool" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "XorBoolAssgn" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type BinAritOperator =
+| 0
+| typeof Add
+| typeof AddAssgn
+| typeof And
+| typeof AndArit
+| typeof AndAssgn
+| typeof AndBoolAssgn
+| typeof Assgn
+| typeof Comma
+| typeof Eql
+| typeof Geq
+| typeof Gtr
+| typeof Leq
+| typeof Lss
+| typeof Mul
+| typeof MulAssgn
+| typeof Neq
+| typeof Or
+| typeof OrArit
+| typeof OrAssgn
+| typeof OrBoolAssgn
+| typeof Pow
+| typeof PowAssgn
+| typeof Quo
+| typeof QuoAssgn
+| typeof Rem
+| typeof RemAssgn
+| typeof Shl
+| typeof ShlAssgn
+| typeof Shr
+| typeof ShrAssgn
+| typeof Sub
+| typeof SubAssgn
+| typeof TernColon
+| typeof TernQuest
+| typeof Xor
+| typeof XorAssgn
+| typeof XorBool
+| typeof XorBoolAssgn
+| RawOperator<'BinAritOperator'>;
+
+// @public
+export interface BinaryArithm {
+    Op: BinAritOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryArithm';
+    X: ArithmExpr | null;
+    Y: ArithmExpr | null;
+}
+
+// @public
+export interface BinaryCmd {
+    Op: BinCmdOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryCmd';
+    X: Stmt | null;
+    Y: Stmt | null;
+}
+
+// @public
+export interface BinaryTest {
+    Op: BinTestOperator;
+    OpPos: SyntaxPos;
+    Type: 'BinaryTest';
+    X: TestExpr | null;
+    Y: TestExpr | null;
+}
+
+// Warning: (ae-forgotten-export) The symbol "AndStmt" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OrStmt" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Pipe" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "PipeAll" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type BinCmdOperator =
+0 | typeof AndStmt | typeof OrStmt | typeof Pipe | typeof PipeAll | RawOperator<'BinCmdOperator'>;
+
+// Warning: (ae-forgotten-export) The symbol "AndTest" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OrTest" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsAfter" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsBefore" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsDevIno" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsEql" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsGeq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsGtr" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsLeq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsLss" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsMatch" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsMatchShort" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNeq" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNewer" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNoMatch" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsOlder" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsReMatch" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type BinTestOperator =
+| 0
+| typeof AndTest
+| typeof OrTest
+| typeof TsAfter
+| typeof TsBefore
+| typeof TsDevIno
+| typeof TsEql
+| typeof TsGeq
+| typeof TsGtr
+| typeof TsLeq
+| typeof TsLss
+| typeof TsMatch
+| typeof TsMatchShort
+| typeof TsNeq
+| typeof TsNewer
+| typeof TsNoMatch
+| typeof TsOlder
+| typeof TsReMatch
+| RawOperator<'BinTestOperator'>;
+
+// @public
+export interface Block {
+    Last: Comment_2[] | null;
+    Lbrace: SyntaxPos;
+    Rbrace: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'Block';
+}
+
+// @public
+export interface BraceExp {
+    Elems: (Word | null)[] | null;
+    Sequence: boolean;
+    Type: 'BraceExp';
+}
+
+// @public
+export interface CallExpr {
+    Args: (Word | null)[] | null;
+    Assigns: (Assign | null)[] | null;
+    Type: 'CallExpr';
+}
+
+// @public
+export interface CaseClause {
+    Braces: boolean;
+    Case: SyntaxPos;
+    Esac: SyntaxPos;
+    In: SyntaxPos;
+    Items: (CaseItem | null)[] | null;
+    Last: Comment_2[] | null;
+    Type: 'CaseClause';
+    Word: Word | null;
+}
+
+// @public
+export interface CaseItem {
+    Comments: Comment_2[] | null;
+    Last: Comment_2[] | null;
+    Op: CaseOperator;
+    OpPos: SyntaxPos;
+    Patterns: (Word | null)[] | null;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'CaseItem';
+}
+
+// Warning: (ae-forgotten-export) The symbol "Break" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Fallthrough" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Resume" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ResumeKorn" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type CaseOperator =
+| 0
+| typeof Break
+| typeof Fallthrough
+| typeof Resume
+| typeof ResumeKorn
+| RawOperator<'CaseOperator'>;
+
+// @public
+export interface CmdSubst {
+    Backquotes: boolean;
+    Last: Comment_2[] | null;
+    Left: SyntaxPos;
+    ReplyVar: boolean;
+    Right: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    TempFile: boolean;
+    Type: 'CmdSubst';
+}
+
+// @public
+export type Command =
+| ArithmCmd
+| BinaryCmd
+| Block
+| CallExpr
+| CaseClause
+| CoprocClause
+| DeclClause
+| ForClause
+| FuncDecl
+| IfClause
+| LetClause
+| Subshell
+| TestClause
+| TestDecl
+| TimeClause
+| WhileClause
+| TypedNil<
+| 'ArithmCmd'
+| 'BinaryCmd'
+| 'Block'
+| 'CallExpr'
+| 'CaseClause'
+| 'CoprocClause'
+| 'DeclClause'
+| 'ForClause'
+| 'FuncDecl'
+| 'IfClause'
+| 'LetClause'
+| 'Subshell'
+| 'TestClause'
+| 'TestDecl'
+| 'TimeClause'
+| 'WhileClause'
+>;
+
+// @public
 export type CommandContext = {
     readonly kind: 'and';
     readonly side: 'right';
@@ -51,7 +374,7 @@ export type CommandContext = {
     readonly role: 'body' | 'cond';
 } | {
     readonly kind: 'function';
-    readonly name: string;
+    readonly name: GoString;
 } | {
     readonly kind: 'background';
 } | {
@@ -65,21 +388,434 @@ export interface CommandSite {
     readonly argv: readonly WordResolution[];
     readonly argv0: WordResolution;
     readonly context: readonly CommandContext[];
-    readonly node: ShNode;
+    readonly node: CallExpr;
+}
+
+// @public
+interface Comment_2 {
+    Hash: SyntaxPos;
+    Text: GoString;
+    Type: 'Comment';
+}
+export { Comment_2 as Comment }
+
+// @public
+export interface CoprocClause {
+    Coproc: SyntaxPos;
+    Name: Word | null;
+    Stmt: Stmt | null;
+    Type: 'CoprocClause';
+}
+
+// @public
+export interface CStyleLoop {
+    Cond: ArithmExpr | null;
+    Init: ArithmExpr | null;
+    Lparen: SyntaxPos;
+    Post: ArithmExpr | null;
+    Rparen: SyntaxPos;
+    Type: 'CStyleLoop';
+}
+
+// @public
+export interface DblQuoted {
+    Dollar: boolean;
+    Left: SyntaxPos;
+    Parts: (WordPart | null)[] | null;
+    Right: SyntaxPos;
+    Type: 'DblQuoted';
+}
+
+// @public
+export interface DeclClause {
+    Args: (Assign | null)[] | null;
+    Type: 'DeclClause';
+    Variant: Lit | null;
 }
 
 // @public
 export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[];
 
 // @public
-export function enumerateCommands(root: ShNode): CommandSite[];
+export function enumerateCommands(root: Node_2): CommandSite[];
 
 // @public
-export interface Position {
-    // (undocumented)
-    readonly column: number;
-    // (undocumented)
-    readonly line: number;
+export interface Expansion {
+    Op: ParExpOperator;
+    Type: 'Expansion';
+    Word: Word | null;
+}
+
+// @public
+export interface ExtGlob {
+    Op: GlobOperator;
+    OpPos: SyntaxPos;
+    Pattern: Lit | null;
+    Type: 'ExtGlob';
+}
+
+// @public
+interface File_2 {
+    Last: Comment_2[] | null;
+    Name: GoString;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'File';
+}
+export { File_2 as File }
+
+// @public
+export interface FlagsArithm {
+    Flags: Lit | null;
+    Type: 'FlagsArithm';
+    X: ArithmExpr | null;
+}
+
+// @public
+export interface ForClause {
+    Braces: boolean;
+    Do: (Stmt | null)[] | null;
+    DoLast: Comment_2[] | null;
+    DonePos: SyntaxPos;
+    DoPos: SyntaxPos;
+    ForPos: SyntaxPos;
+    Loop: Loop | null;
+    Select: boolean;
+    Type: 'ForClause';
+}
+
+// @public
+export interface FuncDecl {
+    Body: Stmt | null;
+    Name: Lit | null;
+    Names: (Lit | null)[] | null;
+    Parens: boolean;
+    Position: SyntaxPos;
+    RsrvWord: boolean;
+    Type: 'FuncDecl';
+}
+
+// Warning: (ae-forgotten-export) The symbol "GlobExcept" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "GlobOne" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "GlobOneOrMore" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "GlobZeroOrMore" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "GlobZeroOrOne" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type GlobOperator =
+| 0
+| typeof GlobExcept
+| typeof GlobOne
+| typeof GlobOneOrMore
+| typeof GlobZeroOrMore
+| typeof GlobZeroOrOne
+| RawOperator<'GlobOperator'>;
+
+// @public
+export type GoString = string | Uint8Array;
+
+// @public
+export interface IfClause {
+    Cond: (Stmt | null)[] | null;
+    CondLast: Comment_2[] | null;
+    Else: IfClause | null;
+    FiPos: SyntaxPos;
+    Last: Comment_2[] | null;
+    Position: SyntaxPos;
+    Then: (Stmt | null)[] | null;
+    ThenLast: Comment_2[] | null;
+    ThenPos: SyntaxPos;
+    Type: 'IfClause';
+}
+
+// @public
+export interface LetClause {
+    Exprs: (ArithmExpr | null)[] | null;
+    Let: SyntaxPos;
+    Type: 'LetClause';
+}
+
+// @public
+export interface Lit {
+    Type: 'Lit';
+    Value: GoString;
+    ValueEnd: SyntaxPos;
+    ValuePos: SyntaxPos;
+}
+
+// @public
+export type Loop = CStyleLoop | WordIter | TypedNil<'CStyleLoop' | 'WordIter'>;
+
+// @public
+type Node_2 =
+| ArithmCmd
+| ArithmExp
+| ArrayElem
+| ArrayExpr
+| Assign
+| BinaryArithm
+| BinaryCmd
+| BinaryTest
+| Block
+| BraceExp
+| CStyleLoop
+| CallExpr
+| CaseClause
+| CaseItem
+| CmdSubst
+| Comment_2
+| CoprocClause
+| DblQuoted
+| DeclClause
+| ExtGlob
+| File_2
+| FlagsArithm
+| ForClause
+| FuncDecl
+| IfClause
+| LetClause
+| Lit
+| ParamExp
+| ParenArithm
+| ParenTest
+| ProcSubst
+| Redirect
+| SglQuoted
+| Stmt
+| Subshell
+| TestClause
+| TestDecl
+| TimeClause
+| UnaryArithm
+| UnaryTest
+| WhileClause
+| Word
+| WordIter
+| TypedNil<
+| 'ArithmCmd'
+| 'ArithmExp'
+| 'ArrayElem'
+| 'ArrayExpr'
+| 'Assign'
+| 'BinaryArithm'
+| 'BinaryCmd'
+| 'BinaryTest'
+| 'Block'
+| 'BraceExp'
+| 'CStyleLoop'
+| 'CallExpr'
+| 'CaseClause'
+| 'CaseItem'
+| 'CmdSubst'
+| 'Comment'
+| 'CoprocClause'
+| 'DblQuoted'
+| 'DeclClause'
+| 'ExtGlob'
+| 'File'
+| 'FlagsArithm'
+| 'ForClause'
+| 'FuncDecl'
+| 'IfClause'
+| 'LetClause'
+| 'Lit'
+| 'ParamExp'
+| 'ParenArithm'
+| 'ParenTest'
+| 'ProcSubst'
+| 'Redirect'
+| 'SglQuoted'
+| 'Stmt'
+| 'Subshell'
+| 'TestClause'
+| 'TestDecl'
+| 'TimeClause'
+| 'UnaryArithm'
+| 'UnaryTest'
+| 'WhileClause'
+| 'Word'
+| 'WordIter'
+>;
+export { Node_2 as Node }
+
+// @public
+export type OperatorFamily =
+| 'BinAritOperator'
+| 'BinCmdOperator'
+| 'BinTestOperator'
+| 'CaseOperator'
+| 'GlobOperator'
+| 'ParExpOperator'
+| 'ParNamesOperator'
+| 'ProcOperator'
+| 'RedirOperator'
+| 'UnAritOperator'
+| 'UnTestOperator';
+
+// @public
+export interface ParamExp {
+    Dollar: SyntaxPos;
+    Excl: boolean;
+    Exp: Expansion | null;
+    Flags: Lit | null;
+    Index: ArithmExpr | null;
+    IsSet: boolean;
+    Length: boolean;
+    Modifiers: (Lit | null)[] | null;
+    Names: ParNamesOperator;
+    NestedParam: WordPart | null;
+    Param: Lit | null;
+    Rbrace: SyntaxPos;
+    Repl: Replace | null;
+    Short: boolean;
+    Slice: Slice | null;
+    Type: 'ParamExp';
+    Width: boolean;
+}
+
+// @public
+export interface ParenArithm {
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ParenArithm';
+    X: ArithmExpr | null;
+}
+
+// @public
+export interface ParenTest {
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Type: 'ParenTest';
+    X: TestExpr | null;
+}
+
+// Warning: (ae-forgotten-export) The symbol "AlternateUnset" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AlternateUnsetOrNull" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ArrayExclude" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ArrayIntersect" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AssignUnset" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AssignUnsetOrNull" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "DefaultUnset" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "DefaultUnsetOrNull" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ErrorUnset" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ErrorUnsetOrNull" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "LowerAll" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "LowerFirst" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "MatchEmpty" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "OtherParamOps" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RemLargePrefix" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RemLargeSuffix" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RemSmallPrefix" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RemSmallSuffix" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "UpperAll" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "UpperFirst" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type ParExpOperator =
+| 0
+| typeof AlternateUnset
+| typeof AlternateUnsetOrNull
+| typeof ArrayExclude
+| typeof ArrayIntersect
+| typeof AssignUnset
+| typeof AssignUnsetOrNull
+| typeof DefaultUnset
+| typeof DefaultUnsetOrNull
+| typeof ErrorUnset
+| typeof ErrorUnsetOrNull
+| typeof LowerAll
+| typeof LowerFirst
+| typeof MatchEmpty
+| typeof OtherParamOps
+| typeof RemLargePrefix
+| typeof RemLargeSuffix
+| typeof RemSmallPrefix
+| typeof RemSmallSuffix
+| typeof UpperAll
+| typeof UpperFirst
+| RawOperator<'ParExpOperator'>;
+
+// Warning: (ae-forgotten-export) The symbol "NamesPrefix" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "NamesPrefixWords" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type ParNamesOperator =
+0 | typeof NamesPrefix | typeof NamesPrefixWords | RawOperator<'ParNamesOperator'>;
+
+// Warning: (ae-forgotten-export) The symbol "CmdIn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CmdInTemp" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CmdOut" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type ProcOperator =
+0 | typeof CmdIn | typeof CmdInTemp | typeof CmdOut | RawOperator<'ProcOperator'>;
+
+// @public
+export interface ProcSubst {
+    Last: Comment_2[] | null;
+    Op: ProcOperator;
+    OpPos: SyntaxPos;
+    Rparen: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'ProcSubst';
+}
+
+// @public
+export type RawOperator<Family extends OperatorFamily> = number & {
+    readonly __shAstOperatorFamily: Family;
+};
+
+// @public
+export interface Redirect {
+    Hdoc: Word | null;
+    N: Lit | null;
+    Op: RedirOperator;
+    OpPos: SyntaxPos;
+    Type: 'Redirect';
+    Word: Word | null;
+}
+
+// Warning: (ae-forgotten-export) The symbol "AppAll" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AppAllClob" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AppClob" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "AppOut" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "DashHdoc" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "DplIn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "DplOut" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Hdoc" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrAll" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrAllClob" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrClob" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrIn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrInOut" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "RdrOut" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "WordHdoc" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type RedirOperator =
+| 0
+| typeof AppAll
+| typeof AppAllClob
+| typeof AppClob
+| typeof AppOut
+| typeof DashHdoc
+| typeof DplIn
+| typeof DplOut
+| typeof Hdoc
+| typeof RdrAll
+| typeof RdrAllClob
+| typeof RdrClob
+| typeof RdrIn
+| typeof RdrInOut
+| typeof RdrOut
+| typeof WordHdoc
+| RawOperator<'RedirOperator'>;
+
+// @public
+export interface Replace {
+    All: boolean;
+    Orig: Word | null;
+    Type: 'Replace';
+    With: Word | null;
 }
 
 // @public
@@ -91,11 +827,20 @@ export interface ResolveArgv0Options {
 }
 
 // @public
-export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution;
+export function resolveWord(word: Node_2, options?: ResolveWordOptions): WordResolution;
 
 // @public
 export interface ResolveWordOptions {
     readonly context?: 'command-argument' | 'assignment-value';
+}
+
+// @public
+export interface SglQuoted {
+    Dollar: boolean;
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'SglQuoted';
+    Value: GoString;
 }
 
 // @public
@@ -119,19 +864,270 @@ export abstract class ShAstError extends Error {
 }
 
 // @public
-export interface ShNode {
-    // (undocumented)
-    [field: string]: unknown;
-    // (undocumented)
-    readonly loc: {
-        readonly start: Position;
-        readonly end: Position;
-    };
-    // (undocumented)
-    readonly range: readonly [number, number];
-    // (undocumented)
-    readonly type: string;
+export interface Slice {
+    Length: ArithmExpr | null;
+    Offset: ArithmExpr | null;
+    Type: 'Slice';
 }
+
+// @public
+export interface Stmt {
+    Background: boolean;
+    Cmd: Command | null;
+    Comments: Comment_2[] | null;
+    Coprocess: boolean;
+    Disown: boolean;
+    Negated: boolean;
+    Position: SyntaxPos;
+    Redirs: (Redirect | null)[] | null;
+    Semicolon: SyntaxPos;
+    Type: 'Stmt';
+}
+
+// @public
+export interface Subshell {
+    Last: Comment_2[] | null;
+    Lparen: SyntaxPos;
+    Rparen: SyntaxPos;
+    Stmts: (Stmt | null)[] | null;
+    Type: 'Subshell';
+}
+
+// @public
+export interface SyntaxPos {
+    Col: number;
+    IsRecovered: boolean;
+    IsValid: boolean;
+    Line: number;
+    Offset: number;
+    OffsetOverflow: boolean;
+}
+
+// @public
+export interface TestClause {
+    Left: SyntaxPos;
+    Right: SyntaxPos;
+    Type: 'TestClause';
+    X: TestExpr | null;
+}
+
+// @public
+export interface TestDecl {
+    Body: Stmt | null;
+    Description: Word | null;
+    Position: SyntaxPos;
+    Type: 'TestDecl';
+}
+
+// @public
+export type TestExpr =
+| BinaryTest
+| ParenTest
+| UnaryTest
+| Word
+| TypedNil<'BinaryTest' | 'ParenTest' | 'UnaryTest' | 'Word'>;
+
+// @public
+export interface TimeClause {
+    PosixFormat: boolean;
+    Stmt: Stmt | null;
+    Time: SyntaxPos;
+    Type: 'TimeClause';
+}
+
+// @public
+export interface TypedNil<
+ConcreteKind extends
+| 'ArithmCmd'
+| 'ArithmExp'
+| 'ArrayElem'
+| 'ArrayExpr'
+| 'Assign'
+| 'BinaryArithm'
+| 'BinaryCmd'
+| 'BinaryTest'
+| 'Block'
+| 'BraceExp'
+| 'CStyleLoop'
+| 'CallExpr'
+| 'CaseClause'
+| 'CaseItem'
+| 'CmdSubst'
+| 'Comment'
+| 'CoprocClause'
+| 'DblQuoted'
+| 'DeclClause'
+| 'ExtGlob'
+| 'File'
+| 'FlagsArithm'
+| 'ForClause'
+| 'FuncDecl'
+| 'IfClause'
+| 'LetClause'
+| 'Lit'
+| 'ParamExp'
+| 'ParenArithm'
+| 'ParenTest'
+| 'ProcSubst'
+| 'Redirect'
+| 'SglQuoted'
+| 'Stmt'
+| 'Subshell'
+| 'TestClause'
+| 'TestDecl'
+| 'TimeClause'
+| 'UnaryArithm'
+| 'UnaryTest'
+| 'WhileClause'
+| 'Word'
+| 'WordIter',
+> {
+    Kind: ConcreteKind;
+    Type: 'TypedNil';
+}
+
+// Warning: (ae-forgotten-export) The symbol "BitNegation" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Dec" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Inc" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Minus" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Not" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Plus" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type UnAritOperator =
+| 0
+| typeof BitNegation
+| typeof Dec
+| typeof Inc
+| typeof Minus
+| typeof Not
+| typeof Plus
+| RawOperator<'UnAritOperator'>;
+
+// @public
+export interface UnaryArithm {
+    Op: UnAritOperator;
+    OpPos: SyntaxPos;
+    Post: boolean;
+    Type: 'UnaryArithm';
+    X: ArithmExpr | null;
+}
+
+// @public
+export interface UnaryTest {
+    Op: UnTestOperator;
+    OpPos: SyntaxPos;
+    Type: 'UnaryTest';
+    X: TestExpr | null;
+}
+
+// Warning: (ae-forgotten-export) The symbol "TsBlckSp" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsCharSp" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsDirect" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsEmpStr" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsExec" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsExists" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsFdTerm" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsGIDSet" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsGrpOwn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsModif" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNempStr" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNmPipe" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNoEmpty" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsNot" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsOptSet" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsParen" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsRead" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsRefVar" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsRegFile" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsSmbLink" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsSocket" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsSticky" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsUIDSet" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsUsrOwn" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsVarSet" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "TsWrite" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type UnTestOperator =
+| 0
+| typeof TsBlckSp
+| typeof TsCharSp
+| typeof TsDirect
+| typeof TsEmpStr
+| typeof TsExec
+| typeof TsExists
+| typeof TsFdTerm
+| typeof TsGIDSet
+| typeof TsGrpOwn
+| typeof TsModif
+| typeof TsNempStr
+| typeof TsNmPipe
+| typeof TsNoEmpty
+| typeof TsNot
+| typeof TsOptSet
+| typeof TsParen
+| typeof TsRead
+| typeof TsRefVar
+| typeof TsRegFile
+| typeof TsSmbLink
+| typeof TsSocket
+| typeof TsSticky
+| typeof TsUIDSet
+| typeof TsUsrOwn
+| typeof TsVarSet
+| typeof TsWrite
+| RawOperator<'UnTestOperator'>;
+
+// @public
+export interface WhileClause {
+    Cond: (Stmt | null)[] | null;
+    CondLast: Comment_2[] | null;
+    Do: (Stmt | null)[] | null;
+    DoLast: Comment_2[] | null;
+    DonePos: SyntaxPos;
+    DoPos: SyntaxPos;
+    Type: 'WhileClause';
+    Until: boolean;
+    WhilePos: SyntaxPos;
+}
+
+// @public
+export interface Word {
+    Parts: (WordPart | null)[] | null;
+    Type: 'Word';
+}
+
+// @public
+export interface WordIter {
+    InPos: SyntaxPos;
+    Items: (Word | null)[] | null;
+    Name: Lit | null;
+    Type: 'WordIter';
+}
+
+// @public
+export type WordPart =
+| ArithmExp
+| BraceExp
+| CmdSubst
+| DblQuoted
+| ExtGlob
+| Lit
+| ParamExp
+| ProcSubst
+| SglQuoted
+| TypedNil<
+| 'ArithmExp'
+| 'BraceExp'
+| 'CmdSubst'
+| 'DblQuoted'
+| 'ExtGlob'
+| 'Lit'
+| 'ParamExp'
+| 'ProcSubst'
+| 'SglQuoted'
+>;
 
 // @public
 export type WordResolution = {

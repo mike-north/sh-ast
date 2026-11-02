@@ -1,111 +1,21 @@
-import type { ShellDialect } from './types.js';
+/** Shared failure classes for binding invariants, resource limits, and analysis contracts. */
 
 /**
- * Common base class for every error this package throws — originally just
- * {@link sh-ast#parseSync | parseSync}'s errors, now also the
- * `sh-ast/analyze` layer's (see {@link ShAnalyzeMaxDepthError},
- * {@link ShAnalyzeInvalidWrapperSpecError}). Provides a stable, documented
- * `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`) alongside the usual
- * `instanceof` narrowing, so consumers can branch on failure kind
- * programmatically without parsing `.message` strings. Never thrown directly
- * — only via its concrete subclasses
- * ({@link sh-ast#ShParseError | ShParseError},
- * {@link sh-ast#ShInvalidDialectError | ShInvalidDialectError},
- * {@link sh-ast#ShInternalError | ShInternalError},
- * {@link ShAnalyzeMaxDepthError},
- * {@link sh-ast#ShParseMaxDepthError | ShParseMaxDepthError},
- * {@link ShAnalyzeInvalidWrapperSpecError}).
- *
- * Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry
- * point (see #23) — every subclass thrown by `sh-ast/analyze`'s own
- * functions extends this, so a consumer of that subpath alone can
- * `catch`/reference the base without also importing from root.
- *
+ * Common base for every package failure, including upstream syntax errors and
+ * analysis errors. The stable code discriminator supports programmatic handling
+ * without interpreting display messages. Only concrete subclasses are thrown.
  * @public
  */
 export abstract class ShAstError extends Error {
-  /**
-   * Stable, machine-readable discriminator for this error kind. Distinct
-   * per subclass and will not change once published.
-   */
+  /** Stable machine-readable identity of the concrete failure kind. */
   abstract readonly code: string;
-}
-
-/**
- * Position info attached to a {@link ShParseError}.
- *
- * @public
- */
-export interface ShParseErrorInfo {
-  /** 1-based line number, exactly as reported by mvdan/sh. */
-  line: number;
-  /**
-   * 1-based column number, in **UTF-16 code units** — converted from
-   * mvdan/sh's own byte-counting column so it agrees with
-   * {@link ShNode.loc}'s columns (mvdan/sh reports `column` as a byte count
-   * on the source line, not a UTF-16 code unit count; see
-   * design/ARCHITECTURE.md's "Byte→UTF-16 conversion"). For ASCII-only
-   * source text this is numerically identical to mvdan/sh's own column.
-   */
-  column: number;
-  /** The filename used for the parse (see {@link ParseOptions.filename}). */
-  filename: string;
-}
-
-/**
- * Thrown by {@link parseSync} when shell source fails to parse. Carries the
- * real position mvdan/sh reported — never 1:1 placeholders: `.line` is
- * 1-based exactly as mvdan/sh reports it, and `.column` is converted to
- * UTF-16 code units so it agrees with {@link ShNode.loc}'s columns (mvdan/sh
- * itself reports `column` as a byte count on the source line — see
- * {@link ShParseErrorInfo.column}). The unconverted, raw byte-column
- * position appears only inside `.message`, mvdan/sh's own formatted string,
- * verbatim.
- *
- * @public
- */
-export class ShParseError extends ShAstError {
-  readonly code = 'SH_AST_PARSE_ERROR';
-  readonly line: number;
-  readonly column: number;
-  readonly filename: string;
-
-  constructor(message: string, info: ShParseErrorInfo) {
-    super(message);
-    this.name = 'ShParseError';
-    this.line = info.line;
-    this.column = info.column;
-    this.filename = info.filename;
-  }
-}
-
-/**
- * Thrown by {@link parseSync} when {@link ParseOptions.dialect} is not one
- * of the supported {@link ShellDialect} values. Carries the rejected value
- * as `.dialect`; `.message` lists the supported dialects. A foreseeable,
- * actionable user mistake — never an instance of {@link ShParseError}.
- *
- * @public
- */
-export class ShInvalidDialectError extends ShAstError {
-  readonly code = 'SH_AST_INVALID_DIALECT';
-  /** The rejected dialect value, exactly as passed to {@link parseSync}. */
-  readonly dialect: string;
-
-  constructor(dialect: string, supportedDialects: readonly ShellDialect[]) {
-    super(
-      `bridge: unrecognized shell dialect "${dialect}"; supported dialects are: ${supportedDialects.join(', ')}`,
-    );
-    this.name = 'ShInvalidDialectError';
-    this.dialect = dialect;
-  }
 }
 
 /**
  * Thrown by {@link parseSync} for failures that should never happen given a
  * correctly-behaving WASM shim: a malformed result envelope, an unexpected
  * root node type, or any other shim contract violation. Distinct from
- * {@link ShInvalidDialectError} and {@link ShParseError}, both of which
+ * {@link InputError} and {@link ParseError}, both of which
  * indicate a foreseeable, actionable user mistake rather than an internal
  * defect.
  *

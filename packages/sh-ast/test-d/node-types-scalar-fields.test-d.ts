@@ -1,215 +1,204 @@
 /**
- * Type-level coverage for https://github.com/mike-north/sh-ast/issues/22:
- * "Verify then fix: generated node types leave key fields as `unknown`
- * (e.g. `ShLitNode.value`), contradicting 'fully-typed' claim".
- *
- * Every scalar leaf field the generator now makes concrete is asserted here
- * — all 44 node/field pairs, not a sample — so a generator regression that
- * misclassifies any one of them (back to `unknown`, or to the wrong scalar)
- * fails this suite. Regeneration/`regenerate-match` only proves byte
- * determinism; these assertions prove semantic correctness.
- *
- * The expected type of each field is derived **independently** from the
- * pinned upstream `mvdan.cc/sh/v3 v3.13.1` struct definitions, not copied
- * from the generated `.d.ts` (which would be tautological): Go `string` →
- * `string`, Go `bool` → `boolean`, and mvdan/sh's `token`-backed operator
- * enums (`RedirOperator`, `BinAritOperator`, `CaseOperator`, `ProcOperator`,
- * `GlobOperator`, `ParNamesOperator`, `ParExpOperator`, `UnAritOperator`,
- * `UnTestOperator`, `BinTestOperator`, `BinCmdOperator`) → `number`, because
- * those types implement only `fmt.Stringer`, not `json.Marshaler`, so the
- * shim's encoder serializes them as JSON numbers. Field names are the Go
- * field names fully lowercased, per the serialization contract (`TempFile`
- * → `tempfile`, `RsrvWord` → `rsrvword`, etc.).
- *
- * Each `expectType` (positive) fails against the pre-fix `node-types.d.ts`
- * (the leaf is `unknown`); each `expectNotAssignable<typeof node.field>`
- * negative asserts an incompatible scalar against the field's own type,
- * which also fails while the field is still `unknown` (everything is
- * assignable to `unknown`) — so both directions guard the reproduction.
- *
- * @see https://github.com/mvdan/sh/blob/v3.13.1/syntax/nodes.go
- * @see https://github.com/mvdan/sh/blob/v3.13.1/syntax/tokens.go
+ * Independent scalar-field coverage for all 44 node/field pairs identified in
+ * issue #22. Expectations come from mvdan/sh v3.13.1 nodes.go and tokens.go:
+ * bools are complete booleans, Go strings retain bytes, operators preserve their
+ * specific uint32 family, and pointer/slice boundaries retain explicit nulls.
+ * Both positive and incompatible-value assertions detect accidental unknowns.
  */
 import { expectNotAssignable, expectType } from 'tsd';
-import type { ShNodes } from 'sh-ast';
+import type * as Syntax from 'sh-ast';
 
-// --- ShArithmCmdNode ---
-declare const arithmCmd: ShNodes.ShArithmCmdNode;
-expectType<boolean | undefined>(arithmCmd.unsigned);
-expectNotAssignable<typeof arithmCmd.unsigned>('x');
+// --- ArithmCmd ---
+declare const arithmCmd: Syntax.ArithmCmd;
+expectType<boolean>(arithmCmd.Unsigned);
+expectNotAssignable<typeof arithmCmd.Unsigned>('x');
 
-// --- ShArithmExpNode ---
-declare const arithmExp: ShNodes.ShArithmExpNode;
-expectType<boolean | undefined>(arithmExp.bracket);
-expectType<boolean | undefined>(arithmExp.unsigned);
-expectNotAssignable<typeof arithmExp.bracket>('x');
-expectNotAssignable<typeof arithmExp.unsigned>('x');
+// --- ArithmExp ---
+declare const arithmExp: Syntax.ArithmExp;
+expectType<boolean>(arithmExp.Bracket);
+expectType<boolean>(arithmExp.Unsigned);
+expectNotAssignable<typeof arithmExp.Bracket>('x');
+expectNotAssignable<typeof arithmExp.Unsigned>('x');
 
-// --- ShAssignNode --- (Assign.Append `+=`, Assign.Naked no-`=` declare form)
-declare const assign: ShNodes.ShAssignNode;
-expectType<boolean | undefined>(assign.append);
-expectType<boolean | undefined>(assign.naked);
-expectNotAssignable<typeof assign.append>('x');
-expectNotAssignable<typeof assign.naked>('x');
-// Non-regression: name/value were already typed as node references, not
+// --- Assign --- (Assign.Append `+=`, Assign.Naked no-`=` declare form)
+declare const assign: Syntax.Assign;
+expectType<boolean>(assign.Append);
+expectType<boolean>(assign.Naked);
+expectNotAssignable<typeof assign.Append>('x');
+expectNotAssignable<typeof assign.Naked>('x');
+// Non-regression: name/value remain typed node references rather than
 // scalar leaves (mvdan/sh's `Assign.Name`/`.Value` are `*Lit`/`*Word`).
-expectType<ShNodes.ShLitNode | undefined>(assign.name);
-expectType<ShNodes.ShWordNode | undefined>(assign.value);
+expectType<Syntax.Lit | null>(assign.Name);
+expectType<Syntax.Word | null>(assign.Value);
 
-// --- ShBinaryArithmNode --- (BinAritOperator → number)
-declare const binaryArithm: ShNodes.ShBinaryArithmNode;
-expectType<number | undefined>(binaryArithm.op);
-expectNotAssignable<typeof binaryArithm.op>('x');
+// --- BinaryArithm --- (BinAritOperator family)
+declare const binaryArithm: Syntax.BinaryArithm;
+expectType<Syntax.BinAritOperator>(binaryArithm.Op);
+expectNotAssignable<typeof binaryArithm.Op>('x');
 
-// --- ShBinaryCmdNode --- (BinCmdOperator → number)
-declare const binaryCmd: ShNodes.ShBinaryCmdNode;
-expectType<number | undefined>(binaryCmd.op);
-expectNotAssignable<typeof binaryCmd.op>('x');
+// --- BinaryCmd --- (BinCmdOperator family)
+declare const binaryCmd: Syntax.BinaryCmd;
+expectType<Syntax.BinCmdOperator>(binaryCmd.Op);
+expectNotAssignable<typeof binaryCmd.Op>('x');
 
-// --- ShBinaryTestNode --- (BinTestOperator → number)
-declare const binaryTest: ShNodes.ShBinaryTestNode;
-expectType<number | undefined>(binaryTest.op);
-expectNotAssignable<typeof binaryTest.op>('x');
+// --- BinaryTest --- (BinTestOperator family)
+declare const binaryTest: Syntax.BinaryTest;
+expectType<Syntax.BinTestOperator>(binaryTest.Op);
+expectNotAssignable<typeof binaryTest.Op>('x');
 
-// --- ShBraceExpNode ---
-declare const braceExp: ShNodes.ShBraceExpNode;
-expectType<boolean | undefined>(braceExp.sequence);
-expectNotAssignable<typeof braceExp.sequence>('x');
+// --- BraceExp ---
+declare const braceExp: Syntax.BraceExp;
+expectType<boolean>(braceExp.Sequence);
+expectNotAssignable<typeof braceExp.Sequence>('x');
 
-// --- ShCaseClauseNode ---
-declare const caseClause: ShNodes.ShCaseClauseNode;
-expectType<boolean | undefined>(caseClause.braces);
-expectNotAssignable<typeof caseClause.braces>('x');
+// --- CaseClause ---
+declare const caseClause: Syntax.CaseClause;
+expectType<boolean>(caseClause.Braces);
+expectNotAssignable<typeof caseClause.Braces>('x');
 
-// --- ShCaseItemNode --- (CaseOperator → number)
-declare const caseItem: ShNodes.ShCaseItemNode;
-expectType<number | undefined>(caseItem.op);
-expectNotAssignable<typeof caseItem.op>('x');
+// --- CaseItem --- (CaseOperator family)
+declare const caseItem: Syntax.CaseItem;
+expectType<Syntax.CaseOperator>(caseItem.Op);
+expectNotAssignable<typeof caseItem.Op>('x');
 
-// --- ShCmdSubstNode ---
-declare const cmdSubst: ShNodes.ShCmdSubstNode;
-expectType<boolean | undefined>(cmdSubst.backquotes);
-expectType<boolean | undefined>(cmdSubst.tempfile);
-expectType<boolean | undefined>(cmdSubst.replyvar);
-expectNotAssignable<typeof cmdSubst.backquotes>('x');
-expectNotAssignable<typeof cmdSubst.tempfile>('x');
-expectNotAssignable<typeof cmdSubst.replyvar>('x');
+// --- CmdSubst ---
+declare const cmdSubst: Syntax.CmdSubst;
+expectType<boolean>(cmdSubst.Backquotes);
+expectType<boolean>(cmdSubst.TempFile);
+expectType<boolean>(cmdSubst.ReplyVar);
+expectNotAssignable<typeof cmdSubst.Backquotes>('x');
+expectNotAssignable<typeof cmdSubst.TempFile>('x');
+expectNotAssignable<typeof cmdSubst.ReplyVar>('x');
 
-// --- ShCommentNode ---
-declare const comment: ShNodes.ShCommentNode;
-expectType<string | undefined>(comment.text);
-expectNotAssignable<typeof comment.text>(42);
+// --- Comment ---
+declare const comment: Syntax.Comment;
+expectType<Syntax.GoString>(comment.Text);
+expectNotAssignable<typeof comment.Text>(42);
 
-// --- ShDblQuotedNode ---
-declare const dblQuoted: ShNodes.ShDblQuotedNode;
-expectType<boolean | undefined>(dblQuoted.dollar);
-expectNotAssignable<typeof dblQuoted.dollar>('x');
+// --- DblQuoted ---
+declare const dblQuoted: Syntax.DblQuoted;
+expectType<boolean>(dblQuoted.Dollar);
+expectNotAssignable<typeof dblQuoted.Dollar>('x');
 
-// --- ShExpansionNode --- (ParExpOperator → number)
-declare const expansion: ShNodes.ShExpansionNode;
-expectType<number | undefined>(expansion.op);
-expectNotAssignable<typeof expansion.op>('x');
+// --- Expansion --- (ParExpOperator family)
+declare const expansion: Syntax.Expansion;
+expectType<Syntax.ParExpOperator>(expansion.Op);
+expectNotAssignable<typeof expansion.Op>('x');
 
-// --- ShExtGlobNode --- (GlobOperator → number)
-declare const extGlob: ShNodes.ShExtGlobNode;
-expectType<number | undefined>(extGlob.op);
-expectNotAssignable<typeof extGlob.op>('x');
+// --- ExtGlob --- (GlobOperator family)
+declare const extGlob: Syntax.ExtGlob;
+expectType<Syntax.GlobOperator>(extGlob.Op);
+expectNotAssignable<typeof extGlob.Op>('x');
 
-// --- ShFileNode ---
-declare const file: ShNodes.ShFileNode;
-expectType<string | undefined>(file.name);
-expectNotAssignable<typeof file.name>(42);
+// --- File ---
+declare const file: Syntax.File;
+expectType<Syntax.GoString>(file.Name);
+expectNotAssignable<typeof file.Name>(42);
 
-// --- ShForClauseNode ---
-declare const forClause: ShNodes.ShForClauseNode;
-expectType<boolean | undefined>(forClause.select);
-expectType<boolean | undefined>(forClause.braces);
-expectNotAssignable<typeof forClause.select>('x');
-expectNotAssignable<typeof forClause.braces>('x');
+// --- ForClause ---
+declare const forClause: Syntax.ForClause;
+expectType<boolean>(forClause.Select);
+expectType<boolean>(forClause.Braces);
+expectNotAssignable<typeof forClause.Select>('x');
+expectNotAssignable<typeof forClause.Braces>('x');
 
-// --- ShFuncDeclNode ---
-declare const funcDecl: ShNodes.ShFuncDeclNode;
-expectType<boolean | undefined>(funcDecl.rsrvword);
-expectType<boolean | undefined>(funcDecl.parens);
-expectNotAssignable<typeof funcDecl.rsrvword>('x');
-expectNotAssignable<typeof funcDecl.parens>('x');
+// --- FuncDecl ---
+declare const funcDecl: Syntax.FuncDecl;
+expectType<boolean>(funcDecl.RsrvWord);
+expectType<boolean>(funcDecl.Parens);
+expectNotAssignable<typeof funcDecl.RsrvWord>('x');
+expectNotAssignable<typeof funcDecl.Parens>('x');
 
-// --- ShLitNode --- (the issue's anchor case: mvdan/sh's `Lit.Value` string)
-declare const lit: ShNodes.ShLitNode;
-expectType<string | undefined>(lit.value);
-expectNotAssignable<typeof lit.value>(42);
+// --- Lit --- (the issue's anchor case: mvdan/sh's `Lit.Value` string)
+declare const lit: Syntax.Lit;
+expectType<Syntax.GoString>(lit.Value);
+expectNotAssignable<typeof lit.Value>(42);
 
-// --- ShParamExpNode --- (Names is ParNamesOperator → number; rest bool)
-declare const paramExp: ShNodes.ShParamExpNode;
-expectType<boolean | undefined>(paramExp.short);
-expectType<boolean | undefined>(paramExp.excl);
-expectType<boolean | undefined>(paramExp.length);
-expectType<boolean | undefined>(paramExp.width);
-expectType<boolean | undefined>(paramExp.isset);
-expectType<number | undefined>(paramExp.names);
-expectNotAssignable<typeof paramExp.short>('x');
-expectNotAssignable<typeof paramExp.excl>('x');
-expectNotAssignable<typeof paramExp.length>('x');
-expectNotAssignable<typeof paramExp.width>('x');
-expectNotAssignable<typeof paramExp.isset>('x');
-expectNotAssignable<typeof paramExp.names>('x');
+// --- ParamExp --- (Names is ParNamesOperator family; rest bool)
+declare const paramExp: Syntax.ParamExp;
+expectType<boolean>(paramExp.Short);
+expectType<boolean>(paramExp.Excl);
+expectType<boolean>(paramExp.Length);
+expectType<boolean>(paramExp.Width);
+expectType<boolean>(paramExp.IsSet);
+expectType<Syntax.ParNamesOperator>(paramExp.Names);
+expectNotAssignable<typeof paramExp.Short>('x');
+expectNotAssignable<typeof paramExp.Excl>('x');
+expectNotAssignable<typeof paramExp.Length>('x');
+expectNotAssignable<typeof paramExp.Width>('x');
+expectNotAssignable<typeof paramExp.IsSet>('x');
+expectNotAssignable<typeof paramExp.Names>('x');
 
-// --- ShProcSubstNode --- (ProcOperator → number)
-declare const procSubst: ShNodes.ShProcSubstNode;
-expectType<number | undefined>(procSubst.op);
-expectNotAssignable<typeof procSubst.op>('x');
+// --- ProcSubst --- (ProcOperator family)
+declare const procSubst: Syntax.ProcSubst;
+expectType<Syntax.ProcOperator>(procSubst.Op);
+expectNotAssignable<typeof procSubst.Op>('x');
 
-// --- ShRedirectNode --- (RedirOperator → number)
-declare const redirect: ShNodes.ShRedirectNode;
-expectType<number | undefined>(redirect.op);
-expectNotAssignable<typeof redirect.op>('x');
+// --- Redirect --- (RedirOperator family)
+declare const redirect: Syntax.Redirect;
+expectType<Syntax.RedirOperator>(redirect.Op);
+expectNotAssignable<typeof redirect.Op>('x');
 
-// --- ShReplaceNode ---
-declare const replace: ShNodes.ShReplaceNode;
-expectType<boolean | undefined>(replace.all);
-expectNotAssignable<typeof replace.all>('x');
+// --- Replace ---
+declare const replace: Syntax.Replace;
+expectType<boolean>(replace.All);
+expectNotAssignable<typeof replace.All>('x');
 
-// --- ShSglQuotedNode --- (Value string; Dollar the `$'...'` ANSI-C flag)
-declare const sglQuoted: ShNodes.ShSglQuotedNode;
-expectType<boolean | undefined>(sglQuoted.dollar);
-expectType<string | undefined>(sglQuoted.value);
-expectNotAssignable<typeof sglQuoted.dollar>('x');
-expectNotAssignable<typeof sglQuoted.value>(42);
+// --- SglQuoted --- (Value string; Dollar the `$'...'` ANSI-C flag)
+declare const sglQuoted: Syntax.SglQuoted;
+expectType<boolean>(sglQuoted.Dollar);
+expectType<Syntax.GoString>(sglQuoted.Value);
+expectNotAssignable<typeof sglQuoted.Dollar>('x');
+expectNotAssignable<typeof sglQuoted.Value>(42);
 
-// --- ShStmtNode ---
-declare const stmt: ShNodes.ShStmtNode;
-expectType<boolean | undefined>(stmt.negated);
-expectType<boolean | undefined>(stmt.background);
-expectType<boolean | undefined>(stmt.coprocess);
-expectType<boolean | undefined>(stmt.disown);
-expectNotAssignable<typeof stmt.negated>('x');
-expectNotAssignable<typeof stmt.background>('x');
-expectNotAssignable<typeof stmt.coprocess>('x');
-expectNotAssignable<typeof stmt.disown>('x');
+// --- Stmt ---
+declare const stmt: Syntax.Stmt;
+expectType<boolean>(stmt.Negated);
+expectType<boolean>(stmt.Background);
+expectType<boolean>(stmt.Coprocess);
+expectType<boolean>(stmt.Disown);
+expectNotAssignable<typeof stmt.Negated>('x');
+expectNotAssignable<typeof stmt.Background>('x');
+expectNotAssignable<typeof stmt.Coprocess>('x');
+expectNotAssignable<typeof stmt.Disown>('x');
 
-// --- ShTimeClauseNode ---
-declare const timeClause: ShNodes.ShTimeClauseNode;
-expectType<boolean | undefined>(timeClause.posixformat);
-expectNotAssignable<typeof timeClause.posixformat>('x');
+// --- TimeClause ---
+declare const timeClause: Syntax.TimeClause;
+expectType<boolean>(timeClause.PosixFormat);
+expectNotAssignable<typeof timeClause.PosixFormat>('x');
 
-// --- ShUnaryArithmNode --- (UnAritOperator → number; Post bool)
-declare const unaryArithm: ShNodes.ShUnaryArithmNode;
-expectType<number | undefined>(unaryArithm.op);
-expectType<boolean | undefined>(unaryArithm.post);
-expectNotAssignable<typeof unaryArithm.op>('x');
-expectNotAssignable<typeof unaryArithm.post>('x');
+// --- UnaryArithm --- (UnAritOperator family; Post bool)
+declare const unaryArithm: Syntax.UnaryArithm;
+expectType<Syntax.UnAritOperator>(unaryArithm.Op);
+expectType<boolean>(unaryArithm.Post);
+expectNotAssignable<typeof unaryArithm.Op>('x');
+expectNotAssignable<typeof unaryArithm.Post>('x');
 
-// --- ShUnaryTestNode --- (UnTestOperator → number)
-declare const unaryTest: ShNodes.ShUnaryTestNode;
-expectType<number | undefined>(unaryTest.op);
-expectNotAssignable<typeof unaryTest.op>('x');
+// --- UnaryTest --- (UnTestOperator family)
+declare const unaryTest: Syntax.UnaryTest;
+expectType<Syntax.UnTestOperator>(unaryTest.Op);
+expectNotAssignable<typeof unaryTest.Op>('x');
 
-// --- ShWhileClauseNode ---
-declare const whileClause: ShNodes.ShWhileClauseNode;
-expectType<boolean | undefined>(whileClause.until);
-expectNotAssignable<typeof whileClause.until>(1);
+// --- WhileClause ---
+declare const whileClause: Syntax.WhileClause;
+expectType<boolean>(whileClause.Until);
+expectNotAssignable<typeof whileClause.Until>(1);
 
 // --- Non-regression: array/child fields were never routed through the
 // `unknown` catch-all, only scalar leaves were. ---
-declare const word: ShNodes.ShWordNode;
-expectType<readonly ShNodes.ShWordPartNode[]>(word.parts);
+declare const word: Syntax.Word;
+expectType<(Syntax.WordPart | null)[] | null>(word.Parts);
+
+// Defaults are data: no scalar can disappear or acquire a null value.
+expectNotAssignable<typeof lit.Value>(undefined);
+expectNotAssignable<typeof lit.Value>(null);
+expectNotAssignable<typeof stmt.Background>(undefined);
+expectNotAssignable<typeof stmt.Background>(null);
+expectNotAssignable<typeof redirect.Op>(undefined);
+expectNotAssignable<typeof redirect.Op>(null);
+// Named operator families do not silently widen to arbitrary uint32 numbers.
+expectNotAssignable<typeof redirect.Op>(0xffffffff);
+expectNotAssignable<typeof binaryCmd.Op>(0xffffffff);
+// Nullable children/slices are distinct from absent properties.
+expectNotAssignable<typeof assign.Name>(undefined);
+expectNotAssignable<typeof word.Parts>(undefined);

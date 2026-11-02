@@ -4,7 +4,7 @@
 
 ## ShAstError.code property
 
-Stable, machine-readable discriminator for this error kind. Distinct per subclass and will not change once published.
+Stable machine-readable identity of the concrete failure kind.
 
 **Signature:**
 

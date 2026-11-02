@@ -1,0 +1,25 @@
+{
+  "observations": [
+    {
+      "mode": "linked",
+      "packageDir": "/Users/mnorth/.codex/worktrees/consumer-candidate-gate/eslint-sh/scratch/snapshot-release-a-candidate/package",
+      "sourceCommit": "6e29227f20aa4d6fa26205bd95a134fd198b4948",
+      "sourcePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tarballSha256": "2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009",
+      "firstLintSynchronous": true,
+      "operations": ["parse-with-positions"],
+      "messages": ["candidate:hello"]
+    },
+    {
+      "mode": "installed",
+      "packageDir": "/private/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/eslint-sh-packaged-install-Heegg2/node_modules/sh-ast",
+      "sourceCommit": "6e29227f20aa4d6fa26205bd95a134fd198b4948",
+      "sourcePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tarballSha256": "2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009",
+      "firstLintSynchronous": true,
+      "operations": ["parse-with-positions"],
+      "messages": ["candidate:hello"]
+    }
+  ],
+  "installedDirectoryLifetime": "The installed fixture is removed by the test teardown after successful verification."
+}

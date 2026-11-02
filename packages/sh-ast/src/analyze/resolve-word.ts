@@ -1,7 +1,8 @@
-import type { ShNode } from '../types.js';
+/** Resolves faithful upstream word records without evaluating shell expansions. */
+import type { Node } from '../../generated/syntax-types.js';
 import { decodeAnsiCString } from './ansi-c-escapes.js';
 import { decodeDblQuotedLit, decodeUnquotedLit } from './decode-lit.js';
-import { nodeArray, stringField } from './node-helpers.js';
+import { nodeArray } from './node-helpers.js';
 
 /**
  * Why a {@link resolveWord} result is `static: false`: the word's exact
@@ -44,7 +45,8 @@ import { nodeArray, stringField } from './node-helpers.js';
  *   `$"..."` word's *contents* would otherwise report — the `DblQuoted`
  *   node's own `dollar` flag is checked before its children are visited at
  *   all, so e.g. `$"hi $x"` reports `'locale'`, never `'expansion'`.
- * - `'unsupported'` — the word contains a `$'...'` (ANSI-C quoted) `\u`/`\U`
+ * - `'unsupported'` — a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
+ *   rather than Unicode text, or the word contains a `$'...'` (ANSI-C quoted) `\u`/`\U`
  *   escape whose value has no corresponding Unicode character (greater than
  *   `U+10FFFF`, e.g. `$'\UFFFFFFFF'`): real bash's output for this case is
  *   an undocumented, non-UTF-8 byte sequence with no exact representation
@@ -129,14 +131,17 @@ export interface ResolveWordOptions {
   readonly context?: 'command-argument' | 'assignment-value';
 }
 
+/** Literal text determined without running any expansion. */
 interface PartOk {
   readonly ok: true;
   readonly text: string;
 }
+/** A fragment that prevents a reliable whole-word text claim. */
 interface PartFail {
   readonly ok: false;
   readonly reason: WordResolutionReason;
 }
+/** Internal resolution preserves the first reason text cannot be determined. */
 type PartResult = PartOk | PartFail;
 
 /**
@@ -166,14 +171,15 @@ function startsWithUnescapedTilde(raw: string): boolean {
  * between loop iterations), since concatenation joins parts with no
  * grammar-level separator between them.
  */
-function hasUnquotedColonTilde(parts: readonly ShNode[]): boolean {
+function hasUnquotedColonTilde(parts: readonly Node[]): boolean {
   let prevWasUnescapedColon = false;
   for (const part of parts) {
-    if (part.type !== 'Lit') {
+    if (part.Type !== 'Lit') {
       prevWasUnescapedColon = false;
       continue;
     }
-    const raw = stringField(part, 'value');
+    const raw = part.Value;
+    if (typeof raw !== 'string') return false;
     let i = 0;
     while (i < raw.length) {
       const ch = raw[i];
@@ -210,21 +216,26 @@ function hasUnquotedColonTilde(parts: readonly ShNode[]): boolean {
  * glob-significant (`a'['bc']'d`'s brackets are both quoted, so it stays
  * literal).
  */
-function hasUnquotedBracketExpression(parts: readonly ShNode[]): boolean {
+function hasUnquotedBracketExpression(parts: readonly Node[]): boolean {
   let brackets = '';
   for (const part of parts) {
-    if (part.type !== 'Lit') continue;
-    brackets += decodeUnquotedLit(stringField(part, 'value')).brackets;
+    if (part.Type !== 'Lit') continue;
+    if (typeof part.Value !== 'string') return false;
+    brackets += decodeUnquotedLit(part.Value).brackets;
   }
   const openIndex = brackets.indexOf('[');
   if (openIndex === -1) return false;
   return brackets.includes(']', openIndex + 1);
 }
 
-function resolvePart(part: ShNode, quoting: 'unquoted' | 'dblquoted'): PartResult {
-  switch (part.type) {
+/** Applies quoting semantics to one fragment without evaluating dynamic content. */
+function resolvePart(part: Node, quoting: 'unquoted' | 'dblquoted'): PartResult {
+  switch (part.Type) {
+    case 'TypedNil':
+      return { ok: false, reason: 'unsupported' };
     case 'Lit': {
-      const raw = stringField(part, 'value');
+      const raw = part.Value;
+      if (typeof raw !== 'string') return { ok: false, reason: 'unsupported' };
       if (quoting === 'dblquoted') {
         return { ok: true, text: decodeDblQuotedLit(raw) };
       }
@@ -233,11 +244,12 @@ function resolvePart(part: ShNode, quoting: 'unquoted' | 'dblquoted'): PartResul
       return { ok: true, text };
     }
     case 'SglQuoted': {
-      const raw = stringField(part, 'value');
+      const raw = part.Value;
+      if (typeof raw !== 'string') return { ok: false, reason: 'unsupported' };
       // ANSI-C quoting ($'...') is flagged by SglQuoted.Dollar (mvdan/sh
       // v3.13.1's `syntax.SglQuoted.Dollar bool`); plain single-quoted
       // text ('...') never has any escapes interpreted at all.
-      if (part.dollar === true) {
+      if (part.Dollar) {
         const decoded = decodeAnsiCString(raw);
         if (!decoded.ok) return { ok: false, reason: 'unsupported' };
         return { ok: true, text: decoded.text };
@@ -252,11 +264,12 @@ function resolvePart(part: ShNode, quoting: 'unquoted' | 'dblquoted'): PartResul
       // Manual §3.1.2.5), so 'locale' deterministically takes precedence
       // over any 'expansion' (or other reason) its contents would
       // otherwise report — see WordResolutionReason's 'locale' doc.
-      if (part.dollar === true) {
+      if (part.Dollar) {
         return { ok: false, reason: 'locale' };
       }
+      if (part.Parts?.includes(null)) return { ok: false, reason: 'unsupported' };
       let text = '';
-      for (const inner of nodeArray(part.parts)) {
+      for (const inner of nodeArray(part.Parts)) {
         const result = resolvePart(inner, 'dblquoted');
         if (!result.ok) return result;
         text += result.text;
@@ -299,30 +312,34 @@ function resolvePart(part: ShNode, quoting: 'unquoted' | 'dblquoted'): PartResul
  * `$'\U...'` escape is `static: false` with a reason — never an error, and
  * never a safety judgment (see {@link WordResolution}).
  *
- * @param word - A `Word` node, e.g. `parseSync(...).stmts[0].cmd.args[0]`.
- * A `word` sourced from `parseSync` has already passed that function's own
- * pathological-nesting guard (`ShParseMaxDepthError` — see
- * `parse-depth-guard.ts`), which rejects deeply-nested input before it is
- * ever turned into a tree at all, so `resolveWord` itself never needs (and
- * does not implement) a depth guard of its own.
+ * @param word - A `Word` node, e.g. `parseSync(...).Stmts[0].Cmd.Args[0]`.
  * @param options - See {@link ResolveWordOptions}.
- * @throws TypeError if `word.type` is not `"Word"` — a programmer-error
+ * @throws TypeError if `word.Type` is neither `"Word"` nor `"TypedNil"` — a programmer-error
  * misuse of the API, not a "malformed shell source" case (well-formed
  * shell source, however dynamic, never throws; see {@link WordResolution}).
  *
  * @public
  */
-export function resolveWord(word: ShNode, options?: ResolveWordOptions): WordResolution {
-  if (word.type !== 'Word') {
-    throw new TypeError(`resolveWord expects a "Word" node, got "${word.type}"`);
+export function resolveWord(word: Node, options?: ResolveWordOptions): WordResolution {
+  // A concrete nil pointer inside an interface retains its kind, but carries no text.
+  if (word.Type === 'TypedNil') return { static: false, reason: 'unsupported' };
+  if (word.Type !== 'Word') {
+    throw new TypeError(`resolveWord expects a "Word" node, got "${word.Type}"`);
   }
-  const parts = nodeArray(word.parts);
+  // A nil slice is an empty word; a nil element is a missing semantic fragment.
+  // Omitting a fragment would invent a different command name.
+  if (word.Parts?.includes(null)) return { static: false, reason: 'unsupported' };
+  const parts = nodeArray(word.Parts);
   if (parts.length === 0) {
     return { static: true, text: '' };
   }
   // `parts.length === 0` returned above, so `parts[0]` is a real element.
   const first = parts[0];
-  if (first.type === 'Lit' && startsWithUnescapedTilde(stringField(first, 'value'))) {
+  if (
+    first.Type === 'Lit' &&
+    typeof first.Value === 'string' &&
+    startsWithUnescapedTilde(first.Value)
+  ) {
     return { static: false, reason: 'tilde' };
   }
   if (options?.context !== 'command-argument' && hasUnquotedColonTilde(parts)) {

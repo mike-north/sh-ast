@@ -63,9 +63,7 @@ Description
 
 </td><td>
 
-Common base class for every error this package throws — originally just [parseSync](./sh-ast.parsesync.md)<!-- -->'s errors, now also the `sh-ast/analyze` layer's (see [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->). Provides a stable, documented `code` discriminator (e.g. `"SH_AST_PARSE_ERROR"`<!-- -->) alongside the usual `instanceof` narrowing, so consumers can branch on failure kind programmatically without parsing `.message` strings. Never thrown directly — only via its concrete subclasses ([ShParseError](./sh-ast.shparseerror.md)<!-- -->, [ShInvalidDialectError](./sh-ast.shinvaliddialecterror.md)<!-- -->, [ShInternalError](./sh-ast.shinternalerror.md)<!-- -->, [ShAnalyzeMaxDepthError](./sh-ast-analyze.shanalyzemaxdeptherror.md)<!-- -->, [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->, [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->).
-
-Re-exported from `sh-ast/analyze` as well as the root `sh-ast` entry point (see \#23) — every subclass thrown by `sh-ast/analyze`<!-- -->'s own functions extends this, so a consumer of that subpath alone can `catch`<!-- -->/reference the base without also importing from root.
+Common base for every package failure, including upstream syntax errors and analysis errors. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
 
 
 </td></tr>
@@ -91,11 +89,11 @@ Description
 
 </td><td>
 
-Enumerates every command invocation (`CallExpr`<!-- -->) reachable from `root`<!-- -->, with its resolved words ([resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->) and the path used to reach it ([CommandContext](./sh-ast-analyze.commandcontext.md)<!-- -->). Descends everywhere a command can occur: statement lists, both sides of `&&`<!-- -->/`||`<!-- -->/pipelines, subshells/blocks, if/case branches \*and\* conditions, loop bodies \*and\* conditions, function bodies, background/negated/coproc statements, and — critically — `CmdSubst`<!-- -->/`ProcSubst` nested inside words, wherever those words occur (arguments, redirection targets, case subjects/patterns, loop word lists, assignment values, test/arithmetic operands, …), not only inside `CallExpr.args`<!-- -->.
+Enumerates every command invocation (`CallExpr`<!-- -->) reachable from `root`<!-- -->, with its resolved words ([resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->) and the path used to reach it ([CommandContext](./sh-ast-analyze.commandcontext.md)<!-- -->). Descends everywhere a command can occur: statement lists, both sides of `&&`<!-- -->/`||`<!-- -->/pipelines, subshells/blocks, if/case branches \*and\* conditions, loop bodies \*and\* conditions, function bodies, background/negated/coproc statements, and — critically — `CmdSubst`<!-- -->/`ProcSubst` nested inside words, wherever those words occur (arguments, redirection targets, case subjects/patterns, loop word lists, assignment values, test/arithmetic operands, …), not only inside `CallExpr.Args`<!-- -->.
 
 An assignment-only `CallExpr` (`FOO=bar`<!-- -->, `args` empty) has no first word to resolve and is not itself a command invocation — no program runs — so it produces no [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->; any command substitution nested in its assigned value (`FOO=$(sub)`<!-- -->) is still found and reported.
 
-Results are sorted by source position (`node.range[0]`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
+Results are sorted by source position (`nodePos(node).Offset`<!-- -->), so nested command substitutions and out-of-structural-order redirection targets still come back in source order regardless of traversal order.
 
 Facts only, matching [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s posture: no safety verdict, no command/wrapper allowlist or denylist, no dataflow. A statically unknown `argv0` (`static: false`<!-- -->) is a normal, expected result.
 
@@ -118,7 +116,7 @@ The wrapper table ([ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.re
 
 1. `argv0` or any wrapper's located word itself resolves `static: false` (an expansion, tilde, glob, …) — `sudo -u x "$prog"` reports `effective: { static: false, reason: 'expansion' }` with `chain: [<sudo>, <"$prog">]`<!-- -->, not `rm`<!-- -->/`sudo`<!-- -->/anything static. 2. A \*statically known\* word shaped like a flag (`-`<!-- -->-prefixed, not `--`<!-- -->) doesn't match any flag/operand shape the current [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes — `sudo -D /tmp rm x` (`-D` isn't modeled for `sudo`<!-- -->) reports an `effective` of `static: false` with `reason: 'unknown-flag'`<!-- -->, \*\*not\*\* `rm` (the pre-fix behavior: any unrecognized word, flag-shaped or not, was silently treated as the wrapped command — a false report that hid the real effective command behind a flag this table simply hadn't modeled yet). 3. A recognized flag's value structurally embeds the real command rather than naming it as a separate word — `env -S 'rm -rf /'` reports `effective: { static: false, reason: 'embedded-command' }` (see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment).
 
-`VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
+`VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.Assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
 
 
 </td></tr>
@@ -172,6 +170,208 @@ A word position [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) could not res
 </td></tr>
 <tr><td>
 
+[ArithmCmd](./sh-ast-analyze.arithmcmd.md)
+
+
+</td><td>
+
+ArithmCmd represents an arithmetic command.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArithmExp](./sh-ast-analyze.arithmexp.md)
+
+
+</td><td>
+
+ArithmExp represents an arithmetic expansion.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArrayElem](./sh-ast-analyze.arrayelem.md)
+
+
+</td><td>
+
+ArrayElem represents a Bash array element.
+
+Index can be nil; for example, declare -a x=(value). Value can be nil; for example, declare -A x=(`index`<!-- -->=). Finally, neither can be nil; for example, declare -A x=(`index`<!-- -->=value)
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ArrayExpr](./sh-ast-analyze.arrayexpr.md)
+
+
+</td><td>
+
+ArrayExpr represents a Bash array expression.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Assign](./sh-ast-analyze.assign.md)
+
+
+</td><td>
+
+Assign represents an assignment to a variable.
+
+Here and elsewhere, Index can mean either an index expression into an indexed array, or a string key into an associative array.
+
+If Index is non-nil, the value will be a word and not an array as nested arrays are not allowed.
+
+If Naked is true and Name is nil, the assignment is part of a `DeclClause` and the argument (in the Value field) will be evaluated at run-time. This includes parameter expansions, which may expand to assignments or options.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryArithm](./sh-ast-analyze.binaryarithm.md)
+
+
+</td><td>
+
+BinaryArithm represents a binary arithmetic expression.
+
+If Op is any assign operator, X will be a word with a single `Lit` whose value is a valid name.
+
+Ternary operators like "a ? b : c" are fit into this structure. Thus, if Op==`TernQuest`<!-- -->, Y will be a `BinaryArithm` with Op==`TernColon`<!-- -->. `TernColon` does not appear in any other scenario.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryCmd](./sh-ast-analyze.binarycmd.md)
+
+
+</td><td>
+
+BinaryCmd represents a binary expression between two statements.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BinaryTest](./sh-ast-analyze.binarytest.md)
+
+
+</td><td>
+
+BinaryTest represents a binary test expression.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Block](./sh-ast-analyze.block.md)
+
+
+</td><td>
+
+Block represents a series of commands that should be executed in a nested scope. It is essentially a list of statements within curly braces.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[BraceExp](./sh-ast-analyze.braceexp.md)
+
+
+</td><td>
+
+BraceExp represents a Bash brace expression, such as "<!-- -->{<!-- -->a,f<!-- -->}<!-- -->" or "<!-- -->{<!-- -->1..10<!-- -->}<!-- -->".
+
+This node will only appear as a result of `SplitBraces`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CallExpr](./sh-ast-analyze.callexpr.md)
+
+
+</td><td>
+
+CallExpr represents a command execution or function call, otherwise known as a "simple command".
+
+If Args is empty, Assigns apply to the shell environment. Otherwise, they are variables that cannot be arrays and which only apply to the call.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CaseClause](./sh-ast-analyze.caseclause.md)
+
+
+</td><td>
+
+CaseClause represents a case (switch) clause.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CaseItem](./sh-ast-analyze.caseitem.md)
+
+
+</td><td>
+
+CaseItem represents a pattern list (case) within a `CaseClause`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CmdSubst](./sh-ast-analyze.cmdsubst.md)
+
+
+</td><td>
+
+CmdSubst represents a command substitution.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
 [CommandSite](./sh-ast-analyze.commandsite.md)
 
 
@@ -183,12 +383,279 @@ One place in the tree where a command is actually invoked — a `CallExpr` node,
 </td></tr>
 <tr><td>
 
-[Position](./sh-ast-analyze.position.md)
+[Comment\_2](./sh-ast-analyze.comment_2.md)
 
 
 </td><td>
 
-A 1-based line/column position. Columns are UTF-16 code units, matching JavaScript string indexing (see [ShNode.range](./sh-ast-analyze.shnode.range.md)<!-- -->).
+Comment represents a single comment on a single line.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CoprocClause](./sh-ast-analyze.coprocclause.md)
+
+
+</td><td>
+
+CoprocClause represents a Bash coproc clause.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[CStyleLoop](./sh-ast-analyze.cstyleloop.md)
+
+
+</td><td>
+
+CStyleLoop represents the behavior of a for clause similar to the C language.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[DblQuoted](./sh-ast-analyze.dblquoted.md)
+
+
+</td><td>
+
+DblQuoted represents a list of nodes within double quotes.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[DeclClause](./sh-ast-analyze.declclause.md)
+
+
+</td><td>
+
+DeclClause represents a Bash declare clause.
+
+Args can contain a mix of regular and naked assignments. The naked assignments can represent either options or variable names.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Expansion](./sh-ast-analyze.expansion.md)
+
+
+</td><td>
+
+Expansion represents string manipulation in a `ParamExp` other than those covered by `Replace`<!-- -->.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
+
+
+</td></tr>
+<tr><td>
+
+[ExtGlob](./sh-ast-analyze.extglob.md)
+
+
+</td><td>
+
+ExtGlob represents a Bash extended globbing expression. Note that these are parsed independently of whether or not `shopt -s extglob` has been used, as the parser runs statically and independently of any interpreter.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[File\_2](./sh-ast-analyze.file_2.md)
+
+
+</td><td>
+
+File represents a shell source file.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[FlagsArithm](./sh-ast-analyze.flagsarithm.md)
+
+
+</td><td>
+
+FlagsArithm represents zsh subscript flags attached to an arithmetic expression, such as $<!-- -->{<!-- -->array\[(flags)expr\]<!-- -->}<!-- -->.
+
+This node will only appear with `LangZsh`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ForClause](./sh-ast-analyze.forclause.md)
+
+
+</td><td>
+
+ForClause represents a for or a select clause. The latter is only present in Bash.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[FuncDecl](./sh-ast-analyze.funcdecl.md)
+
+
+</td><td>
+
+FuncDecl represents the declaration of a function.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[IfClause](./sh-ast-analyze.ifclause.md)
+
+
+</td><td>
+
+IfClause represents an if statement.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[LetClause](./sh-ast-analyze.letclause.md)
+
+
+</td><td>
+
+LetClause represents a Bash let clause.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Lit](./sh-ast-analyze.lit.md)
+
+
+</td><td>
+
+Lit represents a string literal.
+
+Note that a parsed string literal may not appear as-is in the original source code, as it is possible to split literals by escaping newlines. The splitting is lost, but the end position is not.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParamExp](./sh-ast-analyze.paramexp.md)
+
+
+</td><td>
+
+ParamExp represents a parameter expansion.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParenArithm](./sh-ast-analyze.parenarithm.md)
+
+
+</td><td>
+
+ParenArithm represents an arithmetic expression within parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ParenTest](./sh-ast-analyze.parentest.md)
+
+
+</td><td>
+
+ParenTest represents a test expression within parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[ProcSubst](./sh-ast-analyze.procsubst.md)
+
+
+</td><td>
+
+ProcSubst represents a Bash process substitution.
+
+This node will only appear with `LangBash`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Redirect](./sh-ast-analyze.redirect.md)
+
+
+</td><td>
+
+Redirect represents an input/output redirection.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Replace](./sh-ast-analyze.replace.md)
+
+
+</td><td>
+
+Replace represents a search and replace expression inside a `ParamExp`<!-- -->.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
 
 
 </td></tr>
@@ -216,16 +683,187 @@ Options controlling [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s t
 </td></tr>
 <tr><td>
 
-[ShNode](./sh-ast-analyze.shnode.md)
+[SglQuoted](./sh-ast-analyze.sglquoted.md)
 
 
 </td><td>
 
-A normalized AST node produced by [parseSync](./sh-ast.parsesync.md)<!-- -->.
+SglQuoted represents a string within single quotes.
 
-`range` and `loc` are expressed in UTF-16 code units, so `code.slice(node.range[0], node.range[1])` reproduces the node's exact source text — even though mvdan/sh itself reports byte offsets and byte-counting columns internally (see design/ARCHITECTURE.md's "Serialization contract"). Every other field copied over from mvdan/sh's typedjson tree keeps its original value but with the field name lowercased (`Stmts` becomes `stmts`<!-- -->, `CondLast` becomes `condlast`<!-- -->, etc.).
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
 
-Also re-exported from `sh-ast/analyze` (see \#23) — the subpath's public surface consumes and exposes `ShNode`<!-- -->, so a consumer can reference the type without also importing from the root `sh-ast` entry point.
+
+</td></tr>
+<tr><td>
+
+[Slice](./sh-ast-analyze.slice.md)
+
+
+</td><td>
+
+Slice represents a character slicing expression inside a `ParamExp`<!-- -->.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->. `LangZsh` uses a `BinaryArithm` with `Comma` in `ParamExp.Index` instead.
+
+Auxiliary syntax data, not a syntax.Node; it has no independent source bounds.
+
+
+</td></tr>
+<tr><td>
+
+[Stmt](./sh-ast-analyze.stmt.md)
+
+
+</td><td>
+
+Stmt represents a statement, also known as a "complete command". It is compromised of a command and other components that may come before or after it.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Subshell](./sh-ast-analyze.subshell.md)
+
+
+</td><td>
+
+Subshell represents a series of commands that should be executed in a nested shell environment.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[SyntaxPos](./sh-ast-analyze.syntaxpos.md)
+
+
+</td><td>
+
+The observable value of an upstream syntax.Pos. Offset and Col count bytes; Line and Col use upstream numbering and overflow behavior. IsValid, IsRecovered, and OffsetOverflow retain distinctions that coordinates alone cannot express. Token positions are data; node bounds are derived operations.
+
+
+</td></tr>
+<tr><td>
+
+[TestClause](./sh-ast-analyze.testclause.md)
+
+
+</td><td>
+
+TestClause represents a Bash extended test clause.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TestDecl](./sh-ast-analyze.testdecl.md)
+
+
+</td><td>
+
+TestDecl represents the declaration of a Bats test function.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TimeClause](./sh-ast-analyze.timeclause.md)
+
+
+</td><td>
+
+TimeClause represents a Bash time clause. PosixFormat corresponds to the -p flag.
+
+This node will only appear with `LangBash` and `LangMirBSDKorn`<!-- -->.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[TypedNil](./sh-ast-analyze.typednil.md)
+
+
+</td><td>
+
+An upstream interface containing a nil pointer of a concrete syntax.Node kind. This differs from a nil interface (null): the concrete Go type remains observable and can affect operations. Only interface-valued positions admit this tag; concrete pointer fields use null. No record fields or node bounds are stored on the tag.
+
+
+</td></tr>
+<tr><td>
+
+[UnaryArithm](./sh-ast-analyze.unaryarithm.md)
+
+
+</td><td>
+
+UnaryArithm represents an unary arithmetic expression. The unary operator may come before or after the sub-expression.
+
+If Op is `Inc` or `Dec`<!-- -->, X will be a word with a single `Lit` whose value is a valid name.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[UnaryTest](./sh-ast-analyze.unarytest.md)
+
+
+</td><td>
+
+UnaryTest represents a unary test expression. The unary operator may come before or after the sub-expression.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[WhileClause](./sh-ast-analyze.whileclause.md)
+
+
+</td><td>
+
+WhileClause represents a while or an until clause.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[Word](./sh-ast-analyze.word.md)
+
+
+</td><td>
+
+Word represents a shell word, containing one or more word parts contiguous to each other. The word is delimited by word boundaries, such as spaces, newlines, semicolons, or parentheses.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[WordIter](./sh-ast-analyze.worditer.md)
+
+
+</td><td>
+
+WordIter represents the iteration of a variable over a series of words in a for clause. If InPos is an invalid position, the "in" token was missing, so the iteration is over the shell's positional parameters.
+
+A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
 
 
 </td></tr>
@@ -268,7 +906,7 @@ Description
 
 `sh-ast/analyze`<!-- -->'s default [WrapperSpec](./sh-ast-analyze.wrapperspec.md) table — every entry's flag/operand handling is hand-derived from that wrapper's own manual page (or, for shell builtins, the Bash Reference Manual/POSIX Shell &amp; Utilities volume), cited per entry below, and cross-checked empirically against the real utility where one was locally available (GNU coreutils `env`<!-- -->/`nice` directly; `sudo` via `sudo -h`<!-- -->'s usage/option summary only — never executed, per this package's "facts only" posture and basic safety hygiene). This table is \*data\*, not policy: it names no "dangerous" commands, makes no safety judgment, and a caller can freely replace or extend it via [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md) (see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s criterion-4-style configurability guarantee).
 
-Frozen (including each entry object and its own array/regexp fields) so immutability of this shared, module-scoped table is a contract, not just a convention any importer happens to honor — mirrors `visitorKeys`<!-- -->'s and `CHILD_TYPE_SCHEMA`<!-- -->'s freezing in `visitor-keys.ts`<!-- -->/`normalize.ts`<!-- -->.
+Frozen (including each entry object and its own array/regexp fields) so immutability of this shared, module-scoped table is a contract, not just a convention any importer happens to honor. Per-call wrapper options are separate values and cannot mutate these shared defaults.
 
 `xargs` is deliberately \*\*excluded\*\*: unlike every entry here, `xargs` doesn't simply re-exec a single wrapped command word it can point to statically — it invokes `command [initial-arguments]` once per \*batch\* of additional arguments assembled from its own stdin at run time (batched per `-n`<!-- -->/`-L`<!-- -->/line-splitting rules, GNU xargs(1)). Treating it as transparent would misrepresent what's actually invoked: the "wrapped command" is only ever a syntactic \*prefix\* of the real, stdin-dependent argv, and that prefix can itself be entirely absent (bare `xargs` reruns each stdin-derived line as its own command). No `WrapperSpec` shape here can honestly express that, so `xargs` is left for a caller to model explicitly if their use case calls for it, rather than shipped as a silently-wrong default.
 
@@ -317,6 +955,72 @@ This union may grow in a \*\*minor\*\* release (mirroring `WordResolutionReason`
 </td></tr>
 <tr><td>
 
+[ArithmExpr](./sh-ast-analyze.arithmexpr.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.ArithmExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[BinAritOperator](./sh-ast-analyze.binaritoperator.md)
+
+
+</td><td>
+
+The upstream BinAritOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[BinCmdOperator](./sh-ast-analyze.bincmdoperator.md)
+
+
+</td><td>
+
+The upstream BinCmdOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[BinTestOperator](./sh-ast-analyze.bintestoperator.md)
+
+
+</td><td>
+
+The upstream BinTestOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[CaseOperator](./sh-ast-analyze.caseoperator.md)
+
+
+</td><td>
+
+The upstream CaseOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[Command](./sh-ast-analyze.command.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Command. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
 [CommandContext](./sh-ast-analyze.commandcontext.md)
 
 
@@ -324,11 +1028,165 @@ This union may grow in a \*\*minor\*\* release (mirroring `WordResolutionReason`
 
 A single frame of the path from the root of the tree down to a [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->, describing \*how\* the command is reached — never whether it is safe to run. `CommandSite.context` is an ordered stack of these, outermost frame first:
 
-- `'and'`<!-- -->/`'or'` (`side: 'right'`<!-- -->) — the right-hand operand of a `BinaryCmd` (mvdan/sh's node for both `&&` and `||`<!-- -->); only the right side is tagged; the left side inherits the surrounding context unchanged, since it runs unconditionally relative to this operator. - `'pipeline'` (`stage: n`<!-- -->) — one stage of a `|`<!-- -->/`|&` chain (also a `BinaryCmd`<!-- -->, left-associatively nested by mvdan/sh); every stage is tagged, 0-indexed left to right, regardless of whether the chain mixes `|` and `|&`<!-- -->. - `'subshell'` — inside a `Subshell` (`( ... )`<!-- -->). - `'cmdSubst'`<!-- -->/`'procSubst'` — inside a `CmdSubst` (`$(...)`<!-- -->/backticks) or `ProcSubst` (`<(...)`<!-- -->/`>(...)`<!-- -->) reached from \*any\* word-bearing position (an argument, a redirection target, a case subject, a loop's word list, an assignment value, a test/arithmetic operand, …) — not only from `CallExpr.args`<!-- -->. - `'if'` (`branch: 'cond' | 'then' | 'else'`<!-- -->) — inside an `IfClause`<!-- -->'s condition, then-branch, or else-branch (mvdan/sh nests `elif` chains as `IfClause.else` pointing to another `IfClause`<!-- -->, so an `elif`<!-- -->'s own condition/then are reached through an `{kind:'if',branch:'else'}` frame first, then their own `'cond'`<!-- -->/`'then'` frame — reflecting the real nesting rather than collapsing it). - `'case'` — inside one `CaseClause` branch's statement list (not the case subject word or the patterns). - `'loop'` (`role` is `'body'` or `'cond'`<!-- -->) — inside a `ForClause`<!-- -->'s statement list (`role: 'body'` only — a `for` loop has no statement-list condition) or a `WhileClause`<!-- -->'s (`role: 'cond'` for the condition, `role: 'body'` for the loop body). - `'function'` (`name`<!-- -->) — inside a `FuncDecl`<!-- -->'s body; `name` is the function's literal name text. - `'background'`<!-- -->/`'negated'` — the enclosing `Stmt` has mvdan/sh's Background/Negated flag set (`cmd &`<!-- -->, `! cmd`<!-- -->). - `'coproc'` — inside a `CoprocClause`<!-- -->'s statement (a `coproc` block, optionally named).
+- `'and'`<!-- -->/`'or'` (`side: 'right'`<!-- -->) — the right-hand operand of a `BinaryCmd` (mvdan/sh's node for both `&&` and `||`<!-- -->); only the right side is tagged; the left side inherits the surrounding context unchanged, since it runs unconditionally relative to this operator. - `'pipeline'` (`stage: n`<!-- -->) — one stage of a `|`<!-- -->/`|&` chain (also a `BinaryCmd`<!-- -->, left-associatively nested by mvdan/sh); every stage is tagged, 0-indexed left to right, regardless of whether the chain mixes `|` and `|&`<!-- -->. - `'subshell'` — inside a `Subshell` (`( ... )`<!-- -->). - `'cmdSubst'`<!-- -->/`'procSubst'` — inside a `CmdSubst` (`$(...)`<!-- -->/backticks) or `ProcSubst` (`<(...)`<!-- -->/`>(...)`<!-- -->) reached from \*any\* word-bearing position (an argument, a redirection target, a case subject, a loop's word list, an assignment value, a test/arithmetic operand, …) — not only from `CallExpr.Args`<!-- -->. - `'if'` (`branch: 'cond' | 'then' | 'else'`<!-- -->) — inside an `IfClause`<!-- -->'s condition, then-branch, or else-branch (mvdan/sh nests `elif` chains as `IfClause.Else` pointing to another `IfClause`<!-- -->, so an `elif`<!-- -->'s own condition/then are reached through an `{kind:'if',branch:'else'}` frame first, then their own `'cond'`<!-- -->/`'then'` frame — reflecting the real nesting rather than collapsing it). - `'case'` — inside one `CaseClause` branch's statement list (not the case subject word or the patterns). - `'loop'` (`role` is `'body'` or `'cond'`<!-- -->) — inside a `ForClause`<!-- -->'s statement list (`role: 'body'` only — a `for` loop has no statement-list condition) or a `WhileClause`<!-- -->'s (`role: 'cond'` for the condition, `role: 'body'` for the loop body). - `'function'` (`name`<!-- -->) — inside a `FuncDecl`<!-- -->'s body; `name` is the function's literal name text. - `'background'`<!-- -->/`'negated'` — the enclosing `Stmt` has mvdan/sh's Background/Negated flag set (`cmd &`<!-- -->, `! cmd`<!-- -->). - `'coproc'` — inside a `CoprocClause`<!-- -->'s statement (a `coproc` block, optionally named).
 
 A `Block` grouping (`{ ...; }`<!-- -->) and a `TimeClause` (`time cmd`<!-- -->) are deliberately transparent — grouping and timing a command doesn't change how it's reached, so no frame is added for either.
 
 This union may grow in a \*\*minor\*\* release — a future mvdan/sh grammar construct this module starts modeling can add a new `kind` variant without that being a breaking change (mirroring [WordResolutionReason](./sh-ast-analyze.wordresolutionreason.md)<!-- -->'s semver policy in `resolve-word.ts`<!-- -->). It is deliberately not sealed against extension elsewhere in the codebase. Every existing variant's shape (its extra fields, if any) is stable — only new variants are ever added — so an exhaustive compile-time `switch` over `.kind` should still include a `default` case to stay forward-compatible.
+
+
+</td></tr>
+<tr><td>
+
+[GlobOperator](./sh-ast-analyze.globoperator.md)
+
+
+</td><td>
+
+The upstream GlobOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[GoString](./sh-ast-analyze.gostring.md)
+
+
+</td><td>
+
+A Go string's exact bytes. Valid UTF-8 is represented as a JavaScript string; other bytes use Uint8Array. String inputs must not contain unpaired surrogates, which have no faithful UTF-8 representation.
+
+
+</td></tr>
+<tr><td>
+
+[Loop](./sh-ast-analyze.loop.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Loop. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[Node\_2](./sh-ast-analyze.node_2.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.Node. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[OperatorFamily](./sh-ast-analyze.operatorfamily.md)
+
+
+</td><td>
+
+The upstream uint32 operator families. A family name identifies the Go named type, not the spelling of one token.
+
+
+</td></tr>
+<tr><td>
+
+[ParExpOperator](./sh-ast-analyze.parexpoperator.md)
+
+
+</td><td>
+
+The upstream ParExpOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[ParNamesOperator](./sh-ast-analyze.parnamesoperator.md)
+
+
+</td><td>
+
+The upstream ParNamesOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[ProcOperator](./sh-ast-analyze.procoperator.md)
+
+
+</td><td>
+
+The upstream ProcOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[RawOperator](./sh-ast-analyze.rawoperator.md)
+
+
+</td><td>
+
+An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
+
+
+</td></tr>
+<tr><td>
+
+[RedirOperator](./sh-ast-analyze.rediroperator.md)
+
+
+</td><td>
+
+The upstream RedirOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[TestExpr](./sh-ast-analyze.testexpr.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.TestExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
+
+
+</td></tr>
+<tr><td>
+
+[UnAritOperator](./sh-ast-analyze.unaritoperator.md)
+
+
+</td><td>
+
+The upstream UnAritOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[UnTestOperator](./sh-ast-analyze.untestoperator.md)
+
+
+</td><td>
+
+The upstream UnTestOperator domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.
+
+
+</td></tr>
+<tr><td>
+
+[WordPart](./sh-ast-analyze.wordpart.md)
+
+
+</td><td>
+
+The concrete records and typed nil pointers accepted by upstream syntax.WordPart. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
 
 
 </td></tr>
@@ -352,7 +1210,7 @@ The result of statically resolving a `Word` node's text. Reports facts only — 
 
 Why a [resolveWord()](./sh-ast-analyze.resolveword.md) result is `static: false`<!-- -->: the word's exact text cannot be determined from source alone.
 
-- `'expansion'` — the word contains a `ParamExp` (`$x`<!-- -->, `${x}`<!-- -->), a `CmdSubst` (command substitution, either `$(...)` or backtick form), an `ArithmExp` (`$((expr))`<!-- -->), or a `ProcSubst` (`<(cmd)`<!-- -->/`>(cmd)`<!-- -->) part: its value depends on program state (variables, command output, process substitution) that only exists at run time. - `'tilde'` — an unquoted, unescaped `~` triggers Bash tilde expansion (Bash Reference Manual §3.5.2, "Tilde Expansion") at the start of the word, or — when `resolveWord`<!-- -->'s `context` option is `'assignment-value'` or omitted — immediately after an unquoted `:` anywhere in the word too (§3.5.2 also documents this for assignment-statement values, e.g. `PATH=/foo:~/bar`<!-- -->). Either way: statically shaped, but its value depends on the filesystem/environment (`$HOME`<!-- -->, NSS user database lookups) at run time. See `resolveWord`<!-- -->'s `context` parameter doc for the full command-argument-vs-assignment-value distinction. - `'glob'` — the word contains an unquoted, unescaped glob metacharacter (`*`<!-- -->/`?`<!-- -->), an unquoted bracket expression (`[...]` — an unquoted `[` with a later unquoted `]` in the same word, POSIX 2.13.1 / Bash Reference Manual §3.5.8.1, "Pattern Matching"), or an `ExtGlob` part (Bash Reference Manual §3.5.8, "Filename Expansion"): its value depends on which filesystem entries exist at run time. - `'brace'` — the word contains a `BraceExp` part (`{a,b}`<!-- -->/`{1..10}`<!-- -->, Bash Reference Manual §3.5.1, "Brace Expansion"). mvdan/sh v3.13.1 only ever produces this node type when its caller applies `syntax.SplitBraces` to the parsed tree; this bridge's shim does not call it, so today a brace expression like `{a,b}` reaches [resolveWord()](./sh-ast-analyze.resolveword.md) as an ordinary `Lit` (indistinguishable, in the AST this bridge produces, from literal `{`<!-- -->/`,`<!-- -->/`}` characters) rather than as a `BraceExp` part. This reason is handled here for forward-compatibility with that node type and is not reachable through [resolveWord()](./sh-ast-analyze.resolveword.md) today. - `'locale'` — the word contains a `$"..."` locale-translated string (Bash Reference Manual §3.1.2.5, "Locale-Specific Translation"): its value is looked up in the current locale's translation catalog at run time via `gettext`<!-- -->, regardless of whether its contents also contain an expansion. `'locale'` takes precedence over any `'expansion'` a `$"..."` word's \*contents\* would otherwise report — the `DblQuoted` node's own `dollar` flag is checked before its children are visited at all, so e.g. `$"hi $x"` reports `'locale'`<!-- -->, never `'expansion'`<!-- -->. - `'unsupported'` — the word contains a `$'...'` (ANSI-C quoted) `\u`<!-- -->/`\U` escape whose value has no corresponding Unicode character (greater than `U+10FFFF`<!-- -->, e.g. `$'\UFFFFFFFF'`<!-- -->): real bash's output for this case is an undocumented, non-UTF-8 byte sequence with no exact representation as a JavaScript string (see `ansi-c-escapes.ts`<!-- -->'s `MAX_UNICODE_CODE_POINT` doc comment for the empirical detail) — this package declines to claim a `static: true` text bash never actually produces.
+- `'expansion'` — the word contains a `ParamExp` (`$x`<!-- -->, `${x}`<!-- -->), a `CmdSubst` (command substitution, either `$(...)` or backtick form), an `ArithmExp` (`$((expr))`<!-- -->), or a `ProcSubst` (`<(cmd)`<!-- -->/`>(cmd)`<!-- -->) part: its value depends on program state (variables, command output, process substitution) that only exists at run time. - `'tilde'` — an unquoted, unescaped `~` triggers Bash tilde expansion (Bash Reference Manual §3.5.2, "Tilde Expansion") at the start of the word, or — when `resolveWord`<!-- -->'s `context` option is `'assignment-value'` or omitted — immediately after an unquoted `:` anywhere in the word too (§3.5.2 also documents this for assignment-statement values, e.g. `PATH=/foo:~/bar`<!-- -->). Either way: statically shaped, but its value depends on the filesystem/environment (`$HOME`<!-- -->, NSS user database lookups) at run time. See `resolveWord`<!-- -->'s `context` parameter doc for the full command-argument-vs-assignment-value distinction. - `'glob'` — the word contains an unquoted, unescaped glob metacharacter (`*`<!-- -->/`?`<!-- -->), an unquoted bracket expression (`[...]` — an unquoted `[` with a later unquoted `]` in the same word, POSIX 2.13.1 / Bash Reference Manual §3.5.8.1, "Pattern Matching"), or an `ExtGlob` part (Bash Reference Manual §3.5.8, "Filename Expansion"): its value depends on which filesystem entries exist at run time. - `'brace'` — the word contains a `BraceExp` part (`{a,b}`<!-- -->/`{1..10}`<!-- -->, Bash Reference Manual §3.5.1, "Brace Expansion"). mvdan/sh v3.13.1 only ever produces this node type when its caller applies `syntax.SplitBraces` to the parsed tree; this bridge's shim does not call it, so today a brace expression like `{a,b}` reaches [resolveWord()](./sh-ast-analyze.resolveword.md) as an ordinary `Lit` (indistinguishable, in the AST this bridge produces, from literal `{`<!-- -->/`,`<!-- -->/`}` characters) rather than as a `BraceExp` part. This reason is handled here for forward-compatibility with that node type and is not reachable through [resolveWord()](./sh-ast-analyze.resolveword.md) today. - `'locale'` — the word contains a `$"..."` locale-translated string (Bash Reference Manual §3.1.2.5, "Locale-Specific Translation"): its value is looked up in the current locale's translation catalog at run time via `gettext`<!-- -->, regardless of whether its contents also contain an expansion. `'locale'` takes precedence over any `'expansion'` a `$"..."` word's \*contents\* would otherwise report — the `DblQuoted` node's own `dollar` flag is checked before its children are visited at all, so e.g. `$"hi $x"` reports `'locale'`<!-- -->, never `'expansion'`<!-- -->. - `'unsupported'` — a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array` rather than Unicode text, or the word contains a `$'...'` (ANSI-C quoted) `\u`<!-- -->/`\U` escape whose value has no corresponding Unicode character (greater than `U+10FFFF`<!-- -->, e.g. `$'\UFFFFFFFF'`<!-- -->): real bash's output for this case is an undocumented, non-UTF-8 byte sequence with no exact representation as a JavaScript string (see `ansi-c-escapes.ts`<!-- -->'s `MAX_UNICODE_CODE_POINT` doc comment for the empirical detail) — this package declines to claim a `static: true` text bash never actually produces.
 
 This union may grow in a \*\*minor\*\* release — new mvdan/sh word-part node types, or new statically-shaped-but-dynamic categories, can add new reason strings without that being a breaking change. It is deliberately not sealed against extension elsewhere in the codebase. A reason string this version of the package doesn't yet know about only ever accompanies `static: false`<!-- -->, never changes the meaning of `static: true`<!-- -->, so runtime consumers that only branch on `.static` are safe by construction across such additions; an exhaustive compile-time `switch` over `.reason` should still include a `default` case to stay forward-compatible.
 

@@ -1,3 +1,4 @@
+/** Synchronous singleton WASM ownership and byte-exact syntax protocol transport. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,37 +15,33 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const wasmPath = path.join(here, '..', 'shim', 'sh-ast.wasm');
 
 /**
- * The shim's linear-memory ABI (see `shim/main.go`'s module doc): `alloc`
- * reserves a buffer of the given byte length and returns its address;
- * `process` takes three (pointer, length) pairs — Go's `go:wasmexport`
- * decomposes each `string` parameter into one automatically — and returns
- * the address of a NUL-terminated JSON result buffer; `free` releases a
- * buffer previously returned by `alloc` or `process`. `mem` is Go's
- * wasm/js linear memory export (always named `mem`, not `memory`).
- *
+ * Shared linear-memory primitives and the faithful syntax operation entry point.
+ * Each operation owns its input/output buffers until free releases them. The Go
+ * wasm/js runtime exports its memory as mem, rather than memory.
  * @internal
  */
 interface ShimExports {
   mem: WebAssembly.Memory;
   alloc: (size: number) => number;
   free: (ptr: number) => void;
-  process: (
-    textPtr: number,
-    textLen: number,
-    dialectPtr: number,
-    dialectLen: number,
-    filenamePtr: number,
-    filenameLen: number,
+  /** The lossless syntax protocol uses the same pointer/length calling convention. */
+  syntaxProcess?: (
+    operationPtr: number,
+    operationLen: number,
+    payloadPtr: number,
+    payloadLen: number,
+    optionsPtr: number,
+    optionsLen: number,
   ) => number;
 }
 
+/** Validates shared memory ownership primitives before any buffer crosses the bridge. */
 function isShimExports(value: WebAssembly.Exports): value is WebAssembly.Exports & ShimExports {
   const candidate = value as Partial<ShimExports>;
   return (
     candidate.mem instanceof WebAssembly.Memory &&
     typeof candidate.alloc === 'function' &&
-    typeof candidate.free === 'function' &&
-    typeof candidate.process === 'function'
+    typeof candidate.free === 'function'
   );
 }
 
@@ -53,8 +50,7 @@ let shimExports: ShimExports | undefined;
 
 /**
  * Instantiates the WASM shim synchronously in Node, exactly once, and
- * reuses the instance across parses (see design/ARCHITECTURE.md,
- * "Synchronous parse: solved, two mechanisms"). Node imposes no size limit
+ * reuses the instance across parses and position operations. Node imposes no size limit
  * on synchronous `WebAssembly.Module` compilation — that restriction is
  * browser-main-thread-only.
  */
@@ -66,7 +62,7 @@ function ensureInstance(): ShimExports {
   void go.run(instance);
   if (!isShimExports(instance.exports)) {
     throw new ShInternalError(
-      'bridge: WASM shim did not export the expected alloc/process/free/mem linear-memory ABI',
+      'bridge: WASM shim did not export the expected alloc/free/mem linear-memory ABI',
     );
   }
   shimExports = instance.exports;
@@ -77,52 +73,44 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 /**
- * Writes `text` (UTF-8 encoded) into a freshly `alloc`ed buffer and returns
- * its (pointer, length). The caller owns the buffer and must `free` it once
- * `process` has consumed it.
- */
-function writeString(exports: ShimExports, text: string): { ptr: number; len: number } {
-  const bytes = encoder.encode(text);
-  const ptr = exports.alloc(bytes.length);
-  // `exports.mem.buffer` is re-read here rather than cached across calls:
-  // a Go-side allocation can grow WASM linear memory, which detaches any
-  // previously created `ArrayBuffer` view (see `callParse` below for the
-  // same reasoning on the read side).
-  new Uint8Array(exports.mem.buffer, ptr, bytes.length).set(bytes);
-  return { ptr, len: bytes.length };
-}
-
-/**
- * Calls into the WASM shim's `process` export, instantiating the shim on
- * first use. Encodes `text`/`dialect`/`filename` into shim-owned linear
- * memory, reads the NUL-terminated JSON result back via `TextDecoder`
- * (rather than syscall/js's `js.ValueOf(string)`, which dominated the parse
- * cost — see design/ARCHITECTURE.md's "Performance"), and frees every buffer
- * the call allocated.
- *
+ * Calls the lossless syntax protocol synchronously with byte-exact payloads.
+ * Every returned allocation is released even when a later allocation, exported
+ * operation, or response validation fails. Views are recreated after each call
+ * because Go allocation can grow and detach linear memory.
  * @internal
  */
-export function callParse(text: string, dialect: string, filename: string): string {
+export function callSyntax(operation: string, payload: Uint8Array, options = '{}'): string {
   const exports = ensureInstance();
-  const t = writeString(exports, text);
-  const d = writeString(exports, dialect);
-  const f = writeString(exports, filename);
-  const resultPtr = exports.process(t.ptr, t.len, d.ptr, d.len, f.ptr, f.len);
-  exports.free(t.ptr);
-  exports.free(d.ptr);
-  exports.free(f.ptr);
-
-  if (resultPtr === 0) {
-    throw new ShInternalError('bridge: WASM shim returned a null result pointer');
+  const process = exports.syntaxProcess;
+  if (typeof process !== 'function') {
+    throw new ShInternalError(
+      'The installed WASM asset does not export the lossless syntax protocol',
+    );
   }
-
-  // Re-read `mem.buffer` fresh (see `writeString`'s comment) and scan for the
-  // shim's NUL sentinel — valid JSON from Go's encoding/json never contains
-  // a raw 0x00 byte, since every control character is \u-escaped.
-  const memory = new Uint8Array(exports.mem.buffer);
-  let end = resultPtr;
-  while (memory[end] !== 0) end++;
-  const json = decoder.decode(memory.subarray(resultPtr, end));
-  exports.free(resultPtr);
-  return json;
+  const allocations: number[] = [];
+  const write = (bytes: Uint8Array): { ptr: number; len: number } => {
+    const ptr = exports.alloc(bytes.length);
+    allocations.push(ptr);
+    if (ptr === 0) throw new ShInternalError('The syntax bridge returned a null input allocation');
+    new Uint8Array(exports.mem.buffer, ptr, bytes.length).set(bytes);
+    return { ptr, len: bytes.length };
+  };
+  try {
+    const op = write(encoder.encode(operation));
+    const input = write(payload);
+    const opts = write(encoder.encode(options));
+    const result = process(op.ptr, op.len, input.ptr, input.len, opts.ptr, opts.len);
+    if (result === 0) throw new ShInternalError('The syntax bridge returned a null result');
+    allocations.push(result);
+    const memory = new Uint8Array(exports.mem.buffer);
+    if (result >= memory.length)
+      throw new ShInternalError('The syntax bridge returned an out-of-bounds result');
+    let end = result;
+    while (end < memory.length && memory[end] !== 0) end++;
+    if (end === memory.length)
+      throw new ShInternalError('The syntax bridge result has no terminator');
+    return decoder.decode(memory.subarray(result, end));
+  } finally {
+    for (const ptr of allocations) exports.free(ptr);
+  }
 }
