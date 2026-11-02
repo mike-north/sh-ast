@@ -2,10 +2,10 @@
 // typedjson's omission rules. Exported struct fields retain their Go names and
 // values; Type identifies concrete structs, including auxiliary non-Node structs.
 // Node methods are deliberately absent: bounds are derived from the current tree.
-// The format preserves parser-returned and publicly representable tree values,
-// not pointer identity or cyclic object graphs. Go-only typed-nil interface fields
-// and elements fail closed: the public model cannot preserve their dynamic type
-// and non-nil interface identity, which can change upstream method behavior.
+// The format preserves tree values, not pointer identity or cyclic object graphs.
+// TypedNil tags preserve interface values holding nil concrete pointers: their
+// dynamic type and non-nil interface identity can affect upstream node methods.
+// Ordinary nil concrete pointer fields and slice elements remain plain nulls.
 package syntaxwire
 
 import (
@@ -133,9 +133,9 @@ var recoveredPosition = sync.OnceValues(func() (syntax.Pos, error) {
 })
 
 // Encode returns a complete syntax record. Values must be syntax nodes or
-// auxiliary structs; unsupported values, typed-nil interface fields/elements, and
-// cycles fail rather than lose data. Ordinary nil interfaces and concrete pointers
-// remain representable as null.
+// auxiliary structs; unsupported values and cycles fail rather than lose data.
+// A root value is passed through an interface, so a typed-nil root retains its
+// concrete pointer type just like an interface-typed field or slice element.
 func Encode(value any) ([]byte, error) {
 	encoded, err := Value(value)
 	if err != nil {
@@ -146,7 +146,33 @@ func Encode(value any) ([]byte, error) {
 
 // Value returns a JSON-compatible syntax value for embedding in result envelopes.
 func Value(value any) (any, error) {
-	return encodeValue(reflect.ValueOf(value), make(map[uintptr]bool))
+	root := reflect.ValueOf(value)
+	if root.IsValid() && root.Kind() == reflect.Pointer && root.IsNil() {
+		return typedNilValue(root.Type())
+	}
+	return encodeValue(root, make(map[uintptr]bool))
+}
+
+// typedNilValue identifies a nil pointer inside a Go interface, including the
+// root any argument. Registry validation prevents unsupported dynamic types from
+// acquiring the same marker as known upstream syntax records.
+func typedNilValue(pointer reflect.Type) (any, error) {
+	typ := pointer.Elem()
+	if nodeTypes[typ.Name()] != typ {
+		return nil, fmt.Errorf("unsupported typed-nil syntax pointer %s", pointer)
+	}
+	return map[string]string{"Type": "TypedNil", "Kind": typ.Name()}, nil
+}
+
+// readTypedNil reconstructs only the dynamic nil pointer; the caller separately
+// checks its compatibility with the destination interface or required root API.
+func readTypedNil(obj map[string]any) (reflect.Value, error) {
+	name, ok := obj["Kind"].(string)
+	typ := nodeTypes[name]
+	if len(obj) != 2 || obj["Type"] != "TypedNil" || !ok || typ == nil {
+		return reflect.Value{}, fmt.Errorf("expected a TypedNil tag naming a known syntax record")
+	}
+	return reflect.Zero(reflect.PointerTo(typ)), nil
 }
 
 // encodeValue visits the current pointer ancestry to reject cycles while allowing
@@ -164,11 +190,10 @@ func encodeValue(value reflect.Value, ancestry map[uintptr]bool) (any, error) {
 			return nil, nil
 		}
 		dynamic := value.Elem()
-		// A non-nil interface holding a nil pointer takes different upstream
-		// control-flow branches from a nil interface. JSON null would erase that
-		// distinction; reject it before the ordinary nil-pointer encoding path.
+		// Null alone would erase the dynamic pointer type and change upstream
+		// control flow. Concrete pointer slots still take the plain-null path.
 		if dynamic.Kind() == reflect.Pointer && dynamic.IsNil() {
-			return nil, fmt.Errorf("typed-nil interface %s holding %s is not representable", value.Type(), dynamic.Type())
+			return typedNilValue(dynamic.Type())
 		}
 		return encodeValue(dynamic, ancestry)
 	case reflect.Pointer:
@@ -250,6 +275,13 @@ func Decode(data []byte) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("syntax root must be an object")
 	}
+	if obj["Type"] == "TypedNil" {
+		pointer, err := readTypedNil(obj)
+		if err != nil {
+			return nil, err
+		}
+		return pointer.Interface(), nil
+	}
 	name, ok := obj["Type"].(string)
 	typ := nodeTypes[name]
 	if !ok || typ == nil {
@@ -301,6 +333,17 @@ func decodeValue(target reflect.Value, value any) error {
 		obj, ok := value.(map[string]any)
 		if !ok {
 			return fmt.Errorf("expected syntax object")
+		}
+		if obj["Type"] == "TypedNil" {
+			pointer, err := readTypedNil(obj)
+			if err != nil {
+				return err
+			}
+			if !pointer.Type().Implements(target.Type()) {
+				return fmt.Errorf("typed-nil %s does not implement %s", pointer.Type(), target.Type())
+			}
+			target.Set(pointer)
+			return nil
 		}
 		name, _ := obj["Type"].(string)
 		typ := nodeTypes[name]

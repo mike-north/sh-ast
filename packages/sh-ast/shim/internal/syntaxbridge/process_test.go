@@ -246,3 +246,33 @@ func mustJSON(t *testing.T, value any) []byte {
 	}
 	return encoded
 }
+
+// A typed-nil child can leave Pos meaningful even when End panics. Transport
+// preserves the value, and each operation delegates only to its requested method.
+func TestTypedNilChildPreservesSuccessfulPositionOperation(t *testing.T) {
+	parameter := &syntax.ParamExp{Dollar: syntax.NewPos(7, 2, 3), Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(10, 2, 6)}, Index: (*syntax.Word)(nil)}
+	encoded, err := syntaxwire.Encode(parameter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := response(t, "pos", string(encoded), `{}`)
+	if start["Error"] != nil {
+		t.Fatalf("successful upstream Pos rejected: %#v", start)
+	}
+	position := start["Position"].(map[string]any)
+	if position["Offset"] != json.Number("7") || position["Line"] != json.Number("2") || position["Col"] != json.Number("3") {
+		t.Fatalf("Pos changed: %#v", position)
+	}
+	end := response(t, "end", string(encoded), `{}`)
+	if end["Error"].(map[string]any)["Kind"] != "InputError" {
+		t.Fatalf("upstream End panic lost: %#v", end)
+	}
+	rootFailure := response(t, "pos", `{"Type":"TypedNil","Kind":"Word"}`, `{}`)
+	if rootFailure["Error"].(map[string]any)["Kind"] != "InputError" {
+		t.Fatalf("typed-nil root method panic was not adapted: %#v", rootFailure)
+	}
+	// Failure of one operation cannot poison subsequent successful requests.
+	if next := response(t, "pos", string(encoded), `{}`); !reflect.DeepEqual(next, start) {
+		t.Fatalf("runtime changed after unsupported End: %#v", next)
+	}
+}

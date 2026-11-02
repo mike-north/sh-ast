@@ -271,58 +271,133 @@ func TestEditedTreeRoundTripMatchesNativePrintingAndMeaning(t *testing.T) {
 	}
 }
 
-// A typed-nil interface has a dynamic Go type and compares non-nil. Collapsing
-// it to JSON null changes upstream method control flow, so it is outside the
-// representable model and must fail before producing a wire value.
-func TestEncodeRejectsTypedNilInterfaces(t *testing.T) {
-	parameter := &syntax.ParamExp{
-		Short: true,
-		Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)},
-		Index: (*syntax.Word)(nil),
-	}
-	if parameter.Index == nil {
-		t.Fatal("fixture must contain a non-nil interface with a nil dynamic pointer")
-	}
-	panicked := false
-	func() {
-		defer func() { panicked = recover() != nil }()
-		parameter.End()
-	}()
-	if !panicked {
-		t.Fatal("upstream End must expose the typed-nil distinction on the exact review fixture")
-	}
-	ordinaryNil := *parameter
-	ordinaryNil.Index = nil
-	if ordinaryNil.End() != syntax.NewPos(3, 1, 4) {
-		t.Fatal("ordinary nil must take the non-panicking upstream End path")
-	}
+// A typed-nil interface compares non-nil and can affect an upstream method
+// without affecting another. The tag preserves that dynamic type instead of
+// dropping the value or rejecting otherwise meaningful operations.
+func TestTypedNilInterfacesRetainDynamicTypeAndIndependentBounds(t *testing.T) {
 	fixtures := []struct {
-		name string
-		node syntax.Node
+		name      string
+		node      syntax.Node
+		position  syntax.Pos
+		end       syntax.Pos
+		endPanics bool
 	}{
-		{"arithmetic-field", parameter},
-		{"command-field", &syntax.Stmt{Cmd: (*syntax.CallExpr)(nil)}},
-		{"loop-field", &syntax.ForClause{Loop: (*syntax.WordIter)(nil)}},
-		{"test-field", &syntax.UnaryTest{X: (*syntax.Word)(nil)}},
-		{"word-part-slice", &syntax.Word{Parts: []syntax.WordPart{(*syntax.Lit)(nil)}}},
+		{"exact-review-parameter", &syntax.ParamExp{Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)}, Index: (*syntax.Word)(nil)}, syntax.Pos{}, syntax.Pos{}, true},
+		{"short-parameter", &syntax.ParamExp{Dollar: syntax.NewPos(7, 2, 3), Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(10, 2, 6)}, Index: (*syntax.Word)(nil)}, syntax.NewPos(7, 2, 3), syntax.Pos{}, true},
+		{"long-parameter", &syntax.ParamExp{Dollar: syntax.NewPos(7, 2, 3), Rbrace: syntax.NewPos(12, 2, 8), Index: (*syntax.Word)(nil)}, syntax.NewPos(7, 2, 3), syntax.NewPos(13, 2, 9), false},
+		{"statement", &syntax.Stmt{Position: syntax.NewPos(5, 1, 6), Cmd: (*syntax.CallExpr)(nil)}, syntax.NewPos(5, 1, 6), syntax.Pos{}, true},
+		{"terminated-statement", &syntax.Stmt{Position: syntax.NewPos(5, 1, 6), Semicolon: syntax.NewPos(9, 1, 10), Cmd: (*syntax.CallExpr)(nil)}, syntax.NewPos(5, 1, 6), syntax.NewPos(10, 1, 11), false},
+		{"loop", &syntax.ForClause{ForPos: syntax.NewPos(0, 1, 1), DonePos: syntax.NewPos(15, 1, 16), Loop: (*syntax.WordIter)(nil)}, syntax.NewPos(0, 1, 1), syntax.NewPos(19, 1, 20), false},
+		{"test", &syntax.UnaryTest{OpPos: syntax.NewPos(3, 1, 4), X: (*syntax.Word)(nil)}, syntax.NewPos(3, 1, 4), syntax.Pos{}, true},
+		{"quoted-parts", &syntax.DblQuoted{Left: syntax.NewPos(0, 1, 1), Right: syntax.NewPos(3, 1, 4), Parts: []syntax.WordPart{(*syntax.Lit)(nil)}}, syntax.NewPos(0, 1, 1), syntax.NewPos(4, 1, 5), false},
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture.name, func(t *testing.T) {
 			encoded, err := Encode(fixture.node)
-			if err == nil || !strings.Contains(err.Error(), "typed-nil interface") {
-				t.Fatalf("want explicit typed-nil interface rejection, got bytes=%s error=%v", encoded, err)
+			if err != nil {
+				t.Fatal(err)
 			}
-			if encoded != nil {
-				t.Fatal("an unrepresentable interface must not produce partial encoded output")
+			if !bytes.Contains(encoded, []byte(`"Type":"TypedNil"`)) {
+				t.Fatalf("dynamic nil was not tagged: %s", encoded)
+			}
+			decoded, err := DecodeNode(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(fixture.node, decoded) {
+				t.Fatal("interface dynamic type or nil pointer changed")
+			}
+			for _, node := range []syntax.Node{fixture.node, decoded} {
+				if got := node.Pos(); got != fixture.position {
+					t.Fatalf("Pos=%v; want independent expected position %v", got, fixture.position)
+				}
+				var got syntax.Pos
+				panicked := false
+				func() {
+					defer func() { panicked = recover() != nil }()
+					got = node.End()
+				}()
+				if panicked != fixture.endPanics || !panicked && got != fixture.end {
+					t.Fatalf("End=%v panic=%v; want End=%v panic=%v", got, panicked, fixture.end, fixture.endPanics)
+				}
 			}
 		})
+	}
+	// Ordinary nil has a distinct successful End path for the exact review case.
+	ordinaryNil := &syntax.ParamExp{Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)}}
+	if ordinaryNil.End() != syntax.NewPos(3, 1, 4) {
+		t.Fatal("ordinary nil must remain distinguishable from the typed-nil index")
+	}
+}
+
+// Roots enter through a Go interface too; their dynamic nil pointer type must
+// survive even when their own methods cannot run without dereferencing it.
+func TestTypedNilNodeRootRoundTrip(t *testing.T) {
+	var original syntax.Node = (*syntax.Word)(nil)
+	encoded, err := Encode(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const expected = `{"Kind":"Word","Type":"TypedNil"}`
+	if string(encoded) != expected {
+		t.Fatalf("typed-nil root=%s; want %s", encoded, expected)
+	}
+	decoded, err := DecodeNode(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded == nil || reflect.TypeOf(decoded) != reflect.TypeFor[*syntax.Word]() || !reflect.ValueOf(decoded).IsNil() {
+		t.Fatalf("root dynamic type changed: %T", decoded)
+	}
+}
+
+// Tags are accepted only in an interface-compatible context. Concrete pointer
+// fields keep ordinary nulls, and a marker cannot impersonate an arbitrary Node.
+func TestTypedNilTagsRejectMalformedOrIncompatibleTypes(t *testing.T) {
+	for _, input := range []string{
+		`{"Type":"TypedNil"}`, `{"Type":"TypedNil","Kind":"Missing"}`,
+		`{"Type":"TypedNil","Kind":42}`, `{"Type":"TypedNil","Kind":"Word","Extra":true}`,
+		`{"Type":"TypedNil","Kind":"Slice"}`,
+	} {
+		if _, err := DecodeNode([]byte(input)); err == nil {
+			t.Errorf("accepted invalid Node root tag %s", input)
+		}
+	}
+	for _, fixture := range []struct {
+		node  syntax.Node
+		field string
+		kind  string
+	}{
+		{&syntax.ParamExp{}, "Index", "CallExpr"},
+		{&syntax.Stmt{}, "Cmd", "Word"},
+		{&syntax.ParamExp{}, "Param", "Lit"},
+	} {
+		encoded, err := Encode(fixture.node)
+		if err != nil {
+			t.Fatal(err)
+		}
+		value, err := ReadJSON(encoded)
+		if err != nil {
+			t.Fatal(err)
+		}
+		value.(map[string]any)[fixture.field] = map[string]any{"Type": "TypedNil", "Kind": fixture.kind}
+		malformed, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := DecodeNode(malformed); err == nil {
+			t.Errorf("accepted typed-nil %s in incompatible %T.%s", fixture.kind, fixture.node, fixture.field)
+		}
 	}
 }
 
 // Nil interface fields, nil interface elements, and nil concrete pointer elements
-// have direct null representations; rejecting typed-nil interfaces must not reject
+// have direct null representations; tagging typed-nil interfaces must not change
 // these ordinary nil values or turn an empty collection into a nil collection.
 func TestOrdinaryNilFieldsAndSliceElementsStillRoundTrip(t *testing.T) {
+	if encoded, err := Encode(nil); err != nil || string(encoded) != "null" {
+		t.Fatalf("untyped nil root must remain null: %s %v", encoded, err)
+	}
 	fixtures := []syntax.Node{
 		&syntax.ParamExp{Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)}, Index: nil},
 		&syntax.Stmt{Cmd: nil},

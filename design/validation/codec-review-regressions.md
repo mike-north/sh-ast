@@ -18,31 +18,65 @@ the OR operator, both commands and arguments, and retained comment. The unchange
 original must print differently, and editing the reconstructed tree must leave
 that original intact. No public printer API is introduced.
 
-## Typed-nil interface rejection
+## Typed-nil interface preservation
 
 The exact review fixture is a short ParamExp whose Param.ValueEnd is NewPos(3,1,4)
 and whose Index interface holds `(*syntax.Word)(nil)`. The interface is non-nil,
 and upstream End panics; replacing it with an ordinary nil interface makes End
 return position 1:4. Silently encoding both as null therefore changes behavior.
 
-Tests were added before changing production code. All five typed-nil fixtures
-failed by producing null without an error: arithmetic, command, loop and test
-interface fields, plus a WordPart interface slice element. Separate ordinary-nil
-roundtrips passed before the fix.
+The first containment candidate rejected typed-nil interfaces. Supervisor review
+then established that this also removes meaningful upstream operations: the exact
+fixture's Pos succeeds (returning an invalid zero position), and a version with a
+valid Dollar returns that position even though End panics. Long ParamExp,
+terminated Stmt, ForClause, and DblQuoted examples support both Pos and End despite
+typed-nil children. The final representation preserves these values instead of
+rejecting the entire tree because one operation might fail.
 
-The encoder now rejects a nil dynamic pointer encountered inside an interface,
-with an explicit `typed-nil interface` error and no partial encoded result.
-Ordinary nil interfaces, nil concrete pointers and slice elements remain valid.
-The codec's scope is parser-returned and publicly representable tree records;
-Go-only dynamic typed-nil interface fields/elements are unsupported, rather than
-silently coerced into a different public value. No private Go representation,
-unsafe operation, or upstream fork is used.
+The tag is exactly `{ Type: 'TypedNil', Kind: 'Word' }` for an interface containing
+a nil `*syntax.Word`. Kind must identify a registry-known concrete record whose
+pointer implements the destination Go interface. The decoder rejects unknown or
+incompatible kinds, extra/missing marker fields, and tags in concrete-pointer
+slots. Ordinary nil interfaces, concrete pointers and slice elements remain null.
+Root values enter through a Go interface too: a typed-nil Node root retains its
+concrete pointer type. Auxiliary kinds cannot masquerade as Node roots. The tag
+is a transport value, not a synthetic upstream struct or invented node fields.
+All reconstruction uses public reflection and the existing concrete type registry.
+
+Tests were written before each production change. The original codec failed five
+rejection probes by silently producing null. The tagged-preservation tests then
+failed the containment candidate on eight independent bound fixtures, a typed-nil
+root, and the position bridge. After tagging, tests compare both successful values
+and expected panics against hand-derived upstream outcomes. The exact review
+fixture remains distinct from its ordinary-nil variant. Bridge Pos succeeds when
+upstream Pos succeeds; End and typed-nil-root dereference panics become InputError,
+and another Pos request confirms that the runtime remains usable.
+
+## Parser output evidence and limits
+
+No typed-nil interfaces were observed in 13 focused valid/incomplete/error source
+fixtures with RecoverErrors 0, 1 and 3. Source inspection explains the main risky
+path: `syntax/parser.go:2663` assigns the pointer returned by followWordTok into
+UnaryTest.X. On a missing word, followWordTok (`867-876`) either allocates a real
+recovered Word or sets a parser error. getStmt (`2056-2057`) drops the errored
+statement before the statement list yields it. WordIter is allocated before it
+is returned (`2435-2461`); parameter indices flow through ArithmExpr interfaces
+rather than unchecked nil pointer conversions (`1762-1774`). The upstream
+RecoverErrors tests (`parser_test.go:2579` onward) cover synthesized missing-token
+nodes. This is focused evidence, not proof that every parser path can never
+produce a typed-nil interface.
+
+Parser reachability does not decide the supported operation domain. The public
+Node Pos/End contract (`syntax/nodes.go:12-21`) describes separate operations;
+current upstream methods can successfully inspect caller-constructed records with
+typed-nil children. Preserving that capability is why the tag is supported.
 
 ## Verification
 
 - Native `go test ./... -count=1` passes for the shim's packages.
 - Actual js/wasm test binaries for both `internal/syntaxwire` and
   `internal/syntaxbridge` pass using the pinned Go 1.26.5 `go_js_wasm_exec` runner.
-- The edited-tree, typed-nil rejection and ordinary-nil preservation tests all run
-  in the native and WASM targets. This is private codec/bridge evidence; it does
-  not claim a public print API or a rebuilt release artifact.
+- Edited-tree, tagged dynamic-nil, ordinary-nil preservation, malformed-tag, and
+  independent-position-operation tests run in the native and WASM targets. This
+  is private codec/bridge evidence; it does not claim a public print API or a
+  rebuilt release artifact.
