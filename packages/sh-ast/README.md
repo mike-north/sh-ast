@@ -25,6 +25,12 @@ same public API `@eslint-sh/bridge` did.
 
 ## Status
 
+The proposed refocus into a faithful upstream syntax interface is documented in
+[the design collection](../../design/ARCHITECTURE.md), with a two-minor-release
+plan and explicit acceptance scenarios. It distinguishes accepted direction from
+proposed APIs and current implementation; the public API below describes the
+existing package.
+
 The visitor-keys and child-type-schema tables, plus the `ShNodes.*` TypeScript typings, are
 generated from mvdan/sh's `syntax` package struct definitions by `tools/gen-visitor-keys` — see
 that tool's README for "The schema table is generated, not hand-written".
