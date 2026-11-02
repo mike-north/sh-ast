@@ -42,6 +42,14 @@ if (command?.Type === 'CallExpr') {
 - `nodePos(node)` and `nodeEnd(node)` independently compute upstream bounds from
   the current fields, including after edits. They do not return cached parse-time
   bounds. Incomplete constructed nodes can support one bound but fail the other.
+- `parseWithPositionsSync(source, options?)` parses once and returns `{ File,
+Positions }`. `Positions.get(node)` reads immutable original bounds by node
+  identity without additional WASM calls. Editing `File` leaves these observations
+  unchanged; copied or foreign nodes have no entry. Use this separate snapshot for
+  source-location adapters, and live `nodePos`/`nodeEnd` for edited syntax. A
+  captured upstream bounds failure is thrown when its pair is requested; it does
+  not discard a successful parse. Parser failures retain the same structured
+  error and partial File as `parseSync`.
 - `newPos(offset, line, column)` preserves upstream clamping/overflow semantics.
   Its uint64 inputs and the parser's Go int options accept safe integers or exact
   `bigint`; stored position components and operator values are numbers.

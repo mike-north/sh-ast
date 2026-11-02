@@ -17,9 +17,10 @@ export {
   nodeEnd,
   nodePos,
   parseSync,
+  parseWithPositionsSync,
   rawOperator,
 } from './syntax.js';
-export type { ParseOptions } from './syntax.js';
+export type { ParseOptions, ParsedFile, PositionSnapshot, NodePositions } from './syntax.js';
 export type * from '../generated/syntax-types.js';
 export * from '../generated/syntax-constants.js';
 export type { SyntaxFieldSchema, SyntaxRecordSchema } from '../generated/syntax-schema.js';

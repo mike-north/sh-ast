@@ -20,6 +20,8 @@ import {
   isSyntaxPos,
 } from './syntax-wire.js';
 import { callSyntax } from './wasm-instance.js';
+import { createPositionSnapshot, type ParsedFile } from './syntax-snapshot.js';
+export type { ParsedFile, PositionSnapshot, NodePositions } from './syntax-snapshot.js';
 
 export { InputError, LangError, ParseError } from './syntax-errors.js';
 
@@ -49,6 +51,30 @@ export interface ParseOptions {
  * @public
  */
 export function parseSync(source: string | Uint8Array, options: ParseOptions = {}): File {
+  return invokeParse('parse', source, options).file;
+}
+
+/**
+ * Parses once while observing every real node's upstream bounds in Go. The
+ * separate immutable lookup describes this original parse; it never replaces
+ * live nodePos/nodeEnd or tracks edits. Source adapters avoid reconstructing
+ * each descendant subtree just to display the original source locations.
+ * @public
+ */
+export function parseWithPositionsSync(
+  source: string | Uint8Array,
+  options: ParseOptions = {},
+): ParsedFile {
+  const { file, response } = invokeParse('parse-with-positions', source, options);
+  return Object.freeze({ File: file, Positions: createPositionSnapshot(file, response.Positions) });
+}
+
+/** Shared source/options/error semantics for both whole-file parsing operations. */
+function invokeParse(
+  operation: 'parse' | 'parse-with-positions',
+  source: string | Uint8Array,
+  options: ParseOptions,
+): { file: File; response: Record<string, unknown> } {
   if (typeof source !== 'string' && !(source instanceof Uint8Array))
     throw new InputError('Source must be a string or Uint8Array');
   if (typeof source === 'string') assertUnicodeString(source);
@@ -59,10 +85,10 @@ export function parseSync(source: string | Uint8Array, options: ParseOptions = {
     typeof source === 'string' ? source : new TextDecoder().decode(source),
   );
   validateOptions(options);
-  const result = invoke('parse', bytes, encodeWire(options));
+  const result = invoke(operation, bytes, encodeWire(options));
   if (!isSyntaxFile(result.File))
     throw new ShInternalError('The syntax parser returned an incomplete or invalid File record');
-  return result.File;
+  return { file: result.File, response: result };
 }
 
 /**

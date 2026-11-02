@@ -728,6 +728,12 @@ export function nodeEnd(node: Node_2): SyntaxPos;
 export function nodePos(node: Node_2): SyntaxPos;
 
 // @public
+export interface NodePositions {
+    readonly End: Readonly<SyntaxPos>;
+    readonly Pos: Readonly<SyntaxPos>;
+}
+
+// @public
 export const Not: 39;
 
 // @public
@@ -832,6 +838,12 @@ export type ParNamesOperator =
 0 | typeof NamesPrefix | typeof NamesPrefixWords | RawOperator<'ParNamesOperator'>;
 
 // @public
+export interface ParsedFile {
+    readonly File: File_2;
+    readonly Positions: PositionSnapshot;
+}
+
+// @public
 export class ParseError extends ShAstError {
     constructor(Message: GoString, Filename: GoString, Pos: SyntaxPos, Text: GoString, Incomplete: boolean, File: File_2 | null);
     readonly code = "SH_AST_SYNTAX_PARSE";
@@ -862,6 +874,9 @@ export interface ParseOptions {
 export function parseSync(source: string | Uint8Array, options?: ParseOptions): File_2;
 
 // @public
+export function parseWithPositionsSync(source: string | Uint8Array, options?: ParseOptions): ParsedFile;
+
+// @public
 export const Pipe: 13;
 
 // @public
@@ -869,6 +884,11 @@ export const PipeAll: 14;
 
 // @public
 export const Plus: 81;
+
+// @public
+export interface PositionSnapshot {
+    get(node: Node_2): NodePositions | undefined;
+}
 
 // @public
 export const Pow: 44;

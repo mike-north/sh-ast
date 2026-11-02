@@ -158,6 +158,13 @@ release acceptance; evidence and remaining gates are in [IMPLEMENTATION.md](IMPL
 - Records use upstream field names, a `Type` discriminator, explicit null/default
   values, and mutable fields. Derived bounds are independent `nodePos`/`nodeEnd`
   operations on current data.
+- `parseWithPositionsSync` additionally returns a separate original-source
+  position snapshot. Its identity lookup does not reconstruct subtrees or call
+  WASM. Bounds are observed on the original Go nodes during the same parse;
+  mutating the returned File does not update them. This view supports efficient
+  source consumers without changing live bound operations or adding stored bounds
+  to upstream syntax records. Its internal observation pass has no public Walk
+  ordering or visitor-control contract.
 - GoString preserves Unicode text or exact byte arrays. Bytes reach upstream
   unchanged, including invalid-UTF-8 parse failures. Lone JS surrogates are
   rejected before encoding.

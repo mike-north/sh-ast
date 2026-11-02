@@ -112,10 +112,12 @@ credentials, so the fixed public asset URL plus checksum verification was used.
   consumer-focused tests and ten diagnostic checks passed against preliminary
   linked artifacts. Exact final artifact acceptance remains separate.
 
-## Release A candidate outcome
+## Earlier candidate evidence (superseded)
 
-The implementation and exact local consumer acceptance are complete. This is a
-reviewable pre-release candidate, not authorization or evidence of publication.
+The earlier implementation passed correctness and exact local consumer checks.
+Independent performance review subsequently found repeated subtree transfers in
+the consumer adapter; the candidate identities and receipts below are historical
+evidence and do not establish acceptance of the corrected candidate.
 The package manifest remains 0.3.1; the minor changeset targets 0.4.0.
 
 Producer runtime/API code is frozen at `d1531f1a59c5f6a9bb6dbcab995c9ae7c72367d0`.
@@ -153,6 +155,39 @@ all 70 runtime assets, the exact candidate hash, synchronous first lint, and a
 nested `candidate:hello` report. Their complete receipt and observations are
 committed under the consumer's `work-records/release-a-candidate-*.json`.
 The installed temporary directory is deleted only after verification.
+
+## Parse-time snapshot correction
+
+Independent actual-ESLint measurements found that invoking live `nodePos` and
+`nodeEnd` for every projected node repeatedly encoded and reconstructed entire
+subtrees. On the same Node/ESLint environment, a representative 500-line fixture
+took 790.3 ms warm versus 22.2 ms on 0.3.1; a deliberately deeply nested 134-line
+fixture took 763.3 ms versus 4.7 ms. These are observations, not new acceptance
+thresholds. The source-bound snapshot correction was explicitly authorized after
+this evidence was reported.
+
+Go commit `a5f7875` observes original Node methods during one parse, preserving
+each bound's success or failure separately. Public `parseWithPositionsSync`
+returns mutable `File` plus immutable identity lookup `Positions`. It never adds
+bounds to syntax records or changes live `nodePos`/`nodeEnd` after edits. Auxiliary
+records are traversed for children but are not Node entries. Coverage validation
+rejects missing, duplicate, or contradictory metadata rather than issuing live
+fallback calls. Parser errors retain their original structured partial results.
+
+Tests first failed for the missing operation/public API and readonly type
+contract. The snapshot addition now passes 17 runtime/boundary checks and public
+type checks; the full suite passes 516 runtime tests plus tsd. Native and actual
+js/wasm Go tests pass. The consumer's actual WASM instrumentation first reproduced
+159 operations for its nested fixture, then observed exactly one
+`parse-with-positions` operation after migration. Consumer source `2a0f260`
+passes 180 plugin and 3 umbrella tests with the preliminary build. Independent
+same-fixture measurements now confirm one parse and zero per-node position calls
+across all ten fixtures and 120 measured lints. The representative warm median is
+77.2 ms (baseline 22.2 ms); the deeply nested median is 32.2 ms (baseline 4.7 ms).
+The repeated-subtree defect is removed, while residual baseline overhead remains
+explicit. See the [independent retest](validation/performance/SNAPSHOT-RETEST.md)
+and retained raw measurements. Fresh canonical CI asset receipt and new
+linked/installed final-candidate receipts are still required before acceptance.
 
 ### Acceptance mapping
 

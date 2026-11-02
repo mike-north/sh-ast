@@ -1,0 +1,152 @@
+[
+  {
+    "fixture": "representative-1",
+    "coldMedianMs": 31.920333,
+    "warmMedianMs": 2.240957999999992,
+    "warmImprovement": 7.77734700962716,
+    "baselineWarmRatio": 2.1297671182884055,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 260
+      }
+    }
+  },
+  {
+    "fixture": "representative-5",
+    "coldMedianMs": 41.026667,
+    "warmMedianMs": 8.589249999999993,
+    "warmImprovement": 9.488988212009204,
+    "baselineWarmRatio": 2.867463862293625,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 1300
+      }
+    }
+  },
+  {
+    "fixture": "representative-20",
+    "coldMedianMs": 74.45175,
+    "warmMedianMs": 32.971958,
+    "warmImprovement": 9.470492046605179,
+    "baselineWarmRatio": 3.3292538511838212,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 5230
+      }
+    }
+  },
+  {
+    "fixture": "representative-50",
+    "coldMedianMs": 129.039125,
+    "warmMedianMs": 77.17549999999997,
+    "warmImprovement": 10.240110203367655,
+    "baselineWarmRatio": 3.469737921950891,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 13120
+      }
+    }
+  },
+  {
+    "fixture": "nested-2",
+    "coldMedianMs": 32.274333,
+    "warmMedianMs": 2.141542000000001,
+    "warmImprovement": 7.771542187825398,
+    "baselineWarmRatio": 2.362429123000568,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 232
+      }
+    }
+  },
+  {
+    "fixture": "nested-4",
+    "coldMedianMs": 32.938666000000005,
+    "warmMedianMs": 2.822625000000002,
+    "warmImprovement": 8.158835835436868,
+    "baselineWarmRatio": 2.817342482844673,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 292
+      }
+    }
+  },
+  {
+    "fixture": "nested-8",
+    "coldMedianMs": 36.103542,
+    "warmMedianMs": 3.6452910000000003,
+    "warmImprovement": 11.130329787114391,
+    "baselineWarmRatio": 2.518916972897356,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 412
+      }
+    }
+  },
+  {
+    "fixture": "nested-16",
+    "coldMedianMs": 39.31633299999999,
+    "warmMedianMs": 7.509874999999994,
+    "warmImprovement": 11.582766024734111,
+    "baselineWarmRatio": 4.197318031218273,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 658
+      }
+    }
+  },
+  {
+    "fixture": "nested-32",
+    "coldMedianMs": 45.502750000000006,
+    "warmMedianMs": 12.836999999999989,
+    "warmImprovement": 18.393458985744342,
+    "baselineWarmRatio": 4.867646060664891,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 1154
+      }
+    }
+  },
+  {
+    "fixture": "nested-64",
+    "coldMedianMs": 70.79916700000001,
+    "warmMedianMs": 32.22787499999998,
+    "warmImprovement": 23.684173498873278,
+    "baselineWarmRatio": 6.8551714969422965,
+    "transport": {
+      "calls": {
+        "parse-with-positions": 1
+      },
+      "payloadBytes": {
+        "parse-with-positions": 2146
+      }
+    }
+  }
+]
