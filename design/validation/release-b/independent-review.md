@@ -51,3 +51,58 @@ This binary is excluded from the tests/report commit and is not canonical Linux
 reproducibility evidence. All 52 printer TS cases, native `go test ./...`, and
 `go vet ./...` pass in this review checkout. Frozen integration source was supplied
 as e4cfd11 (unchanged cherry-pick of df8c055); exports/API integration is pending.
+
+## Handoff after acceptance-test integration
+
+Tests/report commit 4ea41e9 was supplied to supervisor and integrated as 0c3f4be.
+The printer implementation files compare byte-for-byte between author df8c055
+and supervisor e4cfd11. New test lint and isolated inherited-config typecheck pass.
+A direct broad `tsc -p test/tsconfig.json` failed because that existing config's
+rootDir is test while tests import src, and this checkout had no rolled-up public
+artifacts. This is not a new acceptance-test type failure or claimed green gate.
+
+Await supervisor's frozen exports/canonical-WASM revision to rerun the targeted
+acceptance tests against its exact asset. Walk implementation/C5 consumer are
+separate pending reviews; structural active-array mutation remains unresolved.
+
+## Frozen print surface and cold-first operation
+
+Supervisor froze public print exports at 0e986dd520b736055c00bbd13a4e19fe2ee02415.
+Review checkout adds its unchanged public-export commit as f529014. The new
+`print-cold-start-review.test.ts` invokes built output in a fresh subprocess,
+constructs an empty File without any parse/newPos prewarm, instruments actual
+WebAssembly.Module/Instance construction, and observes `"\n"` before a queued
+microtask. It then catches PrintError and successfully parses/prints with exactly
+one Module and Instance. The queued microtask is observed running afterward, so
+the synchronous observation cannot pass merely because the callback never runs.
+
+The cold test and the two bounds tests pass against supplied optimized Linux
+WASM SHA-256 fd1ee7cd380abac985c4732a0a4e831a671b3907b6af83ba0e0e1c6ffe3ffad4.
+Focused lint and isolated inherited-config type checking pass. The WASM remains
+disposable and excluded from review commits.
+
+Independently extracted and exercised the actual preliminary package
+`sh-ast-0.3.1.tgz`, SHA-256
+62ec250b046543a3e352d7d2e6ef5c61a13916952bfcf5b6a23257c2b1cda9e1.
+Its embedded WASM matches the hash above. A fresh subprocess importing its public
+entry observes zero initialization at import, cold-first print before microtasks,
+one Module/Instance, and healthy parse/print reuse after both ordinary PrintError
+and recovered PrintPanicError. This is package behavior evidence for the supplied
+preliminary asset, not final canonical CI provenance or release acceptance.
+
+## Walk review in progress
+
+Read current walk author source against pinned native Walk and node methods.
+Normal dispatch, nil distinctions, optional-field rereads, copied item comments,
+and deferred callbacks agree on inspection. No concrete implementation regression
+has been established. Full frozen Walk and integrated C5 review remain pending.
+
+An independent native probe confirms another representation boundary: within a
+File.Last Comment callback, replacing the same whole Comment slot immediately
+changes the value read through the retained Go callback pointer, whose address
+still equals &file.Last[0]. Ordinary JS array-slot object replacement leaves the
+retained callback object unchanged. This is value-slot identity loss at constant
+array length, in addition to the already unresolved capacity/shrink cases. The
+walk author also identified it and is retaining native/JS divergence probes.
+It belongs to the explicit human representation decision, not a silently accepted
+policy or a claim that arbitrary mutation parity has been achieved.
