@@ -213,15 +213,33 @@ guessing at current behavior, and is pinned by `test/dialect-matrix.test.ts`.
 reaches the regex-test parser at all — `=~` is just another literal argument to a command named
 `[[`.
 
-\*\* Brace expansion is never split into a `BraceExp` node by this bridge, in any dialect — mvdan/sh
-only produces `BraceExp` nodes when the caller explicitly runs its `syntax.SplitBraces()`
-post-processing pass, which `shim/main.go` does not invoke. `{a,b}` always parses as an ordinary
-`Lit` word part, identically in every dialect.
+\*\* Parsing preserves upstream output: `{a,b}` remains an ordinary `Lit` word part,
+not a `BraceExp`, in every dialect. The analysis layer separately asks mvdan/sh v3.13.1's
+`syntax.SplitBraces` to recognize potential expansions on a private copy. `resolveWord`,
+`enumerateCommands`, and `resolveArgv0` report `static: false, reason: 'brace'` when actual
+brace-expansion parts are found, without changing the caller's tree. A bare Word carries no
+dialect or shell-option state, so this conservative observation also applies to POSIX-parsed
+records; it does not assert that POSIX sh performs brace expansion.
+
+Quoted or fully escaped opening braces within one literal part remain literal. Brace candidates containing other
+backslashes report `unsupported`: pinned upstream's escape handling differs from Bash, and
+analysis does not guess through that discrepancy. For example, `\{a,b\}` remains static,
+while `a{b\,c}` is conservatively unsupported. Any unquoted backslash escape crossing word-part boundaries in a constructed
+word is also unsupported, including boundaries into quoted parts: such a split
+can expose otherwise quoted syntax, and analysis does not reconstruct shell
+tokenization to infer a literal value. Malformed or singleton unescaped forms such as
+`a{b` and `{a}` remain static. See [the brace-classification decision](../../design/BRACE-CLASSIFICATION-DECISION.md).
 
 \*\*\* zsh's lexer never tokenizes `@(` as an extended-glob opener at all — deliberately, to avoid
 ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses without error under
 `Variant: LangZsh`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
 `checkLang` gate that rejects extended globs under posix is never reached for zsh.
+
+Reason descriptions do not promise universal precedence. Whole-word `unsupported`
+preflight still applies when a constructed word already contains a `BraceExp`.
+Independently quoted or fully protected literal siblings preserve `brace`; an
+escape crossing parts or an escape-uncertain brace candidate remains unsupported.
+Existing tilde/glob resolution order also remains applicable.
 
 ### `[[ ... ]]` and `let` under posix: accepted by design
 

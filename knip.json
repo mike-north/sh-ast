@@ -3,7 +3,8 @@
   "ignore": [
     "packages/sh-ast/generated/*.d.ts",
     "packages/sh-ast/shim/cmd/walk-oracle/js-array-storage.mjs",
-    "packages/sh-ast/src/syntax-walk-license.ts"
+    "packages/sh-ast/src/syntax-walk-license.ts",
+    "design/validation/brace-classification/benchmark.mjs"
   ],
   "ignoreBinaries": ["go"],
   "workspaces": {

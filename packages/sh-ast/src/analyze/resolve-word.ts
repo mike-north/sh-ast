@@ -1,12 +1,13 @@
 /** Resolves faithful upstream word records without evaluating shell expansions. */
 import type { Node } from '../../generated/syntax-types.js';
+import { observeBraces } from './brace-observation.js';
 import { decodeAnsiCString } from './ansi-c-escapes.js';
 import { decodeDblQuotedLit, decodeUnquotedLit } from './decode-lit.js';
 import { nodeArray } from './node-helpers.js';
 
 /**
  * Why a {@link resolveWord} result is `static: false`: the word's exact
- * text cannot be determined from source alone.
+ * value cannot be classified as one reliably known literal word.
  *
  * - `'expansion'` — the word contains a `ParamExp` (`$x`, `${x}`), a
  *   `CmdSubst` (command substitution, either `$(...)` or backtick form), an
@@ -28,15 +29,12 @@ import { nodeArray } from './node-helpers.js';
  *   Reference Manual §3.5.8.1, "Pattern Matching"), or an `ExtGlob` part
  *   (Bash Reference Manual §3.5.8, "Filename Expansion"): its value depends
  *   on which filesystem entries exist at run time.
- * - `'brace'` — the word contains a `BraceExp` part (`{a,b}`/`{1..10}`,
- *   Bash Reference Manual §3.5.1, "Brace Expansion"). mvdan/sh v3.13.1 only
- *   ever produces this node type when its caller applies `syntax.SplitBraces`
- *   to the parsed tree; this bridge's shim does not call it, so today a
- *   brace expression like `{a,b}` reaches {@link resolveWord} as an
- *   ordinary `Lit` (indistinguishable, in the AST this bridge produces,
- *   from literal `{`/`,`/`}` characters) rather than as a `BraceExp` part.
- *   This reason is handled here for forward-compatibility with that node
- *   type and is not reachable through {@link resolveWord} today.
+ * - `'brace'` — the word contains a `BraceExp` part or the pinned upstream
+ *   `syntax.SplitBraces` produces one on a private observation copy (Bash
+ *   Reference Manual §3.5.1, "Brace Expansion"). Parser output is unchanged.
+ *   This reports potential expansion in supporting dialects; a bare Word has
+ *   no dialect or shell-option state, so even POSIX-parsed words receive the
+ *   conservative classification. It does not claim POSIX sh expands braces.
  * - `'locale'` — the word contains a `$"..."` locale-translated string
  *   (Bash Reference Manual §3.1.2.5, "Locale-Specific Translation"): its
  *   value is looked up in the current locale's translation catalog at run
@@ -45,7 +43,10 @@ import { nodeArray } from './node-helpers.js';
  *   `$"..."` word's *contents* would otherwise report — the `DblQuoted`
  *   node's own `dollar` flag is checked before its children are visited at
  *   all, so e.g. `$"hi $x"` reports `'locale'`, never `'expansion'`.
- * - `'unsupported'` — a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
+ * - `'unsupported'` — a brace candidate contains backslashes whose handling
+ *   differs between pinned mvdan/sh and Bash (rather than guessing through
+ *   that discrepancy), an unquoted backslash escape crosses word-part
+ *   boundaries in a caller-constructed word, a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
  *   rather than Unicode text, or the word contains a `$'...'` (ANSI-C quoted) `\u`/`\U`
  *   escape whose value has no corresponding Unicode character (greater than
  *   `U+10FFFF`, e.g. `$'\UFFFFFFFF'`): real bash's output for this case is
@@ -54,6 +55,14 @@ import { nodeArray } from './node-helpers.js';
  *   `MAX_UNICODE_CODE_POINT` doc comment for the empirical detail) — this
  *   package declines to claim a `static: true` text bash never actually
  *   produces.
+ *
+ * Reason descriptions do not establish universal precedence among features.
+ * Whole-word `unsupported` preflight takes precedence even when a caller has
+ * already supplied a `BraceExp`: an escape crossing parts can invalidate the
+ * apparent quoting boundaries, and an escape-uncertain brace candidate remains
+ * uncertain. Independently quoted or fully protected literal siblings do not
+ * suppress a known `BraceExp`. After preflight, existing resolution order can
+ * select a triggering tilde or earlier glob before visiting that part.
  *
  * This union may grow in a **minor** release — new mvdan/sh word-part node
  * types, or new statically-shaped-but-dynamic categories, can add new reason
@@ -86,7 +95,7 @@ export type WordResolution =
       readonly text: string;
     }
   | {
-      /** The word's value depends on program state, the environment, or the filesystem. */
+      /** The word has potential expansion or cannot be resolved reliably by this analyzer. */
       readonly static: false;
       /** Why this word cannot be statically resolved. */
       readonly reason: WordResolutionReason;
@@ -284,8 +293,7 @@ function resolvePart(part: Node, quoting: 'unquoted' | 'dblquoted'): PartResult 
     case 'ExtGlob':
       return { ok: false, reason: 'glob' };
     case 'BraceExp':
-      // See WordResolutionReason's 'brace' doc: unreachable via this
-      // bridge's parser today, handled for forward-compatibility.
+      // Caller-constructed or transformed records can already contain braces.
       return { ok: false, reason: 'brace' };
     default:
       // Any word-part node type this module doesn't specifically know
@@ -308,7 +316,7 @@ function resolvePart(part: Node, quoting: 'unquoted' | 'dblquoted'): PartResult 
  * resolves to `"rm"`). A word containing any expansion (`ParamExp`,
  * `CmdSubst`, `ArithmExp`, `ProcSubst`), a triggering unquoted `~` (see
  * `options.context`), an unquoted glob metacharacter/bracket
- * expression/`ExtGlob`, a `$"..."` locale translation, or an unrepresentable
+ * expression/`ExtGlob`, potential brace expansion, a `$"..."` locale translation, or an unrepresentable
  * `$'\U...'` escape is `static: false` with a reason — never an error, and
  * never a safety judgment (see {@link WordResolution}).
  *
@@ -333,6 +341,9 @@ export function resolveWord(word: Node, options?: ResolveWordOptions): WordResol
   if (parts.length === 0) {
     return { static: true, text: '' };
   }
+  const braces = observeBraces(word);
+  if (braces === 'unsupported') return { static: false, reason: 'unsupported' };
+  if (braces) return { static: false, reason: 'brace' };
   // `parts.length === 0` returned above, so `parts[0]` is a real element.
   const first = parts[0];
   if (

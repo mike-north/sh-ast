@@ -1,0 +1,11 @@
+{
+  "repository": "mike-north/sh-ast",
+  "sourceCommit": "03ec289b1c98541cc3c64445f39daaf7ddf73190",
+  "workflowRun": 41529513788,
+  "artifactId": 13181386622,
+  "artifactName": "sh-ast-linux-amd64-wasm",
+  "archiveSha256": "8522ef08412f76a4cea2598f172a78a2ceb0e1381f85f4b9653c090637d55399",
+  "wasmSha256": "eb13ed12954c6220cf5de70019a3a628b90bd8012d38d33321fb7c4a6e9197e7",
+  "wasmBytes": 4468677,
+  "builder": "WASM reproducibility / rebuild-match, ubuntu-latest, pinned Go1.26.5 and binaryen131"
+}
