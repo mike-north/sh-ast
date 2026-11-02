@@ -18,7 +18,7 @@ const zeroPos: SyntaxPos = {
  * determines a test outcome is provided explicitly at the call site.
  * @internal
  */
-export function syntheticNode<T extends Node['Type']>(
+export function syntheticNode<T extends Exclude<Node['Type'], 'TypedNil'>>(
   Type: T,
   fields: Partial<Extract<Node, { Type: T }>> = {},
 ): Extract<Node, { Type: T }> {

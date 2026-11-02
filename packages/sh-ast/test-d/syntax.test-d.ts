@@ -6,6 +6,7 @@
  */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import type {
+  ArithmExpr,
   Command,
   File,
   GoString,
@@ -15,6 +16,9 @@ import type {
   Slice,
   Stmt,
   SyntaxPos,
+  TypedNil,
+  Word,
+  WordPart,
 } from '../generated/syntax-types.js';
 import {
   CmdIn,
@@ -78,3 +82,17 @@ expectError((SYNTAX_SCHEMA.File.fields.Name.kind = 'boolean'));
 expectError((SYNTAX_SCHEMA.File.fields = {}));
 expectError((SYNTAX_INTERFACES.Node = []));
 expectError((SYNTAX_INTERFACES.Node[0] = 'Slice'));
+
+// An interface may carry a concrete nil pointer. Its concrete kind remains
+// meaningful even though no record fields exist and it is not an ordinary nil interface.
+declare const nilWord: TypedNil<'Word'>;
+expectAssignable<ArithmExpr>(nilWord);
+expectAssignable<Node>(nilWord);
+expectNotAssignable<Word>(nilWord);
+expectAssignable<WordPart>({ Type: 'TypedNil', Kind: 'Lit' });
+expectNotAssignable<ArithmExpr>({ Type: 'TypedNil', Kind: 'Comment' });
+expectNotAssignable<Command>({ Type: 'TypedNil', Kind: 'Word' });
+expectNotAssignable<Node>({ Type: 'TypedNil', Kind: 'Slice' });
+expectNotAssignable<ParamExp['Param']>({ Type: 'TypedNil', Kind: 'Lit' });
+expectAssignable<ParamExp['Param']>(null);
+expectAssignable<ParamExp['Index']>(nilWord);

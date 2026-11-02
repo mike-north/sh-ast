@@ -45,7 +45,7 @@ import { nodeArray } from './node-helpers.js';
  *   `$"..."` word's *contents* would otherwise report — the `DblQuoted`
  *   node's own `dollar` flag is checked before its children are visited at
  *   all, so e.g. `$"hi $x"` reports `'locale'`, never `'expansion'`.
- * - `'unsupported'` — a word contains a nil part, a literal carries a byte-preserving `Uint8Array`
+ * - `'unsupported'` — a word contains a nil or typed nil part, a literal carries a byte-preserving `Uint8Array`
  *   rather than Unicode text, or the word contains a `$'...'` (ANSI-C quoted) `\u`/`\U`
  *   escape whose value has no corresponding Unicode character (greater than
  *   `U+10FFFF`, e.g. `$'\UFFFFFFFF'`): real bash's output for this case is
@@ -231,6 +231,8 @@ function hasUnquotedBracketExpression(parts: readonly Node[]): boolean {
 /** Applies quoting semantics to one fragment without evaluating dynamic content. */
 function resolvePart(part: Node, quoting: 'unquoted' | 'dblquoted'): PartResult {
   switch (part.Type) {
+    case 'TypedNil':
+      return { ok: false, reason: 'unsupported' };
     case 'Lit': {
       const raw = part.Value;
       if (typeof raw !== 'string') return { ok: false, reason: 'unsupported' };
@@ -312,13 +314,15 @@ function resolvePart(part: Node, quoting: 'unquoted' | 'dblquoted'): PartResult 
  *
  * @param word - A `Word` node, e.g. `parseSync(...).Stmts[0].Cmd.Args[0]`.
  * @param options - See {@link ResolveWordOptions}.
- * @throws TypeError if `word.Type` is not `"Word"` — a programmer-error
+ * @throws TypeError if `word.Type` is neither `"Word"` nor `"TypedNil"` — a programmer-error
  * misuse of the API, not a "malformed shell source" case (well-formed
  * shell source, however dynamic, never throws; see {@link WordResolution}).
  *
  * @public
  */
 export function resolveWord(word: Node, options?: ResolveWordOptions): WordResolution {
+  // A concrete nil pointer inside an interface retains its kind, but carries no text.
+  if (word.Type === 'TypedNil') return { static: false, reason: 'unsupported' };
   if (word.Type !== 'Word') {
     throw new TypeError(`resolveWord expects a "Word" node, got "${word.Type}"`);
   }

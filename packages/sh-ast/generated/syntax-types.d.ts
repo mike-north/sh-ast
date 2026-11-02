@@ -84,6 +84,67 @@ export interface SyntaxPos {
 }
 
 /**
+ * An upstream interface containing a nil pointer of a concrete syntax.Node kind. This differs from a nil interface (null): the concrete Go type remains observable and can affect operations. Only interface-valued positions admit this tag; concrete pointer fields use null. No record fields or node bounds are stored on the tag.
+ *
+ * @public
+ */
+export interface TypedNil<
+  ConcreteKind extends
+    | 'ArithmCmd'
+    | 'ArithmExp'
+    | 'ArrayElem'
+    | 'ArrayExpr'
+    | 'Assign'
+    | 'BinaryArithm'
+    | 'BinaryCmd'
+    | 'BinaryTest'
+    | 'Block'
+    | 'BraceExp'
+    | 'CStyleLoop'
+    | 'CallExpr'
+    | 'CaseClause'
+    | 'CaseItem'
+    | 'CmdSubst'
+    | 'Comment'
+    | 'CoprocClause'
+    | 'DblQuoted'
+    | 'DeclClause'
+    | 'ExtGlob'
+    | 'File'
+    | 'FlagsArithm'
+    | 'ForClause'
+    | 'FuncDecl'
+    | 'IfClause'
+    | 'LetClause'
+    | 'Lit'
+    | 'ParamExp'
+    | 'ParenArithm'
+    | 'ParenTest'
+    | 'ProcSubst'
+    | 'Redirect'
+    | 'SglQuoted'
+    | 'Stmt'
+    | 'Subshell'
+    | 'TestClause'
+    | 'TestDecl'
+    | 'TimeClause'
+    | 'UnaryArithm'
+    | 'UnaryTest'
+    | 'WhileClause'
+    | 'Word'
+    | 'WordIter',
+> {
+  /**
+   * Distinguishes a typed nil interface value from a concrete syntax record.
+   */
+  Type: 'TypedNil';
+  /**
+   * The concrete Go pointer type retained by the non-nil interface.
+   */
+  Kind: ConcreteKind;
+}
+
+/**
  * ArithmCmd represents an arithmetic command.
  *
  * This node will only appear with `LangBash` and `LangMirBSDKorn`.
@@ -1721,14 +1782,20 @@ export interface WordIter {
 }
 
 /**
- * The concrete records accepted by upstream syntax.ArithmExpr. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.ArithmExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
-export type ArithmExpr = BinaryArithm | FlagsArithm | ParenArithm | UnaryArithm | Word;
+export type ArithmExpr =
+  | BinaryArithm
+  | FlagsArithm
+  | ParenArithm
+  | UnaryArithm
+  | Word
+  | TypedNil<'BinaryArithm' | 'FlagsArithm' | 'ParenArithm' | 'UnaryArithm' | 'Word'>;
 
 /**
- * The concrete records accepted by upstream syntax.Command. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.Command. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
@@ -1748,17 +1815,35 @@ export type Command =
   | TestClause
   | TestDecl
   | TimeClause
-  | WhileClause;
+  | WhileClause
+  | TypedNil<
+      | 'ArithmCmd'
+      | 'BinaryCmd'
+      | 'Block'
+      | 'CallExpr'
+      | 'CaseClause'
+      | 'CoprocClause'
+      | 'DeclClause'
+      | 'ForClause'
+      | 'FuncDecl'
+      | 'IfClause'
+      | 'LetClause'
+      | 'Subshell'
+      | 'TestClause'
+      | 'TestDecl'
+      | 'TimeClause'
+      | 'WhileClause'
+    >;
 
 /**
- * The concrete records accepted by upstream syntax.Loop. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.Loop. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
-export type Loop = CStyleLoop | WordIter;
+export type Loop = CStyleLoop | WordIter | TypedNil<'CStyleLoop' | 'WordIter'>;
 
 /**
- * The concrete records accepted by upstream syntax.Node. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.Node. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
@@ -1805,19 +1890,88 @@ export type Node =
   | UnaryTest
   | WhileClause
   | Word
-  | WordIter;
+  | WordIter
+  | TypedNil<
+      | 'ArithmCmd'
+      | 'ArithmExp'
+      | 'ArrayElem'
+      | 'ArrayExpr'
+      | 'Assign'
+      | 'BinaryArithm'
+      | 'BinaryCmd'
+      | 'BinaryTest'
+      | 'Block'
+      | 'BraceExp'
+      | 'CStyleLoop'
+      | 'CallExpr'
+      | 'CaseClause'
+      | 'CaseItem'
+      | 'CmdSubst'
+      | 'Comment'
+      | 'CoprocClause'
+      | 'DblQuoted'
+      | 'DeclClause'
+      | 'ExtGlob'
+      | 'File'
+      | 'FlagsArithm'
+      | 'ForClause'
+      | 'FuncDecl'
+      | 'IfClause'
+      | 'LetClause'
+      | 'Lit'
+      | 'ParamExp'
+      | 'ParenArithm'
+      | 'ParenTest'
+      | 'ProcSubst'
+      | 'Redirect'
+      | 'SglQuoted'
+      | 'Stmt'
+      | 'Subshell'
+      | 'TestClause'
+      | 'TestDecl'
+      | 'TimeClause'
+      | 'UnaryArithm'
+      | 'UnaryTest'
+      | 'WhileClause'
+      | 'Word'
+      | 'WordIter'
+    >;
 
 /**
- * The concrete records accepted by upstream syntax.TestExpr. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.TestExpr. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
-export type TestExpr = BinaryTest | ParenTest | UnaryTest | Word;
+export type TestExpr =
+  | BinaryTest
+  | ParenTest
+  | UnaryTest
+  | Word
+  | TypedNil<'BinaryTest' | 'ParenTest' | 'UnaryTest' | 'Word'>;
 
 /**
- * The concrete records accepted by upstream syntax.WordPart. Auxiliary records are excluded unless the upstream interface actually admits them.
+ * The concrete records and typed nil pointers accepted by upstream syntax.WordPart. Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.
  *
  * @public
  */
 export type WordPart =
-  ArithmExp | BraceExp | CmdSubst | DblQuoted | ExtGlob | Lit | ParamExp | ProcSubst | SglQuoted;
+  | ArithmExp
+  | BraceExp
+  | CmdSubst
+  | DblQuoted
+  | ExtGlob
+  | Lit
+  | ParamExp
+  | ProcSubst
+  | SglQuoted
+  | TypedNil<
+      | 'ArithmExp'
+      | 'BraceExp'
+      | 'CmdSubst'
+      | 'DblQuoted'
+      | 'ExtGlob'
+      | 'Lit'
+      | 'ParamExp'
+      | 'ProcSubst'
+      | 'SglQuoted'
+    >;

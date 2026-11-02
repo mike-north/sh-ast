@@ -265,3 +265,34 @@ func TestSemanticCommentEscapesShellPunctuation(t *testing.T) {
 		t.Fatalf("comment = %q, want %q", b.String(), want)
 	}
 }
+
+// TestFaithfulTypedNilDeclarations preserves the Go distinction between a nil
+// interface and an interface containing a concrete nil pointer, without adding
+// that alternative to concrete pointer fields or the record schema.
+func TestFaithfulTypedNilDeclarations(t *testing.T) {
+	schema, err := buildFaithfulSchema(loadSyntaxPackage())
+	if err != nil {
+		t.Fatal(err)
+	}
+	decls := renderFaithfulTypes(schema, "v3.13.1")
+	for _, want := range []string{
+		"export interface TypedNil<ConcreteKind extends ",
+		"Type: 'TypedNil';", "Kind: ConcreteKind;",
+		"export type ArithmExpr = BinaryArithm | FlagsArithm | ParenArithm | UnaryArithm | Word | TypedNil<'BinaryArithm' | 'FlagsArithm' | 'ParenArithm' | 'UnaryArithm' | 'Word'>;",
+		"Param: Lit | null;",
+	} {
+		if !strings.Contains(decls, want) {
+			t.Errorf("declarations missing %q", want)
+		}
+	}
+	if _, exists := schema.Records["TypedNil"]; exists {
+		t.Error("typed nil is an interface value, not a concrete upstream record")
+	}
+	for _, members := range schema.Interfaces {
+		for _, name := range members {
+			if name == "TypedNil" {
+				t.Error("interface metadata must contain real upstream implementers only")
+			}
+		}
+	}
+}

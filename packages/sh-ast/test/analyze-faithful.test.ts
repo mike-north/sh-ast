@@ -1,7 +1,7 @@
 /** Faithful analysis preserves caller-owned records and never invents Unicode text for bytes. */
 import { describe, expect, it } from 'vitest';
 import { parseSync } from '../src/index.js';
-import type { CallExpr, Lit, SyntaxPos, Word } from '../generated/syntax-types.js';
+import type { CallExpr, Lit, SyntaxPos, TypedNil, Word } from '../generated/syntax-types.js';
 import { syntheticNode } from './analyze-fixtures.js';
 import { enumerateCommands, resolveArgv0, resolveWord } from '../src/analyze/index.js';
 
@@ -89,5 +89,18 @@ describe('analysis of faithful syntax records', () => {
       ],
     };
     expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
+  });
+
+  it('does not invent text for an interface containing a typed nil pointer', () => {
+    const nilWord: TypedNil<'Word'> = { Type: 'TypedNil', Kind: 'Word' };
+    const nilLit: TypedNil<'Lit'> = { Type: 'TypedNil', Kind: 'Lit' };
+    expect(resolveWord(nilWord)).toEqual({ static: false, reason: 'unsupported' });
+    expect(resolveWord({ Type: 'Word', Parts: [nilLit] })).toEqual({
+      static: false,
+      reason: 'unsupported',
+    });
+    expect(
+      resolveWord({ Type: 'Word', Parts: [syntheticNode('DblQuoted', { Parts: [nilLit] })] }),
+    ).toEqual({ static: false, reason: 'unsupported' });
   });
 });

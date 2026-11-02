@@ -412,6 +412,16 @@ func renderFaithfulTypes(schema *faithfulSchema, version string) string {
 		fmt.Fprintf(&b, "  %s: %s;\n", field.name, field.typ)
 	}
 	b.WriteString("}\n\n")
+	var nodeKinds []string
+	for _, name := range schema.Interfaces["Node"] {
+		nodeKinds = append(nodeKinds, jsString(name))
+	}
+	writeSemanticComment(&b, "", "An upstream interface containing a nil pointer of a concrete syntax.Node kind. This differs from a nil interface (null): the concrete Go type remains observable and can affect operations. Only interface-valued positions admit this tag; concrete pointer fields use null. No record fields or node bounds are stored on the tag.", "public")
+	fmt.Fprintf(&b, "export interface TypedNil<ConcreteKind extends %s> {\n", strings.Join(nodeKinds, " | "))
+	writeSemanticComment(&b, "  ", "Distinguishes a typed nil interface value from a concrete syntax record.", "")
+	b.WriteString("  Type: 'TypedNil';\n")
+	writeSemanticComment(&b, "  ", "The concrete Go pointer type retained by the non-nil interface.", "")
+	b.WriteString("  Kind: ConcreteKind;\n}\n\n")
 	for _, name := range sortedKeys(schema.Records) {
 		record := schema.Records[name]
 		doc := record.Doc
@@ -435,8 +445,12 @@ func renderFaithfulTypes(schema *faithfulSchema, version string) string {
 		b.WriteString("}\n\n")
 	}
 	for _, name := range sortedKeys(schema.Interfaces) {
-		writeSemanticComment(&b, "", "The concrete records accepted by upstream syntax."+name+". Auxiliary records are excluded unless the upstream interface actually admits them.", "public")
-		fmt.Fprintf(&b, "export type %s = %s;\n\n", name, strings.Join(schema.Interfaces[name], " | "))
+		writeSemanticComment(&b, "", "The concrete records and typed nil pointers accepted by upstream syntax."+name+". Typed nil kinds are limited to this interface's actual implementers; auxiliary records are excluded.", "public")
+		var kinds []string
+		for _, member := range schema.Interfaces[name] {
+			kinds = append(kinds, jsString(member))
+		}
+		fmt.Fprintf(&b, "export type %s = %s | TypedNil<%s>;\n\n", name, strings.Join(schema.Interfaces[name], " | "), strings.Join(kinds, " | "))
 	}
 	return b.String()
 }

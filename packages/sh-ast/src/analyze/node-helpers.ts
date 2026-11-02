@@ -3,11 +3,12 @@ import { SYNTAX_SCHEMA } from '../../generated/syntax-schema.js';
 import type { Node } from '../../generated/syntax-types.js';
 
 /**
- * Recognizes upstream syntax.Node discriminators without confusing auxiliary
- * records or token positions with Nodes. It does not validate complete trees.
+ * Recognizes concrete upstream syntax.Node records without confusing auxiliary
+ * records, typed nil interface tags, or token positions with records that have
+ * traversable fields. It does not validate complete trees.
  * @internal
  */
-export function isSyntaxNode(value: unknown): value is Node {
+export function isSyntaxNode(value: unknown): value is Exclude<Node, { Type: 'TypedNil' }> {
   if (
     typeof value !== 'object' ||
     value === null ||
