@@ -1,0 +1,6 @@
+{
+  "name": "heredoc",
+  "source": "# Unicode comment 你好 🎉 é\nrender() {\n  cat <<'PAYLOAD'\n你好 🎉 é\nPAYLOAD\n  printf \"%s\\n\" BENCHMARK_TOKEN\n}\nrender\n",
+  "markers": 1,
+  "dimensions": { "functions": 1, "heredocs": 1 }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "representative-5",
+  "source": "# Deploy job 0: 你好 🎉 é\njob_0() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_0\n# Deploy job 1: 你好 🎉 é\njob_1() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_1\n# Deploy job 2: 你好 🎉 é\njob_2() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_2\n# Deploy job 3: 你好 🎉 é\njob_3() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_3\n# Deploy job 4: 你好 🎉 é\njob_4() {\n  for item in one two; do\n    if test -n \"$item\"; then\n      result=\"$(printf '%s' \"你好🎉\" | sed 's/好/好/g')\"\n      printf '%s\\n' \"$result\" BENCHMARK_TOKEN # keep the Unicode comment 🎉\n    fi\n  done\n}\njob_4\n",
+  "markers": 5,
+  "dimensions": {
+    "functions": 5,
+    "forLoops": 5,
+    "ifClauses": 5,
+    "commandSubstitutions": 5,
+    "pipelineLinks": 5
+  }
+}
