@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"eslint-sh-shim/internal/syntaxwire"
+	"eslint-sh-shim/internal/legacywiretest"
 	"mvdan.cc/sh/v3/syntax"
 )
 
@@ -23,7 +23,7 @@ func braceWord(t *testing.T, source string) *syntax.Word {
 // encodedBraceWord retains original upstream records for transport and mutation checks.
 func encodedBraceWord(t *testing.T, word *syntax.Word) string {
 	t.Helper()
-	value, err := syntaxwire.Value(word)
+	value, err := legacywiretest.Value(word)
 	if err != nil {
 		t.Fatal(err)
 	}

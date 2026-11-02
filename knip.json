@@ -8,6 +8,13 @@
   ],
   "ignoreBinaries": ["go"],
   "workspaces": {
-    "packages/*": {}
+    "packages/*": {},
+    ".": {
+      "entry": [
+        "tools/benchmark/stream-encoding-prepare.mjs",
+        "tools/benchmark/stream-encoding-run.mjs",
+        "tools/benchmark/stream-encoding-worker.mjs"
+      ]
+    }
   }
 }

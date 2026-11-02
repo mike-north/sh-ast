@@ -1,0 +1,126 @@
+{
+  "source_commit": "25630a596f848b3f2ab6478ca34de66c23e28091",
+  "source_workflow_url": "https://github.com/mike-north/sh-ast/actions/runs/41534214435",
+  "workflow_run": 41534214435,
+  "artifact_id": 13182089937,
+  "artifact_name": "sh-ast-linux-amd64-wasm",
+  "archive_sha256": "b22918c5c78efe73797e54206a24bed99324514c6fa4ee344298693d8c8efdd3",
+  "archive_bytes": 1334026,
+  "member": "sh-ast.wasm",
+  "wasm_sha256": "c2adf9c8f0df30a16ce26bdcdde2b4050d094e0ed6c347650d7bc0e18ea9b0c9",
+  "wasm_bytes": 4537470,
+  "go_version": "1.26.5",
+  "binaryen_version": 131,
+  "extraction": "Verified archive SHA-256 and size; required one nonsymlink sh-ast.wasm member; read only that member into the fixed destination after validating WASM magic/version.",
+  "source_inventory_scope": "Every tracked Go source/test file and module manifest under packages/sh-ast/shim at source_commit; checked byte-identical to adoption checkout.",
+  "source_files": [
+    {
+      "path": "packages/sh-ast/shim/cmd/walk-oracle/main.go",
+      "sha256": "f0a8e1711ab89cbbe9bf27d7b58836e1075311b73c75990b74d2c42d248e66e5"
+    },
+    {
+      "path": "packages/sh-ast/shim/cmd/walk-oracle/main_test.go",
+      "sha256": "5a3d59de31afb7d18d45ae135e628607b35462fa2bb59bee20f83c2bf2ef127a"
+    },
+    {
+      "path": "packages/sh-ast/shim/go.mod",
+      "sha256": "a87eb7d55c7033addb4d03c12cc8ae77c9e347fe093f1d9aa9a01f9e8bb60fb8"
+    },
+    {
+      "path": "packages/sh-ast/shim/go.sum",
+      "sha256": "c6cfc2b595a285388027e0b1626224a068adb37518bab024f7946e1bc6130987"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/legacybridgetest/process.go",
+      "sha256": "4d2ab10e348291a203b09815a8e16e3629957e6a11ddfde829d4b8524a515d2b"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/legacybridgetest/snapshot.go",
+      "sha256": "cd12b2255ecbc8fc07608e5e62f93d8a6751306de9fc6ed44310784ddbe766e0"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/legacywiretest/codec.go",
+      "sha256": "8ff6fdadc3bb3a4b63e586f59b9de538de81cd2cf8bd8922da8af799e9f6b33f"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/nodeencode/encode.go",
+      "sha256": "580309f594df25b2b16ab524b70b750ae790311efb0c8dd7a107a610ca362481"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/nodeencode/encode_test.go",
+      "sha256": "12c70dc2934c5336bb5d4974af897ca654985d8db1714d68cfa002370ea75663"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/braces.go",
+      "sha256": "4d6ab819967a8b1047ea5f9195cf0e83da554920ab03409955e0d3a700d4a1d4"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/braces_test.go",
+      "sha256": "57d5cc1694e69fe808c7a47c9c26df65bee5b1140c16a33b0387be5237153ef0"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/printer.go",
+      "sha256": "f024deab1f3ea3cad526b8a8d4503632e6e23ec848936eca395b0ac9be386944"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/printer_bounds_review_test.go",
+      "sha256": "9c3e90fb2fe7e4cfe7879b199d7ae226bd0f5e6329acb12f3f6b3b80dde46fc9"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/printer_test.go",
+      "sha256": "2a9a2c4e7bcad9aedbe2f71db67eddd569f44cebe4c43386389e7d6c65dc32ae"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/process.go",
+      "sha256": "6c1b495851aefa7c849229669629370434515a0478f8b1bc8a682a7471ccfa79"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/process_test.go",
+      "sha256": "c37bb4484fa55695a563484d72a80d406036d72b4f9f2757f536f1734daa95a6"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/snapshot.go",
+      "sha256": "886fed6d03f07fd3ef7cb509ba719d288920df10c4dbd56b75ef33593c29e34b"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/snapshot_compat_test.go",
+      "sha256": "60f3d5635035d0c00cc2f379230264810f22001adf8d3f0d8281426bf41eaeb1"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/snapshot_test.go",
+      "sha256": "7d4f61ec95f11c66017664478cbf4d712d370275fcc452dcbd3397f4f31e80ae"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxbridge/stream_test.go",
+      "sha256": "380964098fac100efae4424994548f667e485a762677902c03e540e5df1dd3e8"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxwire/codec.go",
+      "sha256": "76e250ebc933152c5c0190ca2f860f526fa247ad30744214ba2210e3bc5c6d19"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxwire/codec_test.go",
+      "sha256": "06e1ccc0886f6798c997f6ece681071569a958701addc35a661835c407fefcf3"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxwire/feasibility_test.go",
+      "sha256": "1a0b462dfafc7326705f8d396ebc19a2502305c51b5d5dc4c31d97af9169a6eb"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxwire/stream.go",
+      "sha256": "6dfa4f74daa1c8bc940a19d7209465e6bccbbd7b276b66e336cf8abfa5483c67"
+    },
+    {
+      "path": "packages/sh-ast/shim/internal/syntaxwire/stream_test.go",
+      "sha256": "baf448148af71768f1db3cb339a89ba311f5bbd45bcbfbc028a9c579b693cdbf"
+    },
+    {
+      "path": "packages/sh-ast/shim/main.go",
+      "sha256": "dbbd1fff74df9a1e2fa2e402a323ccb8c1c7da0103c05bb2a64e4713f287f9df"
+    },
+    {
+      "path": "packages/sh-ast/shim/syntax_process_test.go",
+      "sha256": "365d90b14f64891f51cdf15b3f43c4c33054ab6c50fd90b614b3b7862ef86a97"
+    }
+  ]
+}

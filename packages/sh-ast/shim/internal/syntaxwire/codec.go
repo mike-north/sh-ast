@@ -137,31 +137,7 @@ var recoveredPosition = sync.OnceValues(func() (syntax.Pos, error) {
 // A root value is passed through an interface, so a typed-nil root retains its
 // concrete pointer type just like an interface-typed field or slice element.
 func Encode(value any) ([]byte, error) {
-	encoded, err := Value(value)
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(encoded)
-}
-
-// Value returns a JSON-compatible syntax value for embedding in result envelopes.
-func Value(value any) (any, error) {
-	root := reflect.ValueOf(value)
-	if root.IsValid() && root.Kind() == reflect.Pointer && root.IsNil() {
-		return typedNilValue(root.Type())
-	}
-	return encodeValue(root, make(map[uintptr]bool))
-}
-
-// typedNilValue identifies a nil pointer inside a Go interface, including the
-// root any argument. Registry validation prevents unsupported dynamic types from
-// acquiring the same marker as known upstream syntax records.
-func typedNilValue(pointer reflect.Type) (any, error) {
-	typ := pointer.Elem()
-	if nodeTypes[typ.Name()] != typ {
-		return nil, fmt.Errorf("unsupported typed-nil syntax pointer %s", pointer)
-	}
-	return map[string]string{"Type": "TypedNil", "Kind": typ.Name()}, nil
+	return Append(nil, value)
 }
 
 // readTypedNil reconstructs only the dynamic nil pointer; the caller separately
@@ -173,80 +149,6 @@ func readTypedNil(obj map[string]any) (reflect.Value, error) {
 		return reflect.Value{}, fmt.Errorf("expected a TypedNil tag naming a known syntax record")
 	}
 	return reflect.Zero(reflect.PointerTo(typ)), nil
-}
-
-// encodeValue visits the current pointer ancestry to reject cycles while allowing
-// repeated children. Every exported field is included, even when it is zero or nil.
-func encodeValue(value reflect.Value, ancestry map[uintptr]bool) (any, error) {
-	if !value.IsValid() {
-		return nil, nil
-	}
-	if value.Type() == positionType {
-		return ObservePosition(value.Interface().(syntax.Pos)), nil
-	}
-	switch value.Kind() {
-	case reflect.Interface:
-		if value.IsNil() {
-			return nil, nil
-		}
-		dynamic := value.Elem()
-		// Null alone would erase the dynamic pointer type and change upstream
-		// control flow. Concrete pointer slots still take the plain-null path.
-		if dynamic.Kind() == reflect.Pointer && dynamic.IsNil() {
-			return typedNilValue(dynamic.Type())
-		}
-		return encodeValue(dynamic, ancestry)
-	case reflect.Pointer:
-		if value.IsNil() {
-			return nil, nil
-		}
-		ptr := value.Pointer()
-		if ancestry[ptr] {
-			return nil, fmt.Errorf("cyclic syntax value")
-		}
-		ancestry[ptr] = true
-		defer delete(ancestry, ptr)
-		return encodeValue(value.Elem(), ancestry)
-	case reflect.Struct:
-		typ := value.Type()
-		if nodeTypes[typ.Name()] != typ {
-			return nil, fmt.Errorf("unsupported syntax struct %s", typ)
-		}
-		out := map[string]any{"Type": typ.Name()}
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			if !field.IsExported() {
-				return nil, fmt.Errorf("unsupported private field %s.%s", typ, field.Name)
-			}
-			encoded, err := encodeValue(value.Field(i), ancestry)
-			if err != nil {
-				return nil, fmt.Errorf("%s.%s: %w", typ.Name(), field.Name, err)
-			}
-			out[field.Name] = encoded
-		}
-		return out, nil
-	case reflect.Slice:
-		if value.IsNil() {
-			return nil, nil
-		}
-		out := make([]any, value.Len())
-		for i := range out {
-			encoded, err := encodeValue(value.Index(i), ancestry)
-			if err != nil {
-				return nil, err
-			}
-			out[i] = encoded
-		}
-		return out, nil
-	case reflect.String:
-		return String(value.String()), nil
-	case reflect.Bool:
-		return value.Bool(), nil
-	case reflect.Uint32:
-		return value.Uint(), nil
-	default:
-		return nil, fmt.Errorf("unsupported syntax value %s", value.Type())
-	}
 }
 
 // ReadJSON preserves integer precision and requires exactly one JSON value.
