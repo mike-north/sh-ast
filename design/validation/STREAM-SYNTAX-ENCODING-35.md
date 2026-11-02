@@ -80,10 +80,25 @@ verified unchanged from that source commit at adoption.
 After adoption, the full native Go suite and verified Node 22.22.1 uncached
 build/check/test passed again: 793 runtime tests, tsd, and 27 harness tests.
 The source run passed Go tests, build and artifact upload; its final comparison
-failed as expected against the pre-change binary. A subsequent exact-head
-rebuild-match run is still required. Copilot review is also pending.
+failed as expected against the pre-change binary. The canonical adoption head
+`e6b57a42a9ead1a37ba87af725b3156da88908c7` then passed CI, schema reproducibility,
+and Linux rebuild-match. Copilot submitted a review with no actionable inline
+findings, but explicitly reported that model policy or plan restrictions prevented
+completion at the selected tier; independent specialist review remains the
+substantive source review evidence.
 
-Performance measurements will compare this candidate against the baseline above,
-using the existing harness and canonical artifacts. Preserve raw samples and
-runtime/artifact identities; no performance improvement is claimed by the source
-implementation or byte-equivalence tests alone.
+The reviewed benchmark harness and retained evidence were then integrated without
+changing runtime source or the canonical artifact. Final Node 22.22.1 uncached
+checks and tests passed: 793 runtime tests, tsd, and 33 harness tests. A failing
+Knip check identified missing standalone command entrypoints; explicit root-workspace
+entries for the preparer, runner and worker corrected that integration issue.
+
+The [canonical matched experiment](performance/stream-encoding/README.md) retains
+216 timing workers, 6,480 measured calls and 36 verification workers. On Node
+22.22.1 / Apple M5 Max, M2 raw-bridge snapshot medians fell from 82.58 to 26.78 ms,
+public snapshot medians from 100.10 to 43.08 ms, and no-rule ESLint medians from
+108.28 to 50.37 ms. Raw timing includes ABI allocation/copy/result conversion/free;
+no pure internal WASM/parser timer was collected. The median paired raw snapshot
+ratio was 32.37%, so the <=30% investigation target was not met. Root explicitly
+accepted this bounded outcome; no additional optimization or #36 work was added.
+Final PR merge remains the root's decision; no publication is implied.

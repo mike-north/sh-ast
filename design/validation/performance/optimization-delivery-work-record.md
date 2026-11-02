@@ -57,16 +57,24 @@ priority. Root retains acceptance and merge authority. Implementers stop at PR-o
 
 ## Remaining delivery state
 
-#38 remains draft PR #46 until corrected-source canonical Linux WASM adoption and
-full artifact verification. Independent review caught adjacent-Lit and quote-boundary
-escape uncertainty; the conservative unsupported guard is approved after 58
-focused outcomes independently passed. No grammar repair was added. Initial
-local benchmark timings predate this guard and are not final candidate evidence.
+- #39 and #38 are complete, accepted and merged through PR #44 and PR #46.
+  Wrapper assignment grammars and conservative brace/escape classification include
+  their canonical artifact validation and independent review.
+- #37's in-place decoder slice was accepted and merged through PR #45. The issue
+  remains partial; snapshot-path optimization is deferred.
+- #35 is implemented, independently reviewed and validated with the exact-source
+  canonical Linux artifact. Root accepted the measured outcome explicitly:
+  M2 raw-bridge snapshot paired ratio 32.37% misses the <=30% investigation target.
+  The metric includes ABI overhead; it is not pure internal WASM/parser time.
+  [Validation](../STREAM-SYNTAX-ENCODING-35.md) and
+  [matched performance evidence](stream-encoding/README.md) retain contracts,
+  provenance, distributions and limits. Final PR #48 merge is pending root approval.
+- #36 is not approved. #40/#41 are approved but queued, #42 remains held for
+  semantic design, and #43 remains lower priority. No follow-on work launches at
+  this stage; stop after PR #48 acceptance. No package publication is claimed.
 
-#35, #36, #40 and #41 have not started implementation. #35 remains approved after
-the initial slices; #36 still needs a separate root gate, #40/#41 are follow-ons.
-#42 remains held and #43 remains lower priority. Live exact-head operational state
-is retained in the lead worktree's `scratch/DELIVERY-STATE.md`.
+Live exact-head operational state is retained in the lead worktree's
+`scratch/DELIVERY-STATE.md`. Earlier sections record the historical delivery steps.
 
 ## Correctness decisions
 
