@@ -1,5 +1,13 @@
 # sh-ast
 
+## 0.4.0
+
+### Minor Changes
+
+- [#30](https://github.com/mike-north/sh-ast/pull/30) [`1431503`](https://github.com/mike-north/sh-ast/commit/143150399ed1a91f53f5a871335854f1d30ede18) Thanks [@mike-north](https://github.com/mike-north)! - Expose a faithful synchronous interface to mvdan/sh v3.13.1, preserving upstream fields, explicit defaults and nulls, byte strings, token positions, operator families, parser controls, and partial error results. First use remains synchronous. Node bounds are computed from current mutable records. `parseWithPositionsSync` provides a separate immutable snapshot of original node bounds for source consumers, with no per-node WASM calls.
+
+  This 0.x migration replaces normalized lowercase nodes and UTF-16 ranges with upstream syntax records and byte positions; consumers own their presentation adapters. KeepComments now follows the upstream false default. Analysis helpers consume the new records. Public traversal and printing remain deferred to the following minor release.
+
 ## 0.3.1
 
 ### Patch Changes
