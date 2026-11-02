@@ -3,13 +3,14 @@
  * https://github.com/mike-north/eslint-sh/issues/4.
  *
  * Ports the spike's ~700-line warm-parse exercise (`spike/perf-test.mjs`,
- * `spike/lint-test.mjs` #3): the WASM instance must be instantiated once and
- * reused across many `parseSync` calls without error. No latency gate is
+ * `spike/lint-test.mjs` #3): the WASM instance must remain usable across many `parseSync` calls.
+ * Exact initialization counts are covered by the separate cold-start test. No latency gate is
  * asserted here (see design/MILESTONES.md M2 for the performance work).
  */
 import { describe, expect, it } from 'vitest';
 import { parseSync } from '../src/index.js';
 
+/** Repeats realistic independent functions, each containing multibyte literal data. */
 function buildFixture(functionCount: number): string {
   return Array.from({ length: functionCount }, (_, i) => {
     const n = String(i);
@@ -28,25 +29,25 @@ describe('warm-reuse smoke test', () => {
   // clear vitest's 5000ms default on a fast local machine, but not on the
   // 2-core GitHub Actions runner — give it headroom there rather than
   // shrinking the batch, which is the point of the smoke test.
-  it('parses repeatedly without re-instantiating or throwing (instance reuse)', () => {
+  it('parses repeatedly without corrupting the shared runtime', () => {
     // Warm-up calls, then a batch — every call must succeed and produce a
     // File root, proving the lazily-instantiated WASM module keeps working
     // across calls rather than being torn down or reset.
     for (let i = 0; i < 3; i++) {
       const file = parseSync(big);
-      expect(file.type).toBe('File');
+      expect(file.Type).toBe('File');
     }
     const results = Array.from({ length: 20 }, () => parseSync(big));
     expect(results).toHaveLength(20);
     for (const file of results) {
-      expect(file.type).toBe('File');
-      expect(file.stmts.length).toBeGreaterThan(0);
+      expect(file.Type).toBe('File');
+      expect((file.Stmts ?? []).length).toBeGreaterThan(0);
     }
   }, 30_000);
 
   // 30s: same headroom as the instance-reuse test above — this also does
   // repeated WASM parses of the ~700-line fixture on the same slow CI runner.
-  it('produces identical normalized output across repeated warm parses of the same input', () => {
+  it('produces identical syntax output across repeated warm parses of the same input', () => {
     const first = JSON.stringify(parseSync(big));
     const second = JSON.stringify(parseSync(big));
     expect(second).toBe(first);
