@@ -2,7 +2,10 @@
 // typedjson's omission rules. Exported struct fields retain their Go names and
 // values; Type identifies concrete structs, including auxiliary non-Node structs.
 // Node methods are deliberately absent: bounds are derived from the current tree.
-// The format preserves tree values, not pointer identity or cyclic object graphs.
+// The format preserves parser-returned and publicly representable tree values,
+// not pointer identity or cyclic object graphs. Go-only typed-nil interface fields
+// and elements fail closed: the public model cannot preserve their dynamic type
+// and non-nil interface identity, which can change upstream method behavior.
 package syntaxwire
 
 import (
@@ -130,7 +133,9 @@ var recoveredPosition = sync.OnceValues(func() (syntax.Pos, error) {
 })
 
 // Encode returns a complete syntax record. Values must be syntax nodes or
-// auxiliary structs; unsupported values and cycles fail rather than lose data.
+// auxiliary structs; unsupported values, typed-nil interface fields/elements, and
+// cycles fail rather than lose data. Ordinary nil interfaces and concrete pointers
+// remain representable as null.
 func Encode(value any) ([]byte, error) {
 	encoded, err := Value(value)
 	if err != nil {
@@ -158,7 +163,14 @@ func encodeValue(value reflect.Value, ancestry map[uintptr]bool) (any, error) {
 		if value.IsNil() {
 			return nil, nil
 		}
-		return encodeValue(value.Elem(), ancestry)
+		dynamic := value.Elem()
+		// A non-nil interface holding a nil pointer takes different upstream
+		// control-flow branches from a nil interface. JSON null would erase that
+		// distinction; reject it before the ordinary nil-pointer encoding path.
+		if dynamic.Kind() == reflect.Pointer && dynamic.IsNil() {
+			return nil, fmt.Errorf("typed-nil interface %s holding %s is not representable", value.Type(), dynamic.Type())
+		}
+		return encodeValue(dynamic, ancestry)
 	case reflect.Pointer:
 		if value.IsNil() {
 			return nil, nil

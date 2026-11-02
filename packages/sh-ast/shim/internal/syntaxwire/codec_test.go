@@ -185,6 +185,166 @@ func TestRoundTripMatchesNativeStructsAndPrivatePrinting(t *testing.T) {
 	}
 }
 
+// Edited values, not cached source or parse-time snapshots, must reach upstream
+// printing after reconstruction. The native comparison and fixed expected source
+// separately establish codec fidelity and the intended edit, including Unicode.
+func TestEditedTreeRoundTripMatchesNativePrintingAndMeaning(t *testing.T) {
+	const source = "# keep 🎉 e\u0301\necho old && echo 你好\n"
+	const expected = "# keep 🎉 e\u0301\necho new🎉 || echo 你好\n"
+	parse := func(source string) *syntax.File {
+		t.Helper()
+		file, err := syntax.NewParser(syntax.KeepComments(true)).Parse(strings.NewReader(source), "edited.sh")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return file
+	}
+	print := func(node syntax.Node) string {
+		t.Helper()
+		var output bytes.Buffer
+		if err := syntax.NewPrinter().Print(&output, node); err != nil {
+			t.Fatal(err)
+		}
+		return output.String()
+	}
+	original := parse(source)
+	originalOutput := print(original)
+	if originalOutput != source || originalOutput == expected {
+		t.Fatal("unchanged source must print unchanged and cannot satisfy the edited expectation")
+	}
+	encoded, err := Encode(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeNode(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Mutate the reconstructed public structs before a second wire transfer.
+	// The longer literal deliberately leaves its parse-time ValueEnd unchanged;
+	// the native printer must honor the edited text rather than source slicing.
+	edited := decoded.(*syntax.File)
+	editedBinary := edited.Stmts[0].Cmd.(*syntax.BinaryCmd)
+	editedBinary.Op = syntax.OrStmt
+	editedBinary.X.Cmd.(*syntax.CallExpr).Args[1].Parts[0].(*syntax.Lit).Value = "new🎉"
+	editedWire, err := Encode(edited)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reconstructed, err := DecodeNode(editedWire)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// This independent parser instance never passes through the codec. Its
+	// separately edited structs are the native upstream printer oracle.
+	native := parse(source)
+	nativeBinary := native.Stmts[0].Cmd.(*syntax.BinaryCmd)
+	nativeBinary.Op = syntax.OrStmt
+	nativeBinary.X.Cmd.(*syntax.CallExpr).Args[1].Parts[0].(*syntax.Lit).Value = "new🎉"
+	actual, nativeOutput := print(reconstructed), print(native)
+	if actual != nativeOutput {
+		t.Fatalf("edited codec output %q differs from native output %q", actual, nativeOutput)
+	}
+	if actual != expected {
+		t.Fatalf("edited output %q; want independently specified source %q", actual, expected)
+	}
+	if print(original) != originalOutput {
+		t.Fatal("editing the decoded tree changed the original parser result")
+	}
+	// Reparse meaning is asserted from the intended command, operator and
+	// retained comment/literal values, not from either edited tree's fields.
+	reparsed := parse(actual)
+	if len(reparsed.Stmts) != 1 || len(reparsed.Stmts[0].Comments) != 1 || reparsed.Stmts[0].Comments[0].Text != " keep 🎉 e\u0301" {
+		t.Fatal("edited output lost the statement or its original Unicode comment")
+	}
+	binary := reparsed.Stmts[0].Cmd.(*syntax.BinaryCmd)
+	if binary.Op != syntax.OrStmt {
+		t.Fatal("edited output did not reparse as an OR command")
+	}
+	left, right := binary.X.Cmd.(*syntax.CallExpr), binary.Y.Cmd.(*syntax.CallExpr)
+	if len(left.Args) != 2 || len(right.Args) != 2 ||
+		left.Args[0].Parts[0].(*syntax.Lit).Value != "echo" ||
+		left.Args[1].Parts[0].(*syntax.Lit).Value != "new🎉" ||
+		right.Args[0].Parts[0].(*syntax.Lit).Value != "echo" ||
+		right.Args[1].Parts[0].(*syntax.Lit).Value != "你好" {
+		t.Fatal("edited output did not retain the intended command arguments")
+	}
+}
+
+// A typed-nil interface has a dynamic Go type and compares non-nil. Collapsing
+// it to JSON null changes upstream method control flow, so it is outside the
+// representable model and must fail before producing a wire value.
+func TestEncodeRejectsTypedNilInterfaces(t *testing.T) {
+	parameter := &syntax.ParamExp{
+		Short: true,
+		Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)},
+		Index: (*syntax.Word)(nil),
+	}
+	if parameter.Index == nil {
+		t.Fatal("fixture must contain a non-nil interface with a nil dynamic pointer")
+	}
+	panicked := false
+	func() {
+		defer func() { panicked = recover() != nil }()
+		parameter.End()
+	}()
+	if !panicked {
+		t.Fatal("upstream End must expose the typed-nil distinction on the exact review fixture")
+	}
+	ordinaryNil := *parameter
+	ordinaryNil.Index = nil
+	if ordinaryNil.End() != syntax.NewPos(3, 1, 4) {
+		t.Fatal("ordinary nil must take the non-panicking upstream End path")
+	}
+	fixtures := []struct {
+		name string
+		node syntax.Node
+	}{
+		{"arithmetic-field", parameter},
+		{"command-field", &syntax.Stmt{Cmd: (*syntax.CallExpr)(nil)}},
+		{"loop-field", &syntax.ForClause{Loop: (*syntax.WordIter)(nil)}},
+		{"test-field", &syntax.UnaryTest{X: (*syntax.Word)(nil)}},
+		{"word-part-slice", &syntax.Word{Parts: []syntax.WordPart{(*syntax.Lit)(nil)}}},
+	}
+	for _, fixture := range fixtures {
+		t.Run(fixture.name, func(t *testing.T) {
+			encoded, err := Encode(fixture.node)
+			if err == nil || !strings.Contains(err.Error(), "typed-nil interface") {
+				t.Fatalf("want explicit typed-nil interface rejection, got bytes=%s error=%v", encoded, err)
+			}
+			if encoded != nil {
+				t.Fatal("an unrepresentable interface must not produce partial encoded output")
+			}
+		})
+	}
+}
+
+// Nil interface fields, nil interface elements, and nil concrete pointer elements
+// have direct null representations; rejecting typed-nil interfaces must not reject
+// these ordinary nil values or turn an empty collection into a nil collection.
+func TestOrdinaryNilFieldsAndSliceElementsStillRoundTrip(t *testing.T) {
+	fixtures := []syntax.Node{
+		&syntax.ParamExp{Short: true, Param: &syntax.Lit{ValueEnd: syntax.NewPos(3, 1, 4)}, Index: nil},
+		&syntax.Stmt{Cmd: nil},
+		&syntax.Word{Parts: []syntax.WordPart{nil}},
+		&syntax.File{Stmts: []*syntax.Stmt{nil}, Last: []syntax.Comment{}},
+		&syntax.CallExpr{Args: []*syntax.Word{nil}, Assigns: nil},
+	}
+	for _, original := range fixtures {
+		encoded, err := Encode(original)
+		if err != nil {
+			t.Fatal(err)
+		}
+		decoded, err := DecodeNode(encoded)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(original, decoded) {
+			t.Fatalf("ordinary nil boundaries changed for %T: %s", original, encoded)
+		}
+	}
+}
+
 func TestDecodeRejectsMalformedRepresentations(t *testing.T) {
 	valid, err := Encode(&syntax.BinaryCmd{})
 	if err != nil {
