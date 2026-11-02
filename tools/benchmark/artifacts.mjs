@@ -1,5 +1,5 @@
 /** Freeze exact registry releases and a built local package outside workspace dependency resolution. */
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, statSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -48,8 +48,8 @@ export function prepare(root) {
       ),
     );
     const tarball = join(directory, packed.filename);
-    command('tar', ['-xzf', tarball, '-C', directory], directory);
     const packageRoot = join(directory, 'package');
+    extractPackage(tarball, packageRoot);
     const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'));
     verifyIdentity(
       manifest,
@@ -102,4 +102,55 @@ export function verifyEntrypoints(packageRoot, manifest) {
   };
   collect(manifest.exports);
   for (const target of targets) readFileSync(resolve(packageRoot, target));
+}
+
+/**
+ * Accept only npm's package/ member namespace and strip it into a fresh directory.
+ * Tar owns archive decoding; listing checks reject unexpected names before writes,
+ * and extraction retains local ownership/umask rather than archive privileges.
+ * This bounds package preparation, not arbitrary hostile-code execution: accepted
+ * registry packages are subsequently imported by benchmark workers.
+ */
+export function extractPackage(tarball, packageRoot) {
+  const parent = resolve(packageRoot, '..');
+  const members = command('tar', ['-tzf', tarball], parent).trimEnd().split('\n');
+  if (
+    !members.length ||
+    members.some(
+      (name) =>
+        !(name === 'package' || name.startsWith('package/')) ||
+        name.split('/').some((part) => part === '..' || part === '.') ||
+        /[\r\\]/.test(name),
+    )
+  )
+    throw new Error('Archive members must remain under package/ without traversal');
+  mkdirSync(packageRoot, { mode: 0o700 });
+  command(
+    'tar',
+    [
+      '-xzf',
+      tarball,
+      '--strip-components=1',
+      '--no-same-owner',
+      '--no-same-permissions',
+      '-C',
+      packageRoot,
+      'package',
+    ],
+    parent,
+  );
+  // npm packs regular files/directories. Do not let later asset hashing follow symbolic links
+  // or consume special files left by a nonconforming archive.
+  const validate = (directory) => {
+    for (const name of readdirSync(directory)) {
+      const path = join(directory, name);
+      const entry = lstatSync(path);
+      if (entry.isDirectory()) validate(path);
+      else if (!entry.isFile())
+        throw new Error('Package archive contains a symbolic link or special file');
+    }
+  };
+  validate(packageRoot);
+  if (!lstatSync(join(packageRoot, 'package.json')).isFile())
+    throw new Error('Package archive must contain package/package.json');
 }

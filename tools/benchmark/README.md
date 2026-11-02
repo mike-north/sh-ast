@@ -11,7 +11,11 @@ The command builds the local candidate and generates its API declaration rollups
 then downloads the actual published `sh-ast`
 0.3.1, 0.4.0 and 0.5.0 packages, and packs the local candidate with lifecycle hooks
 disabled. Extraction occurs in a new OS temporary directory; no benchmark
-packages are added to the workspace or dependency lockfile. Registry SRI and exact
+packages are added to the workspace or dependency lockfile. Archive members must
+stay under `package/`; that prefix is stripped into a fresh directory using local
+ownership and umask. Unexpected paths, symbolic links and special files are rejected. This
+is a package-layout boundary, not a sandbox for the package code subsequently
+executed by workers. Registry SRI and exact
 manifest versions are checked. Every advertised runtime and declaration entrypoint
 must exist in the extracted package. The report records tarball SHA-256, every extracted
 asset hash, candidate source hashes, Git HEAD and working-tree status. The package
