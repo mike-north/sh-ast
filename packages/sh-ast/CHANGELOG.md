@@ -1,5 +1,11 @@
 # sh-ast
 
+## 0.5.0
+
+### Minor Changes
+
+- [#31](https://github.com/mike-north/sh-ast/pull/31) [`8f2aacb`](https://github.com/mike-north/sh-ast/commit/8f2aacb65a96fd936cf1d8e9394a844c615b3520) Thanks [@mike-north](https://github.com/mike-north)! - Add synchronous traversal and printing for the faithful mvdan/sh v3.13.1 syntax model. Traversal preserves upstream callback order and control using ordinary TypeScript arrays: active lists capture their array and extent, read future slots live, ignore appends, and retain their captured array when its owner field is replaced. Destructive active-array edits are unsupported; Go slice capacity, reslicing, backing-store aliases and value-slot addresses are not modeled. Printing uses the current edited tree and the pinned printer options. These operations support transformations while original parse-position snapshots remain tied to their original source.
+
 ## 0.4.0
 
 ### Minor Changes
