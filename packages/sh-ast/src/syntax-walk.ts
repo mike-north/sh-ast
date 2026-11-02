@@ -7,6 +7,7 @@
  * The upstream BSD license is retained in syntax-walk-license.ts.
  */
 import type { Comment, Node } from '../generated/syntax-types.js';
+import { InputError } from './syntax-errors.js';
 import { afterItemStart, atStatementEnd } from './syntax-walk-bounds.js';
 import { nilDereference, WalkPanicError } from './syntax-walk-errors.js';
 export { WalkPanicError } from './syntax-walk-errors.js';
@@ -19,7 +20,8 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
 /**
  * Walks synchronously using the pinned upstream case ordering. Each accepted entry is followed by its
  * children and a null exit. Returning false prunes the entry without an exit;
- * exit return values are ignored. Callback exceptions retain their identity,
+ * boolean exit return values are ignored. Every callback must return a boolean
+ * synchronously; other results produce InputError. Callback exceptions retain their identity,
  * and upstream deferred comment callbacks still run during exception unwinding.
  *
  * Children and later fields are read live. List traversal captures the array
@@ -36,6 +38,19 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  */
 export function walk(node: Node, callback: (node: Node | null) => boolean): void {
   visit(node, callback);
+}
+
+/**
+ * Calls user code without intercepting its exceptions, then enforces Go's bool
+ * return domain before traversal can consume the result. Exit results share
+ * that domain even though their boolean values do not control traversal.
+ */
+function invokeCallback(node: Node | null, callback: ICallback): boolean {
+  const result: unknown = callback(node);
+  if (typeof result !== 'boolean') {
+    throw new InputError('Walk callbacks must return a boolean synchronously');
+  }
+  return result;
 }
 
 /** An unconditional concrete-pointer child is observable even when the pointer is nil. */
@@ -100,7 +115,7 @@ function copyComment(node: Comment): Comment {
  * work and the null exit, preserving Go's unwind order and replacement exception.
  */
 function visit(node: Node | null, callback: ICallback): void {
-  if (!callback(node)) {
+  if (!invokeCallback(node, callback)) {
     return;
   }
   if (node === null) {
@@ -113,7 +128,7 @@ function visit(node: Node | null, callback: ICallback): void {
     if (node.Kind !== 'Lit' && node.Kind !== 'Comment' && node.Kind !== 'SglQuoted') {
       nilDereference();
     }
-    callback(null);
+    invokeCallback(null, callback);
     return;
   }
   let deferred: Comment | undefined;
@@ -297,7 +312,7 @@ function visit(node: Node | null, callback: ICallback): void {
         throw new WalkPanicError(`syntax.Walk: unexpected node type ${String(exhaustive)}`);
       }
     }
-    callback(null);
+    invokeCallback(null, callback);
   } finally {
     if (deferred !== undefined) {
       visit(deferred, callback);

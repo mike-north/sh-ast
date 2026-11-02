@@ -106,3 +106,44 @@ array length, in addition to the already unresolved capacity/shrink cases. The
 walk author also identified it and is retaining native/JS divergence probes.
 It belongs to the explicit human representation decision, not a silently accepted
 policy or a claim that arbitrary mutation parity has been achieved.
+
+Read-only execution of the current walk author suites passes 65 TS tests across
+two suites and native `go test ./cmd/walk-oracle`. Source remains unfrozen and
+representation decision pending; this is provisional evidence only. Read-only C5
+consumer inspection found separate editable parsing, exact target selection,
+real ESLint printed replacements, syntax meaning/stability checks, and retained
+original-view checks. Its use of public walk requires later integrated-package
+validation; no C5 pass is inferred from the print-only package.
+
+Current handoff: 4ea41e9 tests/report already integrated; ad4b6c4 cold-print test
+and updated report supplied to supervisor. Await frozen Walk and C5 same-byte
+linked/installed package evidence before final combined Release B review.
+
+## Confirmed and corrected callback-result boundary
+
+On frozen Walk 6572ca58f55ef5f24d8310b19b7b40c3dc2844bd (integrated as b49c425),
+`visit` used callback truthiness for entry and ignored all exit return values.
+Runtime JavaScript callbacks returning Promise, undefined, null, 0, 1, text, or
+object therefore silently continued/pruned rather than rejecting a result outside
+the upstream bool domain. Public TS negative tests did not cover this boundary.
+
+Added `syntax-walk-callback-boundary.test.ts` before implementation changes.
+The initial run had 17 failing negative cases and two passing preservation
+controls; the local full red log is `scratch/walk-callback-boundary-red.log`.
+Entry cases expect InputError before child dispatch. Exit cases cover both the
+normal and typed-nil leaf paths. Boolean false exits remain ignored. Callback
+exception identity and deferred comment visits during unwind remain intact.
+
+The minimal correction invokes the callback without catching its exception,
+checks `typeof result === 'boolean'`, and throws InputError otherwise. Entry and
+both exit paths share that boundary. It neither awaits nor coerces a return
+value. The public method comment states the synchronous boolean requirement.
+
+After the correction, all 19 boundary cases and all 65 native-oracle/protocol
+Walk cases pass (84 total). Focused lint, isolated inherited-config typecheck,
+and package build pass. The green log is
+`scratch/walk-callback-boundary-green.log`. No storage/array-policy choice is
+made by this fix; that consequential fidelity decision remains unresolved.
+
+The supervisor owns integrated public API/doc regeneration and the full package
+acceptance run after cherry-picking this narrow correction.
