@@ -28,6 +28,8 @@ func Process(operation, payload, options string) (result []byte) {
 	switch operation {
 	case "parse":
 		return marshal(parse(payload, options))
+	case "parse-with-positions":
+		return marshal(parseWithPositions(payload, options))
 	case "bounds":
 		return marshal(bounds(payload))
 	case "pos":
@@ -198,18 +200,26 @@ func parseOptions(text string) (string, []syntax.ParserOption, error) {
 // parse preserves the File returned alongside an error. Its error fields come
 // directly from upstream values, never from parsing formatted diagnostic text.
 func parse(source, options string) map[string]any {
+	_, result := parseResult(source, options)
+	return result
+}
+
+// parseResult keeps parser invocation, encoding and structured error adaptation
+// in one place. Supplemental observations can use the original Go File without
+// another parse or reconstructing the serialized tree.
+func parseResult(source, options string) (*syntax.File, map[string]any) {
 	filename, opts, err := parseOptions(options)
 	if err != nil {
-		return errorResponse("InputError", err.Error())
+		return nil, errorResponse("InputError", err.Error())
 	}
 	file, parseError := syntax.NewParser(opts...).Parse(strings.NewReader(source), filename)
 	encoded, err := syntaxwire.Value(file)
 	if err != nil {
-		return errorResponse("InternalError", err.Error())
+		return file, errorResponse("InternalError", err.Error())
 	}
 	result := map[string]any{"File": encoded}
 	if parseError == nil {
-		return result
+		return file, result
 	}
 	failure := map[string]any{"Message": syntaxwire.String(parseError.Error())}
 	switch err := parseError.(type) {
@@ -230,7 +240,7 @@ func parse(source, options string) map[string]any {
 		failure["Kind"] = "InternalError"
 	}
 	result["Error"] = failure
-	return result
+	return file, result
 }
 
 // bounds delegates to upstream methods on the reconstructed current tree. Go
