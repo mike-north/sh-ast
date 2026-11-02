@@ -154,3 +154,45 @@ made by this fix; the consequential fidelity decision was still unresolved then.
 
 The supervisor owns integrated public API/doc regeneration and the full package
 acceptance run after cherry-picking this narrow correction.
+
+## Final accepted ordinary-array contract review
+
+After the user accepted ordinary arrays with explicit limits, an independent
+Codex reviewer inspected author `236bd498` (integrated as `31c1c20`) and producer
+`4c69b7d`, including the regenerated public API/docs. No actionable finding remained.
+
+The review confirmed that traversal executable code was unchanged and matched the
+accepted initial-array/extent and live-slot rules. Ordinary JavaScript aliases
+remain shared, stored Comment identity remains ordinary object identity, and
+specialized item-comment callbacks receive copies. Contract examples were narrowed
+to captured indices so removal beyond the captured extent is not accidentally
+forbidden. Dense reordering can skip/revisit objects; no unique-once or unrestricted
+Go storage-mutation parity is claimed.
+
+Thirteen new intended-outcome/documentation tests in
+`syntax-walk-mutation-contract.test.ts` and `syntax-walk-error-docs.test.ts` cover
+these boundaries. The reviewer inspected the complete 666-test passing log,
+without rerunning runtime tests. Two generated-documentation checks had first
+failed against the old Message property page and API report; the final property
+page/class table carry the exact-byte description and the report no longer marks
+the field undocumented. Message reference/bytes, display text, code and name remain
+covered. This resolves Copilot review comment 4439171598; the reply and resolution
+were applied after integration.
+
+No Go/WASM or traversal behavior change was introduced by finalization. Updated
+packaged comments/declarations and the error field constructor require new consumer
+receipts; the implementation record tracks those separately.
+
+## Final consumer evidence audit
+
+A separate read-only pass checked consumer `b2a9440` evidence for final producer
+`4c69b7d` / tarball `9c7d46ad...`. It verified the complete 98-asset inventory and
+both actual importer receipts, including synchronous first lint, whole-File fix,
+intended meaning, original-view/cache isolation and stable second pass. It
+recomputed all 36 processes / 144 samples, medians and operation sequences (Walk
+zero, print one, timed fix five; full receipt eight including verification).
+The ten packed-file differences matched the producer inventory, consumer runtime
+hashes were unchanged, and earlier timings remained unmodified historical data.
+Consumer documentation matches the accepted captured-extent boundary. No actionable
+finding remained; no tests were rerun or files changed by the auditor. Full artifact
+links and release prerequisites are in the integration implementation record.

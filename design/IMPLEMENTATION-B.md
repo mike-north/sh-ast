@@ -51,8 +51,9 @@ and review are recorded below, together with canonical consumer receipts and
 bounded measurements.
 
 The user accepted ordinary arrays with explicit traversal-mutation limits.
-Finalized contract checks and refreshed packaged-candidate receipts are being
-completed against that boundary; prior implementation evidence follows.
+Finalized producer contract checks pass against that boundary. The original
+implementation evidence is retained below, followed by the final package and
+consumer receipt records.
 
 ## Stacked candidate workflow preparation
 
@@ -102,14 +103,27 @@ remain supported. No Go capacity, shared backing-store, reslicing or value-slot
 address model will be added. Destructive active-array mutations remain outside
 the supported contract; the implementation adds no detector or rejection policy.
 
-The finalization audit checks that existing behavior matches this boundary,
-updates public comments and examples, adds specification-derived coverage, and
-refreshes consumer receipts when packaged bytes change. Copilot has now reviewed
-both drafts: the consumer has no actionable issue; the producer noted missing
-generated documentation for WalkPanicError.Message. That documentation repair
-and independent finalized-contract review are in progress.
+The finalization audit found no traversal runtime change necessary. Public
+comments, generated docs, README and the staged minor note now state the accepted
+boundary. Thirteen new tests cover live future slots, append/extent behavior,
+owner-array replacement, reordering/revisits, list-entry timing, stored Comment
+identity, copied comments and error message documentation/preservation.
 
-## Canonical candidate
+Copilot reviewed both drafts: the consumer had no actionable issue; the producer
+identified missing generated documentation for WalkPanicError.Message. Two
+generated-documentation regressions failed before the repair. A dedicated
+documented readonly field plus a lowercase constructor parameter now produces
+the intended property/class descriptions and API report, while preserving exact
+message reference/bytes, display text, code and name. The review thread was
+answered and resolved after independent verification.
+
+Independent Codex review at `4c69b7d` found no remaining actionable issue in the
+final source, contract tests, decision, README or regenerated API/docs. It also
+confirmed that existing traversal executable code is unchanged. No Go or WASM
+change was required. The [review history](validation/release-b/independent-review.md)
+records this final inspection separately from earlier provisional reviews.
+
+## Canonical Linux binary and preceding package
 
 Draft [PR 31](https://github.com/mike-north/sh-ast/pull/31) is based on the
 unchanged Release A branch. Commit `345dc64afc31fc2d4a002bba3052a78623501ca5`
@@ -134,13 +148,33 @@ not the manifest version. The full upstream BSD notice is present in the tarball
 Canonical commit `345dc64` passes [CI](https://github.com/mike-north/sh-ast/actions/runs/41392911252),
 [schema reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911400),
 and [Linux WASM reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911617).
-Copilot review subsequently landed on both candidates. The artifact above records
-the pre-finalization package; the finalization record will identify its replacement
-if packaged comments or declarations change.
+The package above is historical pre-finalization evidence. The finalized package
+below supersedes it; its Go/WASM bytes and canonical provenance remain unchanged.
 
-## Consumer fix and bounded performance evidence
+## Finalized package and producer checks
 
-The separate consumer B branch validates the exact canonical tarball above. Both
+Clean source `4c69b7dfed64f9cfc1964ea04ede16f82ba6e6e5` produced tarball SHA-256
+`9c7d46ad9bd5906616bd4a8bd6da6ce82d06362ae931a013c2d49ba6592a6116`.
+Its source diff is empty (SHA-256
+`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`),
+and its untracked source inventory is empty. The tarball retains 98 code assets.
+Nine code/declaration/map assets plus README changed from the preceding package:
+Walk comments and the documented error field/constructor account for those
+changes. They require new exact-package consumer receipts. Package version stays
+0.3.1 until the staged version operations; hashes identify this candidate.
+
+Uncached build/check, all 666 runtime tests across 34 files, tsd and regenerated
+API/docs pass. [CI 41409668259](https://github.com/mike-north/sh-ast/actions/runs/41409668259),
+[schema 41409668284](https://github.com/mike-north/sh-ast/actions/runs/41409668284),
+[WASM 41409668265](https://github.com/mike-north/sh-ast/actions/runs/41409668265),
+and [Copilot presence 41409668286](https://github.com/mike-north/sh-ast/actions/runs/41409668286)
+pass on `4c69b7d`. The presence check confirms an existing completed review; a
+refreshed Copilot review was also requested after the final source push. There is
+no remaining open thread from the earlier review.
+
+## Pre-finalization consumer and bounded performance evidence
+
+The preceding consumer B validation exercised tarball `ba0b721a...`. Both
 linked and fresh npm-installed plugin importers verify all 98 code-asset hashes.
 The final canonical receipt pair and eleven C5/API cases were rerun together
 (16 focused cases). The complete configured suite passes 191 plugin tests,
@@ -177,3 +211,55 @@ The consumer retains a `^0.5.0` dependency floor. Its historical registry lockfi
 cannot provide an unpublished candidate. Local exact-artifact override tests do
 not establish a passing frozen registry installation; updating that lock remains
 a publication-order prerequisite. The storage-model decision is now accepted.
+
+## Final consumer receipts and candidate closeout
+
+The finalized consumer is [PR 105](https://github.com/mike-north/eslint-sh/pull/105)
+at `b2a9440d8bb8a13c9165428ae101a90ef04a27da`. Both linked and fresh npm-installed
+plugin importers verify all 98 assets of producer source `4c69b7d`, tarball
+`9c7d46ad9bd5906616bd4a8bd6da6ce82d06362ae931a013c2d49ba6592a6116`.
+The producer's later closeout record commits change no packaged files.
+
+Fresh consumer validation passes uncached build/check, 191 plugin tests, three
+umbrella tests, two documentation harness cases, and a focused 16-case run of
+C5, linked/installed receipts and tutorial cases. The first lint is synchronous
+and performs one parse-with-positions operation. Whole-File editing/printing/fixing
+reparses the intended argument meaning, preserves original view/cache/snapshot
+associations, and reaches a stable second pass. The complete model-visible
+[observations](https://github.com/mike-north/eslint-sh/blob/b2a9440d8bb8a13c9165428ae101a90ef04a27da/work-records/release-b/candidate-observations.json),
+[receipt](https://github.com/mike-north/eslint-sh/blob/b2a9440d8bb8a13c9165428ae101a90ef04a27da/work-records/release-b/candidate-receipt.json),
+and [provenance](https://github.com/mike-north/eslint-sh/blob/b2a9440d8bb8a13c9165428ae101a90ef04a27da/work-records/release-b/candidate-provenance.json)
+identify the exact package.
+
+The consumer reran all four performance fixtures in 36 fresh processes and 144
+timed samples against the new bytes. Representative-50 warm walk/print/fix medians
+were 0.395/36.360/238.178 ms; nested-64 were 0.067/6.625/84.408 ms. Each Walk sample
+made zero bridge calls, print one, and timed fix five; receipt probes include
+three additional verification operations. All intended edits, fixture markers and
+stable-pass assertions held. Cold/warm boundaries and test-rule overhead remain
+explicit in the [final performance report](https://github.com/mike-north/eslint-sh/blob/b2a9440d8bb8a13c9165428ae101a90ef04a27da/work-records/release-b/performance/REPORT.md).
+Historical measurements remain unchanged and are not relabeled as the final run.
+No complexity or latency guarantee follows from these bounded observations.
+
+An independent read-only audit verified the full 98-asset inventory, both importer
+receipts, exact ten packed-file differences, unchanged consumer runtime hashes,
+and historical evidence. It recomputed all 36-process/144-sample medians and
+operation sequences and checked the accepted mutation boundary in consumer docs.
+No actionable finding remained. No runtime test or benchmark was rerun by that
+auditor.
+
+The candidate is finalized under the accepted ordinary-array contract. Remaining
+external release prerequisites are separate: A 0.4 must publish and consume its
+changesets before B's staged minor note is activated and B is retargeted to the
+actual release baseline; expected B remains 0.5, never 1.0. Consumer frozen install
+fails because its manifest requires ^0.5.0 while the historical lock specifies
+^0.3.0. A refreshed registry query at 2026-11-02T07:59:54Z again returned E404 for
+sh-ast@0.5.0. The main-only consumer PR filter is not the sole CI obstacle, so no
+green remote consumer CI is claimed. After publication, regenerate the real lock
+and rerun normal frozen-install CI. No release automation was expanded to bypass
+these prerequisites.
+
+Release A producer `290f158` and consumer `84a85e6` remain separate and unchanged.
+Both B PRs remain drafts; no merge, tag or publication was performed. Fresh Copilot
+reviews were requested after the final source pushes; the earlier producer issue
+is fixed/resolved and the earlier consumer review had no actionable issue.
