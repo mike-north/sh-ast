@@ -1,0 +1,137 @@
+--- sh-ast-05/dist/syntax-wire.js	2026-11-02 12:06:10
++++ sh-ast-fast/dist/syntax-wire.js	2026-11-02 12:10:56
+@@ -79,8 +79,10 @@
+         throw new ShInternalError(`Invalid syntax bridge JSON: ${String(cause)}`);
+     }
+     const visit = (item) => {
+-        if (Array.isArray(item))
+-            return item.map(visit);
++        if (Array.isArray(item)) {
++            for (let i = 0; i < item.length; i++) { const c = item[i]; if (c !== null && typeof c === 'object') item[i] = visit(c); }
++            return item;
++        }
+         if (!isRecord(item))
+             return item;
+         if (Object.keys(item).length === 1 && typeof item.Bytes === 'string') {
+@@ -89,7 +91,15 @@
+                 throw new ShInternalError('Invalid base64 in syntax bridge response');
+             return new Uint8Array(bytes);
+         }
+-        return Object.fromEntries(Object.entries(item).map(([key, child]) => [key, visit(child)]));
++        // PROTOTYPE: restore byte records in place; JSON.parse already produced fresh, unshared plain records.
++        for (const key of Object.keys(item)) {
++            const child = item[key];
++            if (child !== null && typeof child === 'object') {
++                const restored = visit(child);
++                if (restored !== child) Object.defineProperty(item, key, { value: restored, writable: true, enumerable: true, configurable: true });
++            }
++        }
++        return item;
+     };
+     return visit(parsed);
+ }
+--- sh-ast-05/dist/syntax-snapshot.js	2026-11-02 12:06:10
++++ sh-ast-fast/dist/syntax-snapshot.js	2026-11-02 12:10:56
+@@ -13,10 +13,10 @@
+  * each subtree here would reintroduce work proportional to all descendant sizes.
+  */
+ function isNodeIdentity(value) {
+-    return ((typeof value.Type === 'string' && SYNTAX_INTERFACES.Node.includes(value.Type)) ||
++    return ((typeof value.Type === 'string' && NODE_TYPE_SET.has(value.Type)) ||
+         (value.Type === 'TypedNil' &&
+             typeof value.Kind === 'string' &&
+-            SYNTAX_INTERFACES.Node.includes(value.Kind)));
++            NODE_TYPE_SET.has(value.Kind)));
+ }
+ /**
+  * Indexes child-bearing fields once, including paths through auxiliary records.
+@@ -49,6 +49,50 @@
+     visit(file, []);
+     return nodes;
+ }
++/** PROTOTYPE: counts Node-identity occurrences without materializing path keys. */
++function countNodeIdentities(file) {
++    let count = 0;
++    const visit = (value) => {
++        if (!isRecord(value) || typeof value.Type !== 'string') return;
++        if (isNodeIdentity(value)) count++;
++        const schema = SYNTAX_SCHEMA[value.Type];
++        if (schema === undefined || !Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return;
++        for (const name of childFields(value.Type)) {
++            const child = value[name];
++            if (Array.isArray(child)) for (let i = 0; i < child.length; i++) visit(child[i]);
++            else visit(child);
++        }
++    };
++    visit(file);
++    return count;
++}
++const childFieldCache = new Map();
++function childFields(type) {
++    let names = childFieldCache.get(type);
++    if (names === undefined) {
++        names = Object.entries(SYNTAX_SCHEMA[type].fields).filter(([, f]) => f.kind === 'struct' || f.kind === 'interface').map(([n]) => n);
++        childFieldCache.set(type, names);
++    }
++    return names;
++}
++/** PROTOTYPE: follows a sidecar path through child-bearing schema fields only. */
++function resolvePath(file, path) {
++    let current = file;
++    for (let i = 0; i < path.length; i++) {
++        const segment = path[i];
++        if (typeof segment === 'string') {
++            if (!isRecord(current) || typeof current.Type !== 'string' || !Object.hasOwn(SYNTAX_SCHEMA, current.Type) || !childFields(current.Type).includes(segment)) return undefined;
++            current = current[segment];
++            if (Array.isArray(current)) {
++                const index = path[++i];
++                if (typeof index !== 'number' || index >= current.length) return undefined;
++                current = current[index];
++            }
++        } else return undefined;
++    }
++    return isRecord(current) && isNodeIdentity(current) ? current : undefined;
++}
++const NODE_TYPE_SET = new Set(SYNTAX_INTERFACES.Node);
+ /** Accepts the exact field/index domain used by the upstream observation sidecar. */
+ function isPath(value) {
+     return (Array.isArray(value) &&
+@@ -67,11 +111,11 @@
+  * @internal
+  */
+ export function createPositionSnapshot(file, raw) {
+-    const nodes = nodesByPath(file);
+-    if (!Array.isArray(raw) || raw.length !== nodes.size)
++    const nodeCount = countNodeIdentities(file);
++    if (!Array.isArray(raw) || raw.length !== nodeCount)
+         throw new ShInternalError('The syntax snapshot does not cover every parsed node');
+     const observations = new WeakMap();
+-    const remaining = new Map(nodes);
++    const seen = new Set();
+     for (const entry of raw) {
+         if (!isRecord(entry) ||
+             Object.keys(entry).length !== 5 ||
+@@ -80,11 +124,10 @@
+             !isObservation(entry.End, entry.EndError)) {
+             throw new ShInternalError('The syntax snapshot contains an invalid position observation');
+         }
+-        const path = JSON.stringify(entry.Path);
+-        const node = remaining.get(path);
+-        if (node === undefined)
++        const node = resolvePath(file, entry.Path);
++        if (node === undefined || seen.has(node))
+             throw new ShInternalError('The syntax snapshot contains an unknown or duplicate node path');
+-        remaining.delete(path);
++        seen.add(node);
+         if (isGoString(entry.PosError)) {
+             observations.set(node, { error: entry.PosError });
+         }
+@@ -103,7 +146,7 @@
+             throw new ShInternalError('The syntax snapshot dropped an upstream method outcome');
+         }
+     }
+-    if (remaining.size !== 0)
++    if (seen.size !== nodeCount)
+         throw new ShInternalError('The syntax snapshot omitted parsed node observations');
+     return Object.freeze({
+         get(node) {

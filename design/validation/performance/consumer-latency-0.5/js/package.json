@@ -1,0 +1,9 @@
+{
+  "name": "v03",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "sh-ast-03": "npm:sh-ast@^0.3.1",
+    "sh-ast-05": "npm:sh-ast@^0.5.0"
+  }
+}

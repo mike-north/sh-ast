@@ -1,0 +1,62 @@
+--- sh-ast-fast/dist/syntax-snapshot.js	2026-11-02 12:10:56
++++ sh-ast-compact/dist/syntax-snapshot.js	2026-11-02 12:13:25
+@@ -161,4 +161,35 @@
+         },
+     });
+ }
+-//# sourceMappingURL=syntax-snapshot.js.map
+\ No newline at end of file
++//# sourceMappingURL=syntax-snapshot.js.map
++/** PROTOTYPE: correlates the compact, path-free sidecar by schema-order pre-order walk. */
++export function createCompactPositionSnapshot(file, flat, errorsRaw) {
++    const nodes = [];
++    const visit = (v) => {
++        if (!isRecord(v) || typeof v.Type !== 'string') return;
++        if (isNodeIdentity(v)) nodes.push(v);
++        if (!Object.hasOwn(SYNTAX_SCHEMA, v.Type)) return;
++        for (const name of childFields(v.Type)) { const c = v[name]; if (Array.isArray(c)) for (const x of c) visit(x); else visit(c); }
++    };
++    visit(file);
++    if (!Array.isArray(flat) || flat.length !== nodes.length * 8 || !Array.isArray(errorsRaw))
++        throw new ShInternalError('The syntax snapshot does not cover every parsed node');
++    const errors = new Map(errorsRaw.map(([i, pe, ee]) => [i, pe ?? ee]));
++    const observations = new WeakMap();
++    const pos = (i) => ({ Offset: flat[i], Line: flat[i + 1], Col: flat[i + 2], IsValid: (flat[i + 3] & 1) !== 0, IsRecovered: (flat[i + 3] & 2) !== 0, OffsetOverflow: (flat[i + 3] & 4) !== 0 });
++    for (let n = 0; n < nodes.length; n++) {
++        const e = errors.get(n);
++        if (e !== undefined) { observations.set(nodes[n], { error: e }); continue; }
++        const P = pos(n * 8), E = pos(n * 8 + 4);
++        if (!isSyntaxPos(P) || !isSyntaxPos(E)) throw new ShInternalError('The syntax snapshot contains an invalid position observation');
++        observations.set(nodes[n], { positions: Object.freeze({ Pos: Object.freeze(P), End: Object.freeze(E) }) });
++    }
++    return Object.freeze({
++        get(node) {
++            const observation = observations.get(node);
++            if (observation === undefined) return undefined;
++            if ('error' in observation) throw new InputError(typeof observation.error === 'string' ? observation.error : observation.error.slice());
++            return observation.positions;
++        },
++    });
++}
+--- sh-ast-fast/dist/syntax.js	2026-11-02 12:10:56
++++ sh-ast-compact/dist/syntax.js	2026-11-02 12:13:25
+@@ -9,7 +9,7 @@
+ import { InputError, LangError, ParseError } from './syntax-errors.js';
+ import { assertUnicodeString, decodeWire, encodeWire, isGoString, isRecord, isSyntaxFile, isSyntaxNode, isSyntaxPos, } from './syntax-wire.js';
+ import { callSyntax } from './wasm-instance.js';
+-import { createPositionSnapshot } from './syntax-snapshot.js';
++import { createPositionSnapshot, createCompactPositionSnapshot } from './syntax-snapshot.js';
+ export { InputError, LangError, ParseError } from './syntax-errors.js';
+ /**
+  * Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First
+@@ -28,8 +28,8 @@
+  * @public
+  */
+ export function parseWithPositionsSync(source, options = {}) {
+-    const { file, response } = invokeParse('parse-with-positions', source, options);
+-    return Object.freeze({ File: file, Positions: createPositionSnapshot(file, response.Positions) });
++    const { file, response } = invokeParse('parse-with-positions-compact', source, options);
++    return Object.freeze({ File: file, Positions: createCompactPositionSnapshot(file, response.Positions, response.PositionErrors) });
+ }
+ /** Shared source/options/error semantics for both whole-file parsing operations. */
+ function invokeParse(operation, source, options) {

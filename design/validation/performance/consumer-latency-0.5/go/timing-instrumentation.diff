@@ -1,0 +1,71 @@
+diff -ru shim/internal/syntaxbridge/process.go shim-instr/internal/syntaxbridge/process.go
+--- shim/internal/syntaxbridge/process.go	2026-11-02 12:07:02
++++ shim-instr/internal/syntaxbridge/process.go	2026-11-02 12:07:38
+@@ -6,6 +6,7 @@
+ package syntaxbridge
+ 
+ import (
++	"time"
+ 	"encoding/json"
+ 	"fmt"
+ 	"strconv"
+@@ -27,9 +28,21 @@
+ 	}()
+ 	switch operation {
+ 	case "parse":
+-		return marshal(parse(payload, options))
++		r := parse(payload, options)
++		t := time.Now()
++		out := marshal(r)
++		lastTimings["marshal_us"] = since(t)
++		lastTimings["bytes"] = len(out)
++		return out
+ 	case "parse-with-positions":
+-		return marshal(parseWithPositions(payload, options))
++		r := parseWithPositions(payload, options)
++		t := time.Now()
++		out := marshal(r)
++		lastTimings["marshal_us"] = since(t)
++		lastTimings["bytes"] = len(out)
++		return out
++	case "timings":
++		return marshal(map[string]any{"T": lastTimings})
+ 	case "print":
+ 		return marshal(printNode(payload, options))
+ 	case "bounds":
+@@ -214,8 +227,13 @@
+ 	if err != nil {
+ 		return nil, errorResponse("InputError", err.Error())
+ 	}
++	lastTimings = map[string]any{}
++	t0 := time.Now()
+ 	file, parseError := syntax.NewParser(opts...).Parse(strings.NewReader(source), filename)
++	lastTimings["parse_us"] = since(t0)
++	t1 := time.Now()
+ 	encoded, err := syntaxwire.Value(file)
++	lastTimings["value_us"] = since(t1)
+ 	if err != nil {
+ 		return file, errorResponse("InternalError", err.Error())
+ 	}
+diff -ru shim/internal/syntaxbridge/snapshot.go shim-instr/internal/syntaxbridge/snapshot.go
+--- shim/internal/syntaxbridge/snapshot.go	2026-11-02 12:07:02
++++ shim-instr/internal/syntaxbridge/snapshot.go	2026-11-02 12:07:38
+@@ -1,6 +1,7 @@
+ package syntaxbridge
+ 
+ import (
++	"time"
+ 	"fmt"
+ 	"reflect"
+ 
+@@ -29,7 +30,9 @@
+ func parseWithPositions(source, options string) map[string]any {
+ 	file, result := parseResult(source, options)
+ 	if result["Error"] == nil {
++		t := time.Now()
+ 		result["Positions"] = positionSnapshots(file)
++		lastTimings["snapshots_us"] = since(t)
+ 	}
+ 	return result
+ }
+Only in shim-instr/internal/syntaxbridge: timing.go

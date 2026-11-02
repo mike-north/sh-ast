@@ -1,0 +1,27 @@
+--- shim/internal/syntaxbridge/process.go	2026-11-02 12:07:02
++++ shim-stream/internal/syntaxbridge/process.go	2026-11-02 12:12:12
+@@ -27,9 +27,24 @@
+ 	}()
+ 	switch operation {
+ 	case "parse":
++		if out := streamParse(payload, options, false); out != nil {
++			return out
++		}
+ 		return marshal(parse(payload, options))
+ 	case "parse-with-positions":
++		if out := streamParse(payload, options, true); out != nil {
++			return out
++		}
+ 		return marshal(parseWithPositions(payload, options))
++	case "parse-with-positions-compact":
++		if out := streamParseCompact(payload, options); out != nil {
++			return out
++		}
++		return marshal(parseWithPositions(payload, options))
++	case "legacy-parse":
++		return marshal(parse(payload, options))
++	case "legacy-parse-with-positions":
++		return marshal(parseWithPositions(payload, options))
+ 	case "print":
+ 		return marshal(printNode(payload, options))
+ 	case "bounds":
