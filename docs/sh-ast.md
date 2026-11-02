@@ -52,6 +52,28 @@ A source grammar error reported by mvdan/sh, with the partial parsed file.
 </td></tr>
 <tr><td>
 
+[PrintError](./sh-ast.printerror.md)
+
+
+</td><td>
+
+An error returned by upstream Printer.Print, such as an unsupported root or incompatible formatting options. No partial writer output is exposed.
+
+
+</td></tr>
+<tr><td>
+
+[PrintPanicError](./sh-ast.printpanicerror.md)
+
+
+</td><td>
+
+Upstream Printer.Print panicked for a representable tree or option value. Partial and typed-nil trees can trigger this independently of root support. Catching the panic preserves reuse of the binding's shared runtime.
+
+
+</td></tr>
+<tr><td>
+
 [ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)
 
 
@@ -95,6 +117,17 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never ha
 Thrown by [parseSync()](./sh-ast.parsesync.md) when `text`<!-- -->'s conservatively estimated structural nesting depth (subshells, command/process substitutions, `if`<!-- -->/`case`<!-- -->/loop/function bodies, `{ }` blocks, backtick or `$(...)` command substitution, `$((...))` arithmetic — see `parse-depth-guard.ts`<!-- -->'s module doc for the exact heuristic) exceeds the limit `parseSync` accepts. Thrown \*before\* `text` is ever handed to the WASM shim: mvdan/sh's own recursive-descent parser has no recovery path for exhausting its call stack on pathologically deep input (a stack overflow deep inside the shared WASM instance is not a normal, catchable JS error the way a parse syntax error is), so this bridge estimates the risk up front and fails closed with a typed error instead of ever making that call — the shared WASM instance is therefore never put at risk of wedging on this class of input; a `parseSync` call right after catching this error works exactly as it would if this input had never been attempted.
 
 Like [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, this is pathological-input protection, not a normal-usage ceiling: a legitimately deep (but realistic) script parses fine. The estimate can \*over\*-count relative to mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep input) but is designed to never \*under\*-count relative to it — see `parse-depth-guard.ts` for the documented false-positive sources this trades off against ever letting a genuinely crash-inducing input through.
+
+
+</td></tr>
+<tr><td>
+
+[WalkPanicError](./sh-ast.walkpanicerror.md)
+
+
+</td><td>
+
+A panic raised by upstream-equivalent traversal, such as a nil dereference or unsupported concrete node. Exceptions thrown by callbacks are never wrapped.
 
 
 </td></tr>
@@ -196,12 +229,40 @@ Parses once while observing every real node's upstream bounds in Go. The separat
 </td></tr>
 <tr><td>
 
+[printSync(node, options)](./sh-ast.printsync.md)
+
+
+</td><td>
+
+Formats the current tree with a fresh upstream printer and collects all output. Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes produce PrintError. Only File output has upstream's trailing-newline behavior. Invalid UTF-8 output remains bytes. Upstream formatting can itself consume input bytes, including its tabwriter escape byte, so this is not source replay.
+
+InputError identifies unrepresentable input; PrintError is an ordinary returned upstream error; PrintPanicError retains an upstream operation panic. No partial output or arbitrary writer lifecycle is exposed. Full tree reconstruction and collected output require memory proportional to the values involved; extreme indentation or tree size is not made resource-safe by panic adaptation.
+
+
+</td></tr>
+<tr><td>
+
 [rawOperator(family, value)](./sh-ast.rawoperator.md)
 
 
 </td><td>
 
 Represents an unnamed value in an upstream uint32 operator family. Named constants remain precise literal unions; this explicit path preserves other Go values without claiming an operation such as Print accepts them.
+
+
+</td></tr>
+<tr><td>
+
+[walk(node, callback)](./sh-ast.walk.md)
+
+
+</td><td>
+
+Walks synchronously using the pinned upstream case ordering. Each accepted entry is followed by its children and a null exit. Returning false prunes the entry without an exit; boolean exit return values are ignored. Every callback must return a boolean synchronously; other results produce InputError. Callback exceptions retain their identity, and upstream deferred comment callbacks still run during exception unwinding.
+
+Children and later fields are read live. List traversal captures the array reference and starting length while reading its future slots when reached. Value comments on Stmt, CaseItem and ArrayElem are copied, while comments in Last/CondLast/ThenLast/DoLast retain their stored identities. Reentrant walks maintain independent traversal state.
+
+Array identity and length describe JavaScript storage; the records do not encode Go slice capacity, resliced backing storage, or addresses of value slots. Those distinctions can affect callbacks which mutate array structure or replace a Comment slot while retaining its previous callback value.
 
 
 </td></tr>
@@ -700,6 +761,17 @@ Whole-file parser inputs corresponding to upstream controls. Defaults match NewP
 </td><td>
 
 Identity-based lookup of the original parse's bounds. A new or copied node has no observation. The index never calls WASM or recalculates edited node bounds.
+
+
+</td></tr>
+<tr><td>
+
+[PrintOptions](./sh-ast.printoptions.md)
+
+
+</td><td>
+
+Upstream NewPrinter controls applied to a fresh printer for each call. All flags default to false; zero indentation selects tabs. The pinned WASM uint domain is 64-bit, so Indent accepts bigint beyond JavaScript's safe integers.
 
 
 </td></tr>
