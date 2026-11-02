@@ -1,4 +1,11 @@
-# Release B independent review checkpoint
+# Release B independent review history
+
+Current status: the user has accepted ordinary arrays with the explicit limits in
+[the decision record](../../WALK-MUTATION-DECISION.md). The dated/revision-specific
+notes below preserve what was known during the earlier review; their pending
+integration and representation statements are historical, not current blockers.
+Current integration, consumer evidence and final contract review belong to
+[IMPLEMENTATION-B.md](../../IMPLEMENTATION-B.md).
 
 Active assignment from supervisor: review Release B only. Release A producer
 290f158 and consumer 84a85e6 remain intact. No publication, tag, merge, Claude,
@@ -14,7 +21,7 @@ Scope: all eight printer options, uint64 Indent, actual edited-tree printing,
 separation, GoString bytes/native tabwriter behavior, File newline behavior,
 Minify/SingleLine precedence, resource-cost documentation and existing guards.
 Later integrated Walk/C5 review is pending. Walk active-array structural mutation
-semantics remain a consequential unresolved human decision; see
+semantics were then a consequential unresolved human decision; see
 ../../WALK-MUTATION-DECISION.md. Do not assert full Go mutation parity.
 
 Current evidence: read Print API implementation and errors; no finding yet.
@@ -63,7 +70,7 @@ artifacts. This is not a new acceptance-test type failure or claimed green gate.
 
 Await supervisor's frozen exports/canonical-WASM revision to rerun the targeted
 acceptance tests against its exact asset. Walk implementation/C5 consumer are
-separate pending reviews; structural active-array mutation remains unresolved.
+separate pending reviews at this point; the representation decision was unresolved.
 
 ## Frozen print surface and cold-first operation
 
@@ -102,14 +109,14 @@ File.Last Comment callback, replacing the same whole Comment slot immediately
 changes the value read through the retained Go callback pointer, whose address
 still equals &file.Last[0]. Ordinary JS array-slot object replacement leaves the
 retained callback object unchanged. This is value-slot identity loss at constant
-array length, in addition to the already unresolved capacity/shrink cases. The
+array length, in addition to the capacity/shrink cases then awaiting a decision. The
 walk author also identified it and is retaining native/JS divergence probes.
 It belongs to the explicit human representation decision, not a silently accepted
 policy or a claim that arbitrary mutation parity has been achieved.
 
 Read-only execution of the current walk author suites passes 65 TS tests across
 two suites and native `go test ./cmd/walk-oracle`. Source remains unfrozen and
-representation decision pending; this is provisional evidence only. Read-only C5
+representation decision was pending; this was provisional evidence only. Read-only C5
 consumer inspection found separate editable parsing, exact target selection,
 real ESLint printed replacements, syntax meaning/stability checks, and retained
 original-view checks. Its use of public walk requires later integrated-package
@@ -143,7 +150,7 @@ After the correction, all 19 boundary cases and all 65 native-oracle/protocol
 Walk cases pass (84 total). Focused lint, isolated inherited-config typecheck,
 and package build pass. The green log is
 `scratch/walk-callback-boundary-green.log`. No storage/array-policy choice is
-made by this fix; that consequential fidelity decision remains unresolved.
+made by this fix; the consequential fidelity decision was still unresolved then.
 
 The supervisor owns integrated public API/doc regeneration and the full package
 acceptance run after cherry-picking this narrow correction.

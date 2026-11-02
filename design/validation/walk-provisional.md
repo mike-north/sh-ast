@@ -1,11 +1,12 @@
-# Provisional live Walk candidate
+# Live Walk validation and representation boundary
 
-This work implements the live TypeScript dispatcher for Release B's proposed
-`walk(Node, (Node | null) => boolean): void` surface and a separate
-`WalkPanicError` for upstream-equivalent traversal panics. It is a provisional
-candidate, **not accepted full mutation or storage fidelity**. Public exports,
-API reports, release docs, and consumer acceptance belong to the integration
-checkout. No publishing, merge, tag, or release action is part of this change.
+The integrated Release B surface is `walk(Node, (Node | null) => boolean): void`,
+with `WalkPanicError` for upstream-equivalent traversal panics. The user accepted
+ordinary arrays with the [explicit mutation limits](../WALK-MUTATION-DECISION.md).
+This record retains the original slice's validation results and explains the
+accepted divergence from Go storage. Current integration and finalized-contract
+checks are recorded in [IMPLEMENTATION-B.md](../IMPLEMENTATION-B.md). No merge,
+tag or publication follows from those results.
 
 ## Independent evidence
 
@@ -32,14 +33,16 @@ nodeEnd remain unchanged. Whole-tree validation is deliberately absent so a
 pruned malformed or cyclic descendant is not traversed prematurely. Callbacks'
 exceptions retain identity and deferred callbacks execute with try/finally.
 
-## Unresolved representation decision
+## Accepted representation boundary
 
-Ordinary serialized arrays do not capture Go slice headers, capacity, backing
-storage, or addresses of Comment value slots. The implementation currently
-captures JavaScript array reference and initial length and reads future slots
-live. This mechanism is **not a decision that structural edits are prohibited or
-that every Go storage behavior is represented**. No new rejection or fallback
-policy is approved here.
+Ordinary arrays do not capture Go slice headers, capacity, backing storage,
+reslicing or addresses of Comment value slots. Each active list captures its
+JavaScript array and starting length, reads later existing slots live, ignores
+appends beyond that extent and keeps the captured array when its owner field is
+replaced. Stored comments retain JavaScript object identity, not slot addresses.
+The accepted contract excludes destructive changes to active array structure;
+no mutation detector or special rejection policy is introduced. Supported
+field/child/slot edits, pruning, synchronous callbacks and printing remain intact.
 
 Runnable native evidence is retained as `storageProbes` in
 `test/fixtures/walk-oracle.json`; run the oracle to reproduce it. The companion
@@ -55,8 +58,8 @@ Runnable native evidence is retained as `storageProbes` in
   the callback's retained `&slice[i]`: `[before,after]`. Replacing a JavaScript
   array slot preserves the prior callback object: `[before,before]`.
 
-These probes are evidence for the pending human representation decision, not
-claims of passing TypeScript parity. The broad policy remains unresolved.
+These probes explain the storage behavior deliberately left outside the accepted
+TypeScript contract. They are not claims of passing unrestricted Go mutation parity.
 
 ## Verification at candidate creation
 

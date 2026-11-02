@@ -6,9 +6,10 @@ mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
 
-This branch is the separate Release B candidate. Printing and the provisional
-live walker are implemented; the walker's Go storage-identity contract is still
-under review in the [mutation decision record](../../design/WALK-MUTATION-DECISION.md).
+Traversal uses ordinary TypeScript arrays with explicit mutation limits. The
+[accepted representation decision](../../design/WALK-MUTATION-DECISION.md) records
+which live edits are supported and why this interface does not model Go storage
+capacity, reslicing, or value-slot addresses.
 
 ```ts
 import { LangBash, nodeEnd, parseSync } from 'sh-ast';
@@ -68,9 +69,10 @@ Positions }`. `Positions.get(node)` reads immutable original bounds by node
   boolean; Promises and other values throw `InputError`. Child reads happen live, and
   nested calls keep independent state. Specialized statement/item comment loops
   visit value copies; ordinary comment lists visit their stored objects. The
-  current array representation does not retain Go slice capacity, backing-storage
-  reslicing, or value-slot addresses; see the open decision above before relying
-  on mutations of array storage during callbacks.
+  array reference and initial length are captured when each list starts. Future
+  existing slots are read live; appended elements are ignored by that active
+  traversal. Replacing the owner's array field does not retarget an active list.
+  See the mutation limits below.
 - `printSync(node, options?)` reconstructs the current edited tree and collects a
   fresh upstream printer's output as `GoString`. Supported roots are File, Stmt,
   Word, Assign, Command and WordPart alternatives. Only File gets a guaranteed
@@ -97,6 +99,32 @@ Printing collects complete output; large trees or indentation widths can consume
 substantial memory and time. The parse guard does not bound arbitrary constructed
 printing inputs. No arbitrary writer, partial-output, or reusable-printer protocol
 is exposed.
+
+## Traversal mutation limits
+
+Supported edits preserve a node's kind and shape: change syntax fields, replace
+pointer children before their read, replace future existing list slots, append
+beyond an active list's captured extent, or assign a new array to the owner field.
+Changes before a list starts are included in its captured reference and length.
+Pruning and synchronous nested walks retain their control behavior; nested walks
+see the tree at their own entry, while edits to shared objects remain live.
+
+Do not remove indices, leave holes, or shrink a captured array while it is being
+traversed: truncation, `delete`, `pop`, `shift`, or a length-reducing `splice` is
+outside the supported contract, including through aliases. No mutation detector
+or specific error/result is promised for those edits. Assign a new owner array
+instead; the active list keeps its original array and later walks see the new one.
+Length-preserving replacement or reordering, including `sort` and `reverse`,
+follows live slot reads and may revisit an object moved into a later slot. Walk
+does not promise to visit each object only once.
+
+Stored Comment callbacks receive JavaScript objects. Replacing a Comment slot
+leaves a retained callback object unchanged; it does not behave as a pointer to a
+Go value slot. Specialized Stmt/CaseItem/ArrayElem comment callbacks receive
+copies, so editing those callback values does not edit the original comments.
+Ordinary arrays do not represent Go slice capacity, separate headers, shared
+backing stores or reslicing. These limits preclude unrestricted Go storage
+mutation parity while preserving live field edits and upstream traversal control.
 
 ## Editing and printing
 
@@ -131,8 +159,8 @@ request comments explicitly, and handle structured errors and byte positions.
 The root no longer exports normalized `ShNode`/`ShNodes`, `range`/`loc`, or
 `visitorKeys`. The new walker uses entry/null-exit callbacks rather than the former
 structural helper's protocol. Consumers such as ESLint own their source-coordinate
-and traversal views. Whole-file parsing, collected printing and the provisional
-live walker form this candidate's scope. Stateful/incremental parser protocols
+and traversal views. Whole-file parsing, collected printing and the live walker
+with the mutation limits above form this candidate's scope. Stateful/incremental parser protocols
 and full syntax-package parity are deferred.
 
 The [design collection](../../design/ARCHITECTURE.md) and

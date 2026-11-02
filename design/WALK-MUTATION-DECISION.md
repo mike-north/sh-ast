@@ -1,10 +1,77 @@
 # Walk mutation representation decision
 
-Status: unresolved consequential fidelity decision. The accepted Release A model
-uses ordinary mutable JavaScript arrays for Go slices; it does not retain slice
-capacity, shared backing storage or separate slice headers. The Release B
-requirement to preserve live callback effects exposes an observable distinction
-that static traversal traces cannot settle.
+Status: accepted. The user explicitly chose **"Keep ordinary arrays with explicit
+traversal-mutation limits (Recommended)."** This resolves the Release B
+representation question; it does not authorize merging or publishing either
+release. The choice preserves Release A's ordinary mutable TypeScript arrays
+and accepts the storage distinctions demonstrated below.
+
+## Accepted contract
+
+Walk is synchronous and reads each child field at its specified traversal point.
+Shape-valid edits to syntax fields within a node's existing kind, pointer-child
+replacement, pruning, boolean callbacks and synchronous reentrancy remain
+supported. A later child observes its replacement when its field is reached;
+replacing a child already being visited does not replace that active occurrence.
+The `Type` discriminator and a `TypedNil` marker's `Kind` identify the node kind;
+changing those tags during traversal is outside this mutation contract.
+
+Each list captures its array reference and length when that list's traversal
+starts, after any preceding callbacks. It reads each future existing slot when
+reached. Consequently:
+
+- Replacing a not-yet-visited slot is supported and visits the replacement.
+- Appending is supported, but the active traversal ignores elements beyond its
+  captured length. Appending and then replacing an original future slot visits
+  that replacement, independent of any hypothetical Go slice capacity.
+- Replacing or clearing the owner's array field is supported; it does not retarget
+  the active list. That list continues reading the original captured array.
+- A later or nested walk starts from the tree and arrays present at its own entry.
+  Nested traversal has independent control state; edits it makes to shared records
+  remain ordinary live edits visible to an outer traversal where reads remain.
+
+During an active list traversal, destructive structural edits of its captured
+array are outside the supported contract when they remove indices, create holes
+or shrink its extent: for example, truncation, `delete`, `pop`, `shift`, or a
+length-reducing `splice`. Keep every index in the captured extent present.
+Length-preserving replacement or reordering (including `sort` or `reverse`) follows
+the same live-slot rule and can revisit an object moved into a later slot; Walk
+does not promise unique-object visitation. Replace slots or assign a new owner
+array when removing entries is needed. This limit applies to arrays reached through
+aliases as well. The binding adds no mutation detector, rejection policy,
+rollback, or promise about traversal results after such unsupported edits.
+
+Stored comments in Last/CondLast/ThenLast/DoLast lists are ordinary JavaScript
+objects. Mutating their fields changes the stored object. Replacing a Comment
+slot changes that slot's object; a previously retained callback object remains
+its old object and does not follow the slot. Specialized Stmt/CaseItem/ArrayElem
+comment loops instead visit value copies (including copied position/byte-string
+values), preserving the tested upstream copy and deferred-comment behavior.
+A replacement in a future comment slot is read before that occurrence is copied.
+
+There is no Go slice capacity, separate slice header, shared backing-store,
+reslicing, or Go value-slot address model. The contract preserves tested upstream
+order and control within these representation limits; it makes no unrestricted
+Go heap or storage-mutation parity claim. Printing reconstructs the actual tree
+present at the print call, including supported edits, independently of a previous
+walk's captured arrays. Original position snapshots remain tied to original
+records and source.
+
+## Examples and acceptance checks
+
+| Callback action during Args `[a, b]`                                  | Required observation                                                                |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| On `a`, replace original slot 1 with `x`                              | Active list visits `a, x`.                                                          |
+| On `a`, append `c`, then replace original slot 1 with `x`             | Active list visits `a, x`; a later walk sees `c` too.                               |
+| On `a`, assign owner Args to a new array `[x, c]`                     | Active list continues `a, b`; later traversal/printing sees the new field.          |
+| In a stored Comment callback, replace its own slot with a new Comment | Retained callback object remains the old object; slot points at the replacement.    |
+| Mutate a specialized item-comment callback's copied fields            | Original comment record is unchanged.                                               |
+| Truncate, delete or remove indices from the active captured array     | Outside the supported mutation contract; no particular result or error is promised. |
+
+Tests for these expectations derive from this accepted TypeScript contract.
+Native Go oracle traces remain the ground truth for common order, control and
+mutation behavior, while the divergent probes below explain the accepted limit.
+Unsupported edits are not tested as if one accidental result were a guarantee.
 
 ## Independent upstream reproducer
 
@@ -37,26 +104,15 @@ which still equals `&file.Last[0]`. Ordinary JavaScript array-slot replacement
 creates a different object, leaving the retained callback object unchanged. This
 is part of the same representation decision, not merely a resizing limitation.
 
-## Recommendation and alternative
+## Alternatives and revision trigger
 
-The smallest implementation keeps the accepted ordinary-array model and defines
-its live traversal storage semantics explicitly: capture each list reference and
-initial extent, read later existing slots live, ignore appended elements, and
-allow field replacement without retargeting an active list. It preserves ordinary
-node-field edits, pointer-child replacement, pruning, the tested comment copy
-behavior, and synchronous reentrancy. It cannot claim complete equivalence for
-destructive structural mutation of an active array, Go capacity-dependent
-reallocation, or replacing a Go value-array slot through an already-retained
-callback reference.
-That restriction needs explicit acceptance; it must not be disguised as full
-upstream mutation parity or silently implemented as rejection.
+The selected model keeps ordinary arrays and explicit limits so existing syntax
+records and consumer edits remain straightforward. The alternative would introduce
+Go slice/header/storage abstractions, including capacity, aliasing and value-slot
+addresses. That would require parser, codec, type and consumer migrations plus
+new storage-identity evidence. It was not selected.
 
-The broader alternative introduces an explicit Go slice/header/storage model,
-including capacity and aliasing, with controlled mutation operations. That changes
-the accepted representation and requires parser/codec/type/consumer migration and
-new aliasing evidence. It should be chosen deliberately rather than hidden inside
-a traversal helper.
-
-Printing the actual current tree, supported-node traversal order, callback
-pruning/exits, comment identity, and the consumer fix tests can proceed while this
-decision is pending. Final Release B traversal acceptance depends on the choice.
+Revisit this decision if a concrete consumer needs destructive active-list edits
+or Go storage aliasing/slot-address observations that cannot be expressed with
+field edits, future-slot replacement or assigning a new array. Such a need would
+require a new accepted contract rather than silently expanding this walker.

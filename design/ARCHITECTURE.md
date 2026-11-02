@@ -39,6 +39,12 @@ remain descriptions of the implemented API.
 | D7  | The eventual upstream boundary is the syntax package. The shell interpreter, runner, and a newly invented shell model are outside that boundary.                                                                                                                                                                                     |
 | D8  | Software changes start with specification-derived tests. Modules, types, constants, and functions document durable meaning, responsibilities, boundaries, and invariants. Progress notes belong in work records.                                                                                                                     |
 
+Release B's later [accepted mutation representation](WALK-MUTATION-DECISION.md)
+elaborates D1/D2 for live traversal: keep ordinary TypeScript arrays and the
+explicit supported mutation boundary instead of modeling Go slice capacity,
+shared storage, reslicing, or value-slot addresses. This scoped choice does not
+claim unrestricted Go storage-mutation parity or ratify unrelated proposals below.
+
 The proposed edit/print/reparse acceptance scenario elaborates D4 and D6; its exact
 fixture is not itself an accepted product decision. No byte-identical source
 printing guarantee follows from the accepted autofix purpose.

@@ -1,7 +1,7 @@
 # Release B implementation record
 
 This follow-on implements [B1-B4](RELEASE-PLAN.md#implementation-sequence) and
-[B1-B5/C5 acceptance](ACCEPTANCE.md#release-b-owned-by-sh-ast). Release A's
+[B1-B6/C5 acceptance](ACCEPTANCE.md#release-b-owned-by-sh-ast). Release A's
 [accepted candidate evidence](IMPLEMENTATION.md) remains a separate record.
 Publication, release tags, and merges are not authorized by this assignment.
 
@@ -50,8 +50,9 @@ consumer fix scenario. Each wrote behavioral tests first. Integrated implementat
 and review are recorded below, together with canonical consumer receipts and
 bounded measurements.
 
-Release B remains provisional until the storage-identity decision and final
-canonical/consumer gates are complete. Implemented evidence follows.
+The user accepted ordinary arrays with explicit traversal-mutation limits.
+Finalized contract checks and refreshed packaged-candidate receipts are being
+completed against that boundary; prior implementation evidence follows.
 
 ## Stacked candidate workflow preparation
 
@@ -79,7 +80,7 @@ The downloaded artifact is now committed. The subsequent Linux comparison run
   contracts in `6d77fa9`. A native Go oracle supplies traces and storage
   counterexamples. Sixty-five protocol cases cover live reads, pruning, nils,
   comment copies, deferred exceptions, reentrancy and position boundaries. See
-  [provisional Walk evidence](validation/walk-provisional.md).
+  [Walk validation evidence](validation/walk-provisional.md).
 - Independent review reproduced a callback-result constraint bug: 17 negative
   cases accepted nonboolean values through truthiness or ignored them on exit.
   `3350c18` now throws InputError for those values without awaiting/coercion or
@@ -91,13 +92,22 @@ The downloaded artifact is now committed. The subsequent Linux comparison run
   non-runtime entry files excluded narrowly from unused-file checks; the full
   upstream notice is retained in the built package.
 
-## Outstanding decision and artifact gates
+## Accepted representation and finalization
 
-The [Walk mutation decision](WALK-MUTATION-DECISION.md) is still unresolved. It
-includes capacity-dependent append, reslicing, and replacement of a Comment value
-slot observed through a retained callback pointer. The parent chat owns the human
-question. Neither the ordinary-array recommendation nor passing ordinary-field
-edit tests is acceptance of complete Go storage fidelity.
+The user explicitly selected **"Keep ordinary arrays with explicit traversal-mutation
+limits (Recommended)."** The [Walk mutation decision](WALK-MUTATION-DECISION.md)
+is accepted. Shape-valid field/child edits, live future-slot replacement, pruning,
+synchronous callbacks, captured-array traversal and actual edited-tree printing
+remain supported. No Go capacity, shared backing-store, reslicing or value-slot
+address model will be added. Destructive active-array mutations remain outside
+the supported contract; the implementation adds no detector or rejection policy.
+
+The finalization audit checks that existing behavior matches this boundary,
+updates public comments and examples, adds specification-derived coverage, and
+refreshes consumer receipts when packaged bytes change. Copilot has now reviewed
+both drafts: the consumer has no actionable issue; the producer noted missing
+generated documentation for WalkPanicError.Message. That documentation repair
+and independent finalized-contract review are in progress.
 
 ## Canonical candidate
 
@@ -124,8 +134,9 @@ not the manifest version. The full upstream BSD notice is present in the tarball
 Canonical commit `345dc64` passes [CI](https://github.com/mike-north/sh-ast/actions/runs/41392911252),
 [schema reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911400),
 and [Linux WASM reproducibility](https://github.com/mike-north/sh-ast/actions/runs/41392911617).
-Copilot review was requested; its presence gate remains pending. No final Release B
-acceptance is claimed while the storage representation decision remains unresolved.
+Copilot review subsequently landed on both candidates. The artifact above records
+the pre-finalization package; the finalization record will identify its replacement
+if packaged comments or declarations change.
 
 ## Consumer fix and bounded performance evidence
 
@@ -165,4 +176,4 @@ operations. No timing test was rerun by that review.
 The consumer retains a `^0.5.0` dependency floor. Its historical registry lockfile
 cannot provide an unpublished candidate. Local exact-artifact override tests do
 not establish a passing frozen registry installation; updating that lock remains
-a publication-order prerequisite, separate from the storage-model decision.
+a publication-order prerequisite. The storage-model decision is now accepted.
