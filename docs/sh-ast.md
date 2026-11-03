@@ -212,7 +212,7 @@ Computes a node's starting position from its current fields using upstream's Pos
 
 </td><td>
 
-Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction.
+Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
 
 
 </td></tr>
@@ -234,7 +234,7 @@ Parses once while observing every real node's upstream bounds in Go. The separat
 
 </td><td>
 
-Formats the current tree with a fresh upstream printer and collects all output. Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes produce PrintError. Only File output has upstream's trailing-newline behavior. Invalid UTF-8 output remains bytes. Upstream formatting can itself consume input bytes, including its tabwriter escape byte, so this is not source replay.
+Formats the current tree with a fresh upstream printer and collects all output. Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes produce PrintError. An ordinary structuredClone of a supported syntax subtree is accepted under the same input and failure rules; copying does not make nil or unsupported roots printable. Only File output has upstream's trailing-newline behavior. Invalid UTF-8 output remains bytes. Upstream formatting can itself consume input bytes, including its tabwriter escape byte, so this is not source replay.
 
 InputError identifies unrepresentable input; PrintError is an ordinary returned upstream error; PrintPanicError retains an upstream operation panic. No partial output or arbitrary writer lifecycle is exposed. Full tree reconstruction and collected output require memory proportional to the values involved; extreme indentation or tree size is not made resource-safe by panic adaptation.
 
@@ -762,7 +762,7 @@ Whole-file parser inputs corresponding to upstream controls. Defaults match NewP
 
 </td><td>
 
-Identity-based lookup of the original parse's bounds. A new or copied node has no observation. The index never calls WASM or recalculates edited node bounds.
+Identity-based lookup of the original parse's bounds. A new or copied node has no observation, including every node in a structuredClone of the syntax tree. Clone File or a Node subtree, not this function-bearing lookup. Copied position fields retain their values but do not transfer snapshot identity. The index never calls WASM or recalculates edited node bounds.
 
 
 </td></tr>

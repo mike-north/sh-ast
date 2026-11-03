@@ -132,24 +132,55 @@ storage mutation parity while preserving live field edits and upstream traversal
 
 ## Editing and printing
 
-```ts
-import { parseSync, printSync, walk } from 'sh-ast';
+Use ordinary `structuredClone(node)` to obtain an independent editable copy of a
+parsed `File` or any `Node` subtree. Clone the syntax value itself, without a transfer
+list; `ParsedFile` and `PositionSnapshot` contain the identity-based `get` function
+and are not cloneable syntax records. No second parse or `copySyntax` helper is needed.
 
-const file = parseSync("printf '%s\\n' 'old 🎉'\n", { KeepComments: true });
-walk(file, (node) => {
+```ts
+import { parseWithPositionsSync, printSync, walk } from 'sh-ast';
+
+const parsed = parseWithPositionsSync("printf '%s\\n' 'old 🎉'\n");
+const original = parsed.File.Stmts?.[0];
+if (!original) throw new Error('Expected a statement');
+
+const edited = structuredClone(original);
+walk(edited, (node) => {
   if (node?.Type === 'SglQuoted' && node.Value === 'old 🎉') {
-    node.Value = 'new 🎉';
+    node.Value = 'new 你好 e\u0301';
   }
   return true;
 });
-const output = printSync(file);
+const output = printSync(edited); // A Stmt prints without a guaranteed final newline.
+const originalSpan = parsed.Positions.get(original);
+// parsed.Positions.get(edited) is undefined; original is unchanged.
 ```
 
-This edits a field without replacing array storage. Node positions still describe
-their upstream token values; live `nodePos` and `nodeEnd` compute from current
-fields, while a separately captured parse snapshot remains tied to original
-source. Consumers such as ESLint can edit a separate tree and use printed output
-as a fix without mutating their original lint view or traversal cache.
+The copy owns separate records, arrays, position values and `Uint8Array` byte buffers.
+`GoString` bytes remain `Uint8Array`, and `TypedNil` tags retain their concrete kind.
+Repeated references inside the reachable graph point to the same copied object;
+external holders still point to the original objects. Editing the copy therefore
+leaves the original syntax, byte values, printed output and live bounds unchanged.
+
+Position fields retain their original values; copying does not relocate tokens or
+rebase offsets. For an unedited copy, live `nodePos` and `nodeEnd` produce the same
+outcomes as for the original. After edits they compute from the copied current
+fields, while the original `PositionSnapshot` stays tied to the original source.
+Every copied node is a new identity and has no entry in that snapshot. Keep the
+original node when a consumer needs an original source span for a printed fix.
+
+Copies remain valid inputs to `walk`, `nodePos`, `nodeEnd`, `printSync` and
+`sh-ast/analyze` under each operation's existing input and failure rules. In
+particular, printable roots remain File, Stmt, Word, Assign, Command and WordPart;
+other Nodes are not made printable by copying. Preserving a `TypedNil` tag does not
+promise that traversing, observing or printing that nil value succeeds. Analysis
+retains its function-specific input domains and unsupported-byte results.
+
+Printing applies upstream formatting to the edited tree. It does not preserve
+original source bytes, re-indent a subtree to its original column, or guarantee
+that parsing printed output reconstructs every represented value such as a
+`TypedNil` tag. The [copying decision](../../design/STRUCTURED-CLONE-DECISION.md)
+records this boundary and its tests.
 
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
 command, and wrapper analysis consumes the faithful records; it does not define

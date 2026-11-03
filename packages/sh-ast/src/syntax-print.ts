@@ -41,7 +41,9 @@ export interface PrintOptions {
 /**
  * Formats the current tree with a fresh upstream printer and collects all output.
  * Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes
- * produce PrintError. Only File output has upstream's trailing-newline behavior.
+ * produce PrintError. An ordinary structuredClone of a supported syntax subtree
+ * is accepted under the same input and failure rules; copying does not make nil
+ * or unsupported roots printable. Only File output has upstream's trailing-newline behavior.
  * Invalid UTF-8 output remains bytes. Upstream formatting can itself consume
  * input bytes, including its tabwriter escape byte, so this is not source replay.
  *
