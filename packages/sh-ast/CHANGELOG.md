@@ -1,5 +1,17 @@
 # sh-ast
 
+## 0.7.0
+
+### Minor Changes
+
+- [#55](https://github.com/mike-north/sh-ast/pull/55) [`c8c0c0e`](https://github.com/mike-north/sh-ast/commit/c8c0c0e95e962f1f439dbb125a38a0c43742f86f) Thanks [@mike-north](https://github.com/mike-north)! - Export the named operator constants referenced by faithful record types, plus rawOperator, from sh-ast/analyze. Analyze-only consumers can compare and construct operator values without importing the root entry point. Existing types, constant values, operator families and validation behavior are unchanged.
+
+- [#53](https://github.com/mike-north/sh-ast/pull/53) [`cd2a43c`](https://github.com/mike-north/sh-ast/commit/cd2a43cdc29e8ebeb3a78dc414e9570567661a4c) Thanks [@mike-north](https://github.com/mike-north)! - Add readonly `chainIndices` to `resolveArgv0` results, identifying each chain word or synthesized failure's triggering argument in `CommandSite.argv`. Preserve existing wrapper resolution and assignment behavior against pinned mvdan/sh v3.13.1; callers can locate a resolved command's arguments without repeating wrapper parsing.
+
+### Patch Changes
+
+- [#52](https://github.com/mike-north/sh-ast/pull/52) [`42bfcc2`](https://github.com/mike-north/sh-ast/commit/42bfcc245c88188f0d52ab86d2ad03e443d44fec) Thanks [@mike-north](https://github.com/mike-north)! - Document and test ordinary structuredClone as the supported way to make independent editable copies of parsed syntax subtrees. Preserve byte strings, typed-nil records, internal aliases and original position values while keeping copied node identities separate from parse-time snapshots and retaining each operation's existing input limits.
+
 ## 0.6.1
 
 ### Patch Changes
