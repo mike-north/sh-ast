@@ -51,10 +51,10 @@ export interface SyntaxFieldSchema {
 export interface SyntaxRecordSchema {
   /** Whether the actual upstream type implements syntax.Node. */
   readonly node: boolean;
-  /** Every exported upstream field, retaining its original spelling. */
+  /** Every exported upstream field, retaining its original spelling and lexicographic iteration order for internal position correlation. */
   readonly fields: Readonly<Record<string, SyntaxFieldSchema>>;
 }
-/** Reflection metadata; field order is not upstream Walk order. @public */
+/** Reflection metadata; lexicographic field order correlates internal position occurrences and is not upstream Walk order. @public */
 export declare const SYNTAX_SCHEMA: Readonly<Record<string, SyntaxRecordSchema>>;
 /** Concrete alternatives accepted by upstream interfaces. @public */
 export declare const SYNTAX_INTERFACES: Readonly<Record<string, readonly string[]>>;

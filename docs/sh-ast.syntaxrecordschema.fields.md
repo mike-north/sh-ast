@@ -4,7 +4,7 @@
 
 ## SyntaxRecordSchema.fields property
 
-Every exported upstream field, retaining its original spelling.
+Every exported upstream field, retaining its original spelling and lexicographic iteration order for internal position correlation.
 
 **Signature:**
 

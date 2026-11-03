@@ -66,7 +66,10 @@ export function parseWithPositionsSync(
   options: ParseOptions = {},
 ): ParsedFile {
   const { file, response } = invokeParse('parse-with-positions', source, options);
-  return Object.freeze({ File: file, Positions: createPositionSnapshot(file, response.Positions) });
+  return Object.freeze({
+    File: file,
+    Positions: createPositionSnapshot(file, response.Positions, response.PositionErrors),
+  });
 }
 
 /** Shared source/options/error semantics for both whole-file parsing operations. */

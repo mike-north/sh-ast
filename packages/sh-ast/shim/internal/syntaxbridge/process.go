@@ -217,7 +217,14 @@ func streamParse(source, options string, positions bool) []byte {
 // Parser errors retain their partial File but never receive a snapshot sidecar.
 func composeParse(file *syntax.File, parseError error, positions bool) []byte {
 	const filePrefix = `{"File":`
-	out, err := syntaxwire.Append([]byte(filePrefix), file)
+	var out []byte
+	var nodes []syntax.Node
+	var err error
+	if positions && parseError == nil {
+		out, nodes, err = syntaxwire.AppendWithOccurrences([]byte(filePrefix), file)
+	} else {
+		out, err = syntaxwire.Append([]byte(filePrefix), file)
+	}
 	if err != nil {
 		return marshal(errorResponse("InternalError", err.Error()))
 	}
@@ -229,8 +236,8 @@ func composeParse(file *syntax.File, parseError error, positions bool) []byte {
 		return append(errorOut, '}')
 	}
 	if positions {
-		out = append(out, `,"Positions":`...)
-		out = appendPositionSnapshots(out, file)
+		out = append(out, ',')
+		out = appendCompactPositionSidecar(out, nodes)
 	}
 	return append(out, '}')
 }

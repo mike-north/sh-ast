@@ -14,7 +14,7 @@ import (
 // Compare the entire response, including field order and partial parse errors.
 func TestStreamingParseMatchesFrozenEnvelope(t *testing.T) {
 	sources := []string{"", "# 🎉 中 e\u0301\necho '<>&' \"\u2028\u2029\"\n", "cat <<'EOF'\na\tb\nEOF\n", "echo '\x01\x00\xff'", "echo ${a/foo/中} ${a:1:2}", "(foo |", "echo )", "[[ x = x ]]"}
-	for variant := 0; variant < 5; variant++ {
+	for _, variant := range []syntax.LangVariant{syntax.LangBash, syntax.LangPOSIX, syntax.LangMirBSDKorn, syntax.LangBats, syntax.LangZsh} {
 		for i, source := range sources {
 			for _, operation := range []string{"parse", "parse-with-positions"} {
 				t.Run(fmt.Sprintf("%s/%d/%d", operation, variant, i), func(t *testing.T) {
@@ -24,6 +24,19 @@ func TestStreamingParseMatchesFrozenEnvelope(t *testing.T) {
 					}
 					want := legacybridgetest.Process(operation, source, options)
 					got := Process(operation, source, options)
+					if operation == "parse-with-positions" && !bytes.Contains(want, []byte(`"Error":`)) {
+						var old, current map[string]json.RawMessage
+						if err := json.Unmarshal(want, &old); err != nil {
+							t.Fatal(err)
+						}
+						if err := json.Unmarshal(got, &current); err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(old["File"], current["File"]) {
+							t.Fatal("File changed")
+						}
+						return
+					}
 					if !bytes.Equal(got, want) {
 						t.Fatalf("response mismatch\ngot %s\nwant %s", got, want)
 					}
@@ -41,7 +54,7 @@ func TestStreamingParseMatchesFrozenEnvelope(t *testing.T) {
 }
 
 // Synthetic nodes exercise occurrence identity and method failures that a
-// successful parser cannot necessarily produce. Ground truth is the frozen walk.
+// successful parser cannot necessarily produce. Ground truth is independent native field traversal and direct bound calls.
 func TestStreamingSnapshotsMatchFrozenOccurrences(t *testing.T) {
 	shared := &syntax.Stmt{Position: syntax.NewPos(1, 1, 2)}
 	roots := []syntax.Node{
@@ -52,13 +65,33 @@ func TestStreamingSnapshotsMatchFrozenOccurrences(t *testing.T) {
 		(*syntax.Word)(nil),
 	}
 	for _, root := range roots {
-		want, err := json.Marshal(legacybridgetest.Snapshots(root))
-		if err != nil {
-			t.Fatal(err)
+		entries := positionSnapshots(root)
+		nodes, _ := nativeOccurrences(root)
+		if len(entries) != len(nodes) {
+			t.Fatal("occurrence count")
 		}
-		got := appendPositionSnapshots(nil, root)
-		if !bytes.Equal(got, want) {
-			t.Fatalf("%T snapshots\ngot %s\nwant %s", root, got, want)
+		for i, node := range nodes {
+			for _, bound := range []struct {
+				read    func() syntax.Pos
+				actual  any
+				failure any
+			}{
+				{node.Pos, entries[i].Pos, entries[i].PosError},
+				{node.End, entries[i].End, entries[i].EndError},
+			} {
+				func() {
+					defer func() {
+						if caught := recover(); caught != nil && bound.failure == nil {
+							t.Fatalf("missing native failure: %v", caught)
+						}
+					}()
+					expected := bound.read()
+					if bound.failure != nil {
+						t.Fatalf("unexpected failure: %v", bound.failure)
+					}
+					checkSnapshotPosition(t, bound.actual, expected)
+				}()
+			}
 		}
 	}
 }
@@ -75,19 +108,11 @@ func (n *orderedBounds) End() syntax.Pos {
 func TestStreamingSnapshotMethodOrder(t *testing.T) {
 	calls := []string{}
 	root := &orderedBounds{calls: &calls}
-	got := appendPositionSnapshots(nil, root)
+	got := append(appendCompactPositionSidecar([]byte("{"), []syntax.Node{root}), '}')
 	if fmt.Sprint(calls) != "[Pos End]" {
 		t.Fatalf("calls %v", calls)
 	}
-	var entries []struct {
-		Pos      any
-		End      any
-		PosError any
-		EndError any
-	}
-	if err := json.Unmarshal(got, &entries); err != nil {
-		t.Fatal(err)
-	}
+	entries := decodeCompactSnapshots(got, [][]any{{}})
 	if len(entries) != 1 || entries[0].Pos != nil || entries[0].End == nil || entries[0].PosError == nil || entries[0].EndError != nil {
 		t.Fatalf("bounds %s", got)
 	}
