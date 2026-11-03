@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "gitHead": "1e96b49434e05b03c9f9fd8a001151186af1668d",
+    "wasmSha256": "c2adf9c8f0df30a16ce26bdcdde2b4050d094e0ed6c347650d7bc0e18ea9b0c9",
+    "sourceCommit": "25630a596f848b3f2ab6478ca34de66c23e28091",
+    "run": "https://github.com/mike-north/sh-ast/actions/runs/41534214435",
+    "artifactId": 13182089937,
+    "archiveSha256": "b22918c5c78efe73797e54206a24bed99324514c6fa4ee344298693d8c8efdd3",
+    "wasmBytes": 4537470
+  },
+  "candidate": {
+    "gitHead": "84025343c147dc8c9efe8ad93789e74fdb609218",
+    "wasmSha256": "5c8b27246cd4c36057eebfae3a1b114f02b1a026e465193ecf0f00165256831f",
+    "sourceCommit": "f23599574896c9502df45744dfb73e2e4602f335",
+    "run": "https://github.com/mike-north/sh-ast/actions/runs/41566344176",
+    "artifactId": 13199281891,
+    "archiveSha256": "1735fb08fa0a85b8f9e75a203dbf8587029177fb0cdec04056cd6f012bed0ed7",
+    "wasmBytes": 4533132
+  },
+  "harnessCommit": "f8f61c5713640ac37fc588fdfd91065aa3b2ca06",
+  "consumerCommit": "2102a2469fefacac71f564779c4a3afac09a81c1",
+  "retainedFileSha256": {
+    "report.json": "d41d08111ae95e37ca7e8aa46fc641b6dd17f596bba98414c7897ef40aab12f0",
+    "samples.jsonl": "9f8335a6598cc35ccc11da8b7127f778ba9db8b241bbfc0b88cca3bcb35db0ae",
+    "verification.jsonl": "4340d472c2687009296961a72df30549b66f688b148a02a0b07fff0d84f8f018",
+    "historical-target.json": "173ad8557eb60860779cafedfc3d8fda8db86eb1c56d557cee88e99a67f3851e",
+    "historical-samples.jsonl": "c01464f48b3c4657302d3e09487a97b174bc9bda6d9e571cf72b164bd3b8a961",
+    "package-preparation.mjs.txt": "1b568f78237593a209848bb60c3f4f858fe6a6abb3eabc73f7772c7f42255fe6",
+    "reviewed-javascript-changes.json": "41f430a45240ab74547c9275e534e994e93fcad2f8d89fa3b12b419e9ad5b52b"
+  },
+  "retention": "Structured JSON reports formatted without value changes; JSONL worker records and preparation script retained byte-for-byte."
+}

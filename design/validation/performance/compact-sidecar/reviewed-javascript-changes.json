@@ -1,0 +1,14 @@
+{
+  "dist/syntax-snapshot.js": {
+    "baseline": "224183ccb48d9b1ff93e7f734f3322c9fd2aba54ae9b8deb6628d173ee81ad3a",
+    "candidate": "dc750ee1163a3c31e6027593464470ae8185a00d631705e0b3afaa8900203df0"
+  },
+  "dist/syntax.js": {
+    "baseline": "7524a5bd5d0bc784d4c7008a6b08392e63ca534914ecedabb0711a1bfd640854",
+    "candidate": "63b668e7970446146865a27ae117f5e285c4da5c9020bb7a63519978884dc3a4"
+  },
+  "generated/syntax-schema.js": {
+    "baseline": "cd240a082e73e392949898be93f3b9486b19b405ae813e11eefd8c206c9d9326",
+    "candidate": "094a6469286f3e159ba00973cb969eb7deb7d136129741d56c96a9057f8e0aee"
+  }
+}

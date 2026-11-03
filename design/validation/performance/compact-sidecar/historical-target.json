@@ -1,0 +1,692 @@
+{
+  "contract": "latency target only: published 0.3.1 public parse (normalized tree) versus candidate public parse-with-positions (faithful tree plus snapshot); same Bash M2 source, comments and benchmark.sh",
+  "environment": {
+    "node": "v22.22.1",
+    "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max"
+  },
+  "config": {
+    "rounds": 6,
+    "iterations": 30,
+    "warmup": 5
+  },
+  "verification": [
+    {
+      "fixture": "consumer-m2",
+      "round": 0,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 88626,
+      "mode": "verify",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "transport": {
+        "parse": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "traversal": {
+          "entries": 5801,
+          "exits": 0,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 0,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 88627,
+      "mode": "verify",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "transport": {
+        "parse-with-positions": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "nodes": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    }
+  ],
+  "samples": [
+    {
+      "fixture": "consumer-m2",
+      "round": 0,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 88634,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        43.31687499999998, 33.42708399999998, 32.704875000000015, 31.60291699999999,
+        32.60612500000002, 33.14225000000005, 35.329124999999976, 31.103624999999965,
+        31.614458000000013, 31.104165999999964, 30.11987499999998, 31.711791999999946,
+        33.54970800000001, 37.639125000000035, 38.673415999999975, 31.58212500000002,
+        32.37149999999997, 31.344084000000066, 34.43545800000004, 30.95333400000004,
+        32.02895799999999, 31.13412500000004, 30.44358299999999, 30.184166000000005,
+        33.08533299999999, 30.754374999999982, 30.827999999999975, 31.28691700000013,
+        31.71620800000005, 30.868582999999944
+      ],
+      "summary": {
+        "count": 30,
+        "min": 30.11987499999998,
+        "median": 31.66312499999998,
+        "max": 43.31687499999998
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 0,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 89503,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        24.73041699999999, 25.323167000000012, 26.88812500000003, 26.087917000000004,
+        29.08250000000004, 28.821416999999997, 23.738292, 24.833874999999978, 24.422416999999996,
+        24.160833000000025, 23.842167000000018, 25.123125000000016, 24.67066699999998,
+        24.17762499999992, 23.664916999999946, 24.570334000000003, 24.07620799999995,
+        24.093541999999957, 23.559792000000016, 24.901000000000067, 23.95474999999999,
+        28.34241700000007, 25.51324999999997, 24.362250000000017, 22.777791999999977,
+        23.874124999999935, 25.307125000000042, 27.995374999999967, 26.820249999999987,
+        26.536083000000076
+      ],
+      "summary": {
+        "count": 30,
+        "min": 22.777791999999977,
+        "median": 24.700541999999984,
+        "max": 29.08250000000004
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 1,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 89674,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        25.674624999999992, 24.74520800000002, 25.544083999999998, 25.289041999999995,
+        25.249291000000028, 25.899625000000015, 27.849790999999982, 29.798959000000025,
+        25.680375000000026, 24.830208000000027, 24.22191700000002, 23.86099999999999,
+        24.25420799999995, 24.493834000000106, 24.86195799999996, 25.416417000000024,
+        23.898625000000038, 24.299290999999926, 24.369833000000085, 27.988624999999956,
+        25.478374999999915, 23.929624999999987, 24.630041000000006, 24.19162499999993,
+        24.471000000000004, 25.25725, 25.095000000000027, 24.600624999999923, 23.250249999999937,
+        24.203959000000054
+      ],
+      "summary": {
+        "count": 30,
+        "min": 23.250249999999937,
+        "median": 24.787708000000023,
+        "max": 29.798959000000025
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 1,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 90035,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        30.63187499999998, 30.465874999999983, 30.891959000000043, 30.47591699999998,
+        31.400999999999954, 31.309458000000006, 36.97279200000003, 30.44999999999999,
+        30.893791999999962, 31.426999999999907, 31.235165999999936, 31.582667000000015,
+        30.967791999999918, 30.523041000000035, 30.143709000000058, 30.549875000000043,
+        30.317457999999988, 30.75441699999999, 30.571249999999964, 30.33562500000005,
+        30.36912499999994, 30.275667, 30.408667000000037, 31.92112499999996, 35.826458,
+        34.86370800000009, 30.645541999999978, 30.51045799999997, 29.35570800000005,
+        29.447832999999946
+      ],
+      "summary": {
+        "count": 30,
+        "min": 29.35570800000005,
+        "median": 30.60156249999997,
+        "max": 36.97279200000003
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 2,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 90346,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        30.083291000000003, 29.976166999999975, 30.031207999999992, 30.479167000000018,
+        30.143665999999996, 29.92833300000001, 32.00858299999999, 29.837499999999977,
+        30.011958999999933, 29.898666999999932, 30.070875, 31.046167000000082, 31.111375000000066,
+        31.839041000000066, 30.659332999999947, 29.935707999999977, 29.79499999999996,
+        29.29437500000006, 29.862542000000076, 30.077957999999967, 30.838541000000077,
+        30.011250000000018, 30.26866700000005, 30.248042000000055, 29.91066699999999,
+        29.920292000000018, 34.352791000000025, 34.06312500000013, 29.914666000000125,
+        29.826958000000104
+      ],
+      "summary": {
+        "count": 30,
+        "min": 29.29437500000006,
+        "median": 30.051041499999997,
+        "max": 34.352791000000025
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 2,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 90487,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        27.084291000000007, 25.107666999999964, 24.88179199999996, 24.804291999999975,
+        27.287582999999984, 34.407916, 28.70408299999997, 25.38175000000001, 24.501458000000014,
+        33.52075000000002, 30.090167000000008, 25.488207999999986, 26.469875000000002,
+        24.50691699999993, 24.164875000000052, 23.956583000000023, 23.994500000000016,
+        23.825541999999928, 26.027333, 37.420541999999955, 32.699792, 26.702333000000067,
+        26.56045800000004, 26.809583999999973, 25.976749999999925, 30.677915999999982,
+        25.32104199999992, 26.283291000000077, 26.684875000000034, 24.351209000000154
+      ],
+      "summary": {
+        "count": 30,
+        "min": 23.825541999999928,
+        "median": 26.155312000000038,
+        "max": 37.420541999999955
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 3,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 91304,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        27.55416699999998, 30.485791000000006, 31.87633299999999, 26.129500000000007,
+        27.328583000000037, 33.652375000000006, 29.294624999999996, 27.781875000000014,
+        24.608249999999998, 25.265333, 26.262958999999967, 27.337499999999977, 31.94900000000007,
+        28.852374999999938, 29.223249999999894, 24.98979200000008, 27.692083000000025,
+        30.822708000000034, 31.010708000000022, 27.031667000000084, 25.70595800000001,
+        24.532457999999906, 23.48433399999999, 25.643332999999984, 33.52304200000003,
+        36.70500000000004, 31.901542000000063, 24.900874999999928, 26.103584000000183,
+        26.053499999999985
+      ],
+      "summary": {
+        "count": 30,
+        "min": 23.48433399999999,
+        "median": 27.445833499999978,
+        "max": 36.70500000000004
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 3,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 91836,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        37.997208, 34.14295900000002, 31.811540999999977, 32.574540999999954, 32.65674999999999,
+        33.970417, 34.230958999999984, 31.824208, 32.96854199999996, 31.359249999999975,
+        33.049416000000065, 34.11575000000005, 32.49595799999997, 33.350667000000044,
+        33.32224999999994, 31.986083000000008, 34.22470899999996, 32.68066699999997,
+        39.82016699999997, 39.219333000000006, 35.2187909999999, 32.53366600000004,
+        34.40124999999989, 37.27970900000014, 34.85870900000009, 32.384416999999985,
+        32.853624999999965, 38.43895799999996, 35.148291999999856, 37.17879199999993
+      ],
+      "summary": {
+        "count": 30,
+        "min": 31.359249999999975,
+        "median": 33.66054200000002,
+        "max": 39.82016699999997
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 4,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 92110,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        31.67750000000001, 32.176084, 31.814458000000002, 31.996624999999995, 33.480875000000026,
+        32.10033400000003, 34.525709000000006, 33.056583000000046, 31.251540999999975,
+        33.68733300000008, 34.58329100000003, 33.422500000000014, 36.36612500000001,
+        32.09845800000005, 32.66445900000008, 30.489583999999923, 29.883916999999997,
+        30.13858300000004, 29.80158300000005, 30.532584000000043, 29.635041, 29.890125000000012,
+        30.254791999999952, 29.923000000000002, 30.52687499999979, 29.850582999999915,
+        32.660082999999986, 30.066958999999997, 30.542249999999967, 30.575374999999894
+      ],
+      "summary": {
+        "count": 30,
+        "min": 29.635041,
+        "median": 31.464520499999992,
+        "max": 36.36612500000001
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 4,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 92412,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        24.45112500000002, 23.689250000000015, 23.949833000000012, 23.54229200000003,
+        29.835540999999978, 29.685917000000018, 24.07870799999995, 24.175999999999988,
+        23.70433300000002, 24.693542000000036, 24.11045899999999, 24.12566700000002, 23.977959,
+        24.211041000000023, 27.563666000000012, 25.199292000000014, 24.289333000000056,
+        24.122875000000022, 24.575249999999983, 23.594875000000002, 24.197457999999983,
+        25.09491700000001, 36.64525000000003, 27.861249999999927, 24.527625000000057,
+        23.932583000000022, 29.094708999999966, 24.61379199999999, 25.345833999999968,
+        24.898292000000083
+      ],
+      "summary": {
+        "count": 30,
+        "min": 23.54229200000003,
+        "median": 24.370229000000037,
+        "max": 36.64525000000003
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 5,
+      "arm": "candidate",
+      "phase": "parse-with-positions",
+      "pid": 92645,
+      "mode": "timing",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "samples": [
+        26.551375000000007, 30.494625000000042, 33.737708, 31.555542000000003, 24.08937499999996,
+        23.94829199999998, 24.16624999999999, 24.530916999999988, 24.122458999999992,
+        24.525459000000012, 24.985500000000002, 24.153542000000016, 24.579625000000078,
+        23.598833000000013, 29.90816700000005, 29.30270900000005, 29.269792000000052,
+        27.476583000000005, 37.99320899999998, 28.70287499999995, 28.70058400000005, 33.786833,
+        30.366833000000042, 26.460749999999962, 25.78054199999997, 26.479332999999997, 26.048541,
+        25.407916999999998, 24.97716700000001, 24.495374999999967
+      ],
+      "summary": {
+        "count": 30,
+        "min": 23.598833000000013,
+        "median": 26.25464549999998,
+        "max": 37.99320899999998
+      }
+    },
+    {
+      "fixture": "consumer-m2",
+      "round": 5,
+      "arm": "baseline",
+      "phase": "parse",
+      "pid": 93672,
+      "mode": "timing",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "samples": [
+        35.483542, 35.808291, 33.44749999999999, 36.951707999999996, 36.562749999999994, 42.977417,
+        42.59891700000003, 34.732624999999985, 33.970750000000066, 33.04808300000002,
+        33.27395799999999, 35.483791, 35.89704100000006, 34.70520799999997, 33.243292,
+        33.971124999999915, 32.02366600000005, 32.765041, 31.701917000000094, 33.62120900000002,
+        32.90862500000014, 35.569708999999875, 30.869750000000067, 33.771625000000085,
+        31.7154579999999, 31.706709000000046, 31.844542000000047, 31.623665999999957,
+        31.92229199999997, 32.67037500000015
+      ],
+      "summary": {
+        "count": 30,
+        "min": 30.869750000000067,
+        "median": 33.534354500000006,
+        "max": 42.977417
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "label": "0.3.1",
+      "version": "0.3.1",
+      "entry": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-IlGI5I/0.3.1/package/dist/index.js",
+      "packageRoot": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-IlGI5I/0.3.1/package",
+      "tarball": "/var/folders/r4/j5y28vpj6258k4_0kn5f33s00000gn/T/sh-ast-benchmark-IlGI5I/0.3.1/sh-ast-0.3.1.tgz",
+      "tarballSha256": "776c3d0d8a94600c2a5d960608b2579eea0a9b735f88f99c0532f9d58cba91d6",
+      "integrity": "sha512-953k5A/3s+G/5qKS7//Junnrha6z8G6gi7LAyirFsEJl5w0WbKUUSHrZaMYqCJFsvmvnMNLwKWh2CI6QWG/0rA==",
+      "registryTarball": "https://registry.npmjs.org/sh-ast/-/sh-ast-0.3.1.tgz",
+      "assets": {
+        "README.md": "89e3b905d6c387c888a60a0454d8945dc1b02063c1427a9b69251c3b73fef996",
+        "dist/analyze/ansi-c-escapes.d.ts": "261f953bcc1ee479186eb123867303f7420b0771a77d596e2afe4d8decff0309",
+        "dist/analyze/ansi-c-escapes.d.ts.map": "c98fd19f1949f2d3ffba86a5d065ffeb1983d64988527effae7b3c35050c5c46",
+        "dist/analyze/ansi-c-escapes.js": "ae38dbb035306a96f13b4b642c8fbe5c6f31f18f7221e3fba34efb67ab4240ab",
+        "dist/analyze/ansi-c-escapes.js.map": "b9c222195bba72d3a85125f1922c48512096891853a1f747603f4dbe02db735a",
+        "dist/analyze/decode-lit.d.ts": "38db327eb8fd580a90a5bbbde6eb02b9d94aa382d7651d32635584c27df7fad4",
+        "dist/analyze/decode-lit.d.ts.map": "5a779cd72268b6f07420abba4512b8860e365f8836917a07245683484ceb065e",
+        "dist/analyze/decode-lit.js": "9bba6d7e0f37dae1621b80fa800b0a2ce9c2bf06e4a92b1fc5af73a5083d4955",
+        "dist/analyze/decode-lit.js.map": "e34d8c79ea9abeb066e8c15d898ab6e13dc3cffbc53400742b218da4cdc47162",
+        "dist/analyze/enumerate-commands.d.ts": "d6f22c606072d4be18729614df47e00cf92ceebfb4b201a45befa4332e0080f5",
+        "dist/analyze/enumerate-commands.d.ts.map": "9f45a55ffb375179a25bde0225db88cdbc9a48d81f622af27364150027ec4049",
+        "dist/analyze/enumerate-commands.js": "a72a45fc79addd5fa44cad2933705b3399049e73294b5507b213ec7b3ed4b70f",
+        "dist/analyze/enumerate-commands.js.map": "6f15eb2fa8dc70cc586dcd4efc9fd0f28a7db96917f1558d87c8044851c1054d",
+        "dist/analyze/index.d.ts": "340d25df2c1e6f2a2425bc79cd257bcc6e086cf44758be3a5f4272709706712c",
+        "dist/analyze/index.d.ts.map": "7e27a7aded8fb1a0c9f69b1996cfce99bfe899062c76b60dc32af80ebc8fe301",
+        "dist/analyze/index.js": "5028f3471808359ab9d40e098b4bc00202f83c135f48f93cbc91d9622f0c83b6",
+        "dist/analyze/index.js.map": "7f292eaaf4b618e48a95183e817145cb2bdd7722a971d3d33a153bb85f9bfb13",
+        "dist/analyze/node-helpers.d.ts": "666c18ce7cd1420e4e67261a0f9bc510c2a5e85c03018a02fb85a6b082efeaee",
+        "dist/analyze/node-helpers.d.ts.map": "9d9ea1ea35ed544d5abe4f973336553dffa3052341d01a60bae8a72b1c55b059",
+        "dist/analyze/node-helpers.js": "60773e001148bcf0a3cfef8aca2b8138b891360344fe1ffeec996fd4160af3c8",
+        "dist/analyze/node-helpers.js.map": "4e75138358f1c87c124ee6251c43cd607df94e4165ad0cf58286bbc1c6642bfb",
+        "dist/analyze/resolve-argv0.d.ts": "ac405c6a4f6dbeb41bf03893937dca7d5879a037e886638ebca1e01122bb0214",
+        "dist/analyze/resolve-argv0.d.ts.map": "8a87a390bc798bda00357398145567e97873fef18e35c5d9dcab1c3755402043",
+        "dist/analyze/resolve-argv0.js": "f417367bf79f969c73694238d16447cceb8a500b3af6358b2542e07b977b7f6b",
+        "dist/analyze/resolve-argv0.js.map": "f0d34bfc93e56c24c8b2bd1936ee1874ae8d4486d021611becdde161fcbd01e5",
+        "dist/analyze/resolve-word.d.ts": "906b3d558486dc7b8bbca7e3dc035fb810d950700eb109891f0e5902bca342e8",
+        "dist/analyze/resolve-word.d.ts.map": "50bb3843b3cfe802aa83891131d7d919421d7ee87113fdc8f82aacdfa8d7bde0",
+        "dist/analyze/resolve-word.js": "c72c4dbccb32f5090b56ad3145b0d9d9f6ce4b1d76db9abe1486e01e7f2ce9a6",
+        "dist/analyze/resolve-word.js.map": "4c6629432956b89d5d8308a9f13aa15c545f4503d1d3ee2a83e597fd7ee9c10c",
+        "dist/analyze.d.ts": "d788444f11101fa6b755a6094079b34e7376aec824d8aa514d2116edb7673d81",
+        "dist/deep-freeze.d.ts": "b91d8f80b780b69d852465691a85b86baa83f485c4869b192ed95d59546a1917",
+        "dist/deep-freeze.d.ts.map": "f917e83ec9353f56a8c53ace265b1bc26556e12a699372d2cefe420ac6eff123",
+        "dist/deep-freeze.js": "be5638802d351d97a3179ceaf4dff98a793c167f2fd049886ca7ae1c2e9b8a8e",
+        "dist/deep-freeze.js.map": "b6f7c94d9a1bfff8dff855fa99cdd1685ad182dc695437d72713adcc95c64757",
+        "dist/errors.d.ts": "14f886a063dc573d486718207b926f48747f59f4e9b70ffaedcee06971dc3610",
+        "dist/errors.d.ts.map": "7900faf041bc215da9614bd27e92ac7822043a18fde94ae2e76b5a4b648b7086",
+        "dist/errors.js": "47d01a8a566bd19c4baaaa0184adacf56fdc01e83a2b804c5c630db44d1c4d7b",
+        "dist/errors.js.map": "2d47b137ff9d38a4acfc4acfb6aeff42e80e485c298ff727d60e262afc2cef5d",
+        "dist/index.d.ts": "509f07dcf31168e63ad9d4a8ed862fc08955993d21845eccc3e528f473d30dd1",
+        "dist/index.d.ts.map": "60a2f3a64ff0f1c94e24fd157173ea49c4d66fb6c54f38ec21d7020119812e0d",
+        "dist/index.js": "7eb54e45cf00a1cd5b06293dc8c958a2eae250e5554471b32051d058d785957a",
+        "dist/index.js.map": "e7eb4b10a54deaab9f0d907e4706a4be5daf8e4ce8c1025da77e9454c1be1234",
+        "dist/normalize.d.ts": "45a61b29ff2bf1e3a85576665257d5897f68dbc3356c9f0512b804bf6e88f57d",
+        "dist/normalize.d.ts.map": "b4de621f2484a93d233d7d37c1b768e97d41193871c13298f83d718a409ebf08",
+        "dist/normalize.js": "2498656acfd873408de09f1bd0cc33b3ff527ff4d2d55f0cb8ea39dd6cf6e27d",
+        "dist/normalize.js.map": "08cf8199c59e566cbfc3ae736c22b36b88803ace11f1861a3b2d952423ecb9d8",
+        "dist/parse-depth-guard.d.ts": "d66b2d311cee094cfcf26bd7799f27b0f7180c47900ebc3ebed7078fb8d02405",
+        "dist/parse-depth-guard.d.ts.map": "0ab8c7fb791b54d9aec05a740c85331b7b2fdb34cdee2b7434fe78d617af4a48",
+        "dist/parse-depth-guard.js": "9b6aad6788e297ee9eec6a76c1c22f8deda38b8dc404aa9c1030202b12cb8b7b",
+        "dist/parse-depth-guard.js.map": "51b53a73bb84c7c4ecae7262164673b89ebbd2469df0e579b41a8200f1874e8c",
+        "dist/parse.d.ts": "8a9d8b4f61b18c0c8aa9b883859d41d2f529d4cfbb0db6afa301c0669fa36f81",
+        "dist/parse.d.ts.map": "ca192b76c0a3141d70dd2c3038c71188963bee58d37fd0ed583aa03ab407c98e",
+        "dist/parse.js": "e62935c588836dd0360e6774f2293fe250735c8f304d982f6bf12ac7138edcec",
+        "dist/parse.js.map": "bfd27f18fa5dbc5ca51d2e689b311d1326064d868d3260ffb52b3b294a398ba5",
+        "dist/sh-ast.d.ts": "4c9853cc91c792cfb1d64db21dea1486ff49e13f26adb5ad0446fd3d606829fe",
+        "dist/types.d.ts": "4aabcbef37a5341e32cfc6cfe9620510c8a1bc6636807bd2f82f5a3b2e447f6d",
+        "dist/types.d.ts.map": "c5b9f11ecba88bb75360ed38dd63d393a35ffdb55a6cac4c32a2ec3c50df24ea",
+        "dist/types.js": "01ae2a5b120382f9a648ced7ee8507493a134f216d100fc61600c6c9738235d2",
+        "dist/types.js.map": "a7de897b48fe57bf54d6f84169135ff2e89e2fc95ea0a0a815761cc29a41efee",
+        "dist/visitor-keys.d.ts": "0e45fa5c1df5d9bc1b55b099d78627e5853d1cce4537e9d21e7c3f46500a30e5",
+        "dist/visitor-keys.d.ts.map": "04d143f413a4e70585fca8d920833f1675d6c1c1cc7096d87594c257756deb0e",
+        "dist/visitor-keys.js": "84feca71b46bcaaa84b2395eaa434ae76c7ca4e258768cf355609a123ba9bac2",
+        "dist/visitor-keys.js.map": "7e12d32716a215060de0dbeabffae1c06c5be1be99880a3ade288183bae7eb55",
+        "dist/walk.d.ts": "b213283b3e547040ba9edd8deab72266b5e8c612345b045d34316f5fb70af7fa",
+        "dist/walk.d.ts.map": "19934efdee4a24c008b6e6fec5681ef9415314921a0469affd3a287d813925e5",
+        "dist/walk.js": "0268006d7fbe9d3b09fb45db7b30a11cec0af6b6ac904d1682eada2906edd63e",
+        "dist/walk.js.map": "4fdc656afd994de07844fcc5cc4e90c06ef060800ecc05714c6fc747d81d96df",
+        "dist/wasm-instance.d.ts": "c5f1956730a743d89a388682e756daa108f250f355179cc9c20b3a7e7f0a01fc",
+        "dist/wasm-instance.d.ts.map": "0301a2363ae621809de4f5fcf887c3acb145617151d48df81451bd80b9ec87ab",
+        "dist/wasm-instance.js": "a4ab5c8d5a3db110354a07fff6ab84f548a4410f1fc31ef89e887a06f03a83f7",
+        "dist/wasm-instance.js.map": "cb87c02e71bce019679c98f4d7887ca16921784818d0b709f6680d3e570685da",
+        "generated/child-type-schema.d.ts": "e49b39193aebbecda23b29d46361ca74fe54821e79c22353021fa3b0c1740ef3",
+        "generated/child-type-schema.js": "330ae1cb8e13dd0f938b160707b1265cb50370ee1496307538805848e9377379",
+        "generated/node-types.d.ts": "33fcae03d85db767cb800712562f5e99d93f5d466fc6b8b12d7b7885594cfc5e",
+        "generated/position-fields.d.ts": "902a162372f53a642292ef1f15c73ad56d9716dc1699f87f6308df9d7b90ec4a",
+        "generated/position-fields.js": "9580ff521bcd23a352dbad92c95e6074782dc0434544cdd7746ecc209caf2268",
+        "generated/visitor-keys.d.ts": "9f786e1d64f1af3048e9cee3311be418eb3aaf561ee3d323bf0df98fd7a72283",
+        "generated/visitor-keys.js": "b1d48e2ec090f221be5dc3e5ab70fdf1549656c1cd9dd38011f70484ce024654",
+        "package.json": "6f517c5ac92f70307af63ee11bdc4f5c387cccde1ac424816d184e81cfd31748",
+        "shim/sh-ast.wasm": "f9da2cb772a300e44bd87303f1181f864899d5e3da3c5ec32514808e915258b8",
+        "shim/wasm_exec.js": "aebe031720f29deea5dfa7aa07961e7cd509912af2714a09dd0b2ec6aecaca02"
+      }
+    },
+    {
+      "label": "candidate",
+      "version": "0.6.0",
+      "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/package/dist/index.js",
+      "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/package",
+      "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/sh-ast-0.6.0.tgz",
+      "tarballSha256": "8822c430c58cdca1b497a1d9b4d46a4a9d214ffa56ee9fa3073cdbb2ba5746b6",
+      "integrity": "sha512-fiQCk7M7RoCd2fBVU0zVqFf4UnJQKdJt8e+B+hiItikyUOZkroxLxk40xd3zPB4/mJX9AAhSK2eXUvDXXhBxcA==",
+      "assets": {
+        "README.md": "795e8f066f78b253b08a807b0780e24ee82817754fe66e343e82744f6f4162b2",
+        "dist/analyze/ansi-c-escapes.d.ts": "062e50dfe47467a44b709f0feda7acbe1d4dc3a5224e391ab00164df1f02181d",
+        "dist/analyze/ansi-c-escapes.d.ts.map": "c98fd19f1949f2d3ffba86a5d065ffeb1983d64988527effae7b3c35050c5c46",
+        "dist/analyze/ansi-c-escapes.js": "e5416ff479e4e4a53099ac189a5130261d335f9edd2adbbb8c3e1780ba5ee859",
+        "dist/analyze/ansi-c-escapes.js.map": "b9c222195bba72d3a85125f1922c48512096891853a1f747603f4dbe02db735a",
+        "dist/analyze/brace-observation.d.ts": "87a900df932e4a5be47ffb8d06319572f7597f2833bb292e3413f6e3ff45f119",
+        "dist/analyze/brace-observation.d.ts.map": "18477ef9572dd29b71f361eb0dee7feb5ca2f628e99028b12e7338baf040723b",
+        "dist/analyze/brace-observation.js": "c5c962e67f7a0673bdadb54d375fc39da14d9ac6be6c1972c3571cc6b21a40f0",
+        "dist/analyze/brace-observation.js.map": "1de3d535338bd02f7279f922cc44ec63f5c31fd547bb6889435f9f15ef8c5dc9",
+        "dist/analyze/decode-lit.d.ts": "38db327eb8fd580a90a5bbbde6eb02b9d94aa382d7651d32635584c27df7fad4",
+        "dist/analyze/decode-lit.d.ts.map": "5a779cd72268b6f07420abba4512b8860e365f8836917a07245683484ceb065e",
+        "dist/analyze/decode-lit.js": "9bba6d7e0f37dae1621b80fa800b0a2ce9c2bf06e4a92b1fc5af73a5083d4955",
+        "dist/analyze/decode-lit.js.map": "e34d8c79ea9abeb066e8c15d898ab6e13dc3cffbc53400742b218da4cdc47162",
+        "dist/analyze/enumerate-commands.d.ts": "57076c5bbf455a65741f37881e7944dc7e52c603ab006089fe91d965ee505666",
+        "dist/analyze/enumerate-commands.d.ts.map": "aa2352c2112d555ef59fb008286de17012587f2be76bf9b46a5853f702f1e5b0",
+        "dist/analyze/enumerate-commands.js": "a1a4304e83cd8b992b5f8a19aa0cd455b54c8531cea7d8a60f12750097d11eea",
+        "dist/analyze/enumerate-commands.js.map": "1ebdf1863fa1bfebda3df75f0ce2a3e52a44f1f40fc5db1e85049102d9c75e1b",
+        "dist/analyze/index.d.ts": "2916f4ff7696cc13498c23ff3362ac4788513cf2158a29f932f7ea20980c37ba",
+        "dist/analyze/index.d.ts.map": "c69303592ebcc14eba4cf9a665e1d041299fd3dabb6eded575ad3f7a21a41606",
+        "dist/analyze/index.js": "e68bceb80ae05e58d01ab524651d21f9ccc59b7726ca7625eb18ec1efd55fbfe",
+        "dist/analyze/index.js.map": "7f292eaaf4b618e48a95183e817145cb2bdd7722a971d3d33a153bb85f9bfb13",
+        "dist/analyze/node-helpers.d.ts": "6445d2c57a121d16a76fe2dd7285f226f6ae28a9c35f8b4935e5d9356a43d017",
+        "dist/analyze/node-helpers.d.ts.map": "0a1a53f75d4c0983fae2c976f06c56f933d5c0566e25fca4005d7f9f85eb4e2a",
+        "dist/analyze/node-helpers.js": "8be136cbe0e7484601ea50210b609c34ce1d72fc87951e91e83bfea7eddf4a51",
+        "dist/analyze/node-helpers.js.map": "5ffa0e9cca18bc471b0ce0fc3ff58bfe8dcb45ca2fad219711a1d6f962a51027",
+        "dist/analyze/resolve-argv0.d.ts": "144c10f7e87b3ed078997eea025a1a5e92ee2892644475eb91e44552685fac8f",
+        "dist/analyze/resolve-argv0.d.ts.map": "ef8967afa6d6b9ba2af6459afed3b49e009c3e049e0f4cac9af52d53e75b27e0",
+        "dist/analyze/resolve-argv0.js": "982ad8224481cb513503c5ff17024d2c0957dc87e3aebd646755e3d45fcf2b38",
+        "dist/analyze/resolve-argv0.js.map": "0f43908accedf74a1f75ccb09088c7bdf3533ed56066d937e9a238d98d94a8f7",
+        "dist/analyze/resolve-word.d.ts": "af3a9171a4a322785a4a09d059e7aca42d2e0598f785bfd0ecefeae42ef03a0a",
+        "dist/analyze/resolve-word.d.ts.map": "9ec0e92f9a3fc9e9da35f4a423ae8d151d8bfead8fe2edbf672756201b70c016",
+        "dist/analyze/resolve-word.js": "f2d2a2bcd4d9a4fc51a9a9c2bc3dad6aa2f42e5e059eea9379e78b1c0f56960a",
+        "dist/analyze/resolve-word.js.map": "b97b071ec9e0e4e0baaba86073d270a7bf39bcca1ff2c4eeccca2a39df36881c",
+        "dist/analyze.d.ts": "40c2c52f527dc89daff8da9d293048f91115a328ed1730128b328a6855702ece",
+        "dist/deep-freeze.d.ts": "b91d8f80b780b69d852465691a85b86baa83f485c4869b192ed95d59546a1917",
+        "dist/deep-freeze.d.ts.map": "f917e83ec9353f56a8c53ace265b1bc26556e12a699372d2cefe420ac6eff123",
+        "dist/deep-freeze.js": "be5638802d351d97a3179ceaf4dff98a793c167f2fd049886ca7ae1c2e9b8a8e",
+        "dist/deep-freeze.js.map": "b6f7c94d9a1bfff8dff855fa99cdd1685ad182dc695437d72713adcc95c64757",
+        "dist/errors.d.ts": "2cac2cc19cafe3e74d504b928df1052322ed50159f5468a928391bfb256ee2c6",
+        "dist/errors.d.ts.map": "75ef486bef8ab57c17b387fc3d241f6af9dbe2a7db7596f9fb5025ed6a9244f8",
+        "dist/errors.js": "a47015e9c0d9d59cc0f377a5ac0d87e142e072c4af3359db0274547bf685add9",
+        "dist/errors.js.map": "477d6c69518c2a87fc66a962fdba89f19ae104232b064ce9f10e7c35918bff9f",
+        "dist/index.d.ts": "cc37c2c8cf8c30ee9d1ca55494e7bcab63e131ec6954889578bd4c30c08fd0cd",
+        "dist/index.d.ts.map": "adba5ed819e14be9f08bfaec16265b207ae9243067108d172bd479cd0f1297bf",
+        "dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+        "dist/index.js.map": "23628ba56dfcd7713a9ac7d21fbf837e7d0e63244b8fd65e2d83f62fc2be9e0b",
+        "dist/parse-depth-guard.d.ts": "d66b2d311cee094cfcf26bd7799f27b0f7180c47900ebc3ebed7078fb8d02405",
+        "dist/parse-depth-guard.d.ts.map": "0ab8c7fb791b54d9aec05a740c85331b7b2fdb34cdee2b7434fe78d617af4a48",
+        "dist/parse-depth-guard.js": "9b6aad6788e297ee9eec6a76c1c22f8deda38b8dc404aa9c1030202b12cb8b7b",
+        "dist/parse-depth-guard.js.map": "51b53a73bb84c7c4ecae7262164673b89ebbd2469df0e579b41a8200f1874e8c",
+        "dist/sh-ast.d.ts": "41542f333fcd542a095d1b0c62938cd91f666f3f2322b7db89e40e17e457f694",
+        "dist/syntax-errors.d.ts": "90d4b61de601d0dadbd0028b630abcb59b4259227370eaa3c3b7e6d5142183b9",
+        "dist/syntax-errors.d.ts.map": "233f2c8c98727a792dce36143ca8d63c5ec419c4342bd4c175555cf377fc905b",
+        "dist/syntax-errors.js": "b7dd80e5e204c9b03d7270daced47dfc279c973b9cdd96203c9ed8a456eb457a",
+        "dist/syntax-errors.js.map": "e84878ba0d40085f46cc74f16100b291d9f844025f083288a03b8c4ae37f3e55",
+        "dist/syntax-print-errors.d.ts": "433d8a253f0ffbf50a269e70259da369f89ae5269468ab3d6fb692967b937f23",
+        "dist/syntax-print-errors.d.ts.map": "3be51ac8769e0b210194f484369a09683fc0807acd5ae4033589f97ac27d2379",
+        "dist/syntax-print-errors.js": "fd87f98ff736e47fbc2bd8eb5e0de47344f80a9d19d2d54b12f92fcc5bbcdad3",
+        "dist/syntax-print-errors.js.map": "00ef306a6d52a536e2a0a773d138cbcf4b69f55e34ebd4ccaad99bbaee0e863f",
+        "dist/syntax-print.d.ts": "901558a3e80e98d6a2dbb3259bda24eb8f66f41d85f1edbe9c867c7a92adf2d3",
+        "dist/syntax-print.d.ts.map": "dd0b8e78bb5ab764d64ddd5af69d534cab1fd4d64c931e6ebd20a534f36e1274",
+        "dist/syntax-print.js": "636385af1588cc80fb83cff65e2e4ce06f47d7c38bfe8bf029d26b0d72c09e64",
+        "dist/syntax-print.js.map": "090966acec9c25f2474ca1e2b13bb1a3c9c90f039523578af46b8f02b0f2c568",
+        "dist/syntax-snapshot.d.ts": "d93f57b2fa009b0e55d63cc3ec0ba1543bedd221b0ba32252e634210fd71233d",
+        "dist/syntax-snapshot.d.ts.map": "a6c1816cf8ee62b3db9c725876321a93faa84f454f3f06c40a152defa16de4bf",
+        "dist/syntax-snapshot.js": "dc750ee1163a3c31e6027593464470ae8185a00d631705e0b3afaa8900203df0",
+        "dist/syntax-snapshot.js.map": "ee1e39d03e925d4d0aea81348522ff0221a4ad274a57bdaf5fa99925bae56a12",
+        "dist/syntax-walk-bounds.d.ts": "bfee0c96705f71b04e6e61aa205cbadadb8c192392c64d0f3936525248667f12",
+        "dist/syntax-walk-bounds.d.ts.map": "e9682066e2fa403f756521784253ba626a2eae9a7a4d77272df29d9a0b1b280c",
+        "dist/syntax-walk-bounds.js": "a5f6f71aaade05d5b52af45cec3656bf280aae0c67e2a9df62d039168f82c5cd",
+        "dist/syntax-walk-bounds.js.map": "02b4c48fb3863d82722ca480ffb440c882a4c9fb22bbeada0358611971409af1",
+        "dist/syntax-walk-errors.d.ts": "063f9eac55aa9d3e2df59afa3a3f07e9eafc6b35ad4f5afac60b05a199608152",
+        "dist/syntax-walk-errors.d.ts.map": "a719deb159c2194f1e75652152157b54b7df37761c461e64df8d808a8ffff277",
+        "dist/syntax-walk-errors.js": "793942b3ec9926900b15690611a3a75e45ec2039f4975d52bdc66fdef6c21f14",
+        "dist/syntax-walk-errors.js.map": "8bdecbf1a48e7c3de65dbfd05ede26cdf927836331afcf0594380f5b9e0b67b2",
+        "dist/syntax-walk-license.d.ts": "e13c558bd4d3fabee0347fc04e6a4a5eff1962a07e3295109f7fee7c18b8fb76",
+        "dist/syntax-walk-license.d.ts.map": "48e3e810f0647329c54be438495ec564553b46d69136519258ac9a045ce29f08",
+        "dist/syntax-walk-license.js": "9a03338454a34e6947e9ab9e89841840ebeda675768f26bf8c6215bf6050f420",
+        "dist/syntax-walk-license.js.map": "f21e451b954ce3c1d7ed886376b70c06f20046126429ebb31ab0117f90041be3",
+        "dist/syntax-walk.d.ts": "2c26379f5fb585c81ac5a991944a3a180f9b238007079c3a9e27927ef24d4287",
+        "dist/syntax-walk.d.ts.map": "75f4a2a2bec8066825829c52e87dc6292244ebe356e7921e8bd2cf97d565eafe",
+        "dist/syntax-walk.js": "1d7b629fb557cdaab187bf32b8648723277d44ad80a7adb80f761c84f58c592d",
+        "dist/syntax-walk.js.map": "e0a3a71562002448bb3bdcc5e15ed9b9800e08823341329da0acdab757e61541",
+        "dist/syntax-wire.d.ts": "b3693706e677ffce8488c937417025f2c7707c5e125b7f979f4f061e85ed8608",
+        "dist/syntax-wire.d.ts.map": "949c86da69275a0a9454dac1f6319b7e30580d8d26bc4ca9c57d73f5721a8dae",
+        "dist/syntax-wire.js": "0c2ad2762055e0474047753de1733e8eb53aa92e8755ba8463a059f583f873e2",
+        "dist/syntax-wire.js.map": "314581b2955afacee27442a6c2e379de638643ece2b67983c448fcace58b1fc4",
+        "dist/syntax.d.ts": "d72471b8d53e39dc12de8c5c627ea9e73f65724282d85398e97009f056943a29",
+        "dist/syntax.d.ts.map": "1197ace39c5b532e3086d907015e3cabcc064723f47d30802d161aedc3bc3850",
+        "dist/syntax.js": "63b668e7970446146865a27ae117f5e285c4da5c9020bb7a63519978884dc3a4",
+        "dist/syntax.js.map": "61d0c9c652b543894b5c59f34d8735d8ddc4598e2bcea612741cd789b7cd23c2",
+        "dist/wasm-instance.d.ts": "06b63e15b80665cff98a00c617640acaec8010268484a4dd9f937cd20ed92ccd",
+        "dist/wasm-instance.d.ts.map": "ba3c0ab1639e14740e611462dc92743cf9c862a463edb421635f4ee42d3f8650",
+        "dist/wasm-instance.js": "58a52575b814ca430685df32ab489853e111764cac136b93864534646a79382b",
+        "dist/wasm-instance.js.map": "12aefd5f892d09e8c206004419504a80b16716e4721155d83b00e3b04378848c",
+        "generated/syntax-constants.d.ts": "9158e981aa9f62366285bd4b51a6b3b6d5bb00c58994117cf4adbda0f719803b",
+        "generated/syntax-constants.js": "d0278c7a12f2ce98fd3f6f46ca800c16fda40a7f6f9bb2cf2a30e77466023ad8",
+        "generated/syntax-schema.d.ts": "b9bec6fb98e2f390f0ff6b951d4b79b11026d48451e000bce1b8bd8b637d0bdb",
+        "generated/syntax-schema.js": "094a6469286f3e159ba00973cb969eb7deb7d136129741d56c96a9057f8e0aee",
+        "generated/syntax-types.d.ts": "d5f97fb7a5999a244846109377bc4181ef4e6942aefc98783ced2f13ede4af53",
+        "package.json": "85f827e292666889d3742f95486779ec60a45fd10a2e3896a49049cbbacff662",
+        "shim/sh-ast.wasm": "5c8b27246cd4c36057eebfae3a1b114f02b1a026e465193ecf0f00165256831f",
+        "shim/wasm_exec.js": "aebe031720f29deea5dfa7aa07961e7cd509912af2714a09dd0b2ec6aecaca02"
+      },
+      "gitHead": "84025343c147dc8c9efe8ad93789e74fdb609218",
+      "gitStatus": "",
+      "sourceAssets": {
+        "analyze/ansi-c-escapes.ts": "e72052ad468170c1df6885c66fa8405917a31476dfb7e2c8b5133f3dd64565a7",
+        "analyze/brace-observation.ts": "e9a40934aed06aba39e567e312ae23c892ecbabf191bec9d8bf63d32c7d37f10",
+        "analyze/decode-lit.ts": "482395644e91da80561736ea79d798bab7f89b919cf4ccac246a52d8717c7eb5",
+        "analyze/enumerate-commands.ts": "7e56da2980abd8b04a82de8426730af1ccaada99125b8f676decf03cd8330eaa",
+        "analyze/index.ts": "fbe976ece53d2d5d926ad591b36789e824a021219a784d4faa0c6cb4c764e7a3",
+        "analyze/node-helpers.ts": "5d27ba7c31b700c29639d04778b622b4a5a02376b99e141f23a5cb8c0fa37e68",
+        "analyze/resolve-argv0.ts": "4fbf5d00460ce8343891cb98d1c43a4e16126ad8bf41450fbe9c377abdc7b848",
+        "analyze/resolve-word.ts": "833a391706bf80fdcd89163facacfdad3805dc200776c4647efdab6a2708307e",
+        "deep-freeze.ts": "8419e7ef7553169ce75897903a5dd72ba266bfd17c0c3c8e94093757c8c8b55a",
+        "errors.ts": "0bf22e96125f3d37c994488e74696103f1903acd60a4710ad4549d9359a13283",
+        "index.ts": "d962af0051998e259c633eaa5d04bfe39be8a2e2c69dfc1a072c101260cb1262",
+        "parse-depth-guard.ts": "dd5a8fda807c2a1ca70599db55d5ac5255c2cde0503d7feaf0996c3b6758c69b",
+        "syntax-errors.ts": "e9f7c3071f82bbbf8454d4c137d0cfca383d961248284f1a2d11bb682930da91",
+        "syntax-print-errors.ts": "a590db0c49367d9aa0591550e67dfe8f9f8d8f277cf2f382b8341a98f4357968",
+        "syntax-print.ts": "c7eacc43a47e0757401d42c35c0169926670aed20edb926ccbcf4c7b8a774bce",
+        "syntax-snapshot.ts": "6d1e380c595977036c8cc3039f7b4aa6796c209d783bd4832c33e5706cdaad4c",
+        "syntax-walk-bounds.ts": "69446ba28e07afb4e6c76331055a290addf7b1ed8a0e5030235848d4deee33a3",
+        "syntax-walk-errors.ts": "3eb6ff6f71a085412d6e6e86e9ddc1b1958c364c360fa96f5537ed3d4d78d9cd",
+        "syntax-walk-license.ts": "e1920b0e00e7baa30a686b953a59653d604721c41dc0c5323c60a954c0361d9a",
+        "syntax-walk.ts": "aca7539c6dcbc1dff0498dd499c23c4773028299f40729405ff83690461e3d8f",
+        "syntax-wire.ts": "0ed3c8c80fd3445bd2a11b250ec1299a4f87977682e63ad6a93754ce85b7eb07",
+        "syntax.ts": "a434dcf121b54bd223f39ed9c01f1ee620a13fa312e64ca3ed55eb933e4e0a6f",
+        "wasm-globals.d.ts": "58ff41b63dfe3c96a47499f6a0b85d216dc801c691f240ff54fb43d17d9ad7f8",
+        "wasm-instance.ts": "15dda04d33d89b343d59e41702a41d60969cdd5f56650fecf580047dd005bdcf"
+      },
+      "sourceArchiveSha256": "332dd59b0245941afce1c9ccdaf4794a3930d06532c064e1deefef6129dbf8e5",
+      "preparationNode": "v22.22.1"
+    }
+  ],
+  "fixture": {
+    "name": "consumer-m2",
+    "source": "f0() {\n  local x=\"v0 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f0;; esac\nf1() {\n  local x=\"v1 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f1;; esac\nf2() {\n  local x=\"v2 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f2;; esac\nf3() {\n  local x=\"v3 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f3;; esac\nf4() {\n  local x=\"v4 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f4;; esac\nf5() {\n  local x=\"v5 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f5;; esac\nf6() {\n  local x=\"v6 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f6;; esac\nf7() {\n  local x=\"v7 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f7;; esac\nf8() {\n  local x=\"v8 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f8;; esac\nf9() {\n  local x=\"v9 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f9;; esac\nf10() {\n  local x=\"v10 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f10;; esac\nf11() {\n  local x=\"v11 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f11;; esac\nf12() {\n  local x=\"v12 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f12;; esac\nf13() {\n  local x=\"v13 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f13;; esac\nf14() {\n  local x=\"v14 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f14;; esac\nf15() {\n  local x=\"v15 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f15;; esac\nf16() {\n  local x=\"v16 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f16;; esac\nf17() {\n  local x=\"v17 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f17;; esac\nf18() {\n  local x=\"v18 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f18;; esac\nf19() {\n  local x=\"v19 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f19;; esac\nf20() {\n  local x=\"v20 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f20;; esac\nf21() {\n  local x=\"v21 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f21;; esac\nf22() {\n  local x=\"v22 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f22;; esac\nf23() {\n  local x=\"v23 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f23;; esac\nf24() {\n  local x=\"v24 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f24;; esac\nf25() {\n  local x=\"v25 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f25;; esac\nf26() {\n  local x=\"v26 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f26;; esac\nf27() {\n  local x=\"v27 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f27;; esac\nf28() {\n  local x=\"v28 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f28;; esac\nf29() {\n  local x=\"v29 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f29;; esac\nf30() {\n  local x=\"v30 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f30;; esac\nf31() {\n  local x=\"v31 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f31;; esac\nf32() {\n  local x=\"v32 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f32;; esac\nf33() {\n  local x=\"v33 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f33;; esac\nf34() {\n  local x=\"v34 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f34;; esac\nf35() {\n  local x=\"v35 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f35;; esac\nf36() {\n  local x=\"v36 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f36;; esac\nf37() {\n  local x=\"v37 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f37;; esac\nf38() {\n  local x=\"v38 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f38;; esac\nf39() {\n  local x=\"v39 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f39;; esac\nf40() {\n  local x=\"v40 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f40;; esac\nf41() {\n  local x=\"v41 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f41;; esac\nf42() {\n  local x=\"v42 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f42;; esac\nf43() {\n  local x=\"v43 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f43;; esac\nf44() {\n  local x=\"v44 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f44;; esac\nf45() {\n  local x=\"v45 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f45;; esac\nf46() {\n  local x=\"v46 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f46;; esac\nf47() {\n  local x=\"v47 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f47;; esac\nf48() {\n  local x=\"v48 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f48;; esac\nf49() {\n  local x=\"v49 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f49;; esac\nf50() {\n  local x=\"v50 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f50;; esac\nf51() {\n  local x=\"v51 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f51;; esac\nf52() {\n  local x=\"v52 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f52;; esac\nf53() {\n  local x=\"v53 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f53;; esac\nf54() {\n  local x=\"v54 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f54;; esac\nf55() {\n  local x=\"v55 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f55;; esac\nf56() {\n  local x=\"v56 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f56;; esac\nf57() {\n  local x=\"v57 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f57;; esac\nf58() {\n  local x=\"v58 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f58;; esac\nf59() {\n  local x=\"v59 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f59;; esac\nf60() {\n  local x=\"v60 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f60;; esac\nf61() {\n  local x=\"v61 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f61;; esac\nf62() {\n  local x=\"v62 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f62;; esac\nf63() {\n  local x=\"v63 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f63;; esac\nf64() {\n  local x=\"v64 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f64;; esac\nf65() {\n  local x=\"v65 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f65;; esac\nf66() {\n  local x=\"v66 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f66;; esac\nf67() {\n  local x=\"v67 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f67;; esac\nf68() {\n  local x=\"v68 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f68;; esac\nf69() {\n  local x=\"v69 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f69;; esac\nf70() {\n  local x=\"v70 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f70;; esac\nf71() {\n  local x=\"v71 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f71;; esac\nf72() {\n  local x=\"v72 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f72;; esac\nf73() {\n  local x=\"v73 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f73;; esac\nf74() {\n  local x=\"v74 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f74;; esac\nf75() {\n  local x=\"v75 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f75;; esac\nf76() {\n  local x=\"v76 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f76;; esac\nf77() {\n  local x=\"v77 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f77;; esac\nf78() {\n  local x=\"v78 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f78;; esac\nf79() {\n  local x=\"v79 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f79;; esac\nf80() {\n  local x=\"v80 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f80;; esac\nf81() {\n  local x=\"v81 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f81;; esac\nf82() {\n  local x=\"v82 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f82;; esac\nf83() {\n  local x=\"v83 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f83;; esac\nf84() {\n  local x=\"v84 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f84;; esac\nf85() {\n  local x=\"v85 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f85;; esac\nf86() {\n  local x=\"v86 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f86;; esac\nf87() {\n  local x=\"v87 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f87;; esac\nf88() {\n  local x=\"v88 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f88;; esac\nf89() {\n  local x=\"v89 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f89;; esac\nf90() {\n  local x=\"v90 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f90;; esac\nf91() {\n  local x=\"v91 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f91;; esac\nf92() {\n  local x=\"v92 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f92;; esac\nf93() {\n  local x=\"v93 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f93;; esac\nf94() {\n  local x=\"v94 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f94;; esac\nf95() {\n  local x=\"v95 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f95;; esac\nf96() {\n  local x=\"v96 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f96;; esac\nf97() {\n  local x=\"v97 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f97;; esac\nf98() {\n  local x=\"v98 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f98;; esac\nf99() {\n  local x=\"v99 🎉\"\n  if [ -n \"$x\" ]; then\n    echo \"$x\" | tr a-z A-Z\n  fi\n}\ncase \"$1\" in a) f99;; esac\n",
+    "markers": 0,
+    "dimensions": {
+      "functions": 100,
+      "ifClauses": 100,
+      "caseClauses": 100
+    },
+    "dialect": "bash",
+    "path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/design/validation/performance/in-place-wire-decode/consumer-m2.json",
+    "sourceSha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562",
+    "sourceBytes": 11270
+  },
+  "summary": {
+    "baseline": {
+      "count": 6,
+      "min": 30.051041499999997,
+      "median": 31.563822749999986,
+      "max": 33.66054200000002
+    },
+    "candidate": {
+      "count": 6,
+      "min": 24.370229000000037,
+      "median": 25.47151000000003,
+      "max": 27.445833499999978
+    },
+    "pairs": [
+      {
+        "round": 0,
+        "baseline": 31.66312499999998,
+        "candidate": 24.700541999999984,
+        "deltaMs": -6.962582999999995,
+        "ratio": 0.7801043643039024
+      },
+      {
+        "round": 1,
+        "baseline": 30.60156249999997,
+        "candidate": 24.787708000000023,
+        "deltaMs": -5.813854499999948,
+        "ratio": 0.8100144559611963
+      },
+      {
+        "round": 2,
+        "baseline": 30.051041499999997,
+        "candidate": 26.155312000000038,
+        "deltaMs": -3.895729499999959,
+        "ratio": 0.8703629123802594
+      },
+      {
+        "round": 3,
+        "baseline": 33.66054200000002,
+        "candidate": 27.445833499999978,
+        "deltaMs": -6.214708500000043,
+        "ratio": 0.8153711101859251
+      },
+      {
+        "round": 4,
+        "baseline": 31.464520499999992,
+        "candidate": 24.370229000000037,
+        "deltaMs": -7.0942914999999545,
+        "ratio": 0.7745304429476383
+      },
+      {
+        "round": 5,
+        "baseline": 33.534354500000006,
+        "candidate": 26.25464549999998,
+        "deltaMs": -7.279709000000025,
+        "ratio": 0.7829178730725226
+      }
+    ]
+  },
+  "status": "ok"
+}
