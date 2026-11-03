@@ -4,7 +4,7 @@
 
 ## printSync() function
 
-Formats the current tree with a fresh upstream printer and collects all output. Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes produce PrintError. Only File output has upstream's trailing-newline behavior. Invalid UTF-8 output remains bytes. Upstream formatting can itself consume input bytes, including its tabwriter escape byte, so this is not source replay.
+Formats the current tree with a fresh upstream printer and collects all output. Supported roots are File, Stmt, Word, Assign, Command and WordPart; other Nodes produce PrintError. An ordinary structuredClone of a supported syntax subtree is accepted under the same input and failure rules; copying does not make nil or unsupported roots printable. Only File output has upstream's trailing-newline behavior. Invalid UTF-8 output remains bytes. Upstream formatting can itself consume input bytes, including its tabwriter escape byte, so this is not source replay.
 
 InputError identifies unrepresentable input; PrintError is an ordinary returned upstream error; PrintPanicError retains an upstream operation panic. No partial output or arbitrary writer lifecycle is exposed. Full tree reconstruction and collected output require memory proportional to the values involved; extreme indentation or tree size is not made resource-safe by panic adaptation.
 

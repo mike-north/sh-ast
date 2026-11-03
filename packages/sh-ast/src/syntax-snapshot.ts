@@ -24,7 +24,10 @@ export interface NodePositions {
 
 /**
  * Identity-based lookup of the original parse's bounds. A new or copied node has
- * no observation. The index never calls WASM or recalculates edited node bounds.
+ * no observation, including every node in a structuredClone of the syntax tree.
+ * Clone File or a Node subtree, not this function-bearing lookup. Copied position
+ * fields retain their values but do not transfer snapshot identity.
+ * The index never calls WASM or recalculates edited node bounds.
  * @public
  */
 export interface PositionSnapshot {

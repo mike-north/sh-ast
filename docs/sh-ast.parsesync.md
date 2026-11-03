@@ -4,7 +4,7 @@
 
 ## parseSync() function
 
-Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction.
+Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
 
 **Signature:**
 
