@@ -1,5 +1,11 @@
 # sh-ast
 
+## 0.6.1
+
+### Patch Changes
+
+- [#49](https://github.com/mike-north/sh-ast/pull/49) [`9c5ff2b`](https://github.com/mike-north/sh-ast/commit/9c5ff2b1d5ade99db8ca1e170404e534f4f49a90) Thanks [@mike-north](https://github.com/mike-north)! - Reduce parse-with-positions transport overhead by collecting node occurrences during syntax encoding and sending compact position tuples with sparse errors. Preserve snapshot identity, original-source coordinates, independent upstream failures, and public API behavior.
+
 ## 0.6.0
 
 ### Minor Changes
