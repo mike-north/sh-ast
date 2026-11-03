@@ -52,7 +52,7 @@ readonly [WordResolution](./sh-ast-analyze.wordresolution.md)<!-- -->\[\]
 
 </td><td>
 
-`resolveWord` applied to every word, in argument order (same `{ context: 'command-argument' }` as [CommandSite.argv0](./sh-ast-analyze.commandsite.argv0.md)<!-- -->).
+`resolveWord` applied in argument order (same `{ context: 'command-argument' }` as [CommandSite.argv0](./sh-ast-analyze.commandsite.argv0.md)<!-- -->). Indices align directly with [CommandSite.node](./sh-ast-analyze.commandsite.node.md)<!-- -->'s Args array: a null slot is retained as an unsupported resolution, never skipped.
 
 
 </td></tr>

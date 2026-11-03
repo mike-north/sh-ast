@@ -263,8 +263,11 @@ expectType<readonly WrapperSpec[]>(DEFAULT_TRANSPARENT_WRAPPERS);
 expectType<WrapperSpec[]>([...DEFAULT_TRANSPARENT_WRAPPERS, { names: ['with-retry'] }]);
 expectType<WrapperSpec[]>(DEFAULT_TRANSPARENT_WRAPPERS.filter((w) => !w.names.includes('env')));
 
-// Argv0Resolution's shape: chain/effective/assignmentsSkipped, all readonly.
+// Argument provenance and the existing resolution fields remain readonly.
 declare const resolution: Argv0Resolution;
+expectType<readonly number[]>(resolution.chainIndices);
+expectError((resolution.chainIndices = []));
+expectError((resolution.chainIndices[0] = 1));
 expectType<readonly Argv0ChainWord[]>(resolution.chain);
 expectType<Argv0ChainWord>(resolution.effective);
 expectType<number>(resolution.assignmentsSkipped);
@@ -274,6 +277,7 @@ expectError((resolution.assignmentsSkipped = 0));
 
 // Valid construction of an Argv0Resolution.
 expectAssignable<Argv0Resolution>({
+  chainIndices: [0],
   chain: [{ static: true, text: 'rm' }],
   effective: { static: true, text: 'rm' },
   assignmentsSkipped: 0,
@@ -282,6 +286,7 @@ expectAssignable<Argv0Resolution>({
 // Invalid construction: missing/wrong-shaped fields.
 expectError<Argv0Resolution>({ effective: { static: true, text: 'rm' }, assignmentsSkipped: 0 });
 expectError<Argv0Resolution>({
+  chainIndices: [0],
   chain: [{ static: true, text: 'rm' }],
   effective: { static: true, text: 'rm' },
   assignmentsSkipped: 'zero',
