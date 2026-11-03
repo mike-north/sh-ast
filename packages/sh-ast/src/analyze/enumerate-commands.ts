@@ -106,7 +106,11 @@ export interface CommandSite {
    * `ResolveWordOptions.context`'s doc comment).
    */
   readonly argv0: WordResolution;
-  /** `resolveWord` applied to every word, in argument order (same `{ context: 'command-argument' }` as {@link CommandSite.argv0}). */
+  /**
+   * `resolveWord` applied in argument order (same `{ context: 'command-argument' }`
+   * as {@link CommandSite.argv0}). Indices align directly with {@link CommandSite.node}'s
+   * Args array: a null slot is retained as an unsupported resolution, never skipped.
+   */
   readonly argv: readonly WordResolution[];
   /** The path from the tree root to this site, outermost frame first. */
   readonly context: readonly CommandContext[];

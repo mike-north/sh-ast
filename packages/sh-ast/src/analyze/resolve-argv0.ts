@@ -413,6 +413,23 @@ export interface Argv0Resolution {
   readonly chain: readonly Argv0ChainWord[];
 
   /**
+   * Indices into the input {@link CommandSite.argv}, one for each corresponding
+   * {@link Argv0Resolution.chain} entry. The arrays always have the same nonzero
+   * length. Ordinary entries identify their original word; synthesized failures
+   * identify the triggering flag or ambiguous assignment operand instead.
+   * Repeated word text does not collapse distinct argument positions.
+   *
+   * For a resolved effective command, its arguments are
+   * `site.argv.slice(chainIndices.at(-1)! + 1)`. Sites from
+   * {@link enumerateCommands} align argv directly with `site.node.Args`, retaining
+   * null slots as unsupported word resolutions, so the same indices select syntax
+   * Words. A synthetic failure does not identify a command or its arguments.
+   * When wrapper scanning stops or runs out of operands, the existing result
+   * remains the wrapper word and its index; no missing command is invented.
+   */
+  readonly chainIndices: readonly number[];
+
+  /**
    * The last element of {@link Argv0Resolution.chain} — the effective
    * command, or, if resolution hit a statically-unknowable word anywhere
    * along the chain (an expansion, a glob, an unrecognized flag, an
@@ -542,6 +559,8 @@ type AdvanceResult =
   | {
       readonly kind: 'unresolvable';
       readonly reason: Argv0UnresolvedReason;
+      /** Argument responsible for the synthetic failure, rather than a guessed command. */
+      readonly index: number;
     };
 
 /**
@@ -559,7 +578,7 @@ type AdvanceResult =
  *   `argv` with no wrapped-command word found (a malformed or truncated
  *   invocation, e.g. bare `env` with nothing else, or `sudo -u` with no
  *   operand for `-u`).
- * - `{ kind: 'unresolvable', reason }` — an ambiguous assignment, or a
+ * - `{ kind: 'unresolvable', reason, index }` — an ambiguous assignment, or a
  *   *statically known* word that
  *   looks like a flag for this wrapper (unquoted, unescaped `-` prefix,
  *   not `--`) but matches none of `spec`'s recognized flag/operand shapes,
@@ -624,7 +643,7 @@ function advancePastWrapperOperands(
     if (canRecognizeAssignment && assignmentGrammar === 'env' && text.startsWith('=')) {
       // glibc putenv accepts an empty name, while FreeBSD setenv rejects
       // it. The grammar therefore cannot identify a portable invocation.
-      return { kind: 'unresolvable', reason: 'ambiguous-assignment' };
+      return { kind: 'unresolvable', reason: 'ambiguous-assignment', index };
     }
     const isAssignment =
       assignmentGrammar === 'shell-identifier'
@@ -644,7 +663,7 @@ function advancePastWrapperOperands(
         spec.unresolvableFlags !== undefined &&
         matchesWholeOrAttachedFlag(text, spec.unresolvableFlags)
       ) {
-        return { kind: 'unresolvable', reason: 'embedded-command' };
+        return { kind: 'unresolvable', reason: 'embedded-command', index };
       }
       if (
         spec.stopsChainFlags !== undefined &&
@@ -692,7 +711,7 @@ function advancePastWrapperOperands(
       // None of this applies once `optionsEnded` — see this function's
       // doc comment.
       if (looksLikeFlag(text)) {
-        return { kind: 'unresolvable', reason: 'unknown-flag' };
+        return { kind: 'unresolvable', reason: 'unknown-flag', index };
       }
     }
     if (positionalSeen < requiredPositional) {
@@ -852,11 +871,14 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
   const assignmentsSkipped = nodeArray(site.node.Assigns).length;
   const argv = site.argv;
   const chain: Argv0ChainWord[] = [];
+  // Provenance is captured at discovery, so repeated text and skipped operands are unambiguous.
+  const chainIndices: number[] = [];
   let index = 0;
   while (index < argv.length) {
     // `index < argv.length` just checked above, so this is a real element.
     const word = argv[index];
     chain.push(word);
+    chainIndices.push(index);
     if (!word.static) break;
     const spec = findWrapperSpec(wrappers, word.text);
     if (spec === undefined) break;
@@ -864,6 +886,7 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
     if (result.kind === 'truncated') break;
     if (result.kind === 'unresolvable') {
       chain.push({ static: false, reason: result.reason });
+      chainIndices.push(result.index);
       break;
     }
     index = result.index;
@@ -872,5 +895,5 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
   // at least one iteration and pushes `argv[0]` before any `break` — chain
   // always has at least one element.
   const effective = chain[chain.length - 1];
-  return { chain, effective, assignmentsSkipped };
+  return { chain, chainIndices, effective, assignmentsSkipped };
 }

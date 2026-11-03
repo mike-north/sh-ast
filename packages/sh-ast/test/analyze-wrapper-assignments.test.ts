@@ -39,6 +39,7 @@ describe('utility assignment operands', () => {
 
   it('shell assignment counts exclude utility assignment operands', () => {
     expect(resolve('A=1 env B-C=2 rm x')).toEqual({
+      chainIndices: [0, 2],
       chain: [
         { static: true, text: 'env' },
         { static: true, text: 'rm' },
