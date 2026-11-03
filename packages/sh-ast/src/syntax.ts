@@ -3,8 +3,6 @@
  * node bounds run in Go; this module transports exact data and adapts errors,
  * leaving ESLint locations, traversal, and policy to consumers.
  */
-import { SYNTAX_SCHEMA } from '../generated/syntax-schema.js';
-import type { OperatorFamily, RawOperator } from '../generated/syntax-constants.js';
 import type { File, GoString, Node, SyntaxPos } from '../generated/syntax-types.js';
 import { ShInternalError } from './errors.js';
 import { assertParseDepthWithinLimit } from './parse-depth-guard.js';
@@ -24,6 +22,7 @@ import { createPositionSnapshot, type ParsedFile } from './syntax-snapshot.js';
 export type { ParsedFile, PositionSnapshot, NodePositions } from './syntax-snapshot.js';
 
 export { InputError, LangError, ParseError } from './syntax-errors.js';
+export { rawOperator } from './syntax-operator.js';
 
 /**
  * Whole-file parser inputs corresponding to upstream controls. Defaults match
@@ -133,30 +132,6 @@ export function newPos(
   if (!isSyntaxPos(result.Position))
     throw new ShInternalError('The syntax constructor returned an invalid position record');
   return result.Position;
-}
-
-/**
- * Represents an unnamed value in an upstream uint32 operator family. Named
- * constants remain precise literal unions; this explicit path preserves other Go
- * values without claiming an operation such as Print accepts them.
- * @public
- */
-export function rawOperator<Family extends OperatorFamily>(
-  family: Family,
-  value: number,
-): RawOperator<Family> {
-  const knownFamily = Object.values(SYNTAX_SCHEMA).some((record) =>
-    Object.values(record.fields).some(
-      (field) => field.kind === 'operator' && field.type === family,
-    ),
-  );
-  if (!knownFamily || !Number.isInteger(value) || value < 0 || value > 0xffff_ffff) {
-    throw new InputError(
-      'An operator value must belong to a known family and be an integral uint32',
-    );
-  }
-  // The runtime check establishes the opaque numeric brand; no value is changed.
-  return value as RawOperator<Family>;
 }
 
 /** Exact Go options are validated without silently ignoring misspelled keys. */

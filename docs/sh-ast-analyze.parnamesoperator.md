@@ -12,5 +12,5 @@ The upstream ParNamesOperator domain: exact named tokens, the Go zero value, and
 export type ParNamesOperator =
   0 | typeof NamesPrefix | typeof NamesPrefixWords | RawOperator<'ParNamesOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [NamesPrefix](./sh-ast-analyze.namesprefix.md)<!-- -->, [NamesPrefixWords](./sh-ast-analyze.namesprefixwords.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

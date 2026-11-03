@@ -28,5 +28,5 @@ export type RedirOperator =
   | typeof WordHdoc
   | RawOperator<'RedirOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [AppAll](./sh-ast-analyze.appall.md)<!-- -->, [AppAllClob](./sh-ast-analyze.appallclob.md)<!-- -->, [AppClob](./sh-ast-analyze.appclob.md)<!-- -->, [AppOut](./sh-ast-analyze.appout.md)<!-- -->, [DashHdoc](./sh-ast-analyze.dashhdoc.md)<!-- -->, [DplIn](./sh-ast-analyze.dplin.md)<!-- -->, [DplOut](./sh-ast-analyze.dplout.md)<!-- -->, [Hdoc](./sh-ast-analyze.hdoc.md)<!-- -->, [RdrAll](./sh-ast-analyze.rdrall.md)<!-- -->, [RdrAllClob](./sh-ast-analyze.rdrallclob.md)<!-- -->, [RdrClob](./sh-ast-analyze.rdrclob.md)<!-- -->, [RdrIn](./sh-ast-analyze.rdrin.md)<!-- -->, [RdrInOut](./sh-ast-analyze.rdrinout.md)<!-- -->, [RdrOut](./sh-ast-analyze.rdrout.md)<!-- -->, [WordHdoc](./sh-ast-analyze.wordhdoc.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

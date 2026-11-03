@@ -19,5 +19,5 @@ export type UnAritOperator =
   | typeof Plus
   | RawOperator<'UnAritOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [BitNegation](./sh-ast-analyze.bitnegation.md)<!-- -->, [Dec](./sh-ast-analyze.dec.md)<!-- -->, [Inc](./sh-ast-analyze.inc.md)<!-- -->, [Minus](./sh-ast-analyze.minus.md)<!-- -->, [Not](./sh-ast-analyze.not.md)<!-- -->, [Plus](./sh-ast-analyze.plus.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

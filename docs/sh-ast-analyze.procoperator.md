@@ -12,5 +12,5 @@ The upstream ProcOperator domain: exact named tokens, the Go zero value, and exp
 export type ProcOperator =
   0 | typeof CmdIn | typeof CmdInTemp | typeof CmdOut | RawOperator<'ProcOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [CmdIn](./sh-ast-analyze.cmdin.md)<!-- -->, [CmdInTemp](./sh-ast-analyze.cmdintemp.md)<!-- -->, [CmdOut](./sh-ast-analyze.cmdout.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 
