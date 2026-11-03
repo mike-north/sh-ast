@@ -12,5 +12,5 @@ The upstream BinCmdOperator domain: exact named tokens, the Go zero value, and e
 export type BinCmdOperator =
   0 | typeof AndStmt | typeof OrStmt | typeof Pipe | typeof PipeAll | RawOperator<'BinCmdOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [AndStmt](./sh-ast-analyze.andstmt.md)<!-- -->, [OrStmt](./sh-ast-analyze.orstmt.md)<!-- -->, [Pipe](./sh-ast-analyze.pipe.md)<!-- -->, [PipeAll](./sh-ast-analyze.pipeall.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

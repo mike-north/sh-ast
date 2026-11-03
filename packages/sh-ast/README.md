@@ -184,7 +184,23 @@ records this boundary and its tests.
 
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
 command, and wrapper analysis consumes the faithful records; it does not define
-parser behavior or the core tree representation.
+parser behavior or the core tree representation. The analyze entry point also
+exports the faithful record/operator types, the named operator constants those
+types reference, and `rawOperator` for unnamed uint32 values. Analyze-only code can
+compare a `BinaryCmd.Op` with `AndStmt` or `Pipe` and construct family-branded raw
+values without a second import from the root entry point. For example,
+`rawOperator('BinCmdOperator', 500)` returns `500` as a `RawOperator<'BinCmdOperator'>`.
+The shared constructor validates a known family and an integral uint32 value;
+it does not promise that every upstream operation accepts that value.
+
+```ts
+import { AndStmt, rawOperator, type BinaryCmd, type RawOperator } from 'sh-ast/analyze';
+
+function isAndCommand(command: BinaryCmd): boolean {
+  return command.Op === AndStmt;
+}
+const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500);
+```
 
 `resolveArgv0` follows only documented wrapper grammars. The default `env` and
 `sudo` entries accept assignment names beyond shell identifiers, such as `A-B`

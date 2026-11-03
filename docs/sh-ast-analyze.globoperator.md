@@ -18,5 +18,5 @@ export type GlobOperator =
   | typeof GlobZeroOrOne
   | RawOperator<'GlobOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [GlobExcept](./sh-ast-analyze.globexcept.md)<!-- -->, [GlobOne](./sh-ast-analyze.globone.md)<!-- -->, [GlobOneOrMore](./sh-ast-analyze.globoneormore.md)<!-- -->, [GlobZeroOrMore](./sh-ast-analyze.globzeroormore.md)<!-- -->, [GlobZeroOrOne](./sh-ast-analyze.globzeroorone.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

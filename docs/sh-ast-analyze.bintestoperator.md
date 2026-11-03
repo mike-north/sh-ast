@@ -30,5 +30,5 @@ export type BinTestOperator =
   | typeof TsReMatch
   | RawOperator<'BinTestOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [AndTest](./sh-ast-analyze.andtest.md)<!-- -->, [OrTest](./sh-ast-analyze.ortest.md)<!-- -->, [TsAfter](./sh-ast-analyze.tsafter.md)<!-- -->, [TsBefore](./sh-ast-analyze.tsbefore.md)<!-- -->, [TsDevIno](./sh-ast-analyze.tsdevino.md)<!-- -->, [TsEql](./sh-ast-analyze.tseql.md)<!-- -->, [TsGeq](./sh-ast-analyze.tsgeq.md)<!-- -->, [TsGtr](./sh-ast-analyze.tsgtr.md)<!-- -->, [TsLeq](./sh-ast-analyze.tsleq.md)<!-- -->, [TsLss](./sh-ast-analyze.tslss.md)<!-- -->, [TsMatch](./sh-ast-analyze.tsmatch.md)<!-- -->, [TsMatchShort](./sh-ast-analyze.tsmatchshort.md)<!-- -->, [TsNeq](./sh-ast-analyze.tsneq.md)<!-- -->, [TsNewer](./sh-ast-analyze.tsnewer.md)<!-- -->, [TsNoMatch](./sh-ast-analyze.tsnomatch.md)<!-- -->, [TsOlder](./sh-ast-analyze.tsolder.md)<!-- -->, [TsReMatch](./sh-ast-analyze.tsrematch.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

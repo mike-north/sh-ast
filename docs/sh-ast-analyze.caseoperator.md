@@ -17,5 +17,5 @@ export type CaseOperator =
   | typeof ResumeKorn
   | RawOperator<'CaseOperator'>;
 ```
-**References:** [RawOperator](./sh-ast-analyze.rawoperator.md)
+**References:** [Break](./sh-ast-analyze.break.md)<!-- -->, [Fallthrough](./sh-ast-analyze.fallthrough.md)<!-- -->, [Resume](./sh-ast-analyze.resume.md)<!-- -->, [ResumeKorn](./sh-ast-analyze.resumekorn.md)<!-- -->, [RawOperator](./sh-ast-analyze.rawoperator.md)
 

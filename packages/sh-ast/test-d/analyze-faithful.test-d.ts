@@ -1,7 +1,7 @@
 /** Public entry points share faithful values and preserve operator-family distinctions. */
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-import { rawOperator } from 'sh-ast';
-import type { BinCmdOperator, File, Node } from 'sh-ast';
+import { rawOperator } from 'sh-ast/analyze';
+import type { BinCmdOperator, File, Node } from 'sh-ast/analyze';
 import { enumerateCommands, resolveWord } from 'sh-ast/analyze';
 import type {
   CallExpr,
