@@ -81,14 +81,32 @@ function visitNodes(file: File, observe: (node: Node) => void): void {
     if (!isRecord(value) || typeof value.Type !== 'string') return;
     if (isNodeIdentity(value)) observe(value);
     if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return;
-    for (const [name, field] of Object.entries(SYNTAX_SCHEMA[value.Type].fields)) {
-      if (field.kind !== 'struct' && field.kind !== 'interface') continue;
+    for (const name of childFields(value.Type)) {
       const child = value[name];
       if (Array.isArray(child)) child.forEach(visit);
       else visit(child);
     }
   };
   visit(file);
+}
+
+/**
+ * Child-bearing (struct or interface) field names per record type, in schema
+ * order. The generated schema is immutable, so each list is derived once rather
+ * than re-filtering every field of every visited record.
+ */
+const CHILD_FIELDS = new Map<string, readonly string[]>();
+
+/** Returns the cached child field names for a type known to be in the schema. */
+function childFields(type: string): readonly string[] {
+  let names = CHILD_FIELDS.get(type);
+  if (names === undefined) {
+    names = Object.entries(SYNTAX_SCHEMA[type].fields)
+      .filter(([, field]) => field.kind === 'struct' || field.kind === 'interface')
+      .map(([name]) => name);
+    CHILD_FIELDS.set(type, names);
+  }
+  return names;
 }
 
 /** Own byte-bearing failures so neither transport holders nor catchers can alter captures. */

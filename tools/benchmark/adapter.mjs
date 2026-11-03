@@ -7,6 +7,8 @@ export const phases = [
   'first-parse',
   'parse',
   'parse-with-positions',
+  'parse-stages',
+  'parse-with-positions-stages',
   'walk',
   'bounds-root',
   'bounds-all',
@@ -48,6 +50,7 @@ export function contractFor(api, phase) {
   const model = api.SYNTAX_SCHEMA ? 'faithful' : 'normalized';
   if (phase === 'import') return 'module-import';
   if (['first-parse', 'parse'].includes(phase)) return 'parse-source-retain-comments';
+  // Stage attribution exists only for the faithful linear-memory syntax ABI.
   return `${phase}:${model}`;
 }
 /** Each operation isolates preparation, measured work and post-clock correctness. */

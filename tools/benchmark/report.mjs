@@ -66,6 +66,7 @@ export function markdown(report) {
       `| ${row.fixture} / ${row.dialect} | ${row.phase} | ${row.artifact} | ${row.processes} / ${row.observations ?? '—'} | ${elapsed} | ${comparison.status === 'ok' ? `${comparison.ratio.toFixed(2)}x` : comparison.status} |`,
     );
   }
+  lines.push(...stageTable(report.rows));
   lines.push(
     '',
     '## Adjacent release comparisons',
@@ -86,7 +87,8 @@ export function comparisonsFor(rows) {
   for (const [baseline, candidate] of [
     ['0.3.1', '0.4.0'],
     ['0.4.0', '0.5.0'],
-    ['0.5.0', 'local-candidate'],
+    ['0.5.0', '0.7.0'],
+    ['0.7.0', 'local-candidate'],
   ]) {
     for (const row of rows.filter((row) => row.artifact === candidate)) {
       const prior = rows.find(
@@ -107,4 +109,42 @@ export function comparisonsFor(rows) {
     }
   }
   return comparisons;
+}
+
+/** Stage columns in call order; each cell is the median of process medians. */
+const STAGES = ['input', 'wasm', 'parse', 'encode', 'transfer', 'decode'];
+
+/**
+ * One line per fixture/dialect/stage phase/artifact, with every stage side by
+ * side. Unsupported stages (an older package cannot split WASM time) show as
+ * unsupported rather than zero. Rows come from the ordinary summaries.
+ */
+export function stageTable(rows) {
+  const parents = rows.filter((row) => row.phase.endsWith('-stages') && row.status === 'ok');
+  if (!parents.length) return [];
+  const lines = [
+    '',
+    '## Stage attribution',
+    '',
+    'Median of process medians (ms) for the instrumented call; see tools/benchmark/README.md for stage boundaries. wasm = parse + encode.',
+    '',
+    `| Fixture / dialect | Phase | Artifact | ${STAGES.join(' | ')} | total |`,
+    `| --- | --- | --- | ${STAGES.map(() => '---:').join(' | ')} | ---: |`,
+  ];
+  for (const parent of parents) {
+    const cells = STAGES.map((stage) => {
+      const row = rows.find(
+        (other) =>
+          other.fixture === parent.fixture &&
+          other.dialect === parent.dialect &&
+          other.artifact === parent.artifact &&
+          other.phase === `${parent.phase}:${stage}`,
+      );
+      return row?.status === 'ok' ? duration(row.median) : 'unsupported';
+    });
+    lines.push(
+      `| ${parent.fixture} / ${parent.dialect} | ${parent.phase} | ${parent.artifact} | ${cells.join(' | ')} | ${duration(parent.median)} |`,
+    );
+  }
+  return lines;
 }

@@ -11,6 +11,7 @@
     "packages/*": {},
     ".": {
       "entry": [
+        "tools/benchmark/identity.mjs",
         "tools/benchmark/stream-encoding-prepare.mjs",
         "tools/benchmark/stream-encoding-run.mjs",
         "tools/benchmark/stream-encoding-worker.mjs"

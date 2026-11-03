@@ -5,11 +5,13 @@
 // syntaxProcess transports complete upstream data and accepts raw source bytes.
 // Both share explicit alloc/free ownership and the same initialized Go runtime.
 //
-// The faithful syntax response streams structure directly, preserving the
-// original encoding/json bytes and declaration-order observation metadata.
-// JSON strings use encoding/json whenever escaping is needed, including HTML,
-// controls and Unicode separators; arbitrary Go bytes use explicit Bytes records.
-// The legacy protocol and small error envelopes retain encoding/json marshaling.
+// The faithful syntax response streams structure directly, with the original
+// record shapes, member order and declaration-order observation metadata.
+// Parse responses are ASCII-only (non-ASCII text uses \u escapes; ASCII keeps
+// encoding/json's escaping) and spell File positions as compact tuples, which
+// the TypeScript decoder restores to the same position records; arbitrary Go
+// bytes use explicit Bytes records. The legacy protocol and small error
+// envelopes retain encoding/json marshaling.
 //
 // # ABI: linear-memory exports, not syscall/js
 //
@@ -245,6 +247,16 @@ func process(text string, dialect string, filename string) uintptr {
 //go:wasmexport syntaxProcess
 func syntaxProcess(operation string, payload string, options string) uintptr {
 	return pin(append(syntaxbridge.Process(operation, payload, options), 0))
+}
+
+// syntaxLastParseNanoseconds reports how long the most recent parse or
+// parse-with-positions operation spent inside upstream Parser.Parse. It exists
+// for the performance benchmark, which subtracts it from the syntaxProcess call
+// to separate parsing from response encoding; the TypeScript API never calls it.
+//
+//go:wasmexport syntaxLastParseNanoseconds
+func syntaxLastParseNanoseconds() float64 {
+	return float64(syntaxbridge.LastParseDuration().Nanoseconds())
 }
 
 func main() {

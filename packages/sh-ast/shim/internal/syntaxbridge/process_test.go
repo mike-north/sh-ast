@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"eslint-sh-shim/internal/syntaxwire"
+	"eslint-sh-shim/internal/wireformtest"
 	"mvdan.cc/sh/v3/syntax"
 )
 
@@ -27,9 +28,10 @@ func response(t *testing.T, operation, payload, options string) map[string]any {
 
 // fileFromResponse reconstructs the returned tree for comparison with an
 // independently parsed upstream value, including data hidden by sparse JSON.
+// The test oracle expands compact File positions before syntax decoding.
 func fileFromResponse(t *testing.T, result map[string]any) *syntax.File {
 	t.Helper()
-	encoded, err := json.Marshal(result["File"])
+	encoded, err := json.Marshal(wireformtest.ExpandPositions(result["File"]))
 	if err != nil {
 		t.Fatal(err)
 	}

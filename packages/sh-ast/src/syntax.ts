@@ -16,6 +16,7 @@ import {
   isSyntaxFile,
   isSyntaxNode,
   isSyntaxPos,
+  restoreSyntaxFile,
 } from './syntax-wire.js';
 import { callSyntax } from './wasm-instance.js';
 import { createPositionSnapshot, type ParsedFile } from './syntax-snapshot.js';
@@ -90,10 +91,15 @@ function invokeParse(
     typeof source === 'string' ? source : new TextDecoder().decode(source),
   );
   validateOptions(options);
-  const result = invoke(operation, bytes, encodeWire(options));
-  if (!isSyntaxFile(result.File))
+  const result = decodeResponse(operation, bytes, encodeWire(options));
+  // Parse responses, including partial Files beside parser errors, spell File
+  // positions compactly; one boundary validation also restores their records.
+  const file =
+    result.File === null ? null : restoreSyntaxFile(result.File) ? result.File : undefined;
+  throwResponseError(result, file);
+  if (!file)
     throw new ShInternalError('The syntax parser returned an incomplete or invalid File record');
-  return { file: result.File, response: result };
+  return { file, response: result };
 }
 
 /**
@@ -166,9 +172,32 @@ function positionOf(operation: 'pos' | 'end', node: Node): SyntaxPos {
 
 /** Decodes one complete response before translating its upstream failure kind. */
 function invoke(operation: string, payload: Uint8Array, options = '{}'): Record<string, unknown> {
+  const result = decodeResponse(operation, payload, options);
+  throwResponseError(
+    result,
+    result.File === null ? null : isSyntaxFile(result.File) ? result.File : undefined,
+  );
+  return result;
+}
+
+/** Calls the bridge and decodes its complete JSON response record. */
+function decodeResponse(
+  operation: string,
+  payload: Uint8Array,
+  options: string,
+): Record<string, unknown> {
   const result = decodeWire(callSyntax(operation, payload, options));
   if (!isRecord(result))
     throw new ShInternalError('The syntax bridge returned a non-record response');
+  return result;
+}
+
+/**
+ * Translates a response's Error member, if any, into the matching exception.
+ * file is the response's already validated File: null when absent from the
+ * bridge's perspective, undefined when missing or invalid.
+ */
+function throwResponseError(result: Record<string, unknown>, file: File | null | undefined): void {
   if (result.Error !== undefined) {
     const error = result.Error;
     if (!isRecord(error) || !isGoString(error.Message))
@@ -178,7 +207,6 @@ function invoke(operation: string, payload: Uint8Array, options = '{}'): Record<
       throw new ShInternalError(
         typeof error.Message === 'string' ? error.Message : new TextDecoder().decode(error.Message),
       );
-    const file = result.File === null ? null : isSyntaxFile(result.File) ? result.File : undefined;
     if (file === undefined || !isGoString(error.Filename) || !isSyntaxPos(error.Pos))
       throw new ShInternalError('The syntax bridge dropped a partial result or error position');
     if (
@@ -216,5 +244,4 @@ function invoke(operation: string, payload: Uint8Array, options = '{}'): Record<
     }
     throw new ShInternalError('The syntax bridge returned an unknown or incomplete upstream error');
   }
-  return result;
 }

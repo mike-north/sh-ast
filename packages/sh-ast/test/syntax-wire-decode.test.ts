@@ -31,7 +31,7 @@ describe('owned JSON graph restoration', () => {
     const parsed = { File: { Parts: nested }, Error: null };
     vi.spyOn(JSON, 'parse').mockReturnValueOnce(parsed);
 
-    const result = decodeWire('response supplied by JSON.parse');
+    const result = decodeWire('response supplied by JSON.parse, naming a "Bytes" member');
     expect(result).toBe(parsed);
     expect(parsed.File.Parts).toBe(nested);
     expect(parsed.File.Parts[1]).toBe(ordinary);
@@ -42,7 +42,7 @@ describe('owned JSON graph restoration', () => {
     const child = { nested: [null, true, 42, '中'] };
     const parsed = [child, { Bytes: '' }];
     vi.spyOn(JSON, 'parse').mockReturnValueOnce(parsed);
-    expect(decodeWire('array response')).toBe(parsed);
+    expect(decodeWire('array response with a "Bytes" member')).toBe(parsed);
     expect(parsed[0]).toBe(child);
     expect(parsed[1]).toEqual(new Uint8Array());
   });
@@ -72,6 +72,9 @@ describe('owned JSON graph restoration', () => {
     '{"__proto__":{"Bytes":"/w=="},"constructor":{"prototype":{"Bytes":"AA=="}}}',
     '{"Bytes":""}',
     '"🎉中é"',
+    '{"Value":"Bytes","Parts":[{"Text":"say \\"Bytes\\": not a tag"}],"Name":{"Bytes":"AA=="}}',
+    '{"Value":"no byte tags","Parts":[{"Type":"Lit","Value":"\\u00e9\\ud83c\\udf89"},null,0]}',
+    '[{"Text":"say \\"Bytes\\": not a tag"},{"Value":"Bytes"}]',
   ])('matches the retired decoder for independent wire fixture %s', (text) => {
     expect(decodeWire(text)).toEqual(copyingDecode(text));
   });

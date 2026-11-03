@@ -22,7 +22,7 @@ const { values } = parseArgs({
     warmup: { type: 'string', default: '2' },
     fixtures: {
       type: 'string',
-      default: 'representative-1,representative-50,nested-8,nested-64,heredoc',
+      default: 'representative-1,representative-50,nested-8,nested-64,heredoc,consumer-m2',
     },
     dialects: { type: 'string', default: 'bash' },
     phases: { type: 'string', default: phases.join(',') },
@@ -92,6 +92,22 @@ function worker(artifact, fixture, phase, mode) {
   );
   return { artifact: artifact.label, fixture: fixture.name, dialect: fixture.dialect, ...result };
 }
+/**
+ * A stage phase's process contributes one derived sample per stage, named
+ * `<phase>:<stage>`, so each stage is summarized and compared like a phase.
+ * The raw process record (with its per-stage arrays) is what samples.jsonl keeps.
+ */
+function stageSamples(sample) {
+  if (!sample.stages) return [];
+  const identity = { ...sample };
+  for (const key of ['stages', 'samples', 'summary']) delete identity[key];
+  return Object.entries(sample.stages).map(([stage, observed]) => ({
+    ...identity,
+    phase: `${sample.phase}:${stage}`,
+    contract: `${sample.contract}:${stage}`,
+    ...observed,
+  }));
+}
 for (const fixture of fixtures)
   for (const phase of selectedPhases) {
     console.error(`${fixture.name}/${fixture.dialect}: ${phase}`);
@@ -100,7 +116,7 @@ for (const fixture of fixtures)
     for (const [round, order] of schedule(prepared.artifacts, config.rounds).entries())
       for (const artifact of order) {
         const sample = { round, ...worker(artifact, fixture, phase, 'timing') };
-        samples.push(sample);
+        samples.push(sample, ...stageSamples(sample));
         appendFileSync(rawPath, JSON.stringify(sample) + '\n');
       }
   }

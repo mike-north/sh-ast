@@ -105,10 +105,10 @@ export function callSyntax(operation: string, payload: Uint8Array, options = '{}
     const memory = new Uint8Array(exports.mem.buffer);
     if (result >= memory.length)
       throw new ShInternalError('The syntax bridge returned an out-of-bounds result');
-    let end = result;
-    while (end < memory.length && memory[end] !== 0) end++;
-    if (end === memory.length)
-      throw new ShInternalError('The syntax bridge result has no terminator');
+    // The native search finds the first NUL exactly as a byte loop would, without
+    // interpreting each byte of a megabyte-scale response in JavaScript.
+    const end = memory.indexOf(0, result);
+    if (end === -1) throw new ShInternalError('The syntax bridge result has no terminator');
     return decoder.decode(memory.subarray(result, end));
   } finally {
     for (const ptr of allocations) exports.free(ptr);

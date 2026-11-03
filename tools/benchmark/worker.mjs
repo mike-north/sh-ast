@@ -13,10 +13,16 @@ import {
   verifySnapshot,
 } from './adapter.mjs';
 import { instrument, assertBudget } from './transport.mjs';
+import { instrumentStages, stageNames } from './stages.mjs';
+import { summarize } from './model.mjs';
 
 const request = JSON.parse(readFileSync(0, 'utf8'));
-const { entry, fixture, phase, iterations, warmup, mode } = request;
+const { entry, fixture, phase: requestedPhase, iterations, warmup, mode } = request;
+// A stage phase performs its base phase's work while attributing each call to stages.
+const stagePhase = requestedPhase.endsWith('-stages');
+const phase = stagePhase ? requestedPhase.slice(0, -'-stages'.length) : requestedPhase;
 const probe = mode === 'verify' ? instrument() : null;
+const stages = stagePhase && !probe ? instrumentStages() : null;
 const start = performance.now();
 const api = await import(pathToFileURL(entry).href);
 const importMs = performance.now() - start;
@@ -29,7 +35,8 @@ if (phase === 'import') {
   } else result = { status: 'ok', samples: [importMs] };
 } else {
   const operation = operationFor(api, fixture, phase);
-  if (!operation) result = { status: 'unsupported' };
+  if (!operation || (stages && !api.SYNTAX_SCHEMA)) result = { status: 'unsupported' };
+  else if (stages) result = executeStages(operation, stages);
   else if (!probe)
     result = executePhase(
       operation,
@@ -69,5 +76,41 @@ if (phase === 'import') {
   }
 }
 console.log(
-  JSON.stringify({ pid: process.pid, phase, mode, contract: contractFor(api, phase), ...result }),
+  JSON.stringify({
+    pid: process.pid,
+    phase: requestedPhase,
+    mode,
+    contract: contractFor(api, requestedPhase),
+    ...result,
+  }),
 );
+
+/**
+ * Like executePhase, but each measured call also yields its stage durations.
+ * A stage the package cannot report (null in every call) is unsupported.
+ */
+function executeStages(operation, probe) {
+  const state = operation.setup();
+  // WASM is instantiated lazily, so ABI support is known only after one call.
+  operation.verify(operation.run(state));
+  if (!probe.supported) return { status: 'unsupported' };
+  for (let i = 0; i < warmup; i++) operation.verify(operation.run(state));
+  const samples = [];
+  const byStage = Object.fromEntries(stageNames.map((name) => [name, []]));
+  for (let i = 0; i < iterations; i++) {
+    probe.begin();
+    const value = operation.run(state);
+    const observed = probe.end();
+    operation.verify(value);
+    samples.push(observed.input + observed.wasm + observed.transfer + observed.decode);
+    for (const name of stageNames) byStage[name].push(observed[name]);
+  }
+  const stageResults = Object.fromEntries(
+    stageNames.map((name) =>
+      byStage[name].every((value) => value === null)
+        ? [name, { status: 'unsupported' }]
+        : [name, { status: 'ok', samples: byStage[name] }],
+    ),
+  );
+  return { status: 'ok', samples, summary: summarize(samples), stages: stageResults };
+}
