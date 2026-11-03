@@ -138,3 +138,41 @@ assertion no longer appropriate), frozen consumer/config/deps stay matched.
 Compare current post35 baseline to final canonical candidate. Historical0.3.1 parse
 comparison only with a real matched artifact on the same machine; do not relabel
 ABI-inclusive raw timing as pure internal Go/WASM. No #40/#41/#42/#43 or publication.
+
+## Canonical artifact and validation
+
+The reviewed source commit is `f23599574896c9502df45744dfb73e2e4602f335`
+([PR #49](https://github.com/mike-north/sh-ast/pull/49)). Independent source review
+found no blocking correctness issue. Its source-only commit retained the previous
+canonical binary; local host builds were used only for development tests.
+
+The Linux artifact was produced by
+[WASM reproducibility run 41566344176](https://github.com/mike-north/sh-ast/actions/runs/41566344176),
+artifact `13199281891`. Native tests, build and upload succeeded; the final
+comparison failed as expected because the source-only commit still contained the
+previous binary. The adopted ZIP was verified against the Actions artifact digest:
+
+| Item                    |     Bytes | SHA-256                                                            |
+| ----------------------- | --------: | ------------------------------------------------------------------ |
+| Artifact ZIP            | 1,333,199 | `1735fb08fa0a85b8f9e75a203dbf8587029177fb0cdec04056cd6f012bed0ed7` |
+| Extracted `sh-ast.wasm` | 4,533,132 | `5c8b27246cd4c36057eebfae3a1b114f02b1a026e465193ecf0f00165256831f` |
+
+The ZIP contained exactly one member, `sh-ast.wasm`; its WASM header and bounded
+size were checked before adoption. Before the evidence record was updated, the
+artifact was the only tracked difference from the source commit, establishing
+that the source inventory used for local canonical validation was unchanged.
+
+With that exact Linux binary, Node 22.22.1 and the locked dependencies, these gates
+passed on 2026-11-02: full build, workspace check, API extraction and documentation
+generation, full workspace tests, and the full native Go shim suite. Nx caches
+were disabled for the canonical JavaScript/build/check/docs runs. The test run
+included 844 Vitest cases, type tests, 31 benchmark harness unit tests and two
+benchmark integration tests. Independent native tests cover all five actual
+language variants, all 17 comment-bearing slots, typed nils, shared occurrences,
+recovery, per-bound failures and the actual writer order for all 46 records.
+The live JavaScript suite compares each independently enumerated parsed node to
+separate upstream nodePos/nodeEnd calls across Unicode, CRLF and heredoc fixtures.
+
+Canonical CI reproduction, matched performance/payload measurements and final
+acceptance remain separate delivery evidence; these passing gates do not imply
+that those later steps or merge have happened.
