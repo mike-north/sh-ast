@@ -6,9 +6,17 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { cpus, platform, arch, release } from 'node:os';
-import { hash } from './artifacts.mjs';
+import { hash, verifyPrepared } from './artifacts.mjs';
 import { verifyExperiment, files } from './stream-encoding-prepare.mjs';
-import { requests, pairedSummary, streamPhases } from './stream-encoding-model.mjs';
+import {
+  requests,
+  pairedSummary,
+  streamPhases,
+  verifyPair,
+  historicalRequests,
+  publishedTarget,
+  verifyHistoricalResult,
+} from './stream-encoding-model.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { values } = parseArgs({
@@ -20,6 +28,7 @@ const { values } = parseArgs({
     iterations: { type: 'string', default: '30' },
     warmup: { type: 'string', default: '5' },
     'verify-only': { type: 'boolean', default: false },
+    'historical-prepared': { type: 'string' },
   },
 });
 assert(values.prepared && values.output, '--prepared and --output required');
@@ -106,21 +115,7 @@ for (const fixture of fixtures)
       phase,
       ...invoke(arm, fixture, phase, 'verify'),
     }));
-    for (const key of [
-      'treeHash',
-      'positionsHash',
-      'smokeHash',
-      'responseHash',
-      'responseBytes',
-      'nodes',
-      'counts',
-      'eslintVersion',
-    ])
-      assert.deepEqual(
-        pair[0][key],
-        pair[1][key],
-        `verification mismatch ${fixture.name}/${phase}/${key}`,
-      );
+    verifyPair(pair, phase, prepared.compactSidecar);
     report.verification.push(...pair);
     appendFileSync(
       join(output, 'verification.jsonl'),
@@ -153,3 +148,62 @@ if (!values['verify-only']) {
 verifyExperiment(prepared);
 writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(join(output, 'report.json'));
+
+// The optional unequal-output target cannot invalidate or overwrite the main matched report.
+if (values['historical-prepared']) {
+  const target = {
+    contract:
+      'latency target only: published 0.3.1 public parse (normalized tree) versus candidate public parse-with-positions (faithful tree plus snapshot); same Bash M2 source, comments and benchmark.sh',
+    environment: report.environment,
+    config,
+    verification: [],
+    samples: [],
+  };
+  try {
+    const manifest = JSON.parse(readFileSync(resolve(values['historical-prepared']), 'utf8'));
+    const baseline = publishedTarget(manifest);
+    const candidate = prepared.artifacts.find((artifact) => artifact.label === 'candidate');
+    target.artifacts = [baseline, candidate];
+    verifyPrepared({ artifacts: target.artifacts });
+    const fixture = fixtures.find((fixture) => fixture.name === 'consumer-m2');
+    assert(fixture, 'historical target requires consumer-m2');
+    target.fixture = fixture;
+    const invokeTarget = (request, mode) =>
+      JSON.parse(
+        execFileSync(process.execPath, [join(here, 'worker.mjs')], {
+          input: JSON.stringify({
+            entry: (request.arm === 'baseline' ? baseline : candidate).entry,
+            fixture,
+            phase: request.phase,
+            mode,
+            ...config,
+          }),
+          encoding: 'utf8',
+          timeout: 180000,
+          maxBuffer: 16 * 1024 * 1024,
+        }),
+      );
+    for (const request of historicalRequests(1)) {
+      const result = invokeTarget(request, 'verify');
+      verifyHistoricalResult(result, request.arm);
+      target.verification.push({ ...request, ...result });
+    }
+    if (!values['verify-only']) {
+      for (const request of historicalRequests(config.rounds)) {
+        const result = invokeTarget(request, 'timing');
+        assert.equal(result.status, 'ok', 'historical target has no synthetic fallback');
+        const sample = { ...request, ...result };
+        target.samples.push(sample);
+        appendFileSync(join(output, 'historical-samples.jsonl'), JSON.stringify(sample) + '\n');
+      }
+      target.summary = pairedSummary(target.samples);
+    }
+    verifyPrepared({ artifacts: target.artifacts });
+    target.status = 'ok';
+  } catch (error) {
+    target.status = 'failed';
+    target.error = String(error);
+    process.exitCode = 1;
+  }
+  writeFileSync(join(output, 'historical-target.json'), JSON.stringify(target, null, 2) + '\n');
+}

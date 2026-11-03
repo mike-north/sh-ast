@@ -10,8 +10,149 @@ import {
   lintConfiguration,
   rawOperation,
   pairedSummary,
+  verifyPair,
+  historicalRequests,
+  publishedTarget,
+  verifyHistoricalResult,
 } from './stream-encoding-model.mjs';
 import { freezeDependencies } from './stream-encoding-prepare.mjs';
+
+test('historical target pairs actual 0.3.1 parse with candidate snapshot without relabeling work', () => {
+  const plan = historicalRequests(2);
+  assert.deepEqual(
+    plan.map(({ arm, phase, round }) => [arm, phase, round]),
+    [
+      ['baseline', 'parse', 0],
+      ['candidate', 'parse-with-positions', 0],
+      ['candidate', 'parse-with-positions', 1],
+      ['baseline', 'parse', 1],
+    ],
+  );
+  assert(plan.every(({ fixture }) => fixture === 'consumer-m2'));
+  const published = {
+    label: '0.3.1',
+    version: '0.3.1',
+    registryTarball: 'https://registry.npmjs.org/sh-ast/-/sh-ast-0.3.1.tgz',
+    integrity: 'sha512-published',
+  };
+  assert.equal(publishedTarget({ artifacts: [published] }), published);
+  for (const invalid of [
+    { ...published, gitHead: 'a'.repeat(40) },
+    { ...published, version: '0.6.0' },
+    { ...published, registryTarball: null },
+    { ...published, label: 'local-candidate' },
+  ])
+    assert.throws(() => publishedTarget({ artifacts: [invalid] }));
+  assert.throws(() => publishedTarget({ artifacts: [published, published] }));
+  assert.throws(() => verifyHistoricalResult({ status: 'unsupported' }, 'baseline'));
+  const legacy = {
+    status: 'ok',
+    transport: { parse: { calls: 1 } },
+    work: { functions: 100, storedRecords: 6000 },
+  };
+  assert.doesNotThrow(() => verifyHistoricalResult(legacy, 'baseline'));
+  assert.throws(() => verifyHistoricalResult({ ...legacy, work: { functions: 99 } }, 'baseline'));
+  assert.throws(() => verifyHistoricalResult(legacy, 'candidate'));
+  const faithful = {
+    status: 'ok',
+    transport: { 'parse-with-positions': { calls: 1 } },
+    work: { functions: 100, nodes: 5801 },
+  };
+  assert.doesNotThrow(() => verifyHistoricalResult(faithful, 'candidate'));
+  assert.throws(() =>
+    verifyHistoricalResult({ ...faithful, work: { functions: 100, nodes: 5800 } }, 'candidate'),
+  );
+});
+
+test('reviewed decoder changes permit only exact existing JavaScript path and hash pairs', () => {
+  const before = '1'.repeat(64);
+  const after = '2'.repeat(64);
+  const baseline = {
+    gitHead: 'a'.repeat(40),
+    assets: { 'dist/syntax-snapshot.js': before, 'dist/index.js': before },
+  };
+  const candidate = {
+    gitHead: 'b'.repeat(40),
+    assets: { 'dist/syntax-snapshot.js': after, 'dist/index.js': before },
+  };
+  const reviewed = { 'dist/syntax-snapshot.js': { baseline: before, candidate: after } };
+  assert.doesNotThrow(() => matchedArtifacts(baseline, candidate, reviewed));
+  assert.throws(() => matchedArtifacts(baseline, candidate), /JavaScript/);
+  assert.throws(
+    () =>
+      matchedArtifacts(
+        baseline,
+        { ...candidate, assets: { ...candidate.assets, 'dist/index.js': after } },
+        reviewed,
+      ),
+    /JavaScript/,
+  );
+  assert.throws(
+    () =>
+      matchedArtifacts(
+        baseline,
+        {
+          ...candidate,
+          assets: { ...candidate.assets, 'dist/syntax-snapshot.js': '3'.repeat(64) },
+        },
+        reviewed,
+      ),
+    /JavaScript/,
+  );
+  assert.throws(
+    () => matchedArtifacts(baseline, { ...candidate, assets: { ...baseline.assets } }, reviewed),
+    /JavaScript/,
+  );
+  assert.throws(
+    () =>
+      matchedArtifacts(
+        baseline,
+        { ...candidate, assets: { 'dist/syntax-snapshot.js': after } },
+        reviewed,
+      ),
+    /JavaScript/,
+  );
+  assert.throws(
+    () =>
+      matchedArtifacts(
+        baseline,
+        { ...candidate, assets: { ...candidate.assets, 'dist/extra.js': after } },
+        reviewed,
+      ),
+    /JavaScript/,
+  );
+});
+
+test('compact transport changes retain payload sizes while File and all-node observations must agree', () => {
+  const baseline = {
+    treeHash: 'tree',
+    rawFileHash: 'file',
+    positionsHash: 'all-bounds',
+    smokeHash: 'smoke',
+    responseHash: 'old-wire',
+    responseBytes: 1234,
+    nodes: 3,
+    counts: { nodes: 3 },
+  };
+  const candidate = { ...baseline, responseHash: 'compact-wire', responseBytes: 432 };
+  const pair = [baseline, candidate];
+  assert.doesNotThrow(() => verifyPair(pair, 'raw-parse-with-positions', true));
+  assert.equal(pair[0].responseBytes, 1234);
+  assert.equal(pair[1].responseBytes, 432);
+  assert.throws(() => verifyPair(pair, 'raw-parse-with-positions'), /responseHash/);
+  assert.throws(() => verifyPair(pair, 'raw-parse', true), /responseHash/);
+  for (const key of ['rawFileHash', 'treeHash', 'positionsHash', 'smokeHash', 'nodes', 'counts']) {
+    assert.throws(
+      () =>
+        verifyPair(
+          [baseline, { ...candidate, [key]: 'changed' }],
+          'raw-parse-with-positions',
+          true,
+        ),
+      new RegExp(key),
+    );
+  }
+});
 
 test('a matched comparison requires exact distinct producer revisions and faithful consumer identity', () => {
   const baseline = { label: 'local-candidate', gitHead: 'a'.repeat(40) };

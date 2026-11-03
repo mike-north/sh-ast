@@ -128,12 +128,18 @@ export function prepareConsumer({
   consumerRef,
   dependencyRoot: installationRoot = consumerRoot,
   output,
+  expectedJavascriptChanges = {},
+  compactSidecar = false,
 }) {
   output = resolve(output);
   consumerRoot = resolve(consumerRoot);
   installationRoot = resolve(installationRoot);
   assert.match(consumerRef, /^[a-f0-9]{40}$/, 'exact accepted consumer SHA required');
-  const artifacts = matchedArtifacts(producer(baseline), producer(candidate));
+  const artifacts = matchedArtifacts(
+    producer(baseline),
+    producer(candidate),
+    expectedJavascriptChanges,
+  );
   mkdirSync(output); // Refuse to overwrite an earlier frozen experiment.
   const build = join(output, 'build');
   mkdirSync(build);
@@ -185,6 +191,8 @@ export function prepareConsumer({
     schemaVersion: 1,
     preparedAt: new Date().toISOString(),
     artifacts,
+    expectedJavascriptChanges,
+    compactSidecar,
     arms,
     dependencies,
     consumer: {
@@ -212,6 +220,7 @@ export function verifyExperiment(prepared) {
   matchedArtifacts(
     prepared.artifacts.find((x) => x.label === 'baseline'),
     prepared.artifacts.find((x) => x.label === 'candidate'),
+    prepared.expectedJavascriptChanges,
   );
   verifyPrepared({ artifacts: prepared.artifacts });
   for (const arm of Object.values(prepared.arms))
@@ -250,6 +259,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       'consumer-ref': { type: 'string' },
       'dependency-root': { type: 'string' },
       output: { type: 'string' },
+      'reviewed-javascript-changes': { type: 'string' },
+      'compact-sidecar': { type: 'boolean', default: false },
     },
   });
   for (const key of ['baseline', 'candidate', 'consumer-root', 'consumer-ref', 'output'])
@@ -259,6 +270,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     consumerRoot: values['consumer-root'],
     consumerRef: values['consumer-ref'],
     dependencyRoot: values['dependency-root'],
+    expectedJavascriptChanges: values['reviewed-javascript-changes']
+      ? JSON.parse(readFileSync(resolve(values['reviewed-javascript-changes']), 'utf8'))
+      : {},
+    compactSidecar: values['compact-sidecar'],
   });
   console.log(join(resolve(values.output), 'prepared.json'));
 }
