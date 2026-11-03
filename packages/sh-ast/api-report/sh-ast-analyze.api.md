@@ -53,6 +53,7 @@ export type Argv0ChainWord = WordResolution | Argv0UnresolvedWord;
 export interface Argv0Resolution {
     readonly assignmentsSkipped: number;
     readonly chain: readonly Argv0ChainWord[];
+    readonly chainIndices: readonly number[];
     readonly effective: Argv0ChainWord;
 }
 

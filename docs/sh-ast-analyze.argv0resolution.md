@@ -79,6 +79,29 @@ Every word resolved along the way, outermost wrapper first, ending with [Argv0Re
 </td></tr>
 <tr><td>
 
+[chainIndices](./sh-ast-analyze.argv0resolution.chainindices.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly number\[\]
+
+
+</td><td>
+
+Indices into the input [CommandSite.argv](./sh-ast-analyze.commandsite.argv.md)<!-- -->, one for each corresponding [Argv0Resolution.chain](./sh-ast-analyze.argv0resolution.chain.md) entry. The arrays always have the same nonzero length. Ordinary entries identify their original word; synthesized failures identify the triggering flag or ambiguous assignment operand instead. Repeated word text does not collapse distinct argument positions.
+
+For a resolved effective command, its arguments are `site.argv.slice(chainIndices.at(-1)! + 1)`<!-- -->. Sites from [enumerateCommands()](./sh-ast-analyze.enumeratecommands.md) align argv directly with `site.node.Args`<!-- -->, retaining null slots as unsupported word resolutions, so the same indices select syntax Words. A synthetic failure does not identify a command or its arguments. When wrapper scanning stops or runs out of operands, the existing result remains the wrapper word and its index; no missing command is invented.
+
+
+</td></tr>
+<tr><td>
+
 [effective](./sh-ast-analyze.argv0resolution.effective.md)
 
 
