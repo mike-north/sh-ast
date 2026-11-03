@@ -6,6 +6,10 @@ import {
   parseSync,
   parseWithPositionsSync,
   LangMirBSDKorn,
+  LangBash,
+  LangPOSIX,
+  LangBats,
+  LangZsh,
 } from '../src/index.js';
 import { isSyntaxNode } from '../src/syntax-wire.js';
 
@@ -85,5 +89,30 @@ it.each(['echo ok; (', '[[ a =~ b ]]'])(
     expect(capture(() => parseWithPositionsSync(source, options))).toEqual(
       capture(() => parseSync(source, options)),
     );
+  },
+);
+
+/** Real bridge calls independently observe every node, including Unicode byte spans and recovery. */
+it.each([LangBash, LangPOSIX, LangMirBSDKorn, LangBats, LangZsh] as const)(
+  'matches live upstream bounds for every occurrence in dialect %s',
+  (Variant) => {
+    for (const source of [
+      '# 🎉 中 e\u0301\r\necho hi\r\n',
+      "cat <<'EOF'\n中 🎉 e\u0301\nEOF\n",
+      '',
+      '# only\n',
+      '(foo |',
+    ]) {
+      const options = { Variant, KeepComments: true, RecoverErrors: 2 };
+      const parsed = parseWithPositionsSync(source, options);
+      expect(parsed.File).toEqual(parseSync(source, options));
+      let count = 0;
+      for (const value of records(parsed.File)) {
+        if (!isSyntaxNode(value)) continue;
+        count++;
+        expect(parsed.Positions.get(value)).toEqual({ Pos: nodePos(value), End: nodeEnd(value) });
+      }
+      expect(count).toBeGreaterThan(0);
+    }
   },
 );

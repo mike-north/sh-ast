@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { executePhase } from './model.mjs';
-import { operationFor, optionsFor, records, verifyTree } from './adapter.mjs';
+import { operationFor, optionsFor, records, verifyTree, verifySnapshot } from './adapter.mjs';
 import { instrument } from './transport.mjs';
 import { hash } from './artifacts.mjs';
 import { lintConfiguration, rawOperation } from './stream-encoding-model.mjs';
@@ -74,6 +74,8 @@ else {
   }
   const positions = nodes.map((node) => parsed.Positions.get(node));
   assert(positions.every(Boolean), 'every stored Node has a snapshot');
+  // Live independent bridge operations anchor every captured bound outside timing.
+  verifySnapshot(api, parsed);
   // Bound/print calls are smoke checks only, outside all reported clocks and operation budgets.
   const smoke = {
     pos: api.nodePos(parsed.File),
@@ -90,7 +92,11 @@ else {
     positionsHash: hash(JSON.stringify(positions)),
     smokeHash: hash(JSON.stringify(smoke)),
     ...(phase.startsWith('raw-')
-      ? { responseHash: hash(value), responseBytes: Buffer.byteLength(value) }
+      ? {
+          responseHash: hash(value),
+          responseBytes: Buffer.byteLength(value),
+          rawFileHash: hash(JSON.stringify(JSON.parse(value).File)),
+        }
       : {}),
   };
 }

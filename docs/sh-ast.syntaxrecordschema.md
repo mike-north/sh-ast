@@ -52,7 +52,7 @@ Readonly&lt;Record&lt;string, [SyntaxFieldSchema](./sh-ast.syntaxfieldschema.md)
 
 </td><td>
 
-Every exported upstream field, retaining its original spelling.
+Every exported upstream field, retaining its original spelling and lexicographic iteration order for internal position correlation.
 
 
 </td></tr>

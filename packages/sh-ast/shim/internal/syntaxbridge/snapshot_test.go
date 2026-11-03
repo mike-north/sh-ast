@@ -48,28 +48,18 @@ func TestParsePositionSnapshotMatchesUpstreamNodesAndBounds(t *testing.T) {
 				}
 				return true
 			})
-			entries, ok := observed["Positions"].([]any)
-			if !ok || len(entries) == 0 {
-				t.Fatalf("missing nonempty snapshot array: %#v", observed["Positions"])
+			nodes, paths := nativeOccurrences(file)
+			data, err := json.Marshal(observed)
+			if err != nil {
+				t.Fatal(err)
 			}
+			entries := decodeCompactSnapshots(data, paths)
 			seenPaths := make(map[string]bool)
-			for _, raw := range entries {
-				entry := raw.(map[string]any)
-				if len(entry) != 5 {
-					t.Fatalf("snapshot requires exactly five fields: %#v", entry)
-				}
-				path, ok := entry["Path"].([]any)
-				if !ok {
-					t.Fatalf("path must be an array, including the root: %#v", entry["Path"])
-				}
-				pathJSON, _ := json.Marshal(path)
-				if seenPaths[string(pathJSON)] {
-					t.Fatalf("duplicate occurrence path %s", pathJSON)
-				}
+			for i, entry := range entries {
+				pathJSON, _ := json.Marshal(entry.Path)
 				seenPaths[string(pathJSON)] = true
-				node := snapshotNodeAt(t, file, path)
-				// Upstream Walk visits comment values through copies, so identity
-				// alone is not an oracle for []Comment. Match native value equality.
+				node := nodes[i]
+				// Walk copies comments, so native value equality is the oracle.
 				matched := false
 				for candidate, count := range remaining {
 					if count > 0 && reflect.DeepEqual(candidate, node) {
@@ -79,13 +69,13 @@ func TestParsePositionSnapshotMatchesUpstreamNodesAndBounds(t *testing.T) {
 					}
 				}
 				if !matched {
-					t.Fatalf("path %s does not name an upstream Walk occurrence", pathJSON)
+					t.Fatalf("%s has no upstream Walk occurrence", pathJSON)
 				}
-				if entry["PosError"] != nil || entry["EndError"] != nil {
-					t.Fatalf("ordinary parsed node had bound failure: %#v", entry)
+				if entry.PosError != nil || entry.EndError != nil {
+					t.Fatalf("unexpected failure: %#v", entry)
 				}
-				checkSnapshotPosition(t, entry["Pos"], node.Pos())
-				checkSnapshotPosition(t, entry["End"], node.End())
+				checkSnapshotPosition(t, entry.Pos, node.Pos())
+				checkSnapshotPosition(t, entry.End, node.End())
 			}
 			for node, count := range remaining {
 				if count != 0 {
@@ -134,41 +124,6 @@ func TestParsePositionSnapshotPreservesErrorsWithoutCollecting(t *testing.T) {
 	}
 }
 
-// Resolve a returned path directly through native exported fields. This oracle
-// never calls the snapshot collector or relies on generated schema metadata.
-func snapshotNodeAt(t *testing.T, file *syntax.File, path []any) syntax.Node {
-	t.Helper()
-	value := reflect.ValueOf(file)
-	for _, segment := range path {
-		for value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
-			value = value.Elem()
-		}
-		switch key := segment.(type) {
-		case string:
-			value = value.FieldByName(key)
-		case json.Number:
-			index, err := key.Int64()
-			if err != nil {
-				t.Fatal(err)
-			}
-			value = value.Index(int(index))
-		default:
-			t.Fatalf("invalid snapshot path segment %T", segment)
-		}
-	}
-	for value.Kind() == reflect.Interface {
-		value = value.Elem()
-	}
-	if value.Kind() == reflect.Struct {
-		value = value.Addr()
-	}
-	node, ok := value.Interface().(syntax.Node)
-	if !ok {
-		t.Fatalf("snapshot path names non-Node %s", value.Type())
-	}
-	return node
-}
-
 // Expected coordinates come from direct public upstream getters. The overflow
 // observation uses the public ordering relation, not the bridge's position codec.
 func checkSnapshotPosition(t *testing.T, raw any, position syntax.Pos) {
@@ -182,7 +137,17 @@ func checkSnapshotPosition(t *testing.T, raw any, position syntax.Pos) {
 		"IsRecovered":    position.IsRecovered(),
 		"OffsetOverflow": !position.IsValid() && position.Offset() == 0 && !maximum.After(position),
 	}
-	if !reflect.DeepEqual(raw, wanted) {
+	encoded, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var actual any
+	decoder := json.NewDecoder(strings.NewReader(string(encoded)))
+	decoder.UseNumber()
+	if err := decoder.Decode(&actual); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(actual, wanted) {
 		t.Fatalf("snapshot position=%#v; native=%#v", raw, wanted)
 	}
 }

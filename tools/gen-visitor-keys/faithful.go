@@ -534,7 +534,7 @@ func renderFaithfulConstantsDTS(schema *faithfulSchema, version string) string {
 func renderFaithfulSchemaJS(schema *faithfulSchema, version string) string {
 	var b strings.Builder
 	b.WriteString(faithfulHeader(schema, version))
-	writeSemanticComment(&b, "", "Complete upstream field shapes for reflection and consumer adaptation. Ordering is deterministic for review, not the upstream Walk order. The public binding freezes this shared metadata; represented syntax records remain mutable.", "public")
+	writeSemanticComment(&b, "", "Complete upstream field shapes for reflection and consumer adaptation. Fields use lexicographic order to correlate internal parse-time position occurrences with the syntax writer. This order is not upstream Walk order. The public binding freezes this shared metadata; represented syntax records remain mutable.", "public")
 	records, _ := json.MarshalIndent(schema.Records, "", "  ")
 	b.WriteString("export const SYNTAX_SCHEMA = " + string(records) + ";\n\n")
 	writeSemanticComment(&b, "", "Concrete alternatives for upstream interfaces; syntax.Node deliberately excludes auxiliary structs. This is reflection metadata, not a traversal implementation.", "public")
@@ -567,10 +567,10 @@ export interface SyntaxFieldSchema {
 export interface SyntaxRecordSchema {
   /** Whether the actual upstream type implements syntax.Node. */
   readonly node: boolean;
-  /** Every exported upstream field, retaining its original spelling. */
+  /** Every exported upstream field, retaining its original spelling and lexicographic iteration order for internal position correlation. */
   readonly fields: Readonly<Record<string, SyntaxFieldSchema>>;
 }
-/** Reflection metadata; field order is not upstream Walk order. @public */
+/** Reflection metadata; lexicographic field order correlates internal position occurrences and is not upstream Walk order. @public */
 export declare const SYNTAX_SCHEMA: Readonly<Record<string, SyntaxRecordSchema>>;
 /** Concrete alternatives accepted by upstream interfaces. @public */
 export declare const SYNTAX_INTERFACES: Readonly<Record<string, readonly string[]>>;

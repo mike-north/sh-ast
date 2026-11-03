@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /**
- * Complete upstream field shapes for reflection and consumer adaptation. Ordering is deterministic for review, not the upstream Walk order. The public binding freezes this shared metadata; represented syntax records remain mutable.
+ * Complete upstream field shapes for reflection and consumer adaptation. Fields use lexicographic order to correlate internal parse-time position occurrences with the syntax writer. This order is not upstream Walk order. The public binding freezes this shared metadata; represented syntax records remain mutable.
  *
  * @public
  */

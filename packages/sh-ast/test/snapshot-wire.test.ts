@@ -6,21 +6,15 @@ import { callSyntax } from '../src/wasm-instance.js';
 vi.mock('../src/wasm-instance.js', () => ({ callSyntax: vi.fn() }));
 /** An empty upstream File still owns a pair of invalid source observations. */
 const file = { Type: 'File', Name: '', Stmts: null, Last: null };
-const zero = {
-  Offset: 0,
-  Line: 0,
-  Col: 0,
-  IsValid: false,
-  IsRecovered: false,
-  OffsetOverflow: false,
-};
-const observation = { Path: [], Pos: zero, End: zero, PosError: null, EndError: null };
+const observation = [0, 0, 0, 0, 0, 0, 0, 0];
 
 beforeEach(() => vi.resetAllMocks());
 
 describe('position snapshot boundary', () => {
   it('performs one parse operation and no per-node position transfers', () => {
-    vi.mocked(callSyntax).mockReturnValue(JSON.stringify({ File: file, Positions: [observation] }));
+    vi.mocked(callSyntax).mockReturnValue(
+      JSON.stringify({ File: file, Positions: observation, PositionErrors: [] }),
+    );
     const parsed = parseWithPositionsSync('');
     expect(parsed.Positions.get(parsed.File)?.End.Offset).toBe(0);
     expect(parsed.Positions.get(parsed.File)?.Pos.Offset).toBe(0);
@@ -33,12 +27,14 @@ describe('position snapshot boundary', () => {
     undefined,
     [],
     [observation, observation],
-    [{ ...observation, Path: ['Last', 0] }],
-    [{ ...observation, Pos: null }],
-    [{ ...observation, PosError: 'failure' }],
-    [{ ...observation, Extra: true }],
+    [{ Path: ['Last', 0] }],
+    [{ Pos: null }],
+    [{ PosError: 'failure' }],
+    [{ Extra: true }],
   ])('rejects incomplete, duplicated or contradictory snapshot metadata %#', (Positions) => {
-    vi.mocked(callSyntax).mockReturnValue(JSON.stringify({ File: file, Positions }));
+    vi.mocked(callSyntax).mockReturnValue(
+      JSON.stringify({ File: file, Positions, PositionErrors: [] }),
+    );
     expect(() => parseWithPositionsSync('')).toThrow(ShInternalError);
   });
 
@@ -46,9 +42,8 @@ describe('position snapshot boundary', () => {
     vi.mocked(callSyntax).mockReturnValue(
       JSON.stringify({
         File: file,
-        Positions: [
-          { ...observation, End: null, EndError: 'upstream node position: test failure' },
-        ],
+        Positions: observation,
+        PositionErrors: [[0, null, 'upstream node position: test failure']],
       }),
     );
     const parsed = parseWithPositionsSync('');

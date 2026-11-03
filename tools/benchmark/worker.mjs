@@ -45,7 +45,17 @@ if (phase === 'import') {
     assertBudget(phase, transport, nodeCount);
     operation.verify(value);
     const tree = api.parseSync(fixture.source, optionsFor(api, fixture));
-    const work = { storedRecords: records(tree).length };
+    const stored = records(tree);
+    // Counts describe each API's real output; normalized records are not faithful Nodes.
+    const work = {
+      storedRecords: stored.length,
+      functions: stored.filter((node) => (node.Type ?? node.type) === 'FuncDecl').length,
+      ...(api.SYNTAX_INTERFACES
+        ? {
+            nodes: stored.filter((node) => api.SYNTAX_INTERFACES.Node.includes(node.Type)).length,
+          }
+        : {}),
+    };
     if (api.walk) work.traversal = verifyWalk(api, tree, fixture);
     if (api.nodePos) {
       verifyBounds(api, tree, fixture);

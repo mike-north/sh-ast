@@ -52,8 +52,8 @@ export interface ParsedFile {
 
 /** A captured failure is private so callers cannot mutate later error observations. */
 type CapturedPositions = { positions: NodePositions } | { error: GoString };
-/** Field names and slice indices locate one occurrence in the serialized tree. */
-type SyntaxPath = readonly (string | number)[];
+/** Each sparse failure belongs to one occurrence and two independently observed bounds. */
+type BoundErrors = readonly [GoString | null, GoString | null];
 
 /**
  * Checks only node identity within an already fully validated File. Revalidating
@@ -69,104 +69,123 @@ function isNodeIdentity(value: Record<string, unknown>): value is Record<string,
 }
 
 /**
- * Indexes child-bearing fields once, including paths through auxiliary records.
- * Metadata order is irrelevant: paths correlate observations without inventing a
- * Walk order or equating auxiliary records with syntax.Node values.
+ * Visits child-bearing fields in the writer's lexical preorder, including children
+ * of auxiliary records. The complete File boundary has already been validated.
+ * Ordering is internal transport correlation, not the public Walk protocol.
  */
-function nodesByPath(file: File): Map<string, Node> {
-  const nodes = new Map<string, Node>();
-  const visit = (value: unknown, path: SyntaxPath): void => {
+function visitNodes(file: File, observe: (node: Node) => void): void {
+  const visit = (value: unknown): void => {
     if (!isRecord(value) || typeof value.Type !== 'string') return;
-    if (isNodeIdentity(value)) nodes.set(JSON.stringify(path), value);
+    if (isNodeIdentity(value)) observe(value);
     if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return;
     for (const [name, field] of Object.entries(SYNTAX_SCHEMA[value.Type].fields)) {
       if (field.kind !== 'struct' && field.kind !== 'interface') continue;
       const child = value[name];
-      if (Array.isArray(child)) {
-        child.forEach((item: unknown, index: number) => {
-          visit(item, [...path, name, index]);
-        });
-      } else {
-        visit(child, [...path, name]);
-      }
+      if (Array.isArray(child)) child.forEach(visit);
+      else visit(child);
     }
   };
-  visit(file, []);
-  return nodes;
+  visit(file);
 }
 
-/** Accepts the exact field/index domain used by the upstream observation sidecar. */
-function isPath(value: unknown): value is SyntaxPath {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (component: unknown) =>
-        typeof component === 'string' ||
-        (typeof component === 'number' && Number.isSafeInteger(component) && component >= 0),
-    )
-  );
+/** Own byte-bearing failures so neither transport holders nor catchers can alter captures. */
+function copyError(error: GoString): GoString {
+  return typeof error === 'string' ? error : error.slice();
 }
 
-/** An upstream method produced exactly one position or one preserved failure. */
-function isObservation(position: unknown, error: unknown): boolean {
-  return (isSyntaxPos(position) && error === null) || (position === null && isGoString(error));
+/** Reconstruct a bound only after checking flags and the unchanged SyntaxPos contract. */
+function readBound(raw: readonly unknown[], offset: number, failed: boolean): SyntaxPos {
+  const Offset = raw[offset];
+  const Line = raw[offset + 1];
+  const Col = raw[offset + 2];
+  const flags = raw[offset + 3];
+  if (typeof flags !== 'number' || !Number.isInteger(flags) || flags < 0 || flags > 7) {
+    throw new ShInternalError('The syntax snapshot contains invalid position flags');
+  }
+  const position = {
+    Offset,
+    Line,
+    Col,
+    IsValid: (flags & 1) !== 0,
+    IsRecovered: (flags & 2) !== 0,
+    OffsetOverflow: (flags & 4) !== 0,
+  };
+  if (
+    !isSyntaxPos(position) ||
+    (failed && (Offset !== 0 || Line !== 0 || Col !== 0 || flags !== 0))
+  ) {
+    throw new ShInternalError('The syntax snapshot contains an invalid position observation');
+  }
+  return position;
 }
 
 /**
- * Validates complete sidecar coverage once, then stores immutable observations in
- * a weak identity map. Missing or duplicate metadata is a transport defect; no
- * per-node live-position fallback may disguise it or multiply WASM transfers.
- * The File must already have passed the full syntax boundary validator.
+ * Validates complete compact coverage and independent bound outcomes, then stores
+ * immutable observations in a weak identity map. No fallback calls can disguise
+ * malformed transport. The File must already pass the full boundary validator.
  * @internal
  */
-export function createPositionSnapshot(file: File, raw: unknown): PositionSnapshot {
-  const nodes = nodesByPath(file);
-  if (!Array.isArray(raw) || raw.length !== nodes.size)
-    throw new ShInternalError('The syntax snapshot does not cover every parsed node');
-  const observations = new WeakMap<Node, CapturedPositions>();
-  const remaining = new Map(nodes);
-  for (const entry of raw) {
-    if (
-      !isRecord(entry) ||
-      Object.keys(entry).length !== 5 ||
-      !isPath(entry.Path) ||
-      !isObservation(entry.Pos, entry.PosError) ||
-      !isObservation(entry.End, entry.EndError)
-    ) {
-      throw new ShInternalError('The syntax snapshot contains an invalid position observation');
-    }
-    const path = JSON.stringify(entry.Path);
-    const node = remaining.get(path);
-    if (node === undefined)
-      throw new ShInternalError('The syntax snapshot contains an unknown or duplicate node path');
-    remaining.delete(path);
-    if (isGoString(entry.PosError)) {
-      observations.set(node, { error: entry.PosError });
-    } else if (isGoString(entry.EndError)) {
-      observations.set(node, { error: entry.EndError });
-    } else if (isSyntaxPos(entry.Pos) && isSyntaxPos(entry.End)) {
-      observations.set(node, {
-        positions: Object.freeze({
-          Pos: Object.freeze({ ...entry.Pos }),
-          End: Object.freeze({ ...entry.End }),
-        }),
-      });
-    } else {
-      throw new ShInternalError('The syntax snapshot dropped an upstream method outcome');
-    }
+export function createPositionSnapshot(
+  file: File,
+  raw: unknown,
+  rawErrors: unknown,
+): PositionSnapshot {
+  if (!Array.isArray(raw) || raw.length % 8 !== 0 || !Array.isArray(rawErrors)) {
+    throw new ShInternalError('The syntax snapshot has invalid compact metadata');
   }
-  if (remaining.size !== 0)
-    throw new ShInternalError('The syntax snapshot omitted parsed node observations');
+  const count = raw.length / 8;
+  const failures = new Map<number, BoundErrors>();
+  for (const row of rawErrors) {
+    if (!Array.isArray(row) || row.length !== 3) {
+      throw new ShInternalError('The syntax snapshot contains an invalid failure row');
+    }
+    const values: readonly unknown[] = row;
+    const [index, pos, end] = values;
+    if (
+      typeof index !== 'number' ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= count ||
+      failures.has(index) ||
+      !(pos === null || isGoString(pos)) ||
+      !(end === null || isGoString(end)) ||
+      (pos === null && end === null)
+    ) {
+      throw new ShInternalError('The syntax snapshot contains an invalid failure observation');
+    }
+    failures.set(index, [
+      pos === null ? null : copyError(pos),
+      end === null ? null : copyError(end),
+    ]);
+  }
+  const observations = new WeakMap<Node, CapturedPositions>();
+  let index = 0;
+  visitNodes(file, (node) => {
+    if (index >= count) throw new ShInternalError('The syntax snapshot omitted parsed nodes');
+    const errors = failures.get(index);
+    const posError = errors?.[0] ?? null;
+    const endError = errors?.[1] ?? null;
+    // Both bounds are validated even when get will replay the other bound's error.
+    const Pos = readBound(raw, index * 8, posError !== null);
+    const End = readBound(raw, index * 8 + 4, endError !== null);
+    const error = posError ?? endError;
+    observations.set(
+      node,
+      error !== null
+        ? { error }
+        : {
+            positions: Object.freeze({ Pos: Object.freeze(Pos), End: Object.freeze(End) }),
+          },
+    );
+    index++;
+  });
+  if (index !== count)
+    throw new ShInternalError('The syntax snapshot contains excess observations');
   return Object.freeze({
     get(node: Node): NodePositions | undefined {
       const observation = observations.get(node);
       if (observation === undefined) return undefined;
-      if ('error' in observation) {
-        // An exception may be edited by its catcher; retain the captured bytes.
-        throw new InputError(
-          typeof observation.error === 'string' ? observation.error : observation.error.slice(),
-        );
-      }
+      if ('error' in observation) throw new InputError(copyError(observation.error));
       return observation.positions;
     },
   });

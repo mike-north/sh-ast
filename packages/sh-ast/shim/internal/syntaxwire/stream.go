@@ -80,7 +80,7 @@ func (a ancestry) enter(v reflect.Value) (reference, error) {
 func Append(dst []byte, value any) ([]byte, error) {
 	start := len(dst)
 	root := reflect.ValueOf(value)
-	out, err := appendValue(dst, root, true, make(ancestry))
+	out, err := appendValue(dst, root, true, make(ancestry), nil, false)
 	if err == nil {
 		return out, nil
 	}
@@ -88,6 +88,35 @@ func Append(dst []byte, value any) ([]byte, error) {
 		err = original
 	}
 	return dst[:start], err
+}
+
+// AppendWithOccurrences encodes a node while retaining each Node occurrence in
+// actual wire-field preorder. It calls no methods: only after successful encoding
+// may the bridge consume the flat queue to observe bounds. This avoids a second
+// reflection walk without exposing cyclic or otherwise rejected graphs to Pos/End.
+// Failure discards both partial bytes and references; repeated aliases stay repeated.
+func AppendWithOccurrences(dst []byte, node syntax.Node) ([]byte, []syntax.Node, error) {
+	start := len(dst)
+	root := reflect.ValueOf(node)
+	nodes := make([]syntax.Node, 0)
+	out, err := appendValue(dst, root, true, make(ancestry), &nodes, false)
+	if err == nil {
+		return out, nodes, nil
+	}
+	if original := validateValue(root, true, make(ancestry)); original != nil {
+		err = original
+	}
+	return dst[:start], nil, err
+}
+
+// collectNode retains the original receiver, including typed nils and addressable
+// Comment values. Interface assertion observes type identity without calling methods.
+func collectNode(value reflect.Value, nodes *[]syntax.Node) bool {
+	node, ok := value.Interface().(syntax.Node)
+	if ok {
+		*nodes = append(*nodes, node)
+	}
+	return ok
 }
 
 // AppendString preserves Go bytes and encoding/json's HTML-safe escaping. It
@@ -132,7 +161,7 @@ func AppendPosition(dst []byte, p Position) []byte {
 
 // appendValue emits data only: interface identity controls typed nils, while
 // concrete nil pointers remain null. Struct registration precedes field access.
-func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestry) ([]byte, error) {
+func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestry, nodes *[]syntax.Node, observedPointer bool) ([]byte, error) {
 	if !v.IsValid() {
 		return append(dst, "null"...), nil
 	}
@@ -143,7 +172,7 @@ func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestr
 		if v.IsNil() {
 			return append(dst, "null"...), nil
 		}
-		return appendValue(dst, v.Elem(), true, active)
+		return appendValue(dst, v.Elem(), true, active, nodes, false)
 	}
 	if v.Kind() == reflect.Pointer && v.IsNil() {
 		if !interfaceSlot {
@@ -152,6 +181,9 @@ func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestr
 		typ := v.Type().Elem()
 		if nodeTypes[typ.Name()] != typ {
 			return nil, fmt.Errorf("unsupported typed-nil syntax pointer %s", v.Type())
+		}
+		if nodes != nil {
+			collectNode(v, nodes)
 		}
 		dst = append(dst, `{"Kind":`...)
 		dst = AppendString(dst, typ.Name())
@@ -164,11 +196,18 @@ func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestr
 			return nil, err
 		}
 		defer delete(active, key)
-		return appendValue(dst, v.Elem(), false, active)
+		observed := false
+		if nodes != nil {
+			observed = collectNode(v, nodes)
+		}
+		return appendValue(dst, v.Elem(), false, active, nodes, observed)
 	case reflect.Struct:
 		typ := v.Type()
 		if nodeTypes[typ.Name()] != typ {
 			return nil, fmt.Errorf("unsupported syntax struct %s", typ)
+		}
+		if nodes != nil && !observedPointer && v.CanAddr() {
+			collectNode(v.Addr(), nodes)
 		}
 		dst = append(dst, '{')
 		for i, field := range syntaxPlan(typ) {
@@ -183,7 +222,7 @@ func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestr
 				return nil, fmt.Errorf("unsupported private field %s.%s", typ, field.name)
 			}
 			var err error
-			dst, err = appendValue(dst, v.Field(field.index), false, active)
+			dst, err = appendValue(dst, v.Field(field.index), false, active, nodes, false)
 			if err != nil {
 				return nil, fmt.Errorf("%s.%s: %w", typ.Name(), field.name, err)
 			}
@@ -206,7 +245,7 @@ func appendValue(dst []byte, v reflect.Value, interfaceSlot bool, active ancestr
 				dst = append(dst, ',')
 			}
 			var err error
-			dst, err = appendValue(dst, v.Index(i), false, active)
+			dst, err = appendValue(dst, v.Index(i), false, active, nodes, false)
 			if err != nil {
 				return nil, err
 			}

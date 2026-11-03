@@ -3,7 +3,8 @@
 This bounded experiment compares two exact faithful producer packages with one
 identical ESLint consumer build. It reuses the existing artifact verification,
 public phase adapters, timing boundaries and fixture sources. It does not compare
-published historical versions or claim general ESLint performance.
+general ESLint performance. An optional, separate historical latency target is
+described below; it does not participate in the matched six-phase comparison.
 
 The six separately warmed phases are raw bridge parse/parse-with-positions,
 public parse/parse-with-positions, no-rule `Linter.verify`, and `Linter.verify`
@@ -107,3 +108,60 @@ Run small outcome tests with:
 ```sh
 NODENV_VERSION=22.22.1 node --test tools/benchmark/stream-encoding.test.mjs
 ```
+
+## Compact sidecar comparison (#36)
+
+The defaults above retain #35's identical-JavaScript and raw-response checks.
+For #36 use baseline `1e96b49434e05b03c9f9fd8a001151186af1668d` and the final
+reviewed canonical candidate. Refresh the accepted consumer revision before
+preparation; use one frozen build and dependency closure for both arms.
+
+After reviewing the actual emitted JavaScript diff, create a JSON file mapping
+each changed path to its exact baseline and candidate SHA-256 values, for example:
+
+```json
+{
+  "dist/syntax-snapshot.js": {
+    "baseline": "<reviewed baseline file SHA-256>",
+    "candidate": "<reviewed candidate file SHA-256>"
+  }
+}
+```
+
+Pass `--reviewed-javascript-changes /absolute/reviewed-changes.json` and
+`--compact-sidecar` to preparation. The actual complete changed-JavaScript map
+must equal this declaration, including both hashes. Added or deleted JavaScript
+paths, undeclared changes, stale hashes, and declared changes that did not happen
+fail. The declaration is saved and rechecked before and after measurement;
+complete package inventories remain independently verified. It is not a wildcard
+permission for a decoder file to change again after review.
+
+Compact mode permits different raw response hashes and byte counts only for
+`raw-parse-with-positions`. Both sizes and hashes remain in verification records
+so payload reduction is visible. Complete raw File, public File, all-node snapshot,
+smoke, and visitor-count equality remain mandatory. Plain parse retains exact raw
+response equality. Every public snapshot occurrence is also checked against live
+upstream `nodePos`/`nodeEnd` outside timing. No raw metric is relabeled pure WASM time.
+
+## Optional historical M2 latency target
+
+Supply `--historical-prepared /absolute/artifacts.json` to the runner only when an
+actual published `sh-ast@0.3.1` artifact is already prepared using the existing
+artifact tooling. A matching version label on a local build is rejected. Registry
+tarball URL, SRI, tarball hash and extracted asset hashes are retained and verified.
+No target package is downloaded or synthesized by the measurement runner.
+
+This separate comparison uses the existing generic worker for both arms:
+published 0.3.1 public `parseSync` versus candidate public
+`parseWithPositionsSync`, with identical M2 source, Bash, comment-retention intent
+and filename. The normalized legacy tree and faithful tree plus snapshot are
+different outputs. Ratios are a latency target, never an equal-work claim. Both
+must parse once and preserve all markers and 100 functions; only the faithful
+candidate must have 5,801 Nodes. An unavailable API fails the target.
+
+The default six fresh-process alternating pairs, five warmups and thirty calls
+use the main runner's numeric options. `--verify-only` also checks this target
+without timing it. Historical samples and the explicitly unequal-output summary
+go to `historical-samples.jsonl` and `historical-target.json`. The main
+`report.json` is written first and remains valid if the optional target fails;
+such a failure is recorded separately and sets a nonzero process exit code.

@@ -1,0 +1,22 @@
+import { mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { extractPackage, hash, verifyPrepared } from '../../tools/benchmark/artifacts.mjs';
+import { files } from '../../tools/benchmark/stream-encoding-prepare.mjs';
+const root=resolve('.');
+for (const [label,sha] of [['baseline','1e96b49434e05b03c9f9fd8a001151186af1668d'],['candidate','84025343c147dc8c9efe8ad93789e74fdb609218']]) {
+ const dir=join(root,'scratch/compact-packages',label+'-prepared');mkdirSync(dir);
+ const source=join(dir,'source');mkdirSync(source);
+ const archive=execFileSync('git',['archive',sha],{cwd:root,maxBuffer:64*1024*1024});
+ execFileSync('tar',['-xf','-','-C',source],{input:archive});
+ symlinkSync(join(root,'node_modules'),join(source,'node_modules'),'dir');
+ const pkg=join(source,'packages/sh-ast');
+ execFileSync(process.execPath,[join(root,'node_modules/typescript/bin/tsc'),'-p',join(pkg,'tsconfig.json')],{cwd:pkg,stdio:'inherit'});
+ for(const args of [['run'],['run','--config','analyze/api-extractor.json']]) execFileSync(process.execPath,[join(root,'node_modules/@microsoft/api-extractor/bin/api-extractor'),...args],{cwd:pkg,stdio:'inherit'});
+ const [packed]=JSON.parse(execFileSync('npm',['pack','.','--ignore-scripts','--json','--pack-destination',dir],{cwd:pkg,encoding:'utf8'}));
+ const tarball=join(dir,packed.filename),packageRoot=join(dir,'package');extractPackage(tarball,packageRoot);
+ const manifest=JSON.parse(readFileSync(join(packageRoot,'package.json')));
+ const artifact={label:'local-candidate',version:manifest.version,entry:join(packageRoot,manifest.main),packageRoot,tarball,tarballSha256:hash(readFileSync(tarball)),integrity:packed.integrity,assets:files(packageRoot),gitHead:sha,gitStatus:'',sourceAssets:files(join(source,'packages/sh-ast/src')),sourceArchiveSha256:hash(archive),preparationNode:process.version};
+ const prepared={schemaVersion:1,preparedAt:new Date().toISOString(),artifacts:[artifact]};verifyPrepared(prepared);writeFileSync(join(dir,'artifacts.json'),JSON.stringify(prepared,null,2)+'\n');
+ console.log(label,sha,artifact.assets['shim/sh-ast.wasm']);
+}

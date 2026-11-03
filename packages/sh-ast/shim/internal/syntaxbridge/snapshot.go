@@ -1,118 +1,80 @@
-// Snapshot streaming preserves declaration-order occurrences independently of
-// syntax JSON key order. Only successfully encoded acyclic graphs reach this pass.
+// Snapshot transport consumes the syntax writer's ordered occurrence queue only
+// after complete encoding succeeds. No tree discovery or bound calls occur in the
+// writer; malformed graphs therefore cannot reach recursive upstream methods.
 package syntaxbridge
 
 import (
 	"eslint-sh-shim/internal/syntaxwire"
 	"fmt"
 	"mvdan.cc/sh/v3/syntax"
-	"reflect"
 	"strconv"
 )
 
-// pathSegment keeps traversal indices unboxed and borrowed field names immutable.
-// The stack is serialized immediately; no entry retains its backing storage.
-type pathSegment struct {
-	name    string
-	index   int
-	isIndex bool
+// boundFailures stores only exceptional observations. Its index refers to an
+// occurrence, not pointer identity: shared nodes still occupy separate tuples.
+type boundFailures struct {
+	index    int
+	pos, end *string
 }
 
-// appendPositionSnapshots observes each Node occurrence before its children, using
-// real pointer receivers for addressable Comment values and preserving typed-nil
-// interface occurrences. Bounds are never cached or written into the input graph.
-// The caller must have successfully encoded the graph before invoking methods.
-func appendPositionSnapshots(dst []byte, root syntax.Node) []byte {
-	dst = append(dst, '[')
-	first := true
-	path := make([]pathSegment, 0, 16)
-	observe := func(node syntax.Node) {
-		start, startError := snapshotPosition(node, syntax.Node.Pos)
+// appendCompactPositionSidecar emits eight numeric slots per occurrence and a
+// mandatory sparse error array. Failed bounds use zero quartets; the error row
+// distinguishes those placeholders from a successful invalid zero position.
+// The caller must have successfully encoded the entire syntax graph first.
+func appendCompactPositionSidecar(dst []byte, nodes []syntax.Node) []byte {
+	dst = append(dst, `"Positions":[`...)
+	var failures []boundFailures
+	for index, node := range nodes {
+		pos, posError := snapshotPosition(node, syntax.Node.Pos)
 		end, endError := snapshotPosition(node, syntax.Node.End)
-		if !first {
+		if index > 0 {
 			dst = append(dst, ',')
 		}
-		first = false
-		dst = append(dst, `{"Path":[`...)
-		for i, segment := range path {
-			if i > 0 {
-				dst = append(dst, ',')
-			}
-			if segment.isIndex {
-				dst = strconv.AppendInt(dst, int64(segment.index), 10)
-			} else {
-				dst = syntaxwire.AppendString(dst, segment.name)
-			}
-		}
-		dst = append(dst, `],"Pos":`...)
-		dst = appendSnapshotBound(dst, start)
-		dst = append(dst, `,"End":`...)
-		dst = appendSnapshotBound(dst, end)
-		dst = append(dst, `,"PosError":`...)
-		dst = appendSnapshotError(dst, startError)
-		dst = append(dst, `,"EndError":`...)
-		dst = appendSnapshotError(dst, endError)
-		dst = append(dst, '}')
-	}
-	var visit func(reflect.Value, bool)
-	visit = func(value reflect.Value, interfaceSlot bool) {
-		if !value.IsValid() {
-			return
-		}
-		for value.Kind() == reflect.Interface {
-			interfaceSlot = true
-			if value.IsNil() {
-				return
-			}
-			value = value.Elem()
-		}
-		if value.Kind() == reflect.Pointer {
-			if value.IsNil() && !interfaceSlot {
-				return
-			}
-			if node, ok := value.Interface().(syntax.Node); ok {
-				observe(node)
-			}
-			if value.IsNil() {
-				return
-			}
-			value = value.Elem()
-		} else if value.Kind() == reflect.Struct && value.CanAddr() {
-			if node, ok := value.Addr().Interface().(syntax.Node); ok {
-				observe(node)
-			}
-		}
-		switch value.Kind() {
-		case reflect.Struct:
-			for i := 0; i < value.NumField(); i++ {
-				field := value.Type().Field(i)
-				if field.IsExported() {
-					path = append(path, pathSegment{name: field.Name})
-					visit(value.Field(i), false)
-					path = path[:len(path)-1]
-				}
-			}
-		case reflect.Slice:
-			for i := 0; i < value.Len(); i++ {
-				path = append(path, pathSegment{index: i, isIndex: true})
-				visit(value.Index(i), false)
-				path = path[:len(path)-1]
-			}
+		dst = appendCompactBound(dst, pos)
+		dst = append(dst, ',')
+		dst = appendCompactBound(dst, end)
+		if posError != nil || endError != nil {
+			failures = append(failures, boundFailures{index, posError, endError})
 		}
 	}
-	visit(reflect.ValueOf(root), true)
+	dst = append(dst, `],"PositionErrors":[`...)
+	for i, failure := range failures {
+		if i > 0 {
+			dst = append(dst, ',')
+		}
+		dst = append(dst, '[')
+		dst = strconv.AppendInt(dst, int64(failure.index), 10)
+		dst = append(dst, ',')
+		dst = appendSnapshotError(dst, failure.pos)
+		dst = append(dst, ',')
+		dst = appendSnapshotError(dst, failure.end)
+		dst = append(dst, ']')
+	}
 	return append(dst, ']')
 }
 
-// appendSnapshotBound retains explicit null slots when the corresponding method failed.
-func appendSnapshotBound(dst []byte, position *syntaxwire.Position) []byte {
-	if position == nil {
-		return append(dst, "null"...)
+// appendCompactBound preserves every public coordinate and observation flag.
+func appendCompactBound(dst []byte, position syntaxwire.Position) []byte {
+	flags := 0
+	if position.IsValid {
+		flags |= 1
 	}
-	return syntaxwire.AppendPosition(dst, *position)
+	if position.IsRecovered {
+		flags |= 2
+	}
+	if position.OffsetOverflow {
+		flags |= 4
+	}
+	dst = strconv.AppendUint(dst, uint64(position.Offset), 10)
+	dst = append(dst, ',')
+	dst = strconv.AppendUint(dst, uint64(position.Line), 10)
+	dst = append(dst, ',')
+	dst = strconv.AppendUint(dst, uint64(position.Col), 10)
+	dst = append(dst, ',')
+	return strconv.AppendInt(dst, int64(flags), 10)
 }
 
-// appendSnapshotError keeps failure bytes separate from successful coordinates.
+// appendSnapshotError keeps arbitrary failure bytes separate from coordinates.
 func appendSnapshotError(dst []byte, failure *string) []byte {
 	if failure == nil {
 		return append(dst, "null"...)
@@ -120,15 +82,14 @@ func appendSnapshotError(dst []byte, failure *string) []byte {
 	return syntaxwire.AppendString(dst, *failure)
 }
 
-// snapshotPosition calls one method independently. A panic becomes source-bound
-// observation data instead of aborting the parse or calling the other method.
-func snapshotPosition(node syntax.Node, read func(syntax.Node) syntax.Pos) (position *syntaxwire.Position, failure *string) {
+// snapshotPosition observes each method independently. Panic data never prevents
+// the other method from running, and a failed bound retains a zero placeholder.
+func snapshotPosition(node syntax.Node, read func(syntax.Node) syntax.Pos) (position syntaxwire.Position, failure *string) {
 	defer func() {
 		if caught := recover(); caught != nil {
 			message := fmt.Sprintf("upstream node position: %v", caught)
 			failure = &message
 		}
 	}()
-	observed := syntaxwire.ObservePosition(read(node))
-	return &observed, nil
+	return syntaxwire.ObservePosition(read(node)), nil
 }
