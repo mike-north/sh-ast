@@ -4,9 +4,13 @@
 
 ## WrapperSpec.names property
 
-The literal, exact argv0 text (after quote/escape removal) that identifies this wrapper — e.g. `['env']`<!-- -->. Matched only against a `static: true` word; see [WrapperSpec](./sh-ast-analyze.wrapperspec.md)<!-- -->'s doc comment.
+The command name that identifies this wrapper — e.g. `['env']`<!-- -->. Matched only against a `static: true` word; see [WrapperSpec](./sh-ast-analyze.wrapperspec.md)<!-- -->'s doc comment.
 
-Matching is \*\*exact-name-only\*\* — never basename matching. `sudo` does not match `/usr/bin/sudo` or `./sudo`<!-- -->; only a word whose \*entire\* resolved text equals one of `names` is recognized. This is a deliberate, narrower-than-real-world policy choice (a real shell would happily run `/usr/bin/sudo`<!-- -->), not an oversight: silently treating any path \*ending in\* a known wrapper name as that wrapper would be a different, broader matching policy this package isn't making on a caller's behalf. A caller who wants path-aware matching can express it explicitly via a custom [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md) table (e.g. `names: ['sudo', '/usr/bin/sudo']`<!-- -->).
+A word is recognized in exactly two ways:
+
+1. Its entire resolved text (after quote/escape removal) equals one of `names`<!-- -->: `env`<!-- -->, or a path a caller listed verbatim. 2. It is an \*\*absolute path\*\* (starts with `/`<!-- -->) whose final segment equals one of `names`<!-- -->: `/usr/bin/env`<!-- -->, `/usr/bin/sudo`<!-- -->, `/opt/x/nice` and `/usr//bin/env` resolve as `env`<!-- -->, `sudo` and `nice`<!-- -->. The chain keeps the word as written, so a consumer still sees the path.
+
+A \*\*relative path is never followed\*\*, whether or not it ends in a known name: `./env`<!-- -->, `bin/env` and `../sudo` run whatever file sits at that location relative to the working directory, which need not be the utility. A path with a trailing slash has no final segment and never matches. This is lexical only: `PATH` is not consulted and the filesystem is not read, so an absolute path to an unrelated executable that happens to be called `env` is still treated as `env`<!-- -->. A word with an expansion (`"$dir/env"`<!-- -->) is not `static` and is never matched.
 
 **Signature:**
 

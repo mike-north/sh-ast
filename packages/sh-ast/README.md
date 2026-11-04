@@ -202,6 +202,13 @@ function isAndCommand(command: BinaryCmd): boolean {
 const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500);
 ```
 
+`resolveArgv0` recognizes a wrapper by its exact name (`env`) or by an
+**absolute** path whose final segment is the name (`/usr/bin/env`,
+`/usr//bin/env`); `chain` keeps the word as written. A relative path (`./env`,
+`bin/env`) is never followed, because it runs whatever file is at that location,
+and neither is a dynamic word such as `"$dir/env"`. Matching is lexical: `PATH`
+and the filesystem are not consulted.
+
 `resolveArgv0` follows only documented wrapper grammars. The default `env` and
 `sudo` entries accept assignment names beyond shell identifiers, such as `A-B`
 or `名`. `env` recognizes assignments after `--` and ends option scanning at its

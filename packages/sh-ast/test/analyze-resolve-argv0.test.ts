@@ -506,34 +506,125 @@ describe('resolveArgv0 — review fix: command -v/-V stop the chain at command i
   });
 });
 
-describe('resolveArgv0 — review fix: exact-name-only wrapper matching is documented and pinned', () => {
-  // WrapperSpec.names matches only the *entire* resolved word text — never
-  // a basename/suffix match. `/usr/bin/sudo` and `./sudo` are both,
-  // truthfully, just ordinary (non-transparent) commands as far as the
-  // default table is concerned.
-  it('/usr/bin/sudo -u alice rm x -> effective is /usr/bin/sudo itself, not followed', () => {
-    const resolution = resolveArgv0(site('/usr/bin/sudo -u alice rm x'));
-    expect(chainSummary(resolution)).toEqual(['/usr/bin/sudo']);
-    expect(resolution.effective).toEqual({ static: true, text: '/usr/bin/sudo' });
+describe('resolveArgv0 — wrappers named by absolute path are followed (issue #66)', () => {
+  // Criterion 1: an absolute path whose final segment is a wrapper name is
+  // that wrapper. Expected chains are hand-derived from the source text.
+  it('/usr/bin/env bash x -> follows env; the chain keeps the word as written (criterion 3)', () => {
+    const resolution = resolveArgv0(site('/usr/bin/env bash x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', 'bash']);
+    expect(resolution.effective).toEqual({ static: true, text: 'bash' });
+    expect(resolution.chainIndices).toEqual([0, 1]);
   });
 
-  it('./sudo -u alice rm x -> effective is ./sudo itself, not followed', () => {
+  it('/usr/bin/env /usr/sbin/useradd bob -> reaches /usr/sbin/useradd', () => {
+    const resolution = resolveArgv0(site('/usr/bin/env /usr/sbin/useradd bob'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', '/usr/sbin/useradd']);
+    expect(resolution.effective).toEqual({ static: true, text: '/usr/sbin/useradd' });
+  });
+
+  it('/usr/bin/sudo -u alice rm x -> follows sudo and its -u operand', () => {
+    const resolution = resolveArgv0(site('/usr/bin/sudo -u alice rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/sudo', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+    expect(resolution.chainIndices).toEqual([0, 3]);
+  });
+
+  it('/usr/bin/nice -n 5 rm x -> follows nice and its -n operand', () => {
+    const resolution = resolveArgv0(site('/usr/bin/nice -n 5 rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/nice', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('the wrapper grammar still applies behind the path: /usr/bin/env -i A=1 rm x', () => {
+    const resolution = resolveArgv0(site('/usr/bin/env -i A=1 rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', 'rm']);
+  });
+
+  it('absolute-path and bare wrappers nest: /usr/bin/nohup env /usr/bin/nice rm x', () => {
+    const resolution = resolveArgv0(site('/usr/bin/nohup env /usr/bin/nice rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/nohup', 'env', '/usr/bin/nice', 'rm']);
+  });
+
+  it('a doubled slash still ends in the wrapper name: /usr//bin/env rm x', () => {
+    const resolution = resolveArgv0(site('/usr//bin/env rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr//bin/env', 'rm']);
+  });
+
+  it('a quoted absolute path is the same static word: "/usr/bin/env" rm x', () => {
+    const resolution = resolveArgv0(site('"/usr/bin/env" rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', 'rm']);
+  });
+
+  it('a multibyte directory does not disturb the final segment: /opt/日本語/🚀/env rm x', () => {
+    const resolution = resolveArgv0(site('/opt/日本語/🚀/env rm x'));
+    expect(chainSummary(resolution)).toEqual(['/opt/日本語/🚀/env', 'rm']);
+    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  });
+
+  it('a multibyte final segment is not a wrapper name: /usr/bin/envé rm x', () => {
+    const resolution = resolveArgv0(site('/usr/bin/envé rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/envé']);
+  });
+
+  // Criterion 2: relative paths are not followed. Checked against bash and
+  // zsh on macOS: with files ./env and bin/env present, `./env b` and
+  // `bin/env a` run those local files, not env(1).
+  it('bin/env rm x -> a relative path with a directory is NOT followed', () => {
+    const resolution = resolveArgv0(site('bin/env rm x'));
+    expect(chainSummary(resolution)).toEqual(['bin/env']);
+    expect(resolution.effective).toEqual({ static: true, text: 'bin/env' });
+  });
+
+  it('./sudo -u alice rm x -> NOT followed', () => {
     const resolution = resolveArgv0(site('./sudo -u alice rm x'));
     expect(chainSummary(resolution)).toEqual(['./sudo']);
     expect(resolution.effective).toEqual({ static: true, text: './sudo' });
   });
 
-  it('a caller who wants path-aware matching can express it explicitly via a custom table', () => {
-    const withAbsoluteSudo: readonly WrapperSpec[] = DEFAULT_TRANSPARENT_WRAPPERS.map((wrapper) =>
-      wrapper.names.includes('sudo')
-        ? { ...wrapper, names: [...wrapper.names, '/usr/bin/sudo'] }
-        : wrapper,
-    );
-    const resolution = resolveArgv0(site('/usr/bin/sudo -u alice rm x'), {
-      transparentWrappers: withAbsoluteSudo,
-    });
-    expect(chainSummary(resolution)).toEqual(['/usr/bin/sudo', 'rm']);
-    expect(resolution.effective).toEqual({ static: true, text: 'rm' });
+  it('../env rm x -> NOT followed', () => {
+    expect(chainSummary(resolveArgv0(site('../env rm x')))).toEqual(['../env']);
+  });
+
+  // Negative cases for the absolute rule itself.
+  it('an absolute path ending in a slash has no final segment: /usr/bin/env/ rm x', () => {
+    const resolution = resolveArgv0(site('/usr/bin/env/ rm x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env/']);
+  });
+
+  it('the root and a non-wrapper absolute path are ordinary commands', () => {
+    expect(chainSummary(resolveArgv0(site('/ rm x')))).toEqual(['/']);
+    expect(chainSummary(resolveArgv0(site('/usr/bin/printenv rm x')))).toEqual([
+      '/usr/bin/printenv',
+    ]);
+  });
+
+  // Criterion 4: a dynamic path stays unresolved.
+  it('"$dir/env" rm x -> dynamic word, never matched', () => {
+    const resolution = resolveArgv0(site('"$dir/env" rm x'));
+    expect(chainSummary(resolution)).toEqual(['<expansion>']);
+    expect(resolution.effective).toEqual({ static: false, reason: 'expansion' });
+  });
+
+  it('/usr/bin/$tool rm x -> dynamic final segment, never matched', () => {
+    const resolution = resolveArgv0(site('/usr/bin/$tool rm x'));
+    expect(resolution.effective).toEqual({ static: false, reason: 'expansion' });
+  });
+
+  it('/usr/bin/env "$cmd" x -> stops at the dynamic word behind the wrapper', () => {
+    const resolution = resolveArgv0(site('/usr/bin/env "$cmd" x'));
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', '<expansion>']);
+  });
+
+  it('a table that omits env does not follow /usr/bin/env either', () => {
+    const noEnv = DEFAULT_TRANSPARENT_WRAPPERS.filter((w) => !w.names.includes('env'));
+    const resolution = resolveArgv0(site('/usr/bin/env rm x'), { transparentWrappers: noEnv });
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env']);
+  });
+
+  it('a name listed verbatim in a custom table still matches, relative included', () => {
+    const custom: readonly WrapperSpec[] = [{ names: ['./with-retry'] }];
+    const resolution = resolveArgv0(site('./with-retry rm x'), { transparentWrappers: custom });
+    expect(chainSummary(resolution)).toEqual(['./with-retry', 'rm']);
   });
 });
 
