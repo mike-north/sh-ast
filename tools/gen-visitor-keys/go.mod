@@ -1,6 +1,6 @@
 module sh-ast-gen-visitor-keys
 
-go 1.26.5
+go 1.26.10
 
 require (
 	golang.org/x/mod v0.38.0 // indirect

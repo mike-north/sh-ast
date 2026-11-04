@@ -1,5 +1,5 @@
 module eslint-sh-shim
 
-go 1.26.5
+go 1.26.10
 
 require mvdan.cc/sh/v3 v3.13.1

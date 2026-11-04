@@ -1,13 +1,11 @@
 /**
- * Large-input public-API sequences must leave the WASM instance usable. This
- * guards the js/wasm runtime failure in which an itab first built while a GC is
- * marking a heap larger than the module's numeric method "PCs" aborts the Go
- * runtime ("found bad pointer in Go heap"), after which every call throws. See
- * packages/sh-ast/shim/internal/syntaxwire/itabs.go. The failure depends on
- * heap layout, so the sequence runs at several sizes, each in a fresh process.
+ * Large-input public-API sequences must leave the WASM instance usable. The
+ * reported sequence aborted the Go runtime ("found bad pointer in Go heap",
+ * golang/go#80472) on a go1.26.5 build, after which every call threw; the
+ * failure depends on heap layout, so it runs at several sizes, each in a fresh
+ * process. The print path is covered by packages/sh-ast/test/go-runtime-abort.test.ts.
  *
- * SH_AST_ENTRY may name another built package's dist/index.js, to confirm the
- * test fails on a build without the fix.
+ * SH_AST_ENTRY may name another built package's dist/index.js, to check that build.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';

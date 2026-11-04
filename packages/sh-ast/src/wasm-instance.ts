@@ -69,6 +69,37 @@ function ensureInstance(): ShimExports {
   return shimExports;
 }
 
+/**
+ * Reinterprets a raw i32 returned by a WASM export as the unsigned 32-bit
+ * linear-memory address it denotes. WebAssembly hands i32 results to JS as
+ * signed numbers, so any address at or above 2 GiB would otherwise read as
+ * negative and be rejected by typed-array views.
+ * @internal
+ */
+export function toAddress(raw: number): number {
+  return raw >>> 0;
+}
+
+/**
+ * Creates a byte view over linear memory, converting the engine's RangeError
+ * for an unusable range into the package's typed internal failure so callers
+ * never see a buffer-view error from the bridge.
+ */
+function viewMemory(memory: WebAssembly.Memory, ptr: number, len?: number): Uint8Array {
+  try {
+    return len === undefined
+      ? new Uint8Array(memory.buffer)
+      : new Uint8Array(memory.buffer, ptr, len);
+  } catch (error) {
+    if (error instanceof RangeError) {
+      throw new ShInternalError(
+        `The syntax bridge could not address WASM linear memory (address ${String(ptr)}, ${String(len ?? 'whole buffer')} bytes); memory may be exhausted: ${error.message}`,
+      );
+    }
+    throw error;
+  }
+}
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -89,20 +120,20 @@ export function callSyntax(operation: string, payload: Uint8Array, options = '{}
   }
   const allocations: number[] = [];
   const write = (bytes: Uint8Array): { ptr: number; len: number } => {
-    const ptr = exports.alloc(bytes.length);
+    const ptr = toAddress(exports.alloc(bytes.length));
     allocations.push(ptr);
     if (ptr === 0) throw new ShInternalError('The syntax bridge returned a null input allocation');
-    new Uint8Array(exports.mem.buffer, ptr, bytes.length).set(bytes);
+    viewMemory(exports.mem, ptr, bytes.length).set(bytes);
     return { ptr, len: bytes.length };
   };
   try {
     const op = write(encoder.encode(operation));
     const input = write(payload);
     const opts = write(encoder.encode(options));
-    const result = process(op.ptr, op.len, input.ptr, input.len, opts.ptr, opts.len);
+    const result = toAddress(process(op.ptr, op.len, input.ptr, input.len, opts.ptr, opts.len));
     if (result === 0) throw new ShInternalError('The syntax bridge returned a null result');
     allocations.push(result);
-    const memory = new Uint8Array(exports.mem.buffer);
+    const memory = viewMemory(exports.mem, result);
     if (result >= memory.length)
       throw new ShInternalError('The syntax bridge returned an out-of-bounds result');
     // The native search finds the first NUL exactly as a byte loop would, without
