@@ -333,7 +333,9 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
  * option, at `--`, and at a lone `-`; afterwards a word shaped like `-c` is an
  * ordinary script operand. A dynamic word in option position leaves the
  * question undecidable, so scanning stops and the interpreter is reported
- * exactly as before (its own static name).
+ * exactly as before (its own static name). In that case `static: true` means
+ * only that the interpreter's name is known; it does not mean the command is a
+ * plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`.
  *
  * This shape may grow new optional fields in a **minor** release; existing
  * fields' meaning never changes.
@@ -389,8 +391,11 @@ export interface EmbeddedCommandInterpreterSpec {
  * `sh-ast/analyze`'s default {@link EmbeddedCommandInterpreterSpec} table:
  * the shells whose `-c` option makes {@link resolveArgv0} report
  * `'embedded-command'`. Each entry's option grammar is hand-derived from the
- * cited manual and cross-checked by running the real shell (bash 5.2.21,
- * dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8, mksh R59). It is data, not policy:
+ * cited manual. It was cross-checked by running these shells on Linux: bash
+ * 5.2.21, dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8 and mksh R59. Other builds were
+ * not run and can differ; for example macOS's 2012 ksh93u+ behaves differently
+ * from the cited 93u+m for `ksh -o c "echo X"`, and `sh` is bash 3.2 there, which
+ * is why the `sh` entry also models bash's long options. It is data, not policy:
  * it names no dangerous commands and a caller can replace or extend it via
  * {@link ResolveArgv0Options.embeddedCommandInterpreters}; an empty array
  * restores the behavior in which an interpreter is an ordinary effective
@@ -420,13 +425,15 @@ export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInte
       plusCSelectsCommand: true,
     },
     // POSIX `sh`: `-o option` is the only portable operand option. `sh` is
-    // bash, dash or another shell depending on the system; `-O` is accepted
-    // as an operand option as well so that a bash-backed `sh -O extglob -c`
-    // is not misread (dash rejects it, and rejecting means nothing runs).
+    // bash, dash or another shell depending on the system, so this entry
+    // models the superset: `-O` and bash's `--rcfile`/`--init-file` take an
+    // operand so that a bash-backed `sh -O extglob -c` or `sh --rcfile f -c`
+    // is not misread (dash rejects them, and rejecting means nothing runs).
     {
       names: ['sh'],
       operandOptions: ['o', 'O'],
       operandAttachment: 'separate-word',
+      operandLongOptions: ['--rcfile', '--init-file'],
       plusCSelectsCommand: true,
     },
     // dash(1): `-o option` takes the next word, even within a cluster.
@@ -1112,7 +1119,11 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
  *    `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
  *    selected `-c`. `bash script.sh`, `bash -e script.sh`, `bash -- -c`
  *    and `bash -o c` are not `-c` invocations and resolve to `bash` as
- *    before. The `-c` string itself is never parsed.
+ *    before. A dynamic word in option position (`bash "$f" -c x`,
+ *    `bash -c"$y" x`) is undecidable, so the interpreter stays a static
+ *    `bash`: `static: true` then means only that the name is known, not that
+ *    the command is a plain shell invocation. The `-c` string itself is never
+ *    parsed.
  *
  * `VAR=val` shell-assignment prefixes on the `CallExpr` itself
  * (`CommandSite.node.Assigns`, e.g. `FOO=bar rm x`) are always skipped and

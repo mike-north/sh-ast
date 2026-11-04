@@ -79,6 +79,11 @@ describe('interpreter -c — embedded (criterion 1)', () => {
     [sh`bash --init-file /dev/null -c 'ls'`, ['bash', '<embedded-command>'], [0, 3]],
     // bash, dash, zsh and ksh93 treat `+c` as `-c` (mksh does not; see below).
     [sh`bash +c 'ls'`, ['bash', '<embedded-command>'], [0, 1]],
+    // `sh` may be bash (macOS /bin/sh is bash 3.2), so it takes bash's long
+    // options with an operand: `sh --rcfile f -c "echo RAN"` runs the string.
+    [sh`sh --rcfile f -c 'echo RAN'`, ['sh', '<embedded-command>'], [0, 3]],
+    [sh`sh --init-file f -c 'echo RAN'`, ['sh', '<embedded-command>'], [0, 3]],
+    [sh`sh --norc -c 'echo RAN'`, ['sh', '<embedded-command>'], [0, 2]],
     [sh`zsh +ec 'ls'`, ['zsh', '<embedded-command>'], [0, 1]],
     // The other interpreters.
     [sh`dash -c ls`, ['dash', '<embedded-command>'], [0, 1]],
@@ -183,11 +188,20 @@ describe('interpreter -c — not embedded, unchanged from before (criterion 2)',
   // options, so whether a later `-c` is an option is undecidable. Scanning
   // stops and the interpreter resolves as it did before this behavior.
   it('leaves a dynamic option-position word undecidable and unchanged', () => {
-    for (const src of [sh`bash "$script"`, sh`bash "$opts" -c 'ls'`]) {
+    for (const src of [sh`bash "$script"`, sh`bash "$opts" -c 'ls'`, sh`bash -c"$y" x`]) {
       const resolution = resolveArgv0(site(src));
       expect(chainSummary(resolution), src).toEqual(['bash']);
       expect(resolution.effective, src).toEqual({ static: true, text: 'bash' });
     }
+  });
+
+  // Pins the behavior deliberately. `static: true` here means only that the
+  // interpreter's name is known: with f=-x, `bash "$f" -c x` runs `x` as a
+  // command string (bash 5.2.21), yet this is reported as plain `bash`.
+  it('reports static bash with an undecidable chain of exactly one word', () => {
+    const resolution = resolveArgv0(site(sh`bash "$f" -c x`));
+    expect(resolution.chain).toEqual([{ static: true, text: 'bash' }]);
+    expect(resolution.chainIndices).toEqual([0]);
   });
 
   it('does not treat a non-interpreter name as one', () => {

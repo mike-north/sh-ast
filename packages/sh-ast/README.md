@@ -224,8 +224,9 @@ available as `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
 selected `-c`. Clustered flags (`-ec`, `-lc`), preceding options (`-o pipefail`,
 `+o`, `-e`) and `--` follow each shell's own option grammar, so `bash script.sh`,
 `bash -e script.sh`, `bash -- -c` and `bash -o c` still resolve to `bash`. A
-dynamic word in option position (`bash "$opts" -c ls`) is undecidable and also
-resolves to `bash`. `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS` is the overridable
+dynamic word in option position (`bash "$opts" -c ls`, `bash -c"$y" x`) is
+undecidable and also resolves to `bash`; there `static: true` means only that the
+interpreter's name is known, not that the command is a plain shell invocation. `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS` is the overridable
 table; `ResolveArgv0Options.embeddedCommandInterpreters: []` restores the previous
 behavior.
 

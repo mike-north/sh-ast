@@ -8,7 +8,7 @@ A data-only description of one shell interpreter whose `-c` option makes the nex
 
 Only the option grammar needed to decide \*whether `-c` is an option\* is described: which options consume an operand word (so that `-o c` or `-o pipefail -c` are not misread) and where option parsing ends. Everything else about the interpreter — what its other options mean, whether a given option name is valid — is irrelevant to that decision and unmodeled; an invalid invocation that a real shell would reject is still reported conservatively, since nothing is guessed about what it would run.
 
-Option parsing ends at the first statically known word that is not an option, at `--`<!-- -->, and at a lone `-`<!-- -->; afterwards a word shaped like `-c` is an ordinary script operand. A dynamic word in option position leaves the question undecidable, so scanning stops and the interpreter is reported exactly as before (its own static name).
+Option parsing ends at the first statically known word that is not an option, at `--`<!-- -->, and at a lone `-`<!-- -->; afterwards a word shaped like `-c` is an ordinary script operand. A dynamic word in option position leaves the question undecidable, so scanning stops and the interpreter is reported exactly as before (its own static name). In that case `static: true` means only that the interpreter's name is known; it does not mean the command is a plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`<!-- -->.
 
 This shape may grow new optional fields in a \*\*minor\*\* release; existing fields' meaning never changes.
 
