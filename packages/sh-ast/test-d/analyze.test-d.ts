@@ -6,6 +6,7 @@
  */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
 import {
+  DEFAULT_EMBEDDED_COMMAND_INTERPRETERS,
   DEFAULT_TRANSPARENT_WRAPPERS,
   ShAnalyzeInvalidWrapperSpecError,
   ShAnalyzeMaxDepthError,
@@ -21,6 +22,7 @@ import type {
   Argv0UnresolvedWord,
   CommandContext,
   CommandSite,
+  EmbeddedCommandInterpreterSpec,
   SyntaxPos,
   ResolveArgv0Options,
   ResolveWordOptions,
@@ -348,3 +350,20 @@ expectAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'shell-ide
 expectNotAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: true });
 expectNotAssignable<WrapperSpec>({ names: ['retry'], assignmentOperands: 'anything' });
 expectAssignable<Argv0UnresolvedReason>('ambiguous-assignment');
+
+// Shell-interpreter `-c` detection (https://github.com/mike-north/sh-ast/issues/42):
+// a readonly, overridable table of EmbeddedCommandInterpreterSpec entries; the
+// result shape is unchanged (`embedded-command` is an existing reason).
+expectType<readonly EmbeddedCommandInterpreterSpec[]>(DEFAULT_EMBEDDED_COMMAND_INTERPRETERS);
+expectAssignable<ResolveArgv0Options>({ embeddedCommandInterpreters: [] });
+expectAssignable<ResolveArgv0Options>({
+  embeddedCommandInterpreters: [
+    { names: ['fish'], operandOptions: ['C'], operandAttachment: 'rest-of-cluster' },
+  ],
+});
+expectNotAssignable<ResolveArgv0Options>({ embeddedCommandInterpreters: ['bash'] });
+expectNotAssignable<EmbeddedCommandInterpreterSpec>({
+  names: ['bash'],
+  operandOptions: [],
+  operandAttachment: 'anywhere',
+});

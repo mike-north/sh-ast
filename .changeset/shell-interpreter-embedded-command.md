@@ -1,0 +1,5 @@
+---
+'sh-ast': minor
+---
+
+`resolveArgv0` now reports a shell interpreter's `-c` operand (`bash -c "$x"`, `sh -ec ls`, `sudo zsh -lc ls`, `/bin/dash -c ls`) as `effective: { static: false, reason: 'embedded-command' }`, the same result `env -S` gives, instead of a static effective command naming the interpreter. The interpreter word stays available as `chain.at(-2)` and `chainIndices.at(-1)` is the option word that selected `-c`. Covered interpreters are `bash`, `sh`, `dash`, `zsh`, `ksh`, `ksh93` and `mksh`, matched by final path segment; `bash script.sh`, `bash -e script.sh`, `bash -- -c` and `bash -o c` are unchanged. This changes results on unchanged input: consumers that treated `effective.static` as "the command is the interpreter" must now handle `embedded-command` (and can read the shell from `chain`). Adds `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS`, the `EmbeddedCommandInterpreterSpec` type and `ResolveArgv0Options.embeddedCommandInterpreters`; pass `[]` to restore the previous behavior. Pinned mvdan/sh remains v3.13.1.

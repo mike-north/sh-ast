@@ -28,12 +28,17 @@ export type { ResolveWordOptions, WordResolution, WordResolutionReason } from '.
 export { enumerateCommands } from './enumerate-commands.js';
 export type { CommandContext, CommandSite } from './enumerate-commands.js';
 
-export { DEFAULT_TRANSPARENT_WRAPPERS, resolveArgv0 } from './resolve-argv0.js';
+export {
+  DEFAULT_EMBEDDED_COMMAND_INTERPRETERS,
+  DEFAULT_TRANSPARENT_WRAPPERS,
+  resolveArgv0,
+} from './resolve-argv0.js';
 export type {
   Argv0ChainWord,
   Argv0Resolution,
   Argv0UnresolvedReason,
   Argv0UnresolvedWord,
+  EmbeddedCommandInterpreterSpec,
   ResolveArgv0Options,
   WrapperSpec,
 } from './resolve-argv0.js';

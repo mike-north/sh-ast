@@ -215,6 +215,20 @@ Existing `skipAssignmentOperands: true` tables retain their ASCII shell-identifi
 rule before `--`. Wrapper assignment operands do not change `assignmentsSkipped`,
 which counts only shell-level prefixes.
 
+When the effective command is a shell interpreter (`bash`, `sh`, `dash`, `zsh`,
+`ksh`, `ksh93`, `mksh`, matched by the final path segment, so `/bin/bash` too)
+invoked with `-c`, `resolveArgv0` reports `effective: { static: false, reason:
+'embedded-command' }`, the same result as `env -S`: the command that runs is
+inside the string operand, which is never parsed. The interpreter's word stays
+available as `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
+selected `-c`. Clustered flags (`-ec`, `-lc`), preceding options (`-o pipefail`,
+`+o`, `-e`) and `--` follow each shell's own option grammar, so `bash script.sh`,
+`bash -e script.sh`, `bash -- -c` and `bash -o c` still resolve to `bash`. A
+dynamic word in option position (`bash "$opts" -c ls`) is undecidable and also
+resolves to `bash`. `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS` is the overridable
+table; `ResolveArgv0Options.embeddedCommandInterpreters: []` restores the previous
+behavior.
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

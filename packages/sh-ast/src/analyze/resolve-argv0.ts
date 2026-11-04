@@ -315,6 +315,150 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
 ]);
 
 /**
+ * A data-only description of one shell interpreter whose `-c` option makes the
+ * next operand a command string run by that shell (`bash -c 'rm x'`). Like
+ * `env -S`, the command that runs lives *inside* an operand, so
+ * {@link resolveArgv0} reports `'embedded-command'` instead of the
+ * interpreter's own name as the effective command.
+ *
+ * Only the option grammar needed to decide *whether `-c` is an option* is
+ * described: which options consume an operand word (so that `-o c` or
+ * `-o pipefail -c` are not misread) and where option parsing ends. Everything
+ * else about the interpreter — what its other options mean, whether a given
+ * option name is valid — is irrelevant to that decision and unmodeled; an
+ * invalid invocation that a real shell would reject is still reported
+ * conservatively, since nothing is guessed about what it would run.
+ *
+ * Option parsing ends at the first statically known word that is not an
+ * option, at `--`, and at a lone `-`; afterwards a word shaped like `-c` is an
+ * ordinary script operand. A dynamic word in option position leaves the
+ * question undecidable, so scanning stops and the interpreter is reported
+ * exactly as before (its own static name).
+ *
+ * This shape may grow new optional fields in a **minor** release; existing
+ * fields' meaning never changes.
+ *
+ * @public
+ */
+export interface EmbeddedCommandInterpreterSpec {
+  /**
+   * The interpreter's name, matched against a static command word's final
+   * path segment: `bash`, `/bin/bash` and `/usr/local/bin/bash` all match
+   * `['bash']`. This deliberately differs from {@link WrapperSpec.names}'
+   * exact-name policy, because a path-qualified shell is the same
+   * interpreter and the question here is only whether a command string is
+   * embedded, not which executable would be located.
+   */
+  readonly names: readonly string[];
+
+  /**
+   * Single option letters (without a sign) that take a name or value operand
+   * under both `-` and `+`, e.g. `['o']` for `-o pipefail` / `+o pipefail`.
+   * A letter listed here never selects the command string itself, so
+   * `bash -o c script` keeps `c` as an option *name*.
+   */
+  readonly operandOptions: readonly string[];
+
+  /**
+   * How an {@link EmbeddedCommandInterpreterSpec.operandOptions} letter
+   * receives its operand inside a clustered word:
+   *
+   * - `'separate-word'` — always the next word; remaining letters in the
+   *   cluster are still options (`bash -oc errexit 'cmd'` is `-o errexit -c`).
+   * - `'rest-of-cluster'` — the remainder of the word if any, else the next
+   *   word; later letters in the same word are part of the operand
+   *   (`zsh -oc` names an option `c`).
+   */
+  readonly operandAttachment: 'separate-word' | 'rest-of-cluster';
+
+  /**
+   * Leading long options (exact `--name` words) that take a separate operand
+   * word, e.g. bash's `--rcfile FILE`. Any other `--name` word is skipped as a
+   * flag with no operand.
+   */
+  readonly operandLongOptions?: readonly string[];
+
+  /**
+   * `true` if the interpreter also treats `+c` as selecting the command
+   * string. Some shells do and some ignore the sign for this letter.
+   */
+  readonly plusCSelectsCommand?: boolean;
+}
+
+/**
+ * `sh-ast/analyze`'s default {@link EmbeddedCommandInterpreterSpec} table:
+ * the shells whose `-c` option makes {@link resolveArgv0} report
+ * `'embedded-command'`. Each entry's option grammar is hand-derived from the
+ * cited manual and cross-checked by running the real shell (bash 5.2.21,
+ * dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8, mksh R59). It is data, not policy:
+ * it names no dangerous commands and a caller can replace or extend it via
+ * {@link ResolveArgv0Options.embeddedCommandInterpreters}; an empty array
+ * restores the behavior in which an interpreter is an ordinary effective
+ * command.
+ *
+ * Frozen, including each entry and its arrays.
+ *
+ * @see https://www.gnu.org/software/bash/manual/bash.html#Invoking-Bash — bash
+ * @see https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sh.html — POSIX `sh`
+ * @see https://man7.org/linux/man-pages/man1/dash.1.html — dash(1)
+ * @see https://zsh.sourceforge.io/Doc/Release/Invocation-and-Startup.html — zsh
+ * @see https://github.com/ksh93/ksh — ksh93u+m `sh(1)`
+ * @see https://man.mirbsd.org/mksh.1 — mksh(1)
+ * @public
+ */
+export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInterpreterSpec[] =
+  deepFreeze([
+    // bash(1) INVOCATION/OPTIONS: `-o option` and `-O shopt_option` each take
+    // the next word, and in a cluster the operands are taken in order from
+    // the following words (`-oc errexit 'cmd'` runs `cmd`). `--rcfile` and
+    // `--init-file` take a file. `+c` is accepted as `-c`.
+    {
+      names: ['bash'],
+      operandOptions: ['o', 'O'],
+      operandAttachment: 'separate-word',
+      operandLongOptions: ['--rcfile', '--init-file'],
+      plusCSelectsCommand: true,
+    },
+    // POSIX `sh`: `-o option` is the only portable operand option. `sh` is
+    // bash, dash or another shell depending on the system; `-O` is accepted
+    // as an operand option as well so that a bash-backed `sh -O extglob -c`
+    // is not misread (dash rejects it, and rejecting means nothing runs).
+    {
+      names: ['sh'],
+      operandOptions: ['o', 'O'],
+      operandAttachment: 'separate-word',
+      plusCSelectsCommand: true,
+    },
+    // dash(1): `-o option` takes the next word, even within a cluster.
+    {
+      names: ['dash'],
+      operandOptions: ['o'],
+      operandAttachment: 'separate-word',
+      plusCSelectsCommand: true,
+    },
+    // zsh: `-o option` names an option; attached (`-oerrexit`) or separate.
+    {
+      names: ['zsh'],
+      operandOptions: ['o'],
+      operandAttachment: 'rest-of-cluster',
+      plusCSelectsCommand: true,
+    },
+    // ksh93: `-o[option]` is attached or separate; `+c` is accepted.
+    {
+      names: ['ksh', 'ksh93'],
+      operandOptions: ['o'],
+      operandAttachment: 'rest-of-cluster',
+      plusCSelectsCommand: true,
+    },
+    // mksh(1): like ksh93, but `+c` does not select a command string.
+    {
+      names: ['mksh'],
+      operandOptions: ['o'],
+      operandAttachment: 'rest-of-cluster',
+    },
+  ]);
+
+/**
  * Options accepted by {@link resolveArgv0}.
  *
  * @public
@@ -335,6 +479,19 @@ export interface ResolveArgv0Options {
    * flag matching.
    */
   readonly transparentWrappers?: readonly WrapperSpec[];
+
+  /**
+   * The shell interpreters whose `-c` operand is reported as an
+   * `'embedded-command'`. Defaults to
+   * {@link DEFAULT_EMBEDDED_COMMAND_INTERPRETERS}. Pass a replacement array to
+   * add or drop interpreters; an empty array disables the behavior, so every
+   * interpreter resolves as an ordinary effective command.
+   *
+   * Validated at the {@link resolveArgv0} boundary like
+   * {@link ResolveArgv0Options.transparentWrappers}: a malformed entry throws
+   * {@link ShAnalyzeInvalidWrapperSpecError}.
+   */
+  readonly embeddedCommandInterpreters?: readonly EmbeddedCommandInterpreterSpec[];
 }
 
 /**
@@ -352,7 +509,10 @@ export interface ResolveArgv0Options {
  * - `'embedded-command'` — a wrapper flag whose value structurally embeds
  *   the real command rather than naming it as a separate word (e.g.
  *   `env -S 'rm -rf /'` — see {@link WrapperSpec.unresolvableFlags}'s doc
- *   comment).
+ *   comment), or a shell interpreter's `-c` option (`bash -c 'rm x'`, see
+ *   {@link EmbeddedCommandInterpreterSpec}). In both cases the chain's
+ *   second-to-last element is the wrapper or interpreter word, so its name
+ *   stays available.
  * - `'ambiguous-assignment'` — a statically known assignment operand whose
  *   acceptance differs across supported utility implementations, such as
  *   `env =value cmd` (GNU/glibc accepts an empty name; BSD rejects it).
@@ -724,6 +884,62 @@ function advancePastWrapperOperands(
   return { kind: 'truncated' };
 }
 
+/** The interpreter entry whose name matches `text`'s final path segment, if any. */
+function findInterpreterSpec(
+  interpreters: readonly EmbeddedCommandInterpreterSpec[],
+  text: string,
+): EmbeddedCommandInterpreterSpec | undefined {
+  const name = text.slice(text.lastIndexOf('/') + 1);
+  return interpreters.find((spec) => spec.names.includes(name));
+}
+
+/**
+ * Scans an interpreter's option words from `startIndex` and returns the index
+ * of the word that selects the `-c` command string, or `undefined` when none
+ * does — the options ended first (see {@link EmbeddedCommandInterpreterSpec}),
+ * a dynamic word made the grammar undecidable, or the words ran out.
+ *
+ * Mirrors real shell option parsing, verified against bash, dash, zsh, ksh93
+ * and mksh: a cluster is read letter by letter; `c` selects the command
+ * string; an operand-taking letter (`o`) consumes a following word (or, for
+ * `'rest-of-cluster'` shells, the rest of its own word), so the operand `c`
+ * of `-o c` is never an option.
+ */
+function findCommandStringOption(
+  argv: readonly WordResolution[],
+  startIndex: number,
+  spec: EmbeddedCommandInterpreterSpec,
+): number | undefined {
+  let index = startIndex;
+  while (index < argv.length) {
+    const word = argv[index];
+    if (!word.static) return undefined;
+    const text = word.text;
+    // `--` and a lone `-` end options in every modeled shell; a lone `+`
+    // and any non-option word are operands (a script path or command string).
+    const sign = text[0];
+    if (text.length < 2 || (sign !== '-' && sign !== '+') || text === '--') return undefined;
+    if (text.startsWith('--')) {
+      index += spec.operandLongOptions?.includes(text) === true ? 2 : 1;
+      continue;
+    }
+    let pendingOperands = 0;
+    let selectsCommand = false;
+    for (let i = 1; i < text.length; i += 1) {
+      const letter = text[i];
+      if (letter === 'c') {
+        if (sign === '-' || spec.plusCSelectsCommand === true) selectsCommand = true;
+      } else if (spec.operandOptions.includes(letter)) {
+        if (spec.operandAttachment === 'rest-of-cluster' && i < text.length - 1) break;
+        pendingOperands += 1;
+      }
+    }
+    if (selectsCommand) return index;
+    index += 1 + pendingOperands;
+  }
+  return undefined;
+}
+
 /** `true` iff `value` is a non-empty array of non-empty strings. */
 function isNonEmptyStringArray(value: unknown): value is readonly string[] {
   return (
@@ -804,6 +1020,52 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
 }
 
 /**
+ * Validates one injected {@link EmbeddedCommandInterpreterSpec}, throwing
+ * {@link ShAnalyzeInvalidWrapperSpecError} on the first problem — the same
+ * boundary rule as {@link validateWrapperSpec}, so a malformed JavaScript
+ * caller's table fails loudly instead of as a native `TypeError` mid-scan.
+ */
+function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: number): void {
+  const context = `embeddedCommandInterpreters[${String(index)}]`;
+  if (!isNonEmptyStringArray(spec.names)) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.names must be a non-empty array of non-empty strings`,
+    );
+  }
+  if (
+    !Array.isArray(spec.operandOptions) ||
+    !spec.operandOptions.every((item) => typeof item === 'string' && item.length === 1)
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.operandOptions must be an array of single-character strings`,
+    );
+  }
+  // JavaScript callers can bypass the declared union; validate raw boundary data.
+  const attachment: unknown = spec.operandAttachment;
+  if (attachment !== 'separate-word' && attachment !== 'rest-of-cluster') {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.operandAttachment must be separate-word or rest-of-cluster`,
+    );
+  }
+  if (
+    spec.operandLongOptions !== undefined &&
+    !(
+      Array.isArray(spec.operandLongOptions) &&
+      spec.operandLongOptions.every((item) => typeof item === 'string')
+    )
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.operandLongOptions must be an array of strings when present`,
+    );
+  }
+  if (spec.plusCSelectsCommand !== undefined && typeof spec.plusCSelectsCommand !== 'boolean') {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.plusCSelectsCommand must be a boolean when present`,
+    );
+  }
+}
+
+/**
  * Follows `site`'s argv0 through zero or more *transparent wrappers* —
  * commands whose own argv0 isn't the command actually run, because they
  * just locate and re-exec another command (`env FOO=1 rm -rf /`,
@@ -821,7 +1083,7 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  * command) or add their own (e.g. a project's `with-retry` helper) and
  * both directions are followed identically to any built-in entry.
  *
- * **A statically-unknowable word is never guessed through** — three
+ * **A statically-unknowable word is never guessed through** — four
  * distinct cases all stop the chain immediately at that word rather than
  * falling back to any other guess:
  *
@@ -842,6 +1104,16 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  *    reports `effective: { static: false, reason: 'embedded-command' }`
  *    (see {@link WrapperSpec.unresolvableFlags}'s doc comment).
  *
+ * 4. The effective command is a shell interpreter
+ *    ({@link DEFAULT_EMBEDDED_COMMAND_INTERPRETERS}) invoked with `-c` —
+ *    `bash -c "$x"`, `sudo sh -ec ls` — and the command that runs is
+ *    inside the string operand. The result is the same
+ *    `'embedded-command'` shape `env -S` produces: the interpreter word is
+ *    `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
+ *    selected `-c`. `bash script.sh`, `bash -e script.sh`, `bash -- -c`
+ *    and `bash -o c` are not `-c` invocations and resolve to `bash` as
+ *    before. The `-c` string itself is never parsed.
+ *
  * `VAR=val` shell-assignment prefixes on the `CallExpr` itself
  * (`CommandSite.node.Assigns`, e.g. `FOO=bar rm x`) are always skipped and
  * counted in {@link Argv0Resolution.assignmentsSkipped} — a mechanism
@@ -856,7 +1128,8 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  * least one argv word; see its doc comment), not a "malformed shell
  * source" case.
  * @throws {@link ShAnalyzeInvalidWrapperSpecError} if
- * `options.transparentWrappers` contains a malformed entry (see
+ * `options.transparentWrappers` or `options.embeddedCommandInterpreters`
+ * contains a malformed entry (see
  * {@link ResolveArgv0Options.transparentWrappers}'s doc comment).
  * @public
  */
@@ -867,6 +1140,11 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
   const wrappers = options?.transparentWrappers ?? DEFAULT_TRANSPARENT_WRAPPERS;
   if (options?.transparentWrappers !== undefined) {
     wrappers.forEach(validateWrapperSpec);
+  }
+  const interpreters =
+    options?.embeddedCommandInterpreters ?? DEFAULT_EMBEDDED_COMMAND_INTERPRETERS;
+  if (options?.embeddedCommandInterpreters !== undefined) {
+    interpreters.forEach(validateInterpreterSpec);
   }
   const assignmentsSkipped = nodeArray(site.node.Assigns).length;
   const argv = site.argv;
@@ -881,7 +1159,18 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
     chainIndices.push(index);
     if (!word.static) break;
     const spec = findWrapperSpec(wrappers, word.text);
-    if (spec === undefined) break;
+    if (spec === undefined) {
+      const interpreter = findInterpreterSpec(interpreters, word.text);
+      const optionIndex =
+        interpreter === undefined
+          ? undefined
+          : findCommandStringOption(argv, index + 1, interpreter);
+      if (optionIndex !== undefined) {
+        chain.push({ static: false, reason: 'embedded-command' });
+        chainIndices.push(optionIndex);
+      }
+      break;
+    }
     const result = advancePastWrapperOperands(argv, index + 1, spec);
     if (result.kind === 'truncated') break;
     if (result.kind === 'unresolvable') {
