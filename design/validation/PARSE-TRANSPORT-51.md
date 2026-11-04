@@ -105,5 +105,22 @@ this change carries no workaround for it.
 
 `tools/benchmark/heap-sequence.integration.mjs` runs the reported parse sequence
 at eight sizes in fresh processes. On 54c286b (go1.26.5) it failed in 3/3 runs,
-at k = 100 and 120 each time. The print path is covered by main's
-`packages/sh-ast/test/go-runtime-abort.test.ts`.
+at k = 100 and 120 each time.
+
+Which sizes abort depends on the Go heap layout, and this transport change moved
+it: main's `packages/sh-ast/test/go-runtime-abort.test.ts`, with its single print
+sequence (representative-50, k = 10, j = 2), still detected the defect on main's
+source but passed 10/10 on this head built with go1.26.5. The test now runs its
+print sequence at several sizes, each in a fresh process: representative-50
+k = 10/j = 2, consumer-m2 k = 20/j = 2 and consumer-m2 k = 30/j = 3. Verified on
+this VM with the CI build recipe:
+
+| Source         | Toolchain | Result                                                                                                                                   |
+| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| This head      | go1.26.5  | fails 4/4 runs (consumer-m2 k = 20/j = 2 and k = 30/j = 3 abort every run with "found bad pointer in Go heap"; representative-50 passes) |
+| main `4e92cec` | go1.26.5  | fails 3/3 runs (consumer-m2 k = 20/j = 2 every run; representative-50 k = 10/j = 2 in 2/3)                                               |
+| This head      | go1.26.10 | passes 4/4 runs                                                                                                                          |
+| main `4e92cec` | go1.26.10 | passes 1/1 run                                                                                                                           |
+
+Any later transport change must re-prove the test against a go1.26.5 build and
+add sizes until at least one fails there.

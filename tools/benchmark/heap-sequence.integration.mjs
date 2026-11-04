@@ -3,7 +3,9 @@
  * reported sequence aborted the Go runtime ("found bad pointer in Go heap",
  * golang/go#80472) on a go1.26.5 build, after which every call threw; the
  * failure depends on heap layout, so it runs at several sizes, each in a fresh
- * process. The print path is covered by packages/sh-ast/test/go-runtime-abort.test.ts.
+ * process. packages/sh-ast/test/go-runtime-abort.test.ts runs the print path at
+ * its own set of sizes; both sets must be re-proved against a go1.26.5 build
+ * whenever the transport changes the heap layout.
  *
  * SH_AST_ENTRY may name another built package's dist/index.js, to check that build.
  */
