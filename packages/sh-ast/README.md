@@ -207,7 +207,9 @@ const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500
 `/usr//bin/env`); `chain` keeps the word as written. A relative path (`./env`,
 `bin/env`) is never followed, because it runs whatever file is at that location,
 and neither is a dynamic word such as `"$dir/env"`. Matching is lexical: `PATH`
-and the filesystem are not consulted.
+and the filesystem are not consulted, so any absolute path ending in a wrapper
+name is followed even if that file is not the system utility (`/opt/mytools/env
+rm x` resolves to `rm`).
 
 `resolveArgv0` follows only documented wrapper grammars. The default `env` and
 `sudo` entries accept assignment names beyond shell identifiers, such as `A-B`
