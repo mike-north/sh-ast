@@ -168,3 +168,6 @@ exits nonzero on any mismatch.
 
 Run `pnpm test:benchmark` for accounting/capability/provenance/comparison outcome
 tests and a built-package worker integration test. No test asserts latency.
+`heap-sequence.integration.mjs` runs a large public-API sequence at several sizes,
+each in a fresh process, and fails if the Go runtime aborts; set `SH_AST_ENTRY` to
+another build's `dist/index.js` to check that build.

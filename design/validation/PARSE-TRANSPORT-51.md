@@ -93,3 +93,38 @@ The 10 ms acceptance target applies to the benchmark machine and is not
 established by these VM numbers. Remaining cost on the VM is dominated by
 reflective encoding (~7 ms), JSON.parse plus File validation (~6.7 ms), and for
 positions the upstream bound calls in WASM and snapshot construction.
+
+## Go js/wasm runtime fault with large heaps
+
+Independent verification found that head `54c286b` aborted the Go runtime
+("found bad pointer in Go heap") on a valid sequence of large public calls, after
+which the instance was unusable. Root cause is in the Go 1.26.5 js/wasm runtime,
+not in this repository's code: `runtime.itabInit` stores method entry PCs into a
+new itab's `Fun[k]` for k ≥ 1 through a write barrier (`methods[k] = ifn`,
+`runtime/iface.go:243`, compiled with `gcWriteBarrier2`). On js/wasm a PC is the
+number `funcIndex<<16|block`, at least `0x10000000` here. When the first
+conversion of a type to a two-method interface (here `*syntax.FuncDecl` to
+`syntax.Node` in occurrence collection) happens while a GC is marking a heap that
+has grown past that number, the barrier hands the GC a value inside a heap arena;
+in a free part of a span the runtime aborts. The bad value in every crash was the
+entry PC of `(*syntax.FuncDecl).Pos`, the Node itab's second method.
+
+Evidence:
+
+- A standalone 64-type program (no unsafe, no wasmexport, no JS buffers) aborts
+  the same way 5/5; with only that runtime store changed to a plain `uintptr`
+  store it passes 5/5, and the unchanged shim built with that runtime passes
+  k = 90–130.
+- Runtime tracing on 54c286b shows eight two-method itabs created during JS
+  calls; small inputs survive only because no GC is marking at that moment.
+
+Mitigation (`shim/internal/syntaxwire/itabs.go`): every syntax interface table
+the bridge can need (each registered struct pointer asserted to `syntax.Node`,
+and assigned to each of the six syntax interfaces it implements) is built during
+package initialization, while the heap is far below every PC. The runtime caches
+itabs for the process lifetime; tracing shows no two-method itab created after
+initialization. `TestWarmupCoversEverySyntaxInterface` pins the interface set.
+
+`tools/benchmark/heap-sequence.integration.mjs` runs the reported sequence at
+eight sizes in fresh processes. On 54c286b it failed in 3/3 runs (k = 100 and
+120 each time); with the mitigation it passed 3/3.
