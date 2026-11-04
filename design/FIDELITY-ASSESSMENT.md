@@ -14,7 +14,7 @@ not newly accepted API requirements. The target is in
 | Local remote-tracking ref `origin/main`                        | `7a70a12`, package `0.3.0`                                                                                                        | Newer code comparison only; not the planning baseline                                             |
 | Live remote `refs/heads/main` and peeled `sh-ast@0.3.1` tag    | `7bdc6b14899898518e1dbecc01830b2f5f05a893`; GitHub manifest read reports `0.3.1`                                                  | Read with `git ls-remote` and the GitHub connector; no registry publication claim                 |
 | Consumer `/Users/mnorth/Development/eslint-sh`                 | HEAD `7412616a48428137e16bfe8c61c64be50a7c01fb`; plugin and umbrella `0.3.0`; sh-ast dependency/lock/installed resolution `0.3.0` | Read-only consumer assessment; pre-existing untracked `.agentmonitors/` and `.codex/` left intact |
-| Upstream parser and generator                                  | Both Go manifests pin `mvdan.cc/sh/v3 v3.13.1`, Go `1.26.5`                                                                       | Syntax source inspected from the local Go module cache                                            |
+| Upstream parser and generator                                  | Both Go manifests pin `mvdan.cc/sh/v3 v3.13.1`, Go `1.26.10`                                                                      | Syntax source inspected from the local Go module cache                                            |
 
 Local tags also include `sh-ast@0.1.0`, `0.2.0`, and `0.3.0`; live remote refs
 confirmed those tags and `0.3.1`. Tags and manifests do not prove npm publication.
