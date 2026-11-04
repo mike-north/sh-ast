@@ -17,6 +17,7 @@
  *   2. Non-embedded stays unchanged — "not embedded" block.
  *   3. Paths and `env` — "paths" block.
  *   4. Result shape — "result shape" block.
+ *   5. Docs, API report and changeset — not covered by tests.
  *   6. Old results asserted deliberately — "overrides" block (empty table
  *      restores the previous result).
  */
@@ -173,6 +174,17 @@ describe('interpreter -c — not embedded, unchanged from before (criterion 2)',
     [sh`mksh -oc errexit 'ls'`, ['mksh'], [0]],
     // mksh R59 ignores `+c`: it ran the operand as a script path.
     [sh`mksh +c 'ls'`, ['mksh'], [0]],
+    // `-c` with no command-string operand: bash 5.2.21 ("-c: option requires
+    // an argument"), dash, zsh, ksh93u+m and mksh all reject it and run
+    // nothing, so no embedded command exists.
+    [sh`bash -c`, ['bash'], [0]],
+    [sh`bash -ec`, ['bash'], [0]],
+    [sh`bash -c -e`, ['bash'], [0]],
+    [sh`bash -c --`, ['bash'], [0]],
+    [sh`bash -oc errexit`, ['bash'], [0]],
+    [sh`dash -c`, ['dash'], [0]],
+    [sh`zsh -c`, ['zsh'], [0]],
+    [sh`ksh -co errexit`, ['ksh'], [0]],
     // A lone `+` is an ordinary operand; the check on the next word never runs.
     [sh`zsh + -c 'ls'`, ['zsh'], [0]],
   ];
@@ -202,6 +214,17 @@ describe('interpreter -c — not embedded, unchanged from before (criterion 2)',
     const resolution = resolveArgv0(site(sh`bash "$f" -c x`));
     expect(resolution.chain).toEqual([{ static: true, text: 'bash' }]);
     expect(resolution.chainIndices).toEqual([0]);
+  });
+
+  it('keeps the wrapper chain when -c has no command string', () => {
+    const resolution = resolveArgv0(site(sh`sudo bash -c`));
+    expect(chainSummary(resolution)).toEqual(['sudo', 'bash']);
+    expect(resolution.effective).toEqual({ static: true, text: 'bash' });
+  });
+
+  it('still reports a dynamic command string as embedded', () => {
+    const resolution = resolveArgv0(site(sh`bash -c "$x"`));
+    expect(chainSummary(resolution)).toEqual(['bash', '<embedded-command>']);
   });
 
   it('does not treat a non-interpreter name as one', () => {
@@ -379,6 +402,11 @@ describe.skipIf(!bashAvailable)('interpreter -c — real bash oracle', () => {
     [['--rcfile', '/dev/null', '-c', command], true],
     [['+c', command], true],
     [['-c', '--', command], true],
+    [['-c'], false],
+    [['-ec'], false],
+    [['-c', '-e'], false],
+    [['-c', '--'], false],
+    [['-oc', 'errexit'], false],
     [['s'], false],
     [['-e', 's'], false],
     [['-x', 's'], false],

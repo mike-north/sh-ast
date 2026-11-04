@@ -903,7 +903,7 @@ function findInterpreterSpec(
 /**
  * Scans an interpreter's option words from `startIndex` and returns the index
  * of the word that selects the `-c` command string, or `undefined` when none
- * does — the options ended first (see {@link EmbeddedCommandInterpreterSpec}),
+ * does or no command-string operand follows it — the options ended first (see {@link EmbeddedCommandInterpreterSpec}),
  * a dynamic word made the grammar undecidable, or the words ran out.
  *
  * Mirrors real shell option parsing, verified against bash, dash, zsh, ksh93
@@ -918,32 +918,43 @@ function findCommandStringOption(
   spec: EmbeddedCommandInterpreterSpec,
 ): number | undefined {
   let index = startIndex;
+  // The word that selected `-c`; it only counts once an operand follows.
+  let selected: number | undefined;
   while (index < argv.length) {
     const word = argv[index];
-    if (!word.static) return undefined;
+    // A dynamic word is the command string once `-c` is selected; before
+    // that it makes the option grammar undecidable.
+    if (!word.static) return selected;
     const text = word.text;
-    // `--` and a lone `-` end options in every modeled shell; a lone `+`
-    // and any non-option word are operands (a script path or command string).
+    // `--` and a lone `-` end options in every modeled shell, so only a
+    // word after them can be the command string; a lone `+` and any
+    // non-option word are the operand itself (a script path before `-c`
+    // is selected, the command string after).
     const sign = text[0];
-    if (text.length < 2 || (sign !== '-' && sign !== '+') || text === '--') return undefined;
+    if (text === '--' || text === '-') {
+      return selected !== undefined && index + 1 < argv.length ? selected : undefined;
+    }
+    if (text.length < 2 || (sign !== '-' && sign !== '+')) return selected;
     if (text.startsWith('--')) {
       index += spec.operandLongOptions?.includes(text) === true ? 2 : 1;
       continue;
     }
     let pendingOperands = 0;
-    let selectsCommand = false;
     for (let i = 1; i < text.length; i += 1) {
       const letter = text[i];
       if (letter === 'c') {
-        if (sign === '-' || spec.plusCSelectsCommand === true) selectsCommand = true;
+        if ((sign === '-' || spec.plusCSelectsCommand === true) && selected === undefined) {
+          selected = index;
+        }
       } else if (spec.operandOptions.includes(letter)) {
         if (spec.operandAttachment === 'rest-of-cluster' && i < text.length - 1) break;
         pendingOperands += 1;
       }
     }
-    if (selectsCommand) return index;
     index += 1 + pendingOperands;
   }
+  // Ran out of words: a selected `-c` has no command string (every modeled
+  // shell rejects it: "option requires an argument") so nothing is embedded.
   return undefined;
 }
 
