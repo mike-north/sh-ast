@@ -12,11 +12,16 @@ import { nodeEnd, nodePos, parseSync } from '../src/index.js';
 import type { Node } from '../src/index.js';
 import { nodes } from './regression-helpers.js';
 
-/** Returns `[start, end]` byte offsets of every node of one type, in tree order. */
+/**
+ * Returns `[start, end]` byte offsets of every node of one type, sorted by
+ * start then end. Sorting makes assertions independent of the unspecified
+ * enumeration order of `nodes()`.
+ */
 function spans(source: string, type: Node['Type']): [number, number][] {
   return nodes(parseSync(source))
     .filter((node) => node.Type === type)
-    .map((node) => [nodePos(node).Offset, nodeEnd(node).Offset]);
+    .map((node): [number, number] => [nodePos(node).Offset, nodeEnd(node).Offset])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
 }
 
 describe('CRLF at the end of a word (upstream span behavior)', () => {
