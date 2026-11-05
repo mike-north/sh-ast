@@ -78,7 +78,7 @@ describe('interpreter -c — embedded (criterion 1)', () => {
     [sh`bash --norc -c 'ls'`, ['bash', '<embedded-command>'], [0, 2]],
     [sh`bash --rcfile /dev/null -c 'ls'`, ['bash', '<embedded-command>'], [0, 3]],
     [sh`bash --init-file /dev/null -c 'ls'`, ['bash', '<embedded-command>'], [0, 3]],
-    // bash, dash, zsh and ksh93 treat `+c` as `-c` (mksh does not; see below).
+    // bash, dash and zsh select command mode with `+c`; ksh and mksh do not.
     [sh`bash +c 'ls'`, ['bash', '<embedded-command>'], [0, 1]],
     // `sh` may be bash (macOS /bin/sh is bash 3.2), so it takes bash's long
     // options with an operand: `sh --rcfile f -c "echo RAN"` runs the string.

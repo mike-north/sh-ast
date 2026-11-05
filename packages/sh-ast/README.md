@@ -282,9 +282,23 @@ tables and sparse grammar-field arrays are rejected just like entries
 explicitly holding `undefined`.
 
 The command selector `c` is reserved and cannot be declared an operand-taking
-option in a custom interpreter entry. Ksh's lone `+` ends option processing;
+option in a custom interpreter entry; exact-token fields cannot contain `-c`.
+`embeddedCommandInterpreters` must be an array: `null` and other non-array
+containers throw `ShAnalyzeInvalidWrapperSpecError`; `undefined` uses defaults.
+Ksh/ksh93 `+c`, `+ec` and `+o +c` run scripts instead of selecting a string.
+Apple ksh's `-R` consumes a database-path operand. Ksh's lone `+` ends option processing;
 `ksh -c +` has no command string, while `ksh -c + x` is embedded (executed on
 ksh93u+ AJM 2012-08-01).
+
+Known limits: the table models common option spellings and is not a full
+emulation of each shell's option parser. Unusual spellings can be misclassified
+in either direction:
+
+- Bash/sh single-dash long options after a short option, e.g. `bash -e -rcfile M`.
+- `ksh -c +c M`, or a dynamic word after `-c` that expands to an option.
+- mksh's selector-bearing operands in `mksh -o -c M` and `mksh -o +c M`.
+- A lone `+` before `-c`, e.g. `bash + -c M`.
+- Zsh grammar switches, e.g. `zsh -o shoptionletters -b -c M`.
 
 ## Migration from 0.3
 

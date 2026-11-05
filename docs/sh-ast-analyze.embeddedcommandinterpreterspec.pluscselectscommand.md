@@ -4,7 +4,7 @@
 
 ## EmbeddedCommandInterpreterSpec.plusCSelectsCommand property
 
-`true` if the interpreter also treats `+c` as selecting the command string. Some shells do and some ignore the sign for this letter.
+`true` if the interpreter also treats `+c` as selecting the command string. Other shells do not select command mode with `+c`<!-- -->.
 
 **Signature:**
 

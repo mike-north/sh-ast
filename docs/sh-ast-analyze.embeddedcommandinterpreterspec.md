@@ -4,7 +4,7 @@
 
 ## EmbeddedCommandInterpreterSpec interface
 
-A data-only description of one shell interpreter whose `-c` option makes the next operand a command string run by that shell (`bash -c 'rm x'`<!-- -->). Like `env -S`<!-- -->, the command that runs lives \*inside\* an operand, so [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) reports `'embedded-command'` instead of the interpreter's own name as the effective command.
+A data-only description of one shell interpreter whose `-c` option makes the next operand a command string run by that shell (`bash -c 'rm x'`<!-- -->). Like `env -S`<!-- -->, the command that runs lives \*inside\* an operand, so [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) reports `'embedded-command'` instead of the interpreter's own name as the effective command. The selector `c` is reserved: exact-token fields (`noOperandLongOptions`<!-- -->, `operandLongOptions`<!-- -->, `optionTerminatorWords`<!-- -->) cannot contain `-c`<!-- -->.
 
 Only the option grammar needed to decide \*whether `-c` is an option\* is described: which options consume an operand word (so that `-o c` or `-o pipefail -c` are not misread) and where option parsing ends. Everything else about the interpreter — what its other options mean, whether a given option name is valid — is irrelevant to that decision and unmodeled; an invalid invocation that a real shell would reject is still reported conservatively, since nothing is guessed about what it would run.
 
@@ -230,7 +230,7 @@ boolean
 
 </td><td>
 
-_(Optional)_ `true` if the interpreter also treats `+c` as selecting the command string. Some shells do and some ignore the sign for this letter.
+_(Optional)_ `true` if the interpreter also treats `+c` as selecting the command string. Other shells do not select command mode with `+c`<!-- -->.
 
 
 </td></tr>

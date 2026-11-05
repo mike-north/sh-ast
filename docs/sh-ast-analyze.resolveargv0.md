@@ -14,6 +14,10 @@ The wrapper table ([ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.re
 
 4. The effective command is a shell interpreter ([DEFAULT\_EMBEDDED\_COMMAND\_INTERPRETERS](./sh-ast-analyze.default_embedded_command_interpreters.md)<!-- -->) invoked with `-c` — `bash -c "$x"`<!-- -->, `sudo sh -ec ls` — and the command that runs is inside the string operand. The result is the same `'embedded-command'` shape `env -S` produces: the interpreter word is `chain.at(-2)` and `chainIndices.at(-1)` is the option word that selected `-c`<!-- -->. `bash script.sh`<!-- -->, `bash -e script.sh`<!-- -->, `bash -- -c` and `bash -o c` are not `-c` invocations and resolve to `bash` as before. A dynamic word in option position (`bash "$f" -c x`<!-- -->, `bash -c"$y" x`<!-- -->) is undecidable, so the interpreter stays a static `bash`<!-- -->: `static: true` then means only that the name is known, not that the command is a plain shell invocation. The `-c` string itself is never parsed.
 
+Known limits: the table models common option spellings, not a full emulation of each shell's option parser. Unusual spellings can be misclassified in either direction:
+
+- Bash/sh single-dash long options after a short option, e.g. `bash -e -rcfile M`<!-- -->. - `ksh -c +c M`<!-- -->, or a dynamic word after `-c` that expands to an option. - mksh's selector-bearing operands in `mksh -o -c M` and `mksh -o +c M`<!-- -->. - A lone `+` before `-c`<!-- -->, e.g. `bash + -c M`<!-- -->. - Zsh grammar switches, e.g. `zsh -o shoptionletters -b -c M`<!-- -->.
+
 `VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.Assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
 
 **Signature:**

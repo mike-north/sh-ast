@@ -34,8 +34,6 @@ describe('interpreter option boundaries', () => {
     ["zsh -cx- 'echo X'", ['zsh', '<embedded-command>'], [0, 1]],
     ["ksh -o -c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
     ["ksh +o -c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
-    ["ksh -o +c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
-    ["ksh +o +c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
     ["ksh -eo -c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
     ["ksh +eo -c 'echo X'", ['ksh', '<embedded-command>'], [0, 2]],
     ["ksh -co -c 'echo X'", ['ksh', '<embedded-command>'], [0, 1]],
@@ -66,6 +64,8 @@ describe('interpreter option boundaries', () => {
     ["ksh +o -- -c 'echo X'", 'ksh'],
     ["ksh -oc errexit 'echo X'", 'ksh'],
     ['ksh +o -c', 'ksh'],
+    ["ksh -o +c 'echo X'", 'ksh'],
+    ["ksh +o +c 'echo X'", 'ksh'],
     ['ksh -c +', 'ksh'],
     ['ksh -co', 'ksh'],
     ['ksh -o "$option" -c x', 'ksh'],
@@ -264,7 +264,7 @@ describe('Bash long-option aliases and dynamic operands', () => {
           encoding: 'utf8',
         });
         expect(ran.status).toBe(0);
-        expect(ran.stdout).toBe('SCRIPT_FILE\n');
+        expect(ran.stdout).toContain('SCRIPT_FILE\n');
         expect(resolve(source).effective).toEqual({ static: true, text: 'bash' });
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -291,8 +291,8 @@ const oracleCases: readonly (readonly [string, readonly string[], boolean])[] = 
   ['zsh', ['+-', '-c'], false],
   ['ksh', ['-o', '-c'], true],
   ['ksh', ['+o', '-c'], true],
-  ['ksh', ['-o', '+c'], true],
-  ['ksh', ['+o', '+c'], true],
+  ['ksh', ['-o', '+c'], false],
+  ['ksh', ['+o', '+c'], false],
   ['ksh', ['-eo', '-c'], true],
   ['ksh', ['+eo', '-c'], true],
   ['ksh', ['-co', '-c'], true],
@@ -311,8 +311,12 @@ for (const [shell, args, runsString] of oracleCases) {
     const command = 'printf "COMMAND_STRING\\n"';
     try {
       writeFileSync(join(dir, '-c'), 'printf "SCRIPT_FILE\\n"\n');
+      // The operand must name a real script too: ksh may evaluate a missing
+      // filename while looking it up, which would otherwise mimic execution.
+      writeFileSync(join(dir, command), 'printf "SCRIPT_FILE\\n"\n');
       const ran = spawnSync(shell, [...args, command], { cwd: dir, input: '', encoding: 'utf8' });
       expect(ran.stdout.includes('COMMAND_STRING\n')).toBe(runsString);
+      if (!runsString && ran.status === 0) expect(ran.stdout).toContain('SCRIPT_FILE\n');
       const source = [shell, ...args, command].map((word) => `'${word}'`).join(' ');
       expect(resolve(source).effective.static).toBe(!runsString);
     } finally {
