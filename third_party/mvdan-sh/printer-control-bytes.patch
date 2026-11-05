@@ -1,19 +1,53 @@
 diff --git a/syntax/printer.go b/syntax/printer.go
-index 9015231..4955361 100644
+index 9015231..427ce7b 100644
 --- a/syntax/printer.go
 +++ b/syntax/printer.go
-@@ -379,7 +379,9 @@ func (p *Printer) writeLit(s string) {
+@@ -190,10 +190,13 @@ type colCounter struct {
+ 
+ func (c *colCounter) addByte(b byte) {
+ 	switch b {
++	case tabwriter.Escape:
++		// Escape markers are stripped by tabwriter and occupy no source column.
++		return
+ 	case '\n':
+ 		c.column = 0
+ 		c.lineStart = true
+-	case '\t', ' ', tabwriter.Escape:
++	case '\t', ' ':
+ 	default:
+ 		c.lineStart = false
+ 	}
+@@ -379,9 +382,26 @@ func (p *Printer) writeLit(s string) {
  	// If p.tabWriter is nil, this is the nested printer being used to print
  	// <<- heredoc bodies, so the parent printer will add the escape bytes
  	// later.
 -	if p.tabWriter != nil && strings.Contains(s, "\t") {
-+	// Literal tabs, vertical tabs, and form feeds are shell data, not
-+	// tabwriter cell or line separators. Escape them to preserve their bytes.
+-		p.w.WriteByte(tabwriter.Escape)
+-		defer p.w.WriteByte(tabwriter.Escape)
++	// Preserve the upstream whole-literal escaping for horizontal tabs. For
++	// VT/FF alone, protect just those data bytes so physical newlines remain
++	// visible to tabwriter's alignment of subsequent lines and comments.
 +	if p.tabWriter != nil && strings.ContainsAny(s, "\t\v\f") {
- 		p.w.WriteByte(tabwriter.Escape)
- 		defer p.w.WriteByte(tabwriter.Escape)
++		if strings.Contains(s, "\t") {
++			p.w.WriteByte(tabwriter.Escape)
++			defer p.w.WriteByte(tabwriter.Escape)
++		} else {
++			for {
++				i := strings.IndexAny(s, "\v\f")
++				if i < 0 {
++					break
++				}
++				p.w.WriteString(s[:i])
++				p.w.WriteByte(tabwriter.Escape)
++				p.w.WriteByte(s[i])
++				p.w.WriteByte(tabwriter.Escape)
++				s = s[i+1:]
++			}
++		}
  	}
-@@ -964,6 +966,13 @@ func (p *Printer) unquotedWord(w *Word) {
+ 	p.w.WriteString(s)
+ }
+@@ -964,6 +984,13 @@ func (p *Printer) unquotedWord(w *Word) {
  		case *DblQuoted:
  			p.wordParts(wp.Parts, true)
  		case *Lit:
@@ -27,7 +61,7 @@ index 9015231..4955361 100644
  			for i := 0; i < len(wp.Value); i++ {
  				if b := wp.Value[i]; b == '\\' {
  					if i++; i < len(wp.Value) {
-@@ -973,6 +982,9 @@ func (p *Printer) unquotedWord(w *Word) {
+@@ -973,6 +1000,9 @@ func (p *Printer) unquotedWord(w *Word) {
  					p.w.WriteByte(b)
  				}
  			}
@@ -37,7 +71,7 @@ index 9015231..4955361 100644
  		}
  	}
  }
-@@ -1569,7 +1581,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
+@@ -1569,7 +1599,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
  		e.bufWriter.WriteByte('\t')
  	}
  	e.bufWriter.WriteByte(tabwriter.Escape)

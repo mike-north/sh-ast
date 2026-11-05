@@ -190,10 +190,13 @@ type colCounter struct {
 
 func (c *colCounter) addByte(b byte) {
 	switch b {
+	case tabwriter.Escape:
+		// Escape markers are stripped by tabwriter and occupy no source column.
+		return
 	case '\n':
 		c.column = 0
 		c.lineStart = true
-	case '\t', ' ', tabwriter.Escape:
+	case '\t', ' ':
 	default:
 		c.lineStart = false
 	}
@@ -379,11 +382,26 @@ func (p *Printer) writeLit(s string) {
 	// If p.tabWriter is nil, this is the nested printer being used to print
 	// <<- heredoc bodies, so the parent printer will add the escape bytes
 	// later.
-	// Literal tabs, vertical tabs, and form feeds are shell data, not
-	// tabwriter cell or line separators. Escape them to preserve their bytes.
+	// Preserve the upstream whole-literal escaping for horizontal tabs. For
+	// VT/FF alone, protect just those data bytes so physical newlines remain
+	// visible to tabwriter's alignment of subsequent lines and comments.
 	if p.tabWriter != nil && strings.ContainsAny(s, "\t\v\f") {
-		p.w.WriteByte(tabwriter.Escape)
-		defer p.w.WriteByte(tabwriter.Escape)
+		if strings.Contains(s, "\t") {
+			p.w.WriteByte(tabwriter.Escape)
+			defer p.w.WriteByte(tabwriter.Escape)
+		} else {
+			for {
+				i := strings.IndexAny(s, "\v\f")
+				if i < 0 {
+					break
+				}
+				p.w.WriteString(s[:i])
+				p.w.WriteByte(tabwriter.Escape)
+				p.w.WriteByte(s[i])
+				p.w.WriteByte(tabwriter.Escape)
+				s = s[i+1:]
+			}
+		}
 	}
 	p.w.WriteString(s)
 }

@@ -2,7 +2,12 @@
 // These native assertions isolate that boundary from the WASM transport.
 package syntaxbridge
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"mvdan.cc/sh/v3/syntax"
+)
 
 // Expected programs are written directly from shell syntax, not printer output.
 // Both ANSI-C spellings matter: literal bytes and written escapes must survive.
@@ -31,5 +36,32 @@ func TestPrinterControlBytes(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// Control bytes must occupy the same source columns as ordinary bytes. Internal
+// tabwriter markers are not physical columns or physical newline boundaries.
+func TestPrinterControlByteLayout(t *testing.T) {
+	for _, char := range []struct{ name, byte string }{{"VT", "\v"}, {"FF", "\f"}} {
+		t.Run(char.name+"/padding", func(t *testing.T) {
+			ordinary := "x='aqb'    # comment\ny='longword' # another\n"
+			source := strings.Replace(ordinary, "aqb", "a"+char.byte+"b", 1)
+			reference, _, _ := nativePrint(printFixture(t, ordinary), syntax.KeepPadding(true))
+			first, kind, message := nativePrint(printFixture(t, source), syntax.KeepPadding(true))
+			second, _, _ := nativePrint(printFixture(t, first), syntax.KeepPadding(true))
+			if reference != ordinary || first != source || strings.Replace(first, char.byte, "q", 1) != reference || second != first || kind != "" {
+				t.Fatalf("reference=%q first=%q second=%q (%s %s); want source %q", reference, first, second, kind, message, source)
+			}
+		})
+		t.Run(char.name+"/multiline", func(t *testing.T) {
+			ordinary := "printf '%s' 'longqfirst\nx' # first\nprintf x # second\n"
+			source := strings.Replace(ordinary, "longqfirst", "long"+char.byte+"first", 1)
+			reference, _, _ := nativePrint(printFixture(t, ordinary))
+			first, kind, message := nativePrint(printFixture(t, source))
+			second, _, _ := nativePrint(printFixture(t, first))
+			if reference != "printf '%s' 'longqfirst\nx'       # first\nprintf x # second\n" || strings.Replace(first, char.byte, "q", 1) != reference || second != first || kind != "" {
+				t.Fatalf("reference=%q first=%q second=%q (%s %s)", reference, first, second, kind, message)
+			}
+		})
 	}
 }

@@ -108,7 +108,12 @@ patch**. Go's `text/tabwriter` treats VT and FF as layout separators. Shells ret
 them as data in quoted strings, unquoted words, and here-document bodies; embedded
 comment bytes must also survive without turning the suffix into executable text.
 `writeLit` therefore protects VT and FF with the same tabwriter escape markers
-already used for literal horizontal tabs. The nested `<<-` printer defers escaping
+already used for literal horizontal tabs. Internal escape markers occupy no
+source column, including when `KeepPadding` measures the next comment's padding.
+When no horizontal tab is present, only VT/FF bytes are escaped, so physical
+newlines remain visible for comment alignment. Literals containing horizontal
+tabs retain upstream's whole-literal escaping and its known multiline alignment
+limit. The nested `<<-` printer defers escaping
 until `extraIndenter` has stripped leading tabs; that writer protects VT and FF in
 the remaining body. Existing output without these bytes is unchanged.
 For here-document delimiters, `unquotedWord` must protect these same bytes while
