@@ -32,6 +32,16 @@ function fixtures(byte: string, escape: string): readonly IFixture[] {
       source: `cat <<-EOF\n\ta${byte}b\nEOF\n`,
       stdout: `a${byte}b\n`,
     },
+    {
+      position: 'unquoted here-document delimiter',
+      source: `cat <<E${byte}OF\nbody\nE${byte}OF\nprintf '%s' kept\n`,
+      stdout: 'body\nkept',
+    },
+    {
+      position: 'escaped here-document delimiter',
+      source: `cat <<E\\${byte}OF\nbody\nE${byte}OF\nprintf '%s' kept\n`,
+      stdout: 'body\nkept',
+    },
     { position: 'comment', source: `# a${byte}b\nprintf '%s' kept\n`, stdout: 'kept' },
   ];
 }
