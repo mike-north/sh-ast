@@ -143,6 +143,22 @@ const refused = {
 };
 
 describe('native grammar resource budget', () => {
+  // Left-associative operators build a deep tree without recursive grammar.
+  // The exact issue #71 source must be refused before recursive serialization,
+  // with no partial File, while smaller trees and subsequent calls stay usable.
+  it.each(['parseSync', 'parseWithPositionsSync'])(
+    '%s refuses the 20,000-operator serialization regression (issue #71)',
+    (operation) => {
+      const source = 'echo $(( ' + '1+'.repeat(20_000) + '1 ))';
+      expect(observe(source, operation, 2, 100000)).toEqual([refused, refused]);
+      expect(observe('echo $(( ' + '1+'.repeat(125) + '1 ))', operation)).toEqual([
+        { outcome: 'File' },
+        { outcome: 'File' },
+      ]);
+    },
+    40_000,
+  );
+
   it.each(reviewedForms)(
     '%s refuses deep input through both public operations',
     (_name, make, depth) => {
