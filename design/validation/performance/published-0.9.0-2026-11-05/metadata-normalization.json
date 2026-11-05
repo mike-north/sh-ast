@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "method": "Replace only JSON execution-path string tokens, then apply repository formatting to report metadata. All non-string tokens, including every numeric token and structural delimiter, remain unchanged; whitespace may reflow. Raw JSONL files remain byte-identical copies.",
+  "mapping": [
+    {
+      "observedRole": "absolute or invocation-relative prepared-directory prefix",
+      "replacement": "<prepared>"
+    },
+    {
+      "observedRole": "absolute or invocation-relative public-output prefix",
+      "replacement": "<public-output>"
+    },
+    {
+      "observedRole": "absolute or invocation-relative stage-output prefix",
+      "replacement": "<stage-output>"
+    },
+    {
+      "observedRole": "absolute Node 22.22.1 executable",
+      "replacement": "<node-22.22.1>"
+    },
+    {
+      "observedRole": "absolute repository-root prefix",
+      "replacement": "<repo>"
+    }
+  ],
+  "files": [
+    {
+      "observedRole": "original prepared manifest",
+      "retainedFile": "package-artifacts.json",
+      "originalSha256": "5a032a64a094617e13de19344fae50ace1558bde6c1f16535c0dd8c87d8ea92d",
+      "retainedSha256": "df284699176a46567e93592e2490ed7ad730401112c573c1605b3012bf54165b",
+      "changedStringLocations": [
+        "/cache",
+        "/artifacts/0/entry",
+        "/artifacts/0/packageRoot",
+        "/artifacts/0/tarball"
+      ],
+      "pathNormalizedSha256": "df284699176a46567e93592e2490ed7ad730401112c573c1605b3012bf54165b",
+      "unchangedNonStringTokensSha256": "8df1d8a90b2153eef3a64a177c6c8138dfc036acc1f062eed1af9cb075efc848",
+      "pathOnlyNonStringBytesSha256": "25adcb390545a36c70adb20c1dfc0703094706d8b81a04afedefab94ba2fd927"
+    },
+    {
+      "observedRole": "original public report",
+      "retainedFile": "public-report.json",
+      "originalSha256": "1dd27b9525968d4f0584a5be68749a9ae4ce32ba65649d8b86727827f65bf708",
+      "retainedSha256": "73c63612a1d63629b77ac18ad330d4261d09729a8ca0fffad0252a40b99efdb6",
+      "changedStringLocations": [
+        "/config/invocation/0",
+        "/config/invocation/1",
+        "/config/invocation/3",
+        "/config/invocation/5",
+        "/artifacts/0/entry",
+        "/artifacts/0/packageRoot",
+        "/artifacts/0/tarball"
+      ],
+      "pathNormalizedSha256": "677252d8b93ef8a875835562aa524e8728b077e7cc281499332f21f593a1d96a",
+      "unchangedNonStringTokensSha256": "3643543a980cb82e9b68a3690b15cc1d7a9b7481cf6c28970fc87bf1441b126e",
+      "pathOnlyNonStringBytesSha256": "6698d5cad4a9004f82099e0603262863fa3dc6b537051c0539fbf2a939bd1fb6"
+    },
+    {
+      "observedRole": "original diagnostic report",
+      "retainedFile": "stage-report.json",
+      "originalSha256": "70b5e20033be7632961f1810520ae9e40ef9c0d13c31c848c319a2eff8332c15",
+      "retainedSha256": "6acd3abce02eded57237a51b4a67225994daa92dd1f54557013d6365af4add16",
+      "changedStringLocations": [
+        "/config/invocation/0",
+        "/config/invocation/1",
+        "/config/invocation/3",
+        "/config/invocation/5",
+        "/artifacts/0/entry",
+        "/artifacts/0/packageRoot",
+        "/artifacts/0/tarball"
+      ],
+      "pathNormalizedSha256": "eab8fd83139a17bfe8d6aa38bc0c5bb87c43d4cfddc1e0fba87d936c1f2ccd22",
+      "unchangedNonStringTokensSha256": "71924cd4b7b1083dacd7af400c53b672d7ccf3f1cc4e5ee9db3ee42bfdee4144",
+      "pathOnlyNonStringBytesSha256": "19c98404cb3b2e2d0d66883cadd1ad79a1bd930e07d9c9da8f1927bd9205f718"
+    },
+    {
+      "observedRole": "original public raw observations",
+      "retainedFile": "public-samples.jsonl",
+      "originalSha256": "7ef5905d2f47dd79ceee441439219caa1588ee7898cc3553f80cdabf043839cf",
+      "retainedSha256": "7ef5905d2f47dd79ceee441439219caa1588ee7898cc3553f80cdabf043839cf",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "observedRole": "original diagnostic raw observations",
+      "retainedFile": "stage-samples.jsonl",
+      "originalSha256": "ce69005542e06358a61fb8ccf387cc1e857c87aa9af84971eab363d065436b92",
+      "retainedSha256": "ce69005542e06358a61fb8ccf387cc1e857c87aa9af84971eab363d065436b92",
+      "transformation": "none; byte-identical"
+    }
+  ]
+}

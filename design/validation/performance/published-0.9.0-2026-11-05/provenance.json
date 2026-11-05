@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "repository": "mike-north/sh-ast",
+  "harnessSourceCommit": "211c5b7d4207b5e409d3b1ed841ad629d5f03fde",
+  "package": {
+    "name": "sh-ast",
+    "version": "0.9.0",
+    "registryTarball": "https://registry.npmjs.org/sh-ast/-/sh-ast-0.9.0.tgz",
+    "tarballBytes": 1537875,
+    "tarballSha256": "96e79eb92ec296346b6e7801642ef28e0d843aaa4f64a66e8b26b6e0f43ba52c",
+    "registryIntegrity": "sha512-3KgPAS4CkskmrpAZmszq1MeL1IztGlrsdInh9/oBC8FpETK+jP/Lcsj/YlkSUNH+FGVbX0NA7mue5CbMH/XD+g==",
+    "registrySha1": "b1940d507404820e75963c789c9e7596efa1d16e",
+    "assetCount": 103,
+    "wasmSha256": "a0d94a30ed7e401b74126d4f070fd1aa1a0eb18d8583a326f972f177d20c0a54"
+  },
+  "host": {
+    "node": "v22.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18,
+    "totalMemory": 137438953472
+  },
+  "nodeExecutableSha256": "245e0321af97d3c21dd4e7104457334dfe3c3ba7982d0db75363e354565f8cbb",
+  "fixture": {
+    "name": "consumer-m2",
+    "jsonFileSha256": "8eb7138cc14148c707a9b6b936e3bd22ec3806ef392b1d2d9300db747d7353df",
+    "sourceSha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562",
+    "sourceBytes": 11270,
+    "splitLineCount": 701,
+    "newlineSeparatorCount": 700,
+    "options": {
+      "Variant": "LangBash",
+      "KeepComments": true,
+      "Filename": "benchmark.sh"
+    }
+  },
+  "frozenAt": "2026-11-05T19:10:28.459Z",
+  "acceptedMeasurementPlanSha256": "1d31eb56e9db390242a3c27c0335fff2b4dac5404a300f9dd582b83ed24df710",
+  "schedule": {
+    "artifact": "published-0.9.0",
+    "freshProcessesPerPhase": 8,
+    "excludedWarmupsPerProcess": 5,
+    "measuredCallsPerProcess": 30,
+    "publicPhaseOrder": ["parse", "parse-with-positions"],
+    "diagnosticPhaseOrder": ["parse-stages", "parse-with-positions-stages"],
+    "phaseMajor": true,
+    "serial": true,
+    "stageAdditionalUntimedAbiInitializationCallsPerProcess": 1
+  },
+  "postCampaignReadback": {
+    "frozenInputDigestsMatched": true,
+    "frozenInputDigestCount": 138,
+    "timingWorkers": 32,
+    "separateVerificationWorkers": 4,
+    "distinctWorkerPids": 36,
+    "publicObservations": 480,
+    "instrumentedTotalObservations": 480,
+    "publicExitCode": 0,
+    "diagnosticExitCode": 0,
+    "launcherExitCode": 0
+  },
+  "hostContext": {
+    "preflight": {
+      "policy": {
+        "sampleMs": 1000,
+        "buildCpuPercentMinimum": 50,
+        "method": "process CPU-time delta / monotonic elapsed time"
+      },
+      "elapsedMs": 1085.0181250572205,
+      "loadAverages": [6.642578125, 6.943359375, 9.287109375],
+      "busyBuildTestRuntimes": 0,
+      "backgroundContext": [
+        {
+          "name": "PerfPowerServices",
+          "sampledCpuPercent": 189.8585795413659
+        }
+      ]
+    },
+    "postCampaign": {
+      "observedAt": "2026-11-05T19:12:22.778392+00:00",
+      "loadAverages": [7.93212890625, 7.685546875, 9.30810546875],
+      "statistic": "ps lifetime-average CPU percentage; not comparable to preflight deltas",
+      "backgroundContext": [
+        {
+          "name": "PerfPowerServices",
+          "lifetimeAverageCpuPercent": 189.8
+        }
+      ]
+    },
+    "continuousMonitoring": false
+  },
+  "harnessFileSha256": {
+    "tools/benchmark/adapter.mjs": "bfecf44392456dbd7e57713ccdcf9e4f4ef1a2d6dd06f9d2d0aafd29bd66d98e",
+    "tools/benchmark/adapter.test.mjs": "283e719847c9a3eb4f41ac73a2dd0378074eaa00a72f3dc5ecb1448c1781a73e",
+    "tools/benchmark/artifacts.mjs": "f16765c9d76036077e38dc89d2622efd663e80f130644b6ef75819eb3c1247cd",
+    "tools/benchmark/artifacts.test.mjs": "d8680903ef5cc3550398b075ba2ab58c45766d8686811da87f6469d4f49680bd",
+    "tools/benchmark/extraction.test.mjs": "bb4733f804b1d1843aa11a1c6bd05245c8bf2f6381b7d33fa42a82a759af8c41",
+    "tools/benchmark/heap-sequence.integration.mjs": "3002694ede9767c723e82b072ead1be8e867a1de13223240aab7c647eab7d495",
+    "tools/benchmark/identity.mjs": "b572b3234526db97a2670192967cc6e1f3672f6a42002043fa9e3dadf0dec4f7",
+    "tools/benchmark/model.mjs": "5495576a2195e91f99795450a2d4b3dffc299b642e631fdede43bb2e972a6f88",
+    "tools/benchmark/model.test.mjs": "8f1be8fbd512e5509b4af55d8bc1549031313a3a7ed689a72e1de3145cf51ff2",
+    "tools/benchmark/report.mjs": "f0369424c77e68c673f79b0d9dca8c300736dcee8113a11c8636fc5d62abf4f6",
+    "tools/benchmark/report.test.mjs": "cc12992cd678acdfb50fca00955f4a64635a21f62bf730bf8f8fa75760576a9f",
+    "tools/benchmark/run.mjs": "f6ecbd13ea7389074e726f1ff9279011ea3b798315f1558aec005c384acebe75",
+    "tools/benchmark/stages.mjs": "465e9bd9c0f01a482c712da36292ddbe32653cf69efbb2ac62eaab6d80c8b534",
+    "tools/benchmark/stages.test.mjs": "e73104ab7a0882292dd5449d387a71a8d4919cfd8bcf97c9cf27440dd8c5af91",
+    "tools/benchmark/stream-encoding-model.mjs": "22af02bb693de50ece856403229a0671964a7fe1a7d0c9be955ddc6853ad051a",
+    "tools/benchmark/stream-encoding-prepare.mjs": "676be4244b6aea37c9ecb3243e911ef9346c39f0084fe955a3d40174fa540d45",
+    "tools/benchmark/stream-encoding-run.mjs": "6152d817a5f943e67c1bdb8217c230ca8674c50f146591a518ea8940241f2952",
+    "tools/benchmark/stream-encoding-worker.mjs": "914433025b3b092e52579e88537121c6784d88c21115ce0a148ff74120392506",
+    "tools/benchmark/stream-encoding.test.mjs": "345c6fe11f597ac2cd78a2031bf72286dc634b76f790a643447b6443e7ac6885",
+    "tools/benchmark/transport.mjs": "11e35b6a2c4c71ff064e459bf748958f1458601e152799aafa0c87742ca87142",
+    "tools/benchmark/transport.test.mjs": "6dd24ff5ab5ff750f4f1f8cdfd9be86eb9243948805026a23b8176f37276215f",
+    "tools/benchmark/worker.integration.mjs": "5a46ad4834e07a1be1907e6a251c75f347755fcfb12f986087cb1f6562199726",
+    "tools/benchmark/worker.mjs": "5a8f10977b69ef2982adfa0da04b16985754e2b9a4f81b32e3bceb9612f4694a"
+  },
+  "scope": "Published artifact receipt and supported stage diagnostics; no new baseline/gain, output-identity, downstream lint latency, publication workflow or signature-verification proof."
+}
