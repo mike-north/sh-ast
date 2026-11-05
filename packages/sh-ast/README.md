@@ -2,7 +2,7 @@
 
 A synchronous TypeScript interface to the `syntax` package of
 [mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.14.1 with maintained corrections**
-([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). These are the official Unicode sentinel backport and an owned, behavior-preserving change that scans consecutive comments iteratively. Parsing returns
+([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). The release already contains the Unicode sentinel correction; the remaining maintained parser and printer patches are documented there. Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.

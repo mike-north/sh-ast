@@ -765,6 +765,18 @@ export type OperatorFamily =
 | 'UnTestOperator';
 
 // @public
+export const OptOff: 2;
+
+// @public
+export const OptOn: 1;
+
+// @public
+export type OptState = typeof OptOff | typeof OptOn | typeof OptUnset | RawOperator<'OptState'>;
+
+// @public
+export const OptUnset: 0;
+
+// @public
 export const Or: 13;
 
 // @public
@@ -791,7 +803,6 @@ export interface ParamExp {
     Excl: boolean;
     Exp: Expansion | null;
     Flags: Lit | null;
-    // Warning: (ae-forgotten-export) The symbol "OptState" needs to be exported by the entry point index.d.ts
     GlobSubst: OptState;
     Index: ArithmExpr | null;
     IsSet: boolean;

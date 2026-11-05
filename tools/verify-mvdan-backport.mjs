@@ -52,6 +52,7 @@ export function verifyBackport(root) {
     'printer-control-bytes.patch',
     'heredoc-continuation.patch',
     'printer-backslash-compat.patch',
+    'printer-zsh-prefix-order.patch',
   ];
   if (JSON.stringify(manifest.appliedPatches) !== JSON.stringify(appliedPatches)) {
     throw new Error('Unexpected maintained patch order');
@@ -104,6 +105,6 @@ export function verifyBackport(root) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyBackport(fileURLToPath(new URL('../', import.meta.url)));
   console.log(
-    'Verified mvdan/sh v3.14.1 (including Unicode) with comment iteration, native budget, subshell heredoc, printer literal-byte, heredoc continuation, and split-literal compatibility corrections.',
+    'Verified mvdan/sh v3.14.1 (including Unicode) with comment iteration, native budget, subshell heredoc, printer literal-byte, heredoc continuation, split-literal compatibility, and Zsh prefix-order corrections.',
   );
 }

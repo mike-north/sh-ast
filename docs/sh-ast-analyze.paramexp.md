@@ -129,7 +129,7 @@ Null preserves the upstream absence of this component.
 
 </td><td>
 
-OptState
+[OptState](./sh-ast-analyze.optstate.md)
 
 
 </td><td>
@@ -316,7 +316,7 @@ Recorded source position; invalid and recovered states remain distinct.
 
 </td><td>
 
-OptState
+[OptState](./sh-ast-analyze.optstate.md)
 
 
 </td><td>
@@ -400,7 +400,7 @@ Null preserves the upstream absence of this component.
 
 </td><td>
 
-OptState
+[OptState](./sh-ast-analyze.optstate.md)
 
 
 </td><td>

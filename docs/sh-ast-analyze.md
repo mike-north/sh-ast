@@ -1689,6 +1689,45 @@ Upstream UnAritOperator constant Not. Its numeric value is preserved exactly.
 </td></tr>
 <tr><td>
 
+[OptOff](./sh-ast-analyze.optoff.md)
+
+
+</td><td>
+
+Upstream OptState constant OptOff. Its numeric value is preserved exactly.
+
+option set to false
+
+
+</td></tr>
+<tr><td>
+
+[OptOn](./sh-ast-analyze.opton.md)
+
+
+</td><td>
+
+Upstream OptState constant OptOn. Its numeric value is preserved exactly.
+
+option set to true
+
+
+</td></tr>
+<tr><td>
+
+[OptUnset](./sh-ast-analyze.optunset.md)
+
+
+</td><td>
+
+Upstream OptState constant OptUnset. Its numeric value is preserved exactly.
+
+option not set
+
+
+</td></tr>
+<tr><td>
+
 [Or](./sh-ast-analyze.or.md)
 
 
@@ -2955,6 +2994,17 @@ The concrete records and typed nil pointers accepted by upstream syntax.Node. Ty
 </td><td>
 
 The upstream numeric families: uint32 token operators and uint8 option states. A family name identifies the Go named type, not the spelling of one token.
+
+
+</td></tr>
+<tr><td>
+
+[OptState](./sh-ast-analyze.optstate.md)
+
+
+</td><td>
+
+An upstream option override: OptUnset leaves shell policy unchanged, OptOn enables it, and OptOff disables it. Explicit raw values are restricted to uint8 storage.
 
 
 </td></tr>

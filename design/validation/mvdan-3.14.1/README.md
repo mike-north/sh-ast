@@ -134,3 +134,28 @@ The remaining median ratios range from 0.88x to 1.11x. **These measurements do n
 establish non-regression conclusively; acceptance criterion 4 remains unconfirmed.**
 The raw observations are retained so independent verification can assess that
 criterion without treating noise as either proof of a regression or proof of parity.
+
+## Bounded Zsh and analyze follow-up
+
+The corpus and timing observations above identify the original `f2bbe6c` assets;
+they are retained without further performance measurements. Review follow-up is
+limited to Zsh prefix ordering, the four analyze option-state exports, and the
+obsolete package README description of the dropped sentinel backport.
+
+A hand-written Zsh 5.9 program sets `a=abc` and prints `${=#a}` with `printf`.
+Its expected output is `<3>\n`; the original printer emitted `${#=a}`, whose real
+Zsh output is `<0>\n`. Public parse/print/reparse tests first failed on the lost
+`Split: OptOn`, `Length: true` and parameter name, and now retain those fields.
+Fifteen hand-written fixtures, each under default and KeepPadding, cover on/off
+states, combined prefixes, length/existence operators, and unaffected controls.
+Each checks source and printed Zsh stdout, exact printed spelling, and explicit
+semantic fields after reparsing. Only synthetic programs are executed.
+
+`printer-zsh-prefix-order.patch` moves the option-state loop before the existing
+operator switch; parsing and all other printer branches are unchanged. The
+manifest, offline reversal gate and missing/altered-digest tests include it.
+Analyze-only runtime and type tests first failed on missing `OptState`, `OptUnset`,
+`OptOn` and `OptOff`; the analyze barrel now exposes the consumed type and all its
+named values. The uint8 boundary and cross-family type rejection remain tested.
+Schema regeneration produces no changes; analyze API rollups and docs are current.
+Performance criterion 4 remains inconclusive and separately held.

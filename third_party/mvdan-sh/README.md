@@ -1,7 +1,7 @@
 # mvdan/sh v3.14.1 with maintained corrections
 
 This is the source closure consumed by the WASM shim and schema generator:
-**v3.14.1 plus seven explicitly maintained patches**. The tagged release is
+**v3.14.1 plus eight explicitly maintained patches**. The tagged release is
 commit `a3f0c75d21d918756fa38de8b5d3429efde7948b`; the manifest records its Go
 module checksum and the pristine SHA-256 of every included file. The original
 BSD license and source copyright notices are retained. The 16-file inventory
@@ -25,6 +25,7 @@ patch reverses independently, in reverse order, to reconstruct the exact release
 | Owned `printer-control-bytes.patch`                                             | Still required and adapted to the release's writer composition. Literal output now detects `extraIndenter` directly; its upstream `writeEscapingTabs` also protects VT/FF. Delimiter protection remains necessary. | Native/public literal, comment, delimiter, ordinary and tab-stripping document tests retain real Bash byte expectations. Nested document tests now assert preserved bytes rather than the old known failures.                           |
 | Owned `heredoc-continuation.patch`                                              | Still required; adapted to upstream's corrected `mustNewline` reset and nested writer.                                                                                                                             | Public tests retain exact output and Bash stdout for continuation chains, tab counts, odd/even backslashes, expansions, and quoted/plain-document controls.                                                                             |
 | Owned `printer-backslash-compat.patch`                                          | New compatibility hold: removes upstream's per-Lit trailing-backslash doubling, which changes existing caller-constructed adjacent literal escape runs.                                                            | Existing `analyze-braces.test.ts` expectations remain unchanged. Whether to adopt that upstream change, and its improvement for a parsed lone backslash at EOF, requires a separate decision.                                           |
+| Owned `printer-zsh-prefix-order.patch`                                          | Keeps option-state prefixes before length/existence operators, matching the parser without changing grammar or other printer behavior.                                                                             | Public parse/print/reparse tests retain all state fields and hand-written spelling/stdout under default and KeepPadding; real Zsh preserves `${=#a}` as length three instead of the printed `${#=a}` value zero.                        |
 
 All owned patches are sh-ast maintenance, not official upstream fixes. The native
 nesting units count grammar work, including iteratively constructed operator

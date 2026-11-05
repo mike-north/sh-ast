@@ -796,16 +796,8 @@ func (p *Printer) paramExp(pe *ParamExp) {
 		p.writeLit(pe.Flags.Value)
 		p.w.WriteByte(')')
 	}
-	switch {
-	case pe.Length:
-		p.w.WriteByte('#')
-	case pe.Width:
-		p.w.WriteByte('%')
-	case pe.IsSet:
-		p.w.WriteByte('+')
-	case pe.Excl:
-		p.w.WriteByte('!')
-	}
+	// Option overrides precede length/existence operators in the Zsh grammar.
+	// Reversing these groups changes which parameter and operator are reparsed.
 	for _, pre := range [...]struct {
 		c     byte
 		state OptState
@@ -821,6 +813,16 @@ func (p *Printer) paramExp(pe *ParamExp) {
 		if pre.state == OptOff {
 			p.w.WriteByte(pre.c)
 		}
+	}
+	switch {
+	case pe.Length:
+		p.w.WriteByte('#')
+	case pe.Width:
+		p.w.WriteByte('%')
+	case pe.IsSet:
+		p.w.WriteByte('+')
+	case pe.Excl:
+		p.w.WriteByte('!')
 	}
 	switch {
 	case pe.Param != nil:
