@@ -107,3 +107,79 @@ it.each(['echo ${a[(r)foo', 'echo ${a[(r)$(printf foo]}'])(
     expect(() => parseSync(source, { Variant: LangZsh })).toThrow();
   },
 );
+
+/** Enclosing double quotes make apostrophes data without suppressing expansions. */
+const apostropheFixtures = [
+  { pattern: "don't*", value: "don't-panic", commands: ['echo'] },
+  { pattern: "'$(printf foo)'", value: "'foo'", commands: ['echo', 'printf'] },
+  { pattern: "'$needle'", value: "'foo'", commands: ['echo'] },
+];
+
+describe('Zsh reverse-subscript apostrophes inside outer double quotes', () => {
+  it.each(apostropheFixtures)(
+    'preserves literal apostrophes in $pattern',
+    ({ pattern, commands }) => {
+      const source = `echo "\${a[(r)${pattern}]}"\n`;
+      const file = parseSync(source, { Variant: LangZsh });
+      expect(enumerateCommands(file).map(({ argv0 }) => argv0)).toEqual(
+        commands.map((text) => ({ static: true, text })),
+      );
+      if (pattern.includes('$needle')) {
+        const parameters: unknown[] = [];
+        walk(file, (node) => {
+          if (node?.Type === 'ParamExp') parameters.push(node.Param?.Value);
+          return true;
+        });
+        expect(parameters).toEqual(['a', 'needle']);
+      }
+      for (const options of [{}, { KeepPadding: true }]) {
+        expect(printSync(file, options)).toBe(source);
+      }
+    },
+  );
+
+  describe.skipIf(!zshAvailable)('real Zsh matching', () => {
+    it.each(apostropheFixtures)('matches literal apostrophes in $pattern', ({ pattern, value }) => {
+      const source = `a=(other "${value}"); needle=foo; echo "\${a[(r)${pattern}]}"`;
+      expect(zshStdout(source)).toBe(`${value}\n`);
+      const file = parseSync(source, { Variant: LangZsh });
+      for (const options of [{}, { KeepPadding: true }]) {
+        const output = printSync(file, options);
+        if (typeof output !== 'string') throw new Error('Expected UTF-8 output');
+        expect(zshStdout(output)).toBe(`${value}\n`);
+      }
+    });
+  });
+
+  it('preserves the exact complete apostrophe control under both printers', () => {
+    const source = 'a=(other "don\'t-panic"); echo "${a[(r)don\'t*]}"';
+    const canonical = 'a=(other "don\'t-panic")\necho "${a[(r)don\'t*]}"\n';
+    const file = parseSync(source, { Variant: LangZsh });
+    for (const KeepPadding of [false, true]) {
+      // Moving the command after a semicolon onto a new line retains the
+      // argument's original column with KeepPadding, as on the preceding main.
+      const expected = KeepPadding
+        ? canonical.replace('echo ', `echo${' '.repeat(26)}`)
+        : canonical;
+      expect(printSync(file, { KeepPadding })).toBe(expected);
+    }
+  });
+
+  it.skipIf(!zshAvailable)('matches the exact complete apostrophe control in installed Zsh', () => {
+    const source = 'a=(other "don\'t-panic"); echo "${a[(r)don\'t*]}"';
+    expect(zshStdout(source)).toBe("don't-panic\n");
+    const file = parseSync(source, { Variant: LangZsh });
+    for (const options of [{}, { KeepPadding: true }]) {
+      const output = printSync(file, options);
+      if (typeof output !== 'string') throw new Error('Expected UTF-8 output');
+      expect(zshStdout(output)).toBe("don't-panic\n");
+    }
+  });
+
+  it.each(["echo ${a[(r)don't*]}", 'echo "${a[(r)$(echo ${b[(r)don\'t*]})]}"'])(
+    'does not carry outer double quoting into an unquoted pattern: %s',
+    (source) => {
+      expect(() => parseSync(source, { Variant: LangZsh })).toThrow();
+    },
+  );
+});

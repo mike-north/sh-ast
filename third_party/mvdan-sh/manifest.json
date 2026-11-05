@@ -13,7 +13,7 @@
     "heredoc-continuation.patch": "4853ac39037fff1fca9baa78610e288460f699729583a5bdc3cbd8f9aa520f2b",
     "printer-backslash-compat.patch": "e41b655fbddbc41de0279c874e13f7ba00c8af7763d5a142a98b74d15d59c0c4",
     "printer-zsh-prefix-order.patch": "79dde92379e5b89df2e050c40d038a834bebbe6c686f2ddb787e82130e8c90e2",
-    "zsh-subscript-pattern.patch": "b79ac98b5b67423dfdbcc531f2ab4a9896e2b161023404455cdbf75227f46a42"
+    "zsh-subscript-pattern.patch": "4c707aea88a972babe0daa1c7963099c7aff21bcb2350a10b810079065ec628f"
   },
   "pristineFiles": {
     "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",

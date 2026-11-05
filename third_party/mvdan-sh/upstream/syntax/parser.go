@@ -515,6 +515,11 @@ type Parser struct {
 	recoveredErrors  int
 	recoverErrorsMax int
 
+	// paramExpDquote retains the enclosing double quote while parameter syntax
+	// temporarily uses runeByRune. Zsh subscript apostrophes are literal there;
+	// nested code clears this context, and nested parameter syntax inherits it.
+	paramExpDquote bool
+
 	forbidNested bool
 
 	// list of pending heredoc bodies
@@ -605,6 +610,7 @@ func (p *Parser) reset() {
 	p.r, p.w = 0, 0
 	p.err, p.readErr, p.readEOF = nil, nil, false
 	p.quote, p.forbidNested = noState, false
+	p.paramExpDquote = false
 	p.openNodes = 0
 	p.recoveredErrors = 0
 	p.heredocs, p.buriedHdocs = p.heredocs[:0], 0
@@ -732,19 +738,28 @@ const (
 	allParamExp = paramExpArithm | paramExpSlice | paramExpRepl | paramExpExp
 )
 
+// saveState carries the surrounding lexer and parameter-quote scopes across
+// a nested grammar body, which must not inherit its caller's quote context.
 type saveState struct {
-	quote       quoteState
-	buriedHdocs int
+	quote          quoteState
+	buriedHdocs    int
+	paramExpDquote bool
 }
 
+// preNested isolates a nested grammar body from its surrounding word syntax.
 func (p *Parser) preNested(quote quoteState) (s saveState) {
 	s.quote, s.buriedHdocs = p.quote, p.buriedHdocs
+	s.paramExpDquote = p.paramExpDquote
 	p.buriedHdocs, p.quote = len(p.heredocs), quote
+	// A nested command or arithmetic body establishes its own quoting context.
+	p.paramExpDquote = false
 	return s
 }
 
+// postNested restores the word context after a nested grammar body ends.
 func (p *Parser) postNested(s saveState) {
 	p.quote, p.buriedHdocs = s.quote, s.buriedHdocs
+	p.paramExpDquote = s.paramExpDquote
 }
 
 func (p *Parser) unquotedWordBytes(w *Word) ([]byte, bool) {
@@ -1486,6 +1501,15 @@ func (p *Parser) dblQuoted() *DblQuoted {
 // as a literal.
 func (p *Parser) paramExp() *ParamExp {
 	old := p.quote
+	if p.lang.in(LangZsh) {
+		// Parameter syntax inherits its enclosing quote even when its lexer has
+		// switched to raw runes or parameter operators. Ordinary words start anew.
+		wasDquote := p.paramExpDquote
+		if old != runeByRune && old&allParamExp == 0 {
+			p.paramExpDquote = old == dblQuotes
+		}
+		defer func() { p.paramExpDquote = wasDquote }()
+	}
 	p.quote = runeByRune
 	// [ParamExp.Short] means we are parsing $exp rather than ${exp}.
 	pe := &ParamExp{
@@ -1892,7 +1916,7 @@ func (p *Parser) zshSubFlags() *FlagsArithm {
 	p.rune()
 	// Flags select a pattern argument, not arithmetic. Preserve its word parts
 	// so traversal sees expansions and printing cannot rewrite character classes.
-	zf.X = p.zshSubPattern()
+	zf.X = p.zshSubPattern(p.paramExpDquote)
 	p.quote = old
 	p.next()
 	return zf
@@ -1902,7 +1926,9 @@ func (p *Parser) zshSubFlags() *FlagsArithm {
 // Only an unescaped comma or closing bracket outside balanced brackets ends it.
 // Bracket depth belongs to this pattern, so nested expansions cannot disturb it;
 // those expansions use the ordinary word parser and its nesting/refusal policy.
-func (p *Parser) zshSubPattern() *Word {
+// An enclosing double quote makes apostrophes literal pattern characters, while
+// command and parameter expansions remain visible word parts.
+func (p *Parser) zshSubPattern(doubleQuoted bool) *Word {
 	w := &Word{}
 	brackets := 0
 patternLoop:
@@ -1911,8 +1937,8 @@ patternLoop:
 			break
 		}
 		pos := p.nextPos()
-		switch p.r {
-		case '$', '`', '\'', '"':
+		switch {
+		case p.r == '$' || p.r == '`' || p.r == '"' || p.r == '\'' && !doubleQuoted:
 			p.pos = pos
 			p.tok = p.regToken(p.r)
 			p.enterNode()
@@ -1940,7 +1966,11 @@ patternLoop:
 					if brackets == 0 {
 						break literalLoop
 					}
-				case '$', '`', '\'', '"':
+				case '\'':
+					if !doubleQuoted {
+						break literalLoop
+					}
+				case '$', '`', '"':
 					break literalLoop
 				}
 				p.rune()
