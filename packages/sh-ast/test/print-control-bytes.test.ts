@@ -63,7 +63,7 @@ describe.each([
   it.each(fixtures(byte, escape))(
     'preserves $position and its Bash value',
     ({ source, stdout }) => {
-      const output = printSync(parseSync(source, { KeepComments: true }));
+      const output = printText(source);
       expect(output).toBe(source);
       for (const script of [source, output]) {
         const shell = spawnSync('bash', ['-c', script], { encoding: 'utf8' });

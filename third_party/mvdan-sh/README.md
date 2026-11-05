@@ -132,6 +132,8 @@ writer-ordering limit: VT/FF body data can still change, and nested delimiters
 can become data under Bash 3.2 or cause Bash 5.3 to reject the printed program.
 Ordinary and HT-only nested output is unchanged from the pinned base, including
 its pre-existing HT body defect. Tests document these limits against real Bash.
+Minify's retained-shebang path also keeps its upstream VT/FF transformation;
+an embedded FF can expose following shebang comment text as executable code.
 
 Native and public printer regressions use explicit source expectations for single
 quotes, double quotes, literal and written-escape ANSI-C quotes, unquoted words,
