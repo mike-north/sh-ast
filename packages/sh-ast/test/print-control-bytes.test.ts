@@ -6,6 +6,7 @@
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { parseSync, printSync } from '../src/index.js';
+import type { PrintOptions } from '../src/index.js';
 
 /** Bash output is checked against a literal expectation for each source position. */
 interface IFixture {
@@ -46,6 +47,15 @@ function fixtures(byte: string, escape: string): readonly IFixture[] {
   ];
 }
 
+/** Valid UTF-8 layout fixtures must remain textual rather than becoming byte strings. */
+function printText(source: string, options: PrintOptions = {}): string {
+  const output = printSync(parseSync(source, { KeepComments: true }), options);
+  if (typeof output !== 'string') {
+    throw new Error('Expected UTF-8 fixture output');
+  }
+  return output;
+}
+
 describe.each([
   { name: 'VT', byte: '\v', escape: 'v' },
   { name: 'FF', byte: '\f', escape: 'f' },
@@ -63,5 +73,37 @@ describe.each([
         expect(shell.stdout).toBe(stdout);
       }
     },
+  );
+
+  it('keeps the same comment padding as an ordinary byte and remains a fixed point', () => {
+    const ordinary = "x='aqb'    # comment\ny='longword' # another\n";
+    const source = ordinary.replace('aqb', `a${byte}b`);
+    const options = { KeepPadding: true };
+    const reference = printText(ordinary, options);
+    const first = printText(source, options);
+    expect(reference).toBe(ordinary);
+    expect(first).toBe(source);
+    expect(first.replace(byte, 'q')).toBe(reference);
+    expect(printText(first, options)).toBe(first);
+  });
+
+  it('aligns physical lines around a multiline literal as it does for an ordinary byte', () => {
+    const ordinary = "printf '%s' 'longqfirst\nx' # first\nprintf x # second\n";
+    const source = ordinary.replace('longqfirst', `long${byte}first`);
+    const reference = printText(ordinary);
+    const first = printText(source);
+    expect(reference).toBe("printf '%s' 'longqfirst\nx'       # first\nprintf x # second\n");
+    expect(first.replace(byte, 'q')).toBe(reference);
+    expect(printText(first)).toBe(first);
+  });
+});
+
+it('retains the upstream multiline horizontal-tab alignment limit', () => {
+  // The base printer also escapes the entire literal when it contains HT. That
+  // hides its LF from tabwriter and misaligns these comments. Preserve that known
+  // upstream limit rather than changing horizontal-tab behavior in this fix.
+  const source = "printf '%s' 'long\tfirst\nx' # first\nprintf x # second\n";
+  expect(printSync(parseSync(source, { KeepComments: true }))).toBe(
+    "printf '%s' 'long\tfirst\nx' # first\nprintf x                   # second\n",
   );
 });
