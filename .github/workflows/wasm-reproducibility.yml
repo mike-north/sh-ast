@@ -23,6 +23,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: packages/sh-ast/shim/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Verify the pinned parser backport before building
+        working-directory: .
+        run: node tools/verify-mvdan-backport.mjs
       - name: Run the shim's Go test suite
         run: go test ./...
       - name: Install pinned wasm-opt (binaryen)

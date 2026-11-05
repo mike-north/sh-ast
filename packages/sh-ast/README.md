@@ -1,7 +1,8 @@
 # sh-ast
 
 A synchronous TypeScript interface to the `syntax` package of
-[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1**. Parsing returns
+[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1 with the official Unicode sentinel backport**
+([source and provenance](../../third_party/mvdan-sh/README.md)). Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.

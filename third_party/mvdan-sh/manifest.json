@@ -1,0 +1,28 @@
+{
+  "module": "mvdan.cc/sh/v3",
+  "version": "v3.13.1",
+  "upstreamCommit": "dccf23ff9b34b866c92fa3c6c66e0cd00f4ad159",
+  "moduleSum": "h1:DP3TfgZhDkT7lerUdnp6PTGKyxxzz6T+cOlY/xEvfWk=",
+  "patches": {
+    "upstream-sentinel.patch": "7cd2a82e05263b4597912a464b1e0571bbde27433c7fd09cb4497dad254420eb",
+    "sentinel-backport.patch": "e50088c20e99a828e8d16e9b4173beb62b12a176577d1c731932bb70db8ff1af"
+  },
+  "pristineFiles": {
+    "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",
+    "fileutil/file.go": "97eb2b21513020f29974c254261abd4e72c9f5cd47bb9e7373112d6b05fc5882",
+    "go.mod": "145d7dae7023c2eaf10b273fcf34143ef95f82cf351f47cc0eedf1a79c266c91",
+    "syntax/braces.go": "166ed184d3073d023b5e7e36b7e9b0b75ab1440701638ed6dd6f3113397fabcb",
+    "syntax/doc.go": "cf0d9c337e9c1444ba4722ef2eed72a685fbda3a7ff0386beddc892bebb507a9",
+    "syntax/lexer.go": "1e011e906ed469e2b04ae8018b3cc911976d4b261ded59eeb6bbdc10044cc48f",
+    "syntax/nodes.go": "f7926533f3ae6ba5a8d5c615e84d3905b43e47a3e890af4b1b05b92c55e44c83",
+    "syntax/parser.go": "f9325c1fe7c0645136f25b87e678befaeac24ef3c7cd10dd6a18f3c1642dc370",
+    "syntax/parser_arithm.go": "b40f7c22c74dd948a3cd95fd864fdb3847f33dac3aa9444ca1e0d6b0e6a82840",
+    "syntax/printer.go": "7a82055b014ae3be5c5ad0ed5a53069a47f8eba076920c28fc57e0fcda7bfed8",
+    "syntax/quote.go": "e37e53b7779af2ccefb09a05012839f6d0d044cf1ba6bfa12407b7495f954ca7",
+    "syntax/simplify.go": "bf4ca677d6badb5a575cafb303b3947ec145ad7955710fec12c67f59163d7e41",
+    "syntax/token_string.go": "338c8072175ce2c66832620631b4d10bd2332c8d72fcebbf3716eab623004695",
+    "syntax/tokens.go": "81bb3296c0b51f25e3d781847fa697e7f4b76aa6e2625f5f1f2db37a980c2533",
+    "syntax/typedjson/json.go": "7f338e15cfec79ade4a77b7a33c1ee0dbbcf67749cfbc0535dd918340a93fa9a",
+    "syntax/walk.go": "974e200635b82c4601a0f5b7163aa30b9f2cfff981a0455edf8d9edacb57b683"
+  }
+}

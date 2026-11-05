@@ -1,0 +1,14 @@
+{
+  "repository": "mike-north/sh-ast",
+  "sourceCommit": "d94af2c81a5407023ed18a198836dc9aee783117",
+  "workflowRun": 41946322123,
+  "artifactId": 13378712571,
+  "artifactName": "sh-ast-linux-amd64-wasm",
+  "archiveSha256": "44a1712be6ca8f1a4ba55d9cce42589c145d4a25958fa701d03ce6a3ad90e152",
+  "archiveBytes": 1333940,
+  "archiveEntries": ["sh-ast.wasm"],
+  "wasmSha256": "2c58ccb2a0085a37256076c2c81206e0be830eab19226be1af271a8289323212",
+  "wasmBytes": 4533901,
+  "builder": "WASM reproducibility / rebuild-match, ubuntu-latest, pinned Go1.26.10 and binaryen131",
+  "sourceVerification": "Offline backport verification and all Go tests passed before the Linux build. Only comparison with the previous committed WASM failed on this source-only run."
+}

@@ -1,0 +1,76 @@
+/**
+ * The vendored parser is accepted only when its reviewed upstream inventory and
+ * patch reconstruct the pristine release. Mutations model accidental drift in
+ * source, provenance, and build routing rather than reimplementing verification.
+ */
+import assert from 'node:assert/strict';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { verifyBackport } from './verify-mvdan-backport.mjs';
+
+const root = fileURLToPath(new URL('../', import.meta.url));
+
+/** Copies only verification inputs so destructive probes cannot touch the checkout. */
+function fixture(action) {
+  const directory = mkdtempSync(join(tmpdir(), 'sh-ast-backport-test-'));
+  try {
+    for (const path of [
+      'third_party/mvdan-sh',
+      'packages/sh-ast/shim/go.mod',
+      'tools/gen-visitor-keys/go.mod',
+    ]) {
+      cpSync(join(root, path), join(directory, path), { recursive: true });
+    }
+    action(directory);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+test('accepts precisely the reviewed source closure and patch', () => {
+  assert.doesNotThrow(() => verifyBackport(root));
+});
+
+test('rejects a source edit outside the official backport', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/upstream/syntax/parser.go');
+    writeFileSync(path, `${readFileSync(path, 'utf8')}\n// unreviewed change\n`);
+    assert.throws(() => verifyBackport(directory), /pristine.*syntax\/parser.go/);
+  });
+});
+
+test('rejects an extra Go source file that could change the build', () => {
+  fixture((directory) => {
+    writeFileSync(
+      join(directory, 'third_party/mvdan-sh/upstream/syntax/extra.go'),
+      'package syntax\n',
+    );
+    assert.throws(() => verifyBackport(directory), /inventory/);
+  });
+});
+
+test('rejects missing upstream license provenance', () => {
+  fixture((directory) => {
+    rmSync(join(directory, 'third_party/mvdan-sh/upstream/LICENSE'));
+    assert.throws(() => verifyBackport(directory), /inventory/);
+  });
+});
+
+test('rejects a changed patch before attempting to apply it', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/sentinel-backport.patch');
+    writeFileSync(path, `${readFileSync(path, 'utf8')}\n`);
+    assert.throws(() => verifyBackport(directory), /patch digest/);
+  });
+});
+
+test('rejects generator routing away from the parser source used by WASM', () => {
+  fixture((directory) => {
+    const path = join(directory, 'tools/gen-visitor-keys/go.mod');
+    writeFileSync(path, readFileSync(path, 'utf8').replace(/replace mvdan.cc\/sh\/v3[^\n]+\n/, ''));
+    assert.throws(() => verifyBackport(directory), /replacement/);
+  });
+});
