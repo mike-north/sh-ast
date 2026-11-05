@@ -93,10 +93,10 @@ choice remains separate from this pin update.
 
 The required build/check/test gate, native shim and generator suites, provenance
 and tamper tests, public array-expansion regression, depth/refusal controls,
-Unicode controls, and both Bash fixture runs are recorded locally under
-`/Users/mnorth/Development/eslint-sh/scratch/m4/sh-ast-82/`. Complete source hashes,
-parse/print snapshots and comparison scripts are retained there for independent
-verification. Public declarations, API reports and Markdown API docs are generated
+Unicode controls, and both Bash fixture runs accompany the source/corpus
+comparison. The source-manifest digest and every corpus delta are retained in
+[the summary](corpus-summary.json); the final fixed timing receipt is below.
+Public declarations, API reports and Markdown API docs are generated
 from the new pin. CI independently checks the Linux rebuild; local WASM uses Go 1.26.10 and
 wasm-opt 131.
 
@@ -130,15 +130,16 @@ These are medians of process medians, in milliseconds:
 All process-median ranges overlap, with substantial outliers (for example,
 consumer print spans 60.35–84.99 ms on base and 62.34–229.67 ms on head). The
 large initial small-fixture parse difference does not persist with longer warmup.
-The remaining median ratios range from 0.88x to 1.11x. **These measurements do not
-establish non-regression conclusively; acceptance criterion 4 remains unconfirmed.**
-The raw observations are retained so independent verification can assess that
-criterion without treating noise as either proof of a regression or proof of parity.
+The remaining median ratios range from 0.88x to 1.11x. These initial observations
+were inconclusive at the original review checkpoint and do not establish
+non-regression. They remain separate from the fixed comparison below; overlap
+and noise establish neither a stable regression nor parity.
 
 ## Bounded Zsh and analyze follow-up
 
-The corpus and timing observations above identify the original `f2bbe6c` assets;
-they are retained without further performance measurements. Review follow-up is
+The corpus and earlier timing observations above identify the original `f2bbe6c`
+assets. The fixed comparison below instead measures the repaired `1f4282f` head.
+The functional follow-up is
 limited to Zsh prefix ordering, the four analyze option-state exports, and the
 obsolete package README description of the dropped sentinel backport.
 
@@ -158,7 +159,7 @@ Analyze-only runtime and type tests first failed on missing `OptState`, `OptUnse
 `OptOn` and `OptOff`; the analyze barrel now exposes the consumed type and all its
 named values. The uint8 boundary and cross-family type rejection remain tested.
 Schema regeneration produces no changes; analyze API rollups and docs are current.
-Performance criterion 4 remains inconclusive and separately held.
+The measured tradeoff is recorded separately below.
 
 The native Zsh oracle is optional: discovery and execution use the same `zsh`
 command on PATH, with a successful `-f -c 'exit 0'` probe required to run it.
@@ -167,3 +168,84 @@ the separate 30 native stdout cases explicitly skip when the executable is
 unavailable. A masked-PATH run records 30 API passes and 30 native skips; this
 host's Zsh 5.9 run records 60 passes. This is not evidence of native Zsh coverage
 on Linux hosts without Zsh. Workflows and checker configuration are unchanged.
+
+## Fixed comparison and accepted tradeoff
+
+The correctness/performance tradeoff is accepted with the exact observations
+below. The original no-tolerance comparison remains **FAIL**: three of ten head
+aggregates exceed baseline. Acceptance of the pin does not relabel that result
+or establish non-regression. No samples, targets or recorded verdicts were
+changed, and no replacement campaign was run.
+
+The baseline is `211c5b7d4207b5e409d3b1ed841ad629d5f03fde`; the measured repaired
+head is `1f4282f5381394f1e08dda9c9ea2398d10f48b6b`. Subsequent integration of
+main `d8534e6ddae76a05433d64651f3892c29326a9ae` adds only the separate #87
+documentation/evidence receipt. Runtime, harness and measured assets are
+unchanged by this integration and the tradeoff documentation.
+
+This one fixed campaign used Node **v24.14.0**, Darwin **27.2.0 arm64**, Apple
+**M5 Max**, 18 logical CPUs and 128 GiB. Both arms are locally packaged sources,
+not npm release measurements. [Prepared package identities and all asset hashes](fixed-campaign/package-artifacts.json)
+and the [original preparation identity](fixed-campaign/campaign-identity.json)
+pin both tarballs, JavaScript, declarations, WASM, harness and fixtures. The
+preparation identity's `timingsRun: false` describes preparation before this
+campaign; it is retained unchanged, not a current execution-status field.
+
+Each fixture/phase has nine paired rounds, alternating base/head order, with
+serial fresh processes and post-clock correctness checks. Parse and the three
+small print cells use 100 excluded warmups and 200 measured calls per process;
+the two large print cells use 20/20. Parse, small print, then large print ran in
+that order. All 180 timing processes and 20 separate verification processes
+succeeded; 29,520 measured calls and 15,120 excluded warmups are accounted for.
+No corpus script was executed as shell code. All process IDs, samples and
+outliers remain in the raw records.
+
+Each aggregate is the median of nine process medians, in milliseconds. Ratios
+are head/base; decisions in the original comparison use unrounded values.
+
+| Fixture / phase           |     Base median, ms |     Head median, ms |          Head/base | Original strict result |
+| ------------------------- | ------------------: | ------------------: | -----------------: | ---------------------- |
+| representative-1 / parse  | 0.09860400000000169 | 0.09795849999999717 | 0.9934536124294704 | MEETS                  |
+| representative-1 / print  |  0.5946039999999897 |  0.5828544999999963 |  0.980239789843335 | MEETS                  |
+| representative-50 / parse |   3.885062499999947 |  3.8439579999999296 | 0.9894198613278377 | MEETS                  |
+| representative-50 / print |  37.481437500000084 |   36.82489600000008 |    0.9824835560269 | MEETS                  |
+| nested-8 / parse          | 0.16566600000000165 | 0.17270849999999882 | 1.0425102314294852 | FAIL                   |
+| nested-8 / print          |   0.979708500000001 |  0.9834374999999795 | 1.0038062342012737 | FAIL                   |
+| heredoc / parse           | 0.05683299999999747 |  0.0539164999999997 |  0.948682983477946 | MEETS                  |
+| heredoc / print           |  0.2666255000000035 |  0.2473954999999961 | 0.9278763659139612 | MEETS                  |
+| consumer-m2 / parse       |   6.434646000000043 |    6.49635399999994 | 1.0095899603490068 | FAIL                   |
+| consumer-m2 / print       |   59.82118750000018 |   55.16770900000006 | 0.9222101951754116 | MEETS                  |
+
+Nested parse increased **4.251023142948517%**, about **0.0070425 ms**; nested
+print increased about **0.003729 ms**. Consumer parse has the largest absolute
+increase, about **0.061708 ms**. Consumer print decreased about **4.6534785 ms**.
+Those absolute differences are displayed to seven decimal places; the original
+binary floating-point values and all 90 paired-round ratios remain in the
+[byte-identical strict comparison](fixed-campaign/strict-comparison.json.txt).
+The `.txt` suffix preserves the original JSON bytes against automatic formatting.
+
+Ongoing benchmark acceptance blocks only for a documented-budget violation or a
+repeatable slowdown above 5% on a realistic fixture. Smaller differences do not
+trigger another campaign. That policy and acceptance of this specific pin do
+not change the original strict FAIL or turn these measurements into a general
+performance guarantee. A single campaign does not establish stable causality;
+the consumer-m2 fixture name does not identify the hardware.
+
+The readiness sample lasted 1,076.063042 ms, with no recognized build/test
+runtime reaching the fixed 50%-CPU readiness threshold. The host was not idle:
+PerfPowerServices used about 169.135072% sampled CPU. Pre/post context is retained
+in [provenance](fixed-campaign/provenance.json), not continuous monitoring or a
+causal explanation. All three measurement segments exited 0; the one-shot shell
+exited 1 after writing the strict FAIL, with post-run identities matching.
+
+The [parse](fixed-campaign/parse-samples.jsonl),
+[small-print](fixed-campaign/small-print-samples.jsonl) and
+[large-print](fixed-campaign/large-print-samples.jsonl) raw files and the strict
+comparison are byte-identical originals. Provenance records the raw/full-report
+hashes, schedule, and all 20 verification records. It is a derived metadata
+summary, not a full-report copy. Only private execution-path string values in
+the prepared manifest and preparation identity are normalized.
+[Normalization proof](fixed-campaign/metadata-normalization.json) retains
+original/path-only/final hashes, every changed JSON pointer and non-string-token
+digests; metadata formatting changes whitespace only. No raw observation or
+strict-comparison byte is normalized, rounded, omitted or overwritten.

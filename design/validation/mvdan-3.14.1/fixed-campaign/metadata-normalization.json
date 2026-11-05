@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "method": "Replace only private execution-path string tokens in the prepared manifest and campaign identity. Repository formatting may reflow their whitespace; every other string, key, numeric/non-string token, delimiter and order is preserved. Raw observations and the strict FAIL JSON are byte-identical. Provenance is a separately derived metadata summary, not a normalized full-report copy.",
+  "mapping": [
+    {
+      "role": "prepared-directory prefix",
+      "replacement": "<prepared>"
+    },
+    {
+      "role": "Node 24.14.0 executable",
+      "replacement": "<node-24.14.0>"
+    }
+  ],
+  "files": [
+    {
+      "retainedFile": "package-artifacts.json",
+      "originalSha256": "f4be86a1d6f3dd1b938199d54bce21b36ba65fce5ccd677bac320e01a78ee02c",
+      "pathNormalizedSha256": "74dd913fe988d5156f6c58c1b5b3f6c6d784489086067dc4983af4427632cb29",
+      "retainedSha256": "74dd913fe988d5156f6c58c1b5b3f6c6d784489086067dc4983af4427632cb29",
+      "changedStringLocations": [
+        "/cache",
+        "/artifacts/0/entry",
+        "/artifacts/0/packageRoot",
+        "/artifacts/0/tarball",
+        "/artifacts/1/entry",
+        "/artifacts/1/packageRoot",
+        "/artifacts/1/tarball"
+      ],
+      "unchangedNonStringTokensSha256": "9384de2f5d0e538d86bf8183e599b446c56b697f92db0659eef937b1297fa542",
+      "pathOnlyNonStringBytesSha256": "cfe8b9cf363fc31e704bde00386f580c879ae7bb96954d67d412eabe75019f91"
+    },
+    {
+      "retainedFile": "campaign-identity.json",
+      "originalSha256": "081b110fe6a78ae7cb9c9d06a73172a7a95e06f226be8c1c7a44f93bde71866b",
+      "pathNormalizedSha256": "fee3675050cc03a98c3a26cba83b5b9e696787ce7a4856a3997c6a6b94c71129",
+      "retainedSha256": "fee3675050cc03a98c3a26cba83b5b9e696787ce7a4856a3997c6a6b94c71129",
+      "changedStringLocations": ["/nodePath"],
+      "unchangedNonStringTokensSha256": "07b295ed744de07c671dc299e91025496bc73225a3069ba36eb11a38f0042067",
+      "pathOnlyNonStringBytesSha256": "a71176d033b42db45dea3881338a35d7df438891333701ba1eed8e11410b9120"
+    },
+    {
+      "retainedFile": "parse-samples.jsonl",
+      "originalSha256": "42d9a03f9098506d09153fcc3d2cb20808d4b8e762249d2f869cb91bcb78904c",
+      "retainedSha256": "42d9a03f9098506d09153fcc3d2cb20808d4b8e762249d2f869cb91bcb78904c",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "retainedFile": "small-print-samples.jsonl",
+      "originalSha256": "0b6dc6c0c932dfdc829d6d10cffd6d984c3f3ad7b2aa9545d75e6f496a30d2d1",
+      "retainedSha256": "0b6dc6c0c932dfdc829d6d10cffd6d984c3f3ad7b2aa9545d75e6f496a30d2d1",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "retainedFile": "large-print-samples.jsonl",
+      "originalSha256": "bc585836eeb577280ee5860860c1f4ef2e3cec728f421273ae5f87952e69d229",
+      "retainedSha256": "bc585836eeb577280ee5860860c1f4ef2e3cec728f421273ae5f87952e69d229",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "retainedFile": "strict-comparison.json.txt",
+      "originalSha256": "ea5c31c8cec868d83ab464c74833c46b7394c4edc6618ea5f58dd8286b322bdd",
+      "retainedSha256": "ea5c31c8cec868d83ab464c74833c46b7394c4edc6618ea5f58dd8286b322bdd",
+      "transformation": "none; byte-identical JSON retained with .txt suffix"
+    }
+  ]
+}
