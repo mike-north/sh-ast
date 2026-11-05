@@ -12,7 +12,8 @@
     "printer-control-bytes.patch": "608ba5547c2a87f0a7d5abdf25a61bc54d31b6b3af85b5939c73d6c5bd7f396a",
     "heredoc-continuation.patch": "4853ac39037fff1fca9baa78610e288460f699729583a5bdc3cbd8f9aa520f2b",
     "printer-backslash-compat.patch": "e41b655fbddbc41de0279c874e13f7ba00c8af7763d5a142a98b74d15d59c0c4",
-    "printer-zsh-prefix-order.patch": "79dde92379e5b89df2e050c40d038a834bebbe6c686f2ddb787e82130e8c90e2"
+    "printer-zsh-prefix-order.patch": "79dde92379e5b89df2e050c40d038a834bebbe6c686f2ddb787e82130e8c90e2",
+    "zsh-subscript-compat.patch": "7fb9afa596dc0c83194882bcb9b8c9b15669c0e85017f4157711629fceb90e28"
   },
   "pristineFiles": {
     "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",
@@ -40,7 +41,8 @@
     "printer-control-bytes.patch",
     "heredoc-continuation.patch",
     "printer-backslash-compat.patch",
-    "printer-zsh-prefix-order.patch"
+    "printer-zsh-prefix-order.patch",
+    "zsh-subscript-compat.patch"
   ],
   "nestingUpstreamCommit": "0e0eb36bb6dd6a143842ffda25738e9a82dc915e",
   "releaseCommit": "a3f0c75d21d918756fa38de8b5d3429efde7948b",

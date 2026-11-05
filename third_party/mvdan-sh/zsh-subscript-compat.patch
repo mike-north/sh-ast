@@ -1,0 +1,29 @@
+--- a/syntax/parser.go
++++ b/syntax/parser.go
+@@ -1890,16 +1890,18 @@
+ 	}
+ 	zf.Flags = p.lit(p.pos, p.val)
+ 	p.rune()
+-	// Lex the argument as a raw pattern, stopping at ',' or ']',
+-	// since zsh treats it as a pattern rather than an arithmetic expression.
+-	argPos := p.nextPos()
+-	for p.newLit(p.r); p.r != runeEOF && p.r != ',' && p.r != ']'; p.rune() {
+-	}
+-	if val := p.endLit(); val != "" {
+-		zf.X = p.wordOne(p.lit(argPos, val))
+-	}
+ 	p.quote = old
++	// Preserve sh-ast's pre-v3.14.1 reverse-subscript contract: expansions
++	// must remain traversable nodes, not executable text hidden in a Lit.
++	// This intentionally retains the old arithmetic grammar ceiling, including
++	// refusals and character-class printing limits named in the compatibility
++	// tests and third_party/mvdan-sh/README.md; it is not a pattern-word grammar.
++	// arithmExprAssign leaves commas for ranges, as the pre-pin handler did.
+ 	p.next()
++	if p.tok == star || p.tok == at {
++		p.tok, p.val = _LitWord, p.tok.String()
++	}
++	zf.X = p.arithmExprAssign(false)
+ 	return zf
+ }
+ 
