@@ -1,0 +1,88 @@
+/** Fixed PR57 campaign: each round pairs immutable packages for both public operations. */
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { cpus, platform, arch, release } from 'node:os';
+import { hash, verifyPrepared } from '../../tools/benchmark/artifacts.mjs';
+import { summarize, schedule } from '../../tools/benchmark/model.mjs';
+import { rowsFor } from '../../tools/benchmark/report.mjs';
+
+const directory = dirname(fileURLToPath(import.meta.url));
+const root = resolve(directory, '../..');
+const harness = join(root, 'tools/benchmark');
+const arms = ['accepted-main', 'canonical-candidate'];
+/** Alternating arm order is fixed before observing any durations. */
+const jobs = schedule(arms, 8).flatMap((order, round) =>
+  ['parse', 'parse-with-positions'].flatMap(phase => order.map(artifact =>
+    ({ round, phase, artifact, mode: 'timing', warmup: 5, iterations: 30 }))));
+if (process.argv[2] === '--plan') { console.log(JSON.stringify(jobs)); process.exit(0); }
+const prepared = JSON.parse(readFileSync(join(directory, 'artifacts.json'), 'utf8'));
+verifyPrepared(prepared);
+const fixture = { ...JSON.parse(readFileSync(join(harness, 'fixtures/consumer-m2.json'), 'utf8')), dialect: 'bash' };
+assert.equal(fixture.source.split('\n').length, 701);
+assert.equal(Buffer.byteLength(fixture.source), 11270);
+/** Input and executable hashes make accidental post-freeze drift a hard failure. */
+function inventory() {
+  const files = [fileURLToPath(import.meta.url), join(directory, 'artifacts.json'), join(harness, 'fixtures/consumer-m2.json'), ...readdirSync(harness).filter(name => name.endsWith('.mjs')).map(name => join(harness, name))];
+  return Object.fromEntries(files.sort().map(file => [file, hash(readFileSync(file))]));
+}
+function worker(job) {
+  const artifact = prepared.artifacts.find(value => value.label === job.artifact);
+  assert.ok(artifact);
+  const request = { ...job, entry: artifact.entry, fixture };
+  const result = JSON.parse(execFileSync(process.execPath, [join(harness, 'worker.mjs')], {
+    input: JSON.stringify(request), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: 180000,
+  }));
+  assert.equal(result.status, 'ok');
+  return { ...job, fixture: fixture.name, dialect: fixture.dialect, ...result };
+}
+const mode = process.argv[2];
+if (mode === '--verify') {
+  const verification = jobs.slice(0, 4).map(job => worker({ ...job, mode: 'verify' }));
+  writeFileSync(join(directory, 'verification.json'), JSON.stringify(verification, null, 2) + '\n');
+  console.log('Four packaged public-operation verification workers passed');
+} else if (mode === '--freeze') {
+  const verification = JSON.parse(readFileSync(join(directory, 'verification.json'), 'utf8'));
+  assert.equal(verification.length, 4);
+  assert.ok(verification.every(result => result.status === 'ok'));
+  const frozen = {
+    frozenAt: new Date().toISOString(), jobs, inventory: inventory(),
+    verificationSha256: hash(readFileSync(join(directory, 'verification.json'))),
+    environment: { node: process.version, platform: platform(), arch: arch(), osRelease: release(), cpu: cpus()[0]?.model, cpuCount: cpus().length },
+    acceptance: { aggregation: 'median of eight fresh-process medians per arm and operation', parseMsMaximum: 10, positionsAbsoluteGainAtLeastParseGain: true },
+  };
+  writeFileSync(join(directory, 'frozen.json'), JSON.stringify(frozen, null, 2) + '\n', { flag: 'wx' });
+  console.log('Frozen 32-worker plan; no timings collected');
+} else if (mode === '--run') {
+  const frozen = JSON.parse(readFileSync(join(directory, 'frozen.json'), 'utf8'));
+  assert.deepEqual(frozen.jobs, jobs);
+  assert.deepEqual(frozen.inventory, inventory());
+  assert.equal(frozen.environment.node, process.version);
+  const raw = join(directory, 'samples.jsonl');
+  writeFileSync(raw, '', { flag: 'wx' });
+  const samples = [];
+  for (const job of jobs) {
+    const result = worker(job);
+    assert.equal(result.samples.length, 30);
+    samples.push(result);
+    appendFileSync(raw, JSON.stringify(result) + '\n');
+    console.error(`Round ${job.round + 1}: ${job.phase}/${job.artifact} complete`);
+  }
+  verifyPrepared(prepared);
+  assert.deepEqual(frozen.inventory, inventory());
+  const rows = rowsFor(samples);
+  const median = (phase, artifact) => rows.find(row => row.phase === phase && row.artifact === artifact).median;
+  const gain = phase => median(phase, arms[0]) - median(phase, arms[1]);
+  const paired = Array.from({ length: 8 }, (_, round) => {
+    const value = (phase, artifact) => summarize(samples.find(sample => sample.round === round && sample.phase === phase && sample.artifact === artifact).samples).median;
+    const parseGainMs = value('parse', arms[0]) - value('parse', arms[1]);
+    const positionsGainMs = value('parse-with-positions', arms[0]) - value('parse-with-positions', arms[1]);
+    return { round, candidateParseMs: value('parse', arms[1]), parseGainMs, positionsGainMs, parseTargetMet: value('parse', arms[1]) <= 10, positionsGainTargetMet: positionsGainMs >= parseGainMs };
+  });
+  const report = { environment: frozen.environment, rows, paired,
+    acceptance: { candidateParseMs: median('parse', arms[1]), parseTargetMet: median('parse', arms[1]) <= 10, parseGainMs: gain('parse'), positionsGainMs: gain('parse-with-positions'), positionsGainTargetMet: gain('parse-with-positions') >= gain('parse') } };
+  writeFileSync(join(directory, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+  console.log(JSON.stringify(report, null, 2));
+} else throw new Error('Expected --plan, --verify, --freeze, or --run');

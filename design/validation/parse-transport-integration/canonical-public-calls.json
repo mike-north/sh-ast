@@ -1,0 +1,138 @@
+[
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "ShParseMaxDepthError",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "ShParseMaxDepthError",
+    "code": "SH_AST_PARSE_MAX_DEPTH",
+    "maxDepth": 128,
+    "estimatedDepth": 129,
+    "reuse": "File"
+  },
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "ShParseMaxDepthError",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "ShParseMaxDepthError",
+    "code": "SH_AST_PARSE_MAX_DEPTH",
+    "maxDepth": 128,
+    "estimatedDepth": 129,
+    "reuse": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "ShParseMaxDepthError",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "ShParseMaxDepthError",
+    "code": "SH_AST_PARSE_MAX_DEPTH",
+    "maxDepth": 128,
+    "estimatedDepth": 129,
+    "reuse": "File"
+  },
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "direct",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "ShParseMaxDepthError",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "ShParseMaxDepthError",
+    "code": "SH_AST_PARSE_MAX_DEPTH",
+    "maxDepth": 128,
+    "estimatedDepth": 129,
+    "reuse": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  },
+  {
+    "caller": "eslint",
+    "name": "canonical57-warm",
+    "operation": "parseWithPositionsSync",
+    "expected": "File",
+    "recoverErrors": 0,
+    "iterations": 20,
+    "changed": false,
+    "outcome": "File"
+  }
+]

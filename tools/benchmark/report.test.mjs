@@ -74,15 +74,20 @@ test('faithful phase comparisons include adjacent releases and candidate control
   const result = comparisonsFor([
     { ...base, artifact: '0.4.0', median: 4 },
     { ...base, artifact: '0.5.0', median: 2 },
-    { ...base, artifact: 'local-candidate', median: 3 },
+    { ...base, artifact: '0.7.0', median: 3 },
+    { ...base, artifact: 'local-candidate', median: 1.5 },
   ]);
   assert.equal(
     result.find((row) => row.baseline === '0.4.0' && row.candidate === '0.5.0').ratio,
     0.5,
   );
   assert.equal(
-    result.find((row) => row.baseline === '0.5.0' && row.candidate === 'local-candidate').ratio,
+    result.find((row) => row.baseline === '0.5.0' && row.candidate === '0.7.0').ratio,
     1.5,
+  );
+  assert.equal(
+    result.find((row) => row.baseline === '0.7.0' && row.candidate === 'local-candidate').ratio,
+    0.5,
   );
 });
 

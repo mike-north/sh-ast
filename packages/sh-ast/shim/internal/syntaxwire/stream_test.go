@@ -12,11 +12,14 @@ import (
 	"time"
 
 	"eslint-sh-shim/internal/legacywiretest"
+	"eslint-sh-shim/internal/wireformtest"
 	"mvdan.cc/sh/v3/syntax"
 )
 
-// Full bytes are compared to a frozen map encoder; explicit anchors below also
-// prevent agreement between implementations from hiding an incorrect contract.
+// Full bytes are compared to a frozen map encoder, after the independent
+// wireformtest oracle converts its UTF-8 text to the ASCII-only spelling;
+// explicit anchors below also prevent agreement between implementations from
+// hiding an incorrect contract.
 func TestStreamingSyntaxMatchesFrozenEncoder(t *testing.T) {
 	shared := &syntax.Lit{Value: "🎉中e\u0301<>&\x00\n\u2028\u2029"}
 	fixtures := []any{nil, (*syntax.Word)(nil), &syntax.File{}, &syntax.File{Stmts: []*syntax.Stmt{}}, &syntax.Word{Parts: []syntax.WordPart{shared, shared, (*syntax.Lit)(nil), nil}}, &syntax.Lit{Value: "\xff\xfe"}, syntax.NewPos(2, 3, 4), []string{}, []string(nil), uint32(4294967295), true, "<>&"}
@@ -27,6 +30,7 @@ func TestStreamingSyntaxMatchesFrozenEncoder(t *testing.T) {
 	for _, fixture := range fixtures {
 		got, err := Encode(fixture)
 		want, wantErr := legacywiretest.Encode(fixture)
+		want = wireformtest.Escape(want)
 		if !bytes.Equal(got, want) || errorText(err) != errorText(wantErr) {
 			t.Fatalf("%T: got %s / %v; want %s / %v", fixture, got, err, want, wantErr)
 		}
@@ -35,6 +39,7 @@ func TestStreamingSyntaxMatchesFrozenEncoder(t *testing.T) {
 		root, _ := syntax.NewParser(syntax.KeepComments(true), syntax.RecoverErrors(2)).Parse(strings.NewReader(source), "\xff")
 		got, err := Encode(root)
 		want, wantErr := legacywiretest.Encode(root)
+		want = wireformtest.Escape(want)
 		if !bytes.Equal(got, want) || errorText(err) != errorText(wantErr) {
 			t.Fatalf("source %q mismatch", source)
 		}
@@ -187,5 +192,76 @@ func TestStreamingStringEscapingAllASCII(t *testing.T) {
 		if err != nil || !bytes.Equal(got, want) {
 			t.Fatalf("ASCII %d: %s != %s (%v)", ch, got, want, err)
 		}
+	}
+}
+
+// Non-ASCII text is spelled with lowercase \u escapes (surrogate pairs beyond
+// the BMP) so whole responses are ASCII. Expected spellings are hand-written;
+// encoding/json independently decodes them back to the original Go string.
+func TestStreamingStringEscapesNonASCII(t *testing.T) {
+	cases := map[string]string{
+		"é":                `"\u00e9"`,
+		"🎉":                `"\ud83c\udf89"`,
+		"中e\u0301":         `"\u4e2de\u0301"`,
+		"a\u2028b\u2029":   `"a\u2028b\u2029"`,
+		"\uffff\U0010ffff": `"\uffff\udbff\udfff"`,
+		"x<é>\n":           `"x\u003c\u00e9\u003e\n"`,
+	}
+	for value, want := range cases {
+		got, err := Encode(value)
+		if err != nil || string(got) != want {
+			t.Fatalf("%q: got %s (%v); want %s", value, got, err, want)
+		}
+		var decoded string
+		if err := json.Unmarshal(got, &decoded); err != nil || decoded != value {
+			t.Fatalf("%q: decoded %q (%v)", value, decoded, err)
+		}
+	}
+	if got := string(AppendASCIIJSON([]byte("prefix:"), []byte(`{"Message":"中 🎉 \u003c"}`))); got != `prefix:{"Message":"\u4e2d \ud83c\udf89 \u003c"}` {
+		t.Fatalf("envelope escaping: %s", got)
+	}
+}
+
+// Ancestry checks the first path entries by scanning and deeper ones by hashing;
+// both halves must report exactly the cycles, and only the cycles, of a path
+// far longer than the scanned prefix. A Subshell chain adds one pointer and one
+// slice entry per level, so 40 levels reach well past the 32-entry prefix.
+func TestStreamingDeepAncestryIsExact(t *testing.T) {
+	chain := func(depth int, leaf *syntax.Stmt) *syntax.Stmt {
+		root := &syntax.Stmt{}
+		current := root
+		for i := 0; i < depth; i++ {
+			next := &syntax.Stmt{}
+			current.Cmd = &syntax.Subshell{Stmts: []*syntax.Stmt{next}}
+			current = next
+		}
+		current.Cmd = &syntax.Subshell{Stmts: []*syntax.Stmt{leaf}}
+		return root
+	}
+	shared := &syntax.Stmt{Cmd: &syntax.CallExpr{}}
+	dag := &syntax.File{Stmts: []*syntax.Stmt{chain(40, shared), chain(40, shared)}}
+	if _, err := Encode(dag); err != nil {
+		t.Fatalf("deep shared statements are not cycles: %v", err)
+	}
+	for _, depth := range []int{2, 40} {
+		root := &syntax.Stmt{}
+		root.Cmd = &syntax.Subshell{Stmts: []*syntax.Stmt{chain(depth, root)}}
+		_, err := Encode(root)
+		if err == nil || !strings.HasSuffix(err.Error(), "cyclic syntax value") {
+			t.Fatalf("depth %d: cycle not rejected: %v", depth, err)
+		}
+	}
+	deepCycle := chain(40, nil)
+	last := deepCycle
+	for i := 0; i < 30; i++ {
+		last = last.Cmd.(*syntax.Subshell).Stmts[0]
+	}
+	tail := last
+	for tail.Cmd.(*syntax.Subshell).Stmts[0] != nil {
+		tail = tail.Cmd.(*syntax.Subshell).Stmts[0]
+	}
+	tail.Cmd.(*syntax.Subshell).Stmts[0] = last
+	if _, err := Encode(deepCycle); err == nil || !strings.HasSuffix(err.Error(), "cyclic syntax value") {
+		t.Fatalf("cycle entering beyond the scanned prefix not rejected: %v", err)
 	}
 }

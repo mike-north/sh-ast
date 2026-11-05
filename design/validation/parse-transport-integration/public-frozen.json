@@ -1,0 +1,303 @@
+{
+  "frozenAt": "2026-11-05T03:41:29.543Z",
+  "jobs": [
+    {
+      "round": 0,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 0,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 0,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 0,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 1,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 1,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 1,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 1,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 2,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 2,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 2,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 2,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 3,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 3,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 3,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 3,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 4,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 4,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 4,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 4,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 5,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 5,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 5,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 5,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 6,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 6,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 6,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 6,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 7,
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 7,
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 7,
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    },
+    {
+      "round": 7,
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "mode": "timing",
+      "warmup": 5,
+      "iterations": 30
+    }
+  ],
+  "inventory": {
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/artifacts.json": "ae56edbb2921c7c0b2bdee09335478336369ac4e969dfa5158225a3243cfe6ac",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/campaign.mjs": "2a1e42f113acd83cfca60424f1f7d9c8e5579f4dc87dcb7566f872c018fe2fb2",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/adapter.mjs": "bfecf44392456dbd7e57713ccdcf9e4f4ef1a2d6dd06f9d2d0aafd29bd66d98e",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/adapter.test.mjs": "283e719847c9a3eb4f41ac73a2dd0378074eaa00a72f3dc5ecb1448c1781a73e",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/artifacts.mjs": "f16765c9d76036077e38dc89d2622efd663e80f130644b6ef75819eb3c1247cd",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/artifacts.test.mjs": "d8680903ef5cc3550398b075ba2ab58c45766d8686811da87f6469d4f49680bd",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/extraction.test.mjs": "bb4733f804b1d1843aa11a1c6bd05245c8bf2f6381b7d33fa42a82a759af8c41",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/fixtures/consumer-m2.json": "8eb7138cc14148c707a9b6b936e3bd22ec3806ef392b1d2d9300db747d7353df",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/heap-sequence.integration.mjs": "3002694ede9767c723e82b072ead1be8e867a1de13223240aab7c647eab7d495",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/identity.mjs": "b572b3234526db97a2670192967cc6e1f3672f6a42002043fa9e3dadf0dec4f7",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/model.mjs": "5495576a2195e91f99795450a2d4b3dffc299b642e631fdede43bb2e972a6f88",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/model.test.mjs": "8f1be8fbd512e5509b4af55d8bc1549031313a3a7ed689a72e1de3145cf51ff2",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/report.mjs": "f0369424c77e68c673f79b0d9dca8c300736dcee8113a11c8636fc5d62abf4f6",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/report.test.mjs": "cc12992cd678acdfb50fca00955f4a64635a21f62bf730bf8f8fa75760576a9f",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/run.mjs": "f6ecbd13ea7389074e726f1ff9279011ea3b798315f1558aec005c384acebe75",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stages.mjs": "ce0e56ae696f67e2dfd66629a89b824737a1f32fad6515da762d9b66baccda35",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stages.test.mjs": "e73104ab7a0882292dd5449d387a71a8d4919cfd8bcf97c9cf27440dd8c5af91",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stream-encoding-model.mjs": "22af02bb693de50ece856403229a0671964a7fe1a7d0c9be955ddc6853ad051a",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stream-encoding-prepare.mjs": "676be4244b6aea37c9ecb3243e911ef9346c39f0084fe955a3d40174fa540d45",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stream-encoding-run.mjs": "6152d817a5f943e67c1bdb8217c230ca8674c50f146591a518ea8940241f2952",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stream-encoding-worker.mjs": "914433025b3b092e52579e88537121c6784d88c21115ce0a148ff74120392506",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/stream-encoding.test.mjs": "345c6fe11f597ac2cd78a2031bf72286dc634b76f790a643447b6443e7ac6885",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/transport.mjs": "11e35b6a2c4c71ff064e459bf748958f1458601e152799aafa0c87742ca87142",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/transport.test.mjs": "6dd24ff5ab5ff750f4f1f8cdfd9be86eb9243948805026a23b8176f37276215f",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/worker.integration.mjs": "5a46ad4834e07a1be1907e6a251c75f347755fcfb12f986087cb1f6562199726",
+    "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/worker.mjs": "5a8f10977b69ef2982adfa0da04b16985754e2b9a4f81b32e3bceb9612f4694a"
+  },
+  "verificationSha256": "907ba5da18344662d4c466375299ebb3b9325e0492d977df6f41cfa896da0453",
+  "environment": {
+    "node": "v22.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18
+  },
+  "acceptance": {
+    "aggregation": "median of eight fresh-process medians per arm and operation",
+    "parseMsMaximum": 10,
+    "positionsAbsoluteGainAtLeastParseGain": true
+  }
+}

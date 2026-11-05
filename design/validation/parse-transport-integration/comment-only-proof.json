@@ -1,0 +1,10 @@
+{
+  "file": "tools/benchmark/stages.mjs",
+  "measuredCommit": "1431a4f36a82bc4be255baa25ce77d801e9c0d39",
+  "measuredSha256": "ce0e56ae696f67e2dfd66629a89b824737a1f32fad6515da762d9b66baccda35",
+  "clarifiedSha256": "465e9bd9c0f01a482c712da36292ddbe32653cf69efbb2ac62eaab6d80c8b534",
+  "nonTriviaTokensSha256": "e92e2da13c84e20a1792efa87ffb56f48947f9f22be5f8e2d0fa08268214b158",
+  "nonTriviaTokenCount": 572,
+  "equalNonTriviaTokens": true,
+  "method": "TypeScript scanner with skipTrivia=true; exact token kinds and spellings compared after measurement"
+}

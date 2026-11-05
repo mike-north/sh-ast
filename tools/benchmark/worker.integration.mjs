@@ -56,3 +56,27 @@ test('import-only verification never reports instrumented timing samples', () =>
   assert.equal(result.samples, undefined);
   assert.deepEqual(result.transport, {});
 });
+
+test('stage workers attribute every measured call of the built package', () => {
+  for (const phase of ['parse-stages', 'parse-with-positions-stages']) {
+    const timing = JSON.parse(
+      execFileSync(process.execPath, [worker], {
+        input: JSON.stringify({ entry, fixture, phase, mode: 'timing', iterations: 2, warmup: 1 }),
+        encoding: 'utf8',
+      }),
+    );
+    assert.equal(timing.status, 'ok');
+    assert.equal(timing.contract, `${phase}:faithful`);
+    assert.equal(timing.samples.length, 2);
+    for (const stage of ['input', 'wasm', 'parse', 'encode', 'transfer', 'decode']) {
+      assert.equal(timing.stages[stage].status, 'ok', stage);
+      assert.equal(timing.stages[stage].samples.length, 2, stage);
+    }
+    timing.samples.forEach((total, i) => {
+      const at = (stage) => timing.stages[stage].samples[i];
+      assert(at('parse') > 0 && at('encode') > 0, 'the local shim reports its parse time');
+      assert(Math.abs(at('parse') + at('encode') - at('wasm')) < 1e-9);
+      assert(Math.abs(at('input') + at('wasm') + at('transfer') + at('decode') - total) < 1e-9);
+    });
+  }
+});

@@ -1,0 +1,15 @@
+{
+  "repository": "mike-north/sh-ast",
+  "sourceCommit": "f13d3e737444e9c50c22304fb7e038f6544e3ffe",
+  "workflowRun": 41962404069,
+  "artifactId": 13386260790,
+  "artifactName": "sh-ast-linux-amd64-wasm",
+  "archiveSha256": "d7827220a6077c925d652c5683e867cd9d0e5601a0c7673cd1c7dec05f916977",
+  "archiveBytes": 1348871,
+  "archiveEntries": ["sh-ast.wasm"],
+  "wasmSha256": "327e2875f354e2aa51a347c47f042d1aef1a42c698402b16edcfd4a52077197a",
+  "wasmBytes": 4584369,
+  "builder": "WASM reproducibility / rebuild-match, ubuntu-latest, pinned Go1.26.10 and binaryen131",
+  "sourceVerification": "Offline composed-patch verification and all Go tests passed before the Linux build. Only comparison with the previous committed WASM failed on this source-only run.",
+  "adoptionVerification": "Source inventory unchanged; archive size and SHA-256 verified before extraction; exactly one nonsymlink sh-ast.wasm entry with the WebAssembly version-1 header."
+}

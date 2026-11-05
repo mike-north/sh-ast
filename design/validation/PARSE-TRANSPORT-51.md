@@ -1,0 +1,187 @@
+# Parse transport cost (#51)
+
+## Contract and boundaries
+
+The original prototype baseline was `1b6f23d` (sh-ast 0.7.0 runtime). Final
+canonical integration and current-machine acceptance are recorded in
+[the integration report](parse-transport-integration/README.md). For supported inputs, the public result of `parseSync` and
+`parseWithPositionsSync` is unchanged: the same records, member order, `GoString`
+values (strings and `Uint8Array`), typed nils, frozen position snapshots and
+error classes, messages, fields and precedence. The record shape, the `Type`
+discriminator and the public API are untouched; nothing is decoded lazily.
+
+Only the internal parse response changes. Old/new JS and WASM pairs are not
+supported; they ship as one package.
+
+- **ASCII text.** Streamed strings escape every non-ASCII character as `\u`
+  (surrogate pairs beyond the BMP). ASCII keeps encoding/json's escaping, and
+  the small marshaled failure envelope beside a partial File is escaped the same
+  way. JSON.parse yields identical JavaScript strings; JavaScript decodes a
+  one-byte response instead of a two-byte one.
+- **Compact File positions.** In parse and parse-with-positions responses
+  (including partial Files beside parser errors), each `syntax.Pos` in the File
+  is `[Offset,Line,Col,Flags]` with the sidecar's flags (bit 0 IsValid, bit 1
+  IsRecovered, bit 2 OffsetOverflow). Error envelope positions, the bounds
+  sidecar, and every other operation keep their spelling. Generic `Encode`/
+  `Append` keep object positions, so Go round-trip tests and the printer input
+  format are unaffected.
+- **One JavaScript validation pass.** `restoreSyntaxFile` performs exactly the
+  `isSyntaxFile` checks while replacing each well-formed tuple by the identical
+  six-member record; a malformed tuple fails validation (`ShInternalError`). A
+  fresh JSON.parse tree is acyclic and unshared, so this pass tracks no ancestor
+  set. Caller-input validation retains supported record semantics. Sparse list holes
+  are rejected as missing required records rather than materialized as explicit
+  nil elements; empty slices and explicit `null` entries retain their behavior.
+- **Encoder internals.** Per-type wire plans are prebuilt once from the
+  registry; cycle tracking scans the first 32 path entries and hashes only deeper
+  ones; positions are read without an interface allocation; responses are
+  composed in one retained scratch buffer (bounded at 32 MiB) and copied once.
+  Bounds observation runs under one recovery scope and resumes after a panic at
+  the next call, preserving the exact Pos-then-End call sequence and failures.
+- **Smaller JS costs.** The response terminator is found with a native
+  `indexOf`; the byte-restoration walk runs only if the response text contains
+  `"Bytes"` (the producer never escapes ASCII key letters, so a Bytes key always
+  appears literally); schema field lists are cached per type.
+- **Diagnostic export.** `syntaxLastParseNanoseconds` reports the most recent
+  parser setup plus upstream `Parser.Parse` duration so the benchmark can split WASM time into
+  parse and encode. No API result depends on it.
+
+## Independent tests
+
+| Contract                                                                                  | Ground truth / test                                                                                                                                         |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Complete parse/sidecar response bytes, five dialects, Unicode, bytes, recovery, errors    | Frozen legacy envelope converted by the test-only `wireformtest` oracle (regex/rune rewrite, no production code): `TestStreamingParseMatchesFrozenEnvelope` |
+| Syntax encoder bytes and errors                                                           | Frozen legacy encoder + ASCII oracle: `TestStreamingSyntaxMatchesFrozenEncoder`                                                                             |
+| Hand-derived tuple spellings (multibyte end column, invalid zero, recovered sentinel = 6) | `TestParsedFilePositionsUseCompactTuples`                                                                                                                   |
+| Hand-written non-ASCII escapes, decoded back by encoding/json                             | `TestStreamingStringEscapesNonASCII`; whole responses ASCII: `TestParseResponsesAreASCII`                                                                   |
+| Exact cycles across the scanned/hashed ancestry boundary; shared deep children accepted   | `TestStreamingDeepAncestryIsExact` plus existing cycle tests                                                                                                |
+| Pos-before-End order and independent failures                                             | Existing `TestStreamingSnapshotMethodOrder`, snapshot and compact sidecar suites                                                                            |
+| Parsed File equals an independent upstream parse                                          | `TestParseDefaultsAndOptionsMatchUpstream` (oracle expands tuples before syntax decoding)                                                                   |
+| Byte-restoration fast path                                                                | `syntax-wire-decode.test.ts` against the retired copying decoder, including `"Bytes"` inside string values                                                  |
+| Public output identical to the published release                                          | `tools/benchmark/identity.mjs` against `sh-ast@0.7.0` from the registry: 341 cases, 0 mismatches                                                            |
+
+## Measurement
+
+`pnpm benchmark` gains `parse-stages` and `parse-with-positions-stages` phases,
+the `consumer-m2` fixture and the published 0.7.0 artifact; see
+[the harness README](../../tools/benchmark/README.md). The measurements below
+are from a 4-vCPU Linux VM, not the benchmark machine named in #51, so they show
+relative change only.
+
+Method: `consumer-m2`, Bash, `KeepComments: true`; 8 rounds of fresh worker
+processes (`tools/benchmark/worker.mjs`), arm order rotating per round, 5 excluded
+warmups and 30 measured calls per process; values are the median of the 8
+process medians (ms). "Before" is the 0.7.0 runtime with only the parse timer
+added (needed to split its WASM time); its plain phases match published 0.7.0
+within noise. Upstream parse time is unchanged code; its small difference
+reflects garbage-collector state, since the new encoder allocates far less.
+
+| Measure                    | Published 0.7.0 | Before | After |              Change |
+| -------------------------- | --------------: | -----: | ----: | ------------------: |
+| `parseSync`                |           54.39 |  53.31 | 19.30 | −34.01 ms (−63.8 %) |
+| `parseWithPositionsSync`   |           70.59 |  69.53 | 29.29 | −40.24 ms (−57.9 %) |
+| parse-stages: input        |                 |   0.42 |  0.42 |               0.0 % |
+| parse-stages: wasm         |                 |  32.30 |  9.55 |             −70.5 % |
+| parse-stages: parse        |                 |   2.80 |  2.22 |             −20.6 % |
+| parse-stages: encode       |                 |  29.51 |  7.39 |             −75.0 % |
+| parse-stages: transfer     |                 |   6.99 |  0.76 |             −89.1 % |
+| parse-stages: decode       |                 |  13.15 |  6.66 |             −49.3 % |
+| positions-stages: input    |                 |   0.44 |  0.45 |              +3.0 % |
+| positions-stages: wasm     |                 |  37.11 | 15.10 |             −59.3 % |
+| positions-stages: parse    |                 |   2.57 |  2.11 |             −18.2 % |
+| positions-stages: encode   |                 |  34.32 | 13.03 |             −62.0 % |
+| positions-stages: transfer |                 |   8.27 |  0.88 |             −89.4 % |
+| positions-stages: decode   |                 |  23.31 | 13.62 |             −41.6 % |
+
+The 10 ms acceptance target applies to the benchmark machine and is not
+established by these VM numbers. Remaining cost on the VM is dominated by
+reflective encoding (~7 ms), JSON.parse plus File validation (~6.7 ms), and for
+positions the upstream bound calls in WASM and snapshot construction.
+
+## Large-heap runtime abort
+
+Independent verification found that head `54c286b`, built with go1.26.5, aborted
+the Go runtime ("found bad pointer in Go heap") on a valid sequence of large
+public calls. The cause is golang/go#80472: on js/wasm, `runtime.itabInit` stored
+method PCs through a GC write barrier, and those PCs overlap heap addresses once
+the heap has grown. It is fixed in the Go toolchain now pinned on main (#64);
+this change carries no workaround for it.
+
+`tools/benchmark/heap-sequence.integration.mjs` runs the reported parse sequence
+at eight sizes in fresh processes. On 54c286b (go1.26.5) it failed in 3/3 runs,
+at k = 100 and 120 each time.
+
+Which sizes abort depends on the Go heap layout, and this transport change moved
+it: main's `packages/sh-ast/test/go-runtime-abort.test.ts`, with its single print
+sequence (representative-50, k = 10, j = 2), still detected the defect on main's
+source but passed 10/10 on this head built with go1.26.5. The test now runs its
+print sequence at several sizes, each in a fresh process: representative-50
+k = 10/j = 2, consumer-m2 k = 20/j = 2 and consumer-m2 k = 30/j = 3. Verified on
+this VM with the CI build recipe:
+
+| Source         | Toolchain | Result                                                                                                                                   |
+| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| This head      | go1.26.5  | fails 4/4 runs (consumer-m2 k = 20/j = 2 and k = 30/j = 3 abort every run with "found bad pointer in Go heap"; representative-50 passes) |
+| main `4e92cec` | go1.26.5  | fails 3/3 runs (consumer-m2 k = 20/j = 2 every run; representative-50 k = 10/j = 2 in 2/3)                                               |
+| This head      | go1.26.10 | passes 4/4 runs                                                                                                                          |
+| main `4e92cec` | go1.26.10 | passes 1/1 run                                                                                                                           |
+
+Any later transport change must re-prove the test against a go1.26.5 build and
+add sizes until at least one fails there.
+
+## Integration with accepted parser corrections
+
+The final integration baseline is accepted main
+`87da64fb2f293c2a247bb365399f0150c43ba2ea`, including the Unicode sentinel fix,
+iterative comments, and the fixed 128-unit native node-nesting policy. Historical
+published-release and Linux timing results above describe their original pins;
+they are not final integrated-candidate performance acceptance.
+
+The parse timer wraps construction/configuration of the shared budgeted parser,
+reader setup, and the `Parse` call. It is a parser-phase diagnostic, not a pure
+parser-body or native-stack measurement. Typed resource refusals
+still return before response composition or position traversal. The legacy ABI
+also retains the same shared cap. No vendor patch, grammar policy, public API
+report, or generated syntax schema changes are introduced by the transport work.
+
+Supported-input compatibility is checked against this accepted main, not a
+published parser predating its corrections. The identity corpus now includes
+U+0080/U+0081, a quoted Unicode heredoc crossing the refill boundary, accepted and
+refused native limits, arithmetic subscripts, and a 10,001-comment run. All 429
+cases match in isolated packages of the canonical integrated build, including represented member
+order, bytes, errors, and snapshot lookups. This corpus does not establish every
+possible alias, descriptor, or malformed caller-graph behavior; dedicated public
+and native tests remain part of acceptance.
+
+Sparse caller list slots are explicitly outside complete-record input shape.
+`sparse-input.test.ts` first reproduced the previous `PrintPanicError` for a hole
+and native-bound error-message difference, while empty and explicit-null controls
+passed. The integrated validator rejects the hole with `InputError`; empty arrays
+and explicit `null` entries preserve their prior behavior. This qualification
+replaces the broader claim of identity over arbitrary JavaScript graphs.
+
+The integrated heap layout was independently checked against Go 1.26.5 in an
+isolated source copy, changing only that copy's Go directive. In one run of the
+existing three-size print suite, consumer-m2 k=20/j=2 and k=30/j=3 both reproduced
+the known Go heap abort. In one run of the existing eight-size parse suite,
+k=100 and k=120 reproduced it. Both suites pass with production Go 1.26.10.
+[The source inventory and exact artifact hashes](parse-transport-integration/heap-regression.json)
+record this sensitivity check; these are correctness observations, not timings or
+failure-frequency estimates. Local diagnostic WASM is never the production
+artifact: exact-source Linux adoption and final canonical gates precede the
+separately frozen performance campaign.
+
+The one-time base refresh from `4ecb0e6` to `87da64f` adds the accepted wrapper documentation/tests; parser-side JavaScript, Go source, and canonical WASM are identical. The earlier heap sensitivity check therefore retains the same native source identity. Final identity and performance comparisons use `87da64f`.
+
+## Final canonical campaign
+
+The [frozen canonical campaign](parse-transport-integration/README.md) compares
+accepted main `87da64f` with measured candidate `1431a4f`. On Node 22.22.1 and
+Apple M5 Max, parse falls from 22.066062 to 7.776615 ms and positions parsing
+from 27.218437 to 11.768500 ms (medians of eight process medians). Both aggregate
+targets pass; positions gain is smaller than parse gain in two of eight paired
+rounds. All raw observations, ranges, misses, provenance, and reproduction steps
+are retained. These results do not establish an M2, Linux-VM, or downstream
+ESLint end-to-end latency target. Separate stage diagnostics report unsupported
+baseline parse/encode splits explicitly; encoder remainder includes native/call
+overhead.

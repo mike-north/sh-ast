@@ -1,0 +1,141 @@
+{
+  "environment": {
+    "node": "v22.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18
+  },
+  "rows": [
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "artifact": "accepted-main",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 20.880458499999975,
+      "median": 22.066062249999995,
+      "max": 24.71022949999997
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse",
+      "artifact": "canonical-candidate",
+      "contract": "parse-source-retain-comments",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 7.271041500000024,
+      "median": 7.776615,
+      "max": 8.311583499999998
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 25.39014549999996,
+      "median": 27.218437499999993,
+      "max": 28.96989599999995
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 11.273458500000032,
+      "median": 11.768499749999975,
+      "max": 12.282104000000004
+    }
+  ],
+  "paired": [
+    {
+      "round": 0,
+      "candidateParseMs": 8.311583499999998,
+      "parseGainMs": 16.39864599999997,
+      "positionsGainMs": 16.808541499999905,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    },
+    {
+      "round": 1,
+      "candidateParseMs": 8.081687500000015,
+      "parseGainMs": 15.572811999999999,
+      "positionsGainMs": 15.496082999999999,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": false
+    },
+    {
+      "round": 2,
+      "candidateParseMs": 7.271041500000024,
+      "parseGainMs": 13.92429199999998,
+      "positionsGainMs": 16.055562500000022,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    },
+    {
+      "round": 3,
+      "candidateParseMs": 7.803146499999997,
+      "parseGainMs": 13.787665999999987,
+      "positionsGainMs": 14.775895999999989,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    },
+    {
+      "round": 4,
+      "candidateParseMs": 8.08374950000001,
+      "parseGainMs": 14.693062999999967,
+      "positionsGainMs": 14.727853999999951,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    },
+    {
+      "round": 5,
+      "candidateParseMs": 7.630187499999977,
+      "parseGainMs": 14.911124500000028,
+      "positionsGainMs": 14.475854500000025,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": false
+    },
+    {
+      "round": 6,
+      "candidateParseMs": 7.6870204999999885,
+      "parseGainMs": 13.255438500000025,
+      "positionsGainMs": 13.844207999999952,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    },
+    {
+      "round": 7,
+      "candidateParseMs": 7.750083500000002,
+      "parseGainMs": 13.130374999999972,
+      "positionsGainMs": 15.46704200000002,
+      "parseTargetMet": true,
+      "positionsGainTargetMet": true
+    }
+  ],
+  "acceptance": {
+    "candidateParseMs": 7.776615,
+    "parseTargetMet": true,
+    "parseGainMs": 14.289447249999995,
+    "positionsGainMs": 15.449937750000018,
+    "positionsGainTargetMet": true
+  }
+}
