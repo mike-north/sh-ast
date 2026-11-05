@@ -36,7 +36,7 @@
  * @see https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html — GNU coreutils `timeout`
  * @see https://www.sudo.ws/docs/man/sudo.man/ — `sudo(8)`
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Argv0Resolution, CommandSite, WrapperSpec } from '../src/analyze/index.js';
 import {
   DEFAULT_TRANSPARENT_WRAPPERS,
@@ -865,5 +865,111 @@ describe('resolveArgv0 — review fix: `--` ends option parsing for the rest of 
     const resolution = resolveArgv0(site('command -- -v rm'));
     expect(chainSummary(resolution)).toEqual(['command', '-v']);
     expect(resolution.effective).toEqual({ static: true, text: '-v' });
+  });
+});
+
+/**
+ * Builtin identity is distinct from an external executable's basename. These
+ * literal outcomes are confirmed by bash/zsh probes with real stub executables;
+ * arguments to an external command/exec are not shell instructions.
+ */
+describe('resolveArgv0 — shell builtin wrapper identity (#75)', () => {
+  it.each([
+    ['/tmp/command eval "$x"', '/tmp/command'],
+    ['/usr/bin/command cd /tmp', '/usr/bin/command'],
+    ['/tmp/exec foo', '/tmp/exec'],
+    ['/tmp/command "$cmd" x', '/tmp/command'],
+  ])('%s keeps the external executable as the effective command', (source, command) => {
+    const result = resolveArgv0(site(source));
+    expect(result.effective).toEqual({ static: true, text: command });
+    expect(chainSummary(result)).toEqual([command]);
+    expect(result.chainIndices).toEqual([0]);
+  });
+
+  it.each([
+    ['command eval "$x"', 'eval'],
+    ['exec foo', 'foo'],
+  ])('%s still follows the exact builtin name', (source, effective) => {
+    const result = resolveArgv0(site(source));
+    expect(result.effective).toEqual({ static: true, text: effective });
+    expect(result.chainIndices).toEqual([0, 1]);
+  });
+
+  it.each(['env', 'sudo', 'nice', 'nohup', 'timeout', 'time'])(
+    'an absolute %s still follows the external-wrapper grammar',
+    (name) => {
+      const source = `/usr/bin/${name}${name === 'timeout' ? ' 10' : ''} task`;
+      const result = resolveArgv0(site(source));
+      expect(result.effective).toEqual({ static: true, text: 'task' });
+      expect(chainSummary(result)).toEqual([`/usr/bin/${name}`, 'task']);
+    },
+  );
+
+  it.each(['commandish', 'executable', '/tmp/commandish', '/tmp/executable', '/tmp/envish'])(
+    '%s is a near miss rather than a wrapper',
+    (name) => {
+      expect(chainSummary(resolveArgv0(site(`${name} task`)))).toEqual([name]);
+    },
+  );
+
+  it('a custom builtin follows only its exact name, including explicitly listed paths', () => {
+    const builtin = { names: ['builtin', '/explicit/builtin'], shellBuiltin: true };
+    const options = { transparentWrappers: [builtin] };
+    for (const name of ['builtin', '/explicit/builtin']) {
+      expect(chainSummary(resolveArgv0(site(`${name} task`), options))).toEqual([name, 'task']);
+    }
+    for (const name of ['/tmp/builtin', './builtin', 'builtinish', '/explicit/builtin/']) {
+      expect(chainSummary(resolveArgv0(site(`${name} task`), options))).toEqual([name]);
+    }
+  });
+
+  it.each([undefined, false])(
+    'shellBuiltin=%s preserves custom absolute aliases',
+    (shellBuiltin) => {
+      const options = { transparentWrappers: [{ names: ['command'], shellBuiltin }] };
+      expect(chainSummary(resolveArgv0(site('/tmp/command task'), options))).toEqual([
+        '/tmp/command',
+        'task',
+      ]);
+    },
+  );
+
+  it('a builtin entry cannot hide a later external basename entry', () => {
+    const options = {
+      transparentWrappers: [
+        { names: ['builtin'], shellBuiltin: true, stopsChainFlags: ['-q'] },
+        { names: ['builtin'], noArgFlags: ['-q'] },
+      ],
+    };
+    expect(chainSummary(resolveArgv0(site('builtin -q task'), options))).toEqual(['builtin']);
+    expect(chainSummary(resolveArgv0(site('/tmp/builtin -q task'), options))).toEqual([
+      '/tmp/builtin',
+      'task',
+    ]);
+  });
+
+  it.each(['true', 1, null, [], {}].map((shellBuiltin) => ({ shellBuiltin })))(
+    'rejects non-boolean shellBuiltin=$shellBuiltin',
+    ({ shellBuiltin }) => {
+      // Exercise JavaScript boundary data that cannot satisfy the public type.
+      const spec = { names: ['builtin'], shellBuiltin } as unknown as WrapperSpec;
+      const invoke = (): Argv0Resolution =>
+        resolveArgv0(site('task'), { transparentWrappers: [spec] });
+      expect(invoke).toThrow(ShAnalyzeInvalidWrapperSpecError);
+      expect(invoke).toThrow('transparentWrappers[0].shellBuiltin must be a boolean when present');
+    },
+  );
+
+  it('ordinary commands avoid path-segment scans through the existing early exit', () => {
+    const input = site('ordinary task');
+    // Neither wrapper fallback nor interpreter matching should split a path.
+    const pathScan = vi.spyOn(String.prototype, 'lastIndexOf');
+    try {
+      const result = resolveArgv0(input);
+      expect(result.effective).toEqual({ static: true, text: 'ordinary' });
+      expect(pathScan).not.toHaveBeenCalled();
+    } finally {
+      pathScan.mockRestore();
+    }
   });
 });

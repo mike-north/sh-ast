@@ -46,7 +46,8 @@ export interface WrapperSpec {
    * 1. Its entire resolved text (after quote/escape removal) equals one of
    *    `names`: `env`, or a path a caller listed verbatim. An exact path
    *    entry takes precedence over a plain-name entry even if listed later.
-   * 2. It is an **absolute path** (starts with `/`) whose final segment
+   * 2. The spec does not declare {@link WrapperSpec.shellBuiltin | shellBuiltin: true},
+   *    and the word is an **absolute path** (starts with `/`) whose final segment
    *    equals one of `names`: `/usr/bin/env`, `/usr/bin/sudo`, `/opt/x/nice`
    *    and `/usr//bin/env` resolve as `env`, `sudo` and `nice`. The chain
    *    keeps the word as written, so a consumer still sees the path.
@@ -54,8 +55,8 @@ export interface WrapperSpec {
    * Relative paths and paths with a trailing slash do not use the
    * final-segment fallback. They can still match an explicitly listed name,
    * such as `./with-retry` or `/opt/with-retry/`. Custom plain names also
-   * acquire absolute-path aliases; a path-only name does not acquire aliases
-   * for other paths with the same final segment.
+   * acquire absolute-path aliases unless `shellBuiltin: true`; a path-only
+   * name does not acquire aliases for other paths with the same final segment.
    *
    * This is a lexical analysis assumption, not executable identity:
    * `PATH` is not consulted and the filesystem is not read. Without an
@@ -65,6 +66,18 @@ export interface WrapperSpec {
    * (`"$dir/env"`) is not `static` and is never matched.
    */
   readonly names: readonly string[];
+
+  /**
+   * Whether this wrapper represents a shell builtin rather than an external
+   * utility. A path cannot reach a builtin: `/tmp/command` names an external
+   * executable, so its arguments must not be interpreted as builtin operands.
+   * When true, only exact entries in {@link WrapperSpec.names} match; the
+   * absolute-path final-segment fallback is disabled. Explicitly listed path
+   * entries still match exactly. False or omitted preserves utility matching.
+   * The defaults mark `command` and `exec`; custom tables may mark their own
+   * builtins, such as `builtin`.
+   */
+  readonly shellBuiltin?: boolean;
 
   /**
    * Legacy shorthand for {@link WrapperSpec.assignmentOperands}'s
@@ -217,12 +230,12 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
   // the effective command is `command` itself, regardless of what follows
   // (`stopsChainFlags`, not `noArgFlags` — see `WrapperSpec.stopsChainFlags`'s
   // doc comment).
-  { names: ['command'], noArgFlags: ['-p'], stopsChainFlags: ['-v', '-V'] },
+  { names: ['command'], shellBuiltin: true, noArgFlags: ['-p'], stopsChainFlags: ['-v', '-V'] },
 
   // `exec [-cl] [-a name] [command [arguments]]` — Bash Reference Manual
   // §4.1. `-c`/`-l` take no operand; `-a name` supplies argv0 for the
   // wrapped command and takes `name` as its operand.
-  { names: ['exec'], noArgFlags: ['-c', '-l'], argFlags: ['-a'] },
+  { names: ['exec'], shellBuiltin: true, noArgFlags: ['-c', '-l'], argFlags: ['-a'] },
 
   // `env [-i0v] [-u name] [-C dir] [name=value]... [utility
   // [argument...]]` — POSIX `env` (`-i`) plus GNU coreutils env(1)'s
@@ -819,15 +832,16 @@ function matchShortFlagCluster(text: string, spec: WrapperSpec): 'one' | 'two' |
 
 /**
  * The wrapper entry that recognizes `text`: an exact `names` match, else, for
- * an absolute path only, a match on its final path segment (see
- * {@link WrapperSpec.names}). A relative path is never matched by segment.
+ * an absolute path only, a non-builtin match on its final path segment (see
+ * {@link WrapperSpec.names}). Relative paths and shell builtins never use
+ * segment matching; the bare-command early exit avoids all path scanning.
  */
 function findWrapperSpec(wrappers: readonly WrapperSpec[], text: string): WrapperSpec | undefined {
   const exact = wrappers.find((spec) => spec.names.includes(text));
   if (exact !== undefined || !text.startsWith('/')) return exact;
   const name = text.slice(text.lastIndexOf('/') + 1);
   if (name === '') return undefined;
-  return wrappers.find((spec) => spec.names.includes(name));
+  return wrappers.find((spec) => spec.shellBuiltin !== true && spec.names.includes(name));
 }
 
 /** The outcome of {@link advancePastWrapperOperands} scanning `spec`'s own operands forward from a starting index. */
@@ -1146,6 +1160,11 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
   ) {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.skipAssignmentOperands must be a boolean when present`,
+    );
+  }
+  if (spec.shellBuiltin !== undefined && typeof spec.shellBuiltin !== 'boolean') {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.shellBuiltin must be a boolean when present`,
     );
   }
   // JavaScript callers can bypass the declared union; validate raw boundary data.

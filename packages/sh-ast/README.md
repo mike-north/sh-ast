@@ -222,7 +222,19 @@ there is no exact match does an **absolute** path use its final segment
 (`/usr/bin/env`, `/usr//bin/env`); `chain` keeps the word as written. Relative
 paths (`./env`, `bin/env`) and trailing-slash paths have no such fallback, but
 can match names explicitly listed in a custom table. Custom plain names also
-acquire absolute-path aliases; path-only names do not alias other paths.
+acquire absolute-path aliases unless marked as builtins; path-only names do
+not alias other paths.
+
+`WrapperSpec.shellBuiltin: true` identifies a shell builtin, which can only
+match an exact entry in `names`. A path reaches an external executable rather
+than a builtin, so the default `command` and `exec` entries do not match
+`/tmp/command` or `/tmp/exec`. For example, `/tmp/command eval "$x"` keeps
+`/tmp/command` as its static effective command; `command eval "$x"` still
+resolves to `eval`. The external wrappers `env`, `sudo`, `nice`, `nohup`,
+`timeout` and `time` retain their absolute-path aliases. Custom tables may
+mark their own builtin (`{ names: ['builtin'], shellBuiltin: true }`);
+false or omitted retains the existing matching behavior. Explicit path entries
+still match exactly. Non-boolean values throw `ShAnalyzeInvalidWrapperSpecError`.
 
 Matching is a lexical analysis assumption: `PATH` and the filesystem are not
 consulted. Without an exact override, `/opt/mytools/env rm x` follows the `env`

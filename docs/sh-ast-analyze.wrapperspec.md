@@ -110,9 +110,9 @@ The command name that identifies this wrapper — e.g. `['env']`<!-- -->. Matche
 
 Matching first searches the entire table for an exact name. Only when no exact entry exists does it try an absolute path's final segment:
 
-1. Its entire resolved text (after quote/escape removal) equals one of `names`<!-- -->: `env`<!-- -->, or a path a caller listed verbatim. An exact path entry takes precedence over a plain-name entry even if listed later. 2. It is an \*\*absolute path\*\* (starts with `/`<!-- -->) whose final segment equals one of `names`<!-- -->: `/usr/bin/env`<!-- -->, `/usr/bin/sudo`<!-- -->, `/opt/x/nice` and `/usr//bin/env` resolve as `env`<!-- -->, `sudo` and `nice`<!-- -->. The chain keeps the word as written, so a consumer still sees the path.
+1. Its entire resolved text (after quote/escape removal) equals one of `names`<!-- -->: `env`<!-- -->, or a path a caller listed verbatim. An exact path entry takes precedence over a plain-name entry even if listed later. 2. The spec does not declare [shellBuiltin: true](./sh-ast-analyze.wrapperspec.shellbuiltin.md)<!-- -->, and the word is an \*\*absolute path\*\* (starts with `/`<!-- -->) whose final segment equals one of `names`<!-- -->: `/usr/bin/env`<!-- -->, `/usr/bin/sudo`<!-- -->, `/opt/x/nice` and `/usr//bin/env` resolve as `env`<!-- -->, `sudo` and `nice`<!-- -->. The chain keeps the word as written, so a consumer still sees the path.
 
-Relative paths and paths with a trailing slash do not use the final-segment fallback. They can still match an explicitly listed name, such as `./with-retry` or `/opt/with-retry/`<!-- -->. Custom plain names also acquire absolute-path aliases; a path-only name does not acquire aliases for other paths with the same final segment.
+Relative paths and paths with a trailing slash do not use the final-segment fallback. They can still match an explicitly listed name, such as `./with-retry` or `/opt/with-retry/`<!-- -->. Custom plain names also acquire absolute-path aliases unless `shellBuiltin: true`<!-- -->; a path-only name does not acquire aliases for other paths with the same final segment.
 
 This is a lexical analysis assumption, not executable identity: `PATH` is not consulted and the filesystem is not read. Without an exact override, an unrelated executable named `/opt/mytools/env` uses the `env` entry's grammar. The chain preserves the original path so callers can apply their own policy. A word with an expansion (`"$dir/env"`<!-- -->) is not `static` and is never matched.
 
@@ -178,6 +178,27 @@ number
 </td><td>
 
 _(Optional)_ The number of plain (non-flag, non-assignment-operand) words this wrapper requires \*before\* the wrapped command word — e.g. `timeout`<!-- -->'s mandatory `DURATION` operand (`timeout 10 rm -rf x`<!-- -->).
+
+
+</td></tr>
+<tr><td>
+
+[shellBuiltin?](./sh-ast-analyze.wrapperspec.shellbuiltin.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+boolean
+
+
+</td><td>
+
+_(Optional)_ Whether this wrapper represents a shell builtin rather than an external utility. A path cannot reach a builtin: `/tmp/command` names an external executable, so its arguments must not be interpreted as builtin operands. When true, only exact entries in [WrapperSpec.names](./sh-ast-analyze.wrapperspec.names.md) match; the absolute-path final-segment fallback is disabled. Explicitly listed path entries still match exactly. False or omitted preserves utility matching. The defaults mark `command` and `exec`<!-- -->; custom tables may mark their own builtins, such as `builtin`<!-- -->.
 
 
 </td></tr>
