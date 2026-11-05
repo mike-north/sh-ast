@@ -74,3 +74,33 @@ test('rejects generator routing away from the parser source used by WASM', () =>
     assert.throws(() => verifyBackport(directory), /replacement/);
   });
 });
+
+test('rejects removing the maintained comment correction from patch order', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/manifest.json');
+    const manifest = JSON.parse(readFileSync(path, 'utf8'));
+    manifest.appliedPatches = ['sentinel-backport.patch'];
+    writeFileSync(path, JSON.stringify(manifest));
+    assert.throws(() => verifyBackport(directory), /patch order/);
+  });
+});
+
+test('rejects changed maintained comment-iteration patch bytes', () => {
+  fixture((directory) => {
+    writeFileSync(
+      join(directory, 'third_party/mvdan-sh/comment-iteration.patch'),
+      'unreviewed maintained patch\n',
+    );
+    assert.throws(() => verifyBackport(directory), /patch digest/);
+  });
+});
+
+test('requires a digest for every applied maintenance patch', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/manifest.json');
+    const manifest = JSON.parse(readFileSync(path, 'utf8'));
+    delete manifest.patches['comment-iteration.patch'];
+    writeFileSync(path, JSON.stringify(manifest));
+    assert.throws(() => verifyBackport(directory), /patch digest/);
+  });
+});

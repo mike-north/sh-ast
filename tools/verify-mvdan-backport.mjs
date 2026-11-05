@@ -40,6 +40,17 @@ export function verifyBackport(root) {
   ) {
     throw new Error('Unexpected upstream backport identity');
   }
+  // Order is semantic: the owned iteration correction is based on the official
+  // sentinel backport, and must be removed before reconstructing pristine source.
+  const appliedPatches = ['sentinel-backport.patch', 'comment-iteration.patch'];
+  if (JSON.stringify(manifest.appliedPatches) !== JSON.stringify(appliedPatches)) {
+    throw new Error('Unexpected maintained patch order');
+  }
+  for (const patch of appliedPatches) {
+    if (typeof manifest.patches[patch] !== 'string') {
+      throw new Error(`Missing patch digest: ${patch}`);
+    }
+  }
   for (const [patch, expected] of Object.entries(manifest.patches)) {
     if (digest(join(directory, patch)) !== expected)
       throw new Error(`Invalid patch digest: ${patch}`);
@@ -64,11 +75,13 @@ export function verifyBackport(root) {
     cpSync(source, temporary, { recursive: true });
     // Apply outside any repository so a parent's working-directory prefix cannot
     // silently filter patch paths. Reverse reconstruction never touches checkout files.
-    execFileSync('git', ['apply', '--reverse', join(directory, 'sentinel-backport.patch')], {
-      cwd: temporary,
-      stdio: 'pipe',
-      env: { ...process.env, GIT_DIR: join(temporary, '.absent-git') },
-    });
+    for (const patch of appliedPatches.toReversed()) {
+      execFileSync('git', ['apply', '--reverse', join(directory, patch)], {
+        cwd: temporary,
+        stdio: 'pipe',
+        env: { ...process.env, GIT_DIR: join(temporary, '.absent-git') },
+      });
+    }
     for (const [path, expected] of Object.entries(manifest.pristineFiles)) {
       if (digest(join(temporary, path)) !== expected)
         throw new Error(`Invalid pristine source: ${path}`);
@@ -80,5 +93,5 @@ export function verifyBackport(root) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyBackport(fileURLToPath(new URL('../', import.meta.url)));
-  console.log('Verified mvdan/sh v3.13.1 plus the official Unicode sentinel backport.');
+  console.log('Verified mvdan/sh v3.13.1 plus the Unicode backport and owned comment iteration.');
 }

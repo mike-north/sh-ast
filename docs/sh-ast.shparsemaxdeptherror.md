@@ -4,9 +4,9 @@
 
 ## ShParseMaxDepthError class
 
-Thrown by [parseSync()](./sh-ast.parsesync.md) when `text`<!-- -->'s conservatively estimated structural nesting depth (subshells, command/process substitutions, `if`<!-- -->/`case`<!-- -->/loop/function bodies, `{ }` blocks, backtick or `$(...)` command substitution, `$((...))` arithmetic — see `parse-depth-guard.ts`<!-- -->'s module doc for the exact heuristic) exceeds the limit `parseSync` accepts. Thrown \*before\* `text` is ever handed to the WASM shim: mvdan/sh's own recursive-descent parser has no recovery path for exhausting its call stack on pathologically deep input (a stack overflow deep inside the shared WASM instance is not a normal, catchable JS error the way a parse syntax error is), so this bridge estimates the risk up front and fails closed with a typed error instead of ever making that call — the shared WASM instance is therefore never put at risk of wedging on this class of input; a `parseSync` call right after catching this error works exactly as it would if this input had never been attempted.
+A whole-file parse operation refused its preliminary estimate of recursive parser work before entering WASM. The estimate combines structural nesting with selected recursive operator chains, including arithmetic. Catching this refusal leaves the parser untouched and available for a subsequent input.
 
-Like [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, this is pathological-input protection, not a normal-usage ceiling: a legitimately deep (but realistic) script parses fine. The estimate can \*over\*-count relative to mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep input) but is designed to never \*under\*-count relative to it — see `parse-depth-guard.ts` for the documented false-positive sources this trades off against ever letting a genuinely crash-inducing input through.
+This is a binding resource constraint, not an upstream grammar restriction. The lexical heuristic can reject unusually large valid inputs and is not a complete bound on parser or serializer recursion. Its empirical margin assumes an ordinary caller stack; arbitrary pre-existing JS recursion can exhaust that margin. Estimated units are not a count of actual native or JS stack frames.
 
 **Signature:**
 
@@ -129,7 +129,7 @@ number
 
 </td><td>
 
-The maximum structural nesting depth `parseSync` accepts; the same value every time (not caller-configurable).
+Fixed maximum estimated parser-work units; not caller-configurable.
 
 
 </td></tr>

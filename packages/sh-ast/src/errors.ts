@@ -65,36 +65,22 @@ export class ShAnalyzeMaxDepthError extends ShAstError {
 }
 
 /**
- * Thrown by {@link parseSync} when `text`'s conservatively estimated
- * structural nesting depth (subshells, command/process substitutions,
- * `if`/`case`/loop/function bodies, `{ }` blocks, backtick or `$(...)`
- * command substitution, `$((...))` arithmetic — see
- * `parse-depth-guard.ts`'s module doc for the exact heuristic) exceeds the
- * limit `parseSync` accepts. Thrown *before* `text` is ever handed to the
- * WASM shim: mvdan/sh's own recursive-descent parser has no recovery path
- * for exhausting its call stack on pathologically deep input (a stack
- * overflow deep inside the shared WASM instance is not a normal, catchable
- * JS error the way a parse syntax error is), so this bridge estimates the
- * risk up front and fails closed with a typed error instead of ever making
- * that call — the shared WASM instance is therefore never put at risk of
- * wedging on this class of input; a `parseSync` call right after catching
- * this error works exactly as it would if this input had never been
- * attempted.
+ * A whole-file parse operation refused its preliminary estimate of recursive
+ * parser work before entering WASM. The estimate combines structural nesting
+ * with selected recursive operator chains, including arithmetic. Catching this
+ * refusal leaves the parser untouched and available for a subsequent input.
  *
- * Like {@link ShAnalyzeMaxDepthError}, this is pathological-input
- * protection, not a normal-usage ceiling: a legitimately deep (but
- * realistic) script parses fine. The estimate can *over*-count relative to
- * mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep
- * input) but is designed to never *under*-count relative to it — see
- * `parse-depth-guard.ts` for the documented false-positive sources this
- * trades off against ever letting a genuinely crash-inducing input
- * through.
+ * This is a binding resource constraint, not an upstream grammar restriction.
+ * The lexical heuristic can reject unusually large valid inputs and is not a
+ * complete bound on parser or serializer recursion. Its empirical margin assumes
+ * an ordinary caller stack; arbitrary pre-existing JS recursion can exhaust that
+ * margin. Estimated units are not a count of actual native or JS stack frames.
  *
  * @public
  */
 export class ShParseMaxDepthError extends ShAstError {
   readonly code = 'SH_AST_PARSE_MAX_DEPTH';
-  /** The maximum structural nesting depth `parseSync` accepts; the same value every time (not caller-configurable). */
+  /** Fixed maximum estimated parser-work units; not caller-configurable. */
   readonly maxDepth: number;
   /**
    * The conservatively estimated nesting depth that tripped the guard.
@@ -105,7 +91,7 @@ export class ShParseMaxDepthError extends ShAstError {
 
   constructor(maxDepth: number, estimatedDepth: number) {
     super(
-      `parseSync: input's estimated structural nesting depth (${String(estimatedDepth)}+ frames) exceeds the maximum this bridge accepts (${String(maxDepth)}) — refusing to hand this input to the WASM parser, which would risk exhausting its call stack uncatchably. Treat this as a deny signal, not "input looks fine".`,
+      `parseSync: input's estimated recursive parser work (${String(estimatedDepth)}+ units) exceeds the maximum this bridge accepts (${String(maxDepth)}) — refusing this input before entering the WASM parser.`,
     );
     this.name = 'ShParseMaxDepthError';
     this.maxDepth = maxDepth;

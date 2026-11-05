@@ -5,7 +5,8 @@
   "moduleSum": "h1:DP3TfgZhDkT7lerUdnp6PTGKyxxzz6T+cOlY/xEvfWk=",
   "patches": {
     "upstream-sentinel.patch": "7cd2a82e05263b4597912a464b1e0571bbde27433c7fd09cb4497dad254420eb",
-    "sentinel-backport.patch": "e50088c20e99a828e8d16e9b4173beb62b12a176577d1c731932bb70db8ff1af"
+    "sentinel-backport.patch": "e50088c20e99a828e8d16e9b4173beb62b12a176577d1c731932bb70db8ff1af",
+    "comment-iteration.patch": "81ec5b197f96c1c045ffa0068144d8131163be10f29c14f525a8e3e0ff3ed5ab"
   },
   "pristineFiles": {
     "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",
@@ -24,5 +25,6 @@
     "syntax/tokens.go": "81bb3296c0b51f25e3d781847fa697e7f4b76aa6e2625f5f1f2db37a980c2533",
     "syntax/typedjson/json.go": "7f338e15cfec79ade4a77b7a33c1ee0dbbcf67749cfbc0535dd918340a93fa9a",
     "syntax/walk.go": "974e200635b82c4601a0f5b7163aa30b9f2cfff981a0455edf8d9edacb57b683"
-  }
+  },
+  "appliedPatches": ["sentinel-backport.patch", "comment-iteration.patch"]
 }

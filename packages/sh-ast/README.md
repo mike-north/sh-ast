@@ -1,8 +1,8 @@
 # sh-ast
 
 A synchronous TypeScript interface to the `syntax` package of
-[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1 with the official Unicode sentinel backport**
-([source and provenance](../../third_party/mvdan-sh/README.md)). Parsing returns
+[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1 with maintained corrections**
+([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). These are the official Unicode sentinel backport and an owned, behavior-preserving change that scans consecutive comments iteratively. Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
@@ -93,9 +93,18 @@ unsupported constructed nodes whose requested bound panics upstream.
 `PrintError` retains ordinary upstream printer failures, and `PrintPanicError`
 retains panics from printing representable inputs. `WalkPanicError` represents
 upstream-equivalent traversal panics; callback exceptions retain their identity.
-All extend `ShAstError`. The conservative structural-depth guard throws
-`ShParseMaxDepthError` before potentially exhausting the WASM stack. It is a
-binding resource constraint and can reject deeply nested quoted or commented text.
+All extend `ShAstError`. A preliminary lexical estimate refuses more than 150
+recursive parser-work units with `ShParseMaxDepthError`, before entering WASM.
+It counts nesting and selected arithmetic/operator chains; literal quoted text,
+quoted heredoc bodies, and comments do not themselves add nesting. Flat comment
+runs are scanned iteratively, with no separate comment-count limit.
+
+This is an empirical binding resource constraint, not an upstream grammar rule
+or a universal stack-safety guarantee. The limit retains margin in the measured
+Node 22 / ESLint 10 ordinary parse call path. Deep pre-existing JS recursion can
+consume that margin, and the heuristic does not cover every serialization-depth
+case ([tracked separately](https://github.com/mike-north/sh-ast/issues/71)).
+Unusually large valid syntax may still be refused.
 Printing collects complete output; large trees or indentation widths can consume
 substantial memory and time. The parse guard does not bound arbitrary constructed
 printing inputs. No arbitrary writer, partial-output, or reusable-printer protocol

@@ -1,26 +1,12 @@
 /**
- * Tests for `parseSync`'s pathological-input-nesting guard —
- * https://github.com/mike-north/sh-ast/issues/14.
- *
- * Empirical crash depths this guard is sized against (measured against the
- * committed `packages/sh-ast/shim/sh-ast.wasm`, this repo's `vitest`/Node
- * environment — see `src/parse-depth-guard.ts`'s `MAX_PARSE_NESTING_DEPTH`
- * doc comment for the full table and methodology): a flat, non-CI-safe
- * script of ~252 nested `$(...)` command substitutions is the *lowest*
- * observed crash depth (worse than nested subshells, pipelines, or
- * `if`/`case`/loop nesting, all of which crash only around depth
- * ~1,000–1,500) — an uncatchable, native-stack-exhausting
- * `RangeError: Maximum call stack size exceeded` thrown from inside the
- * WASM instance itself, not a normal, recoverable parse error. This suite
- * never reproduces that crash directly (it would abort the `vitest`
- * worker process); it only exercises the guard, which is designed to
- * reject any of these inputs with a typed, catchable error well before
- * that point.
- *
- * @see src/parse-depth-guard.ts — the estimator under test (via `parseSync`)
+ * Structural refusal and literal-content controls for the parser-work estimate.
+ * Accepted boundary cases exercise the supported ordinary caller shape; they do
+ * not establish safety under arbitrary pre-existing JS recursion. Known overflow
+ * regressions run in isolated subprocesses in parse-depth-coverage.test.ts.
+ * @see src/parse-depth-guard.ts
  */
 import { describe, expect, it } from 'vitest';
-import { parseSync, ShParseMaxDepthError } from '../src/index.js';
+import { parseSync, ParseError, ShParseMaxDepthError } from '../src/index.js';
 
 /** `n` nested subshells: `(((...true...)))`. */
 function nestedSubshells(n: number): string {
@@ -214,6 +200,7 @@ describe('parseSync — regression: case-arm pattern terminator is not mistaken 
 });
 
 describe('parseSync — regression: heredoc bodies cannot be used to hide real nesting from the guard', () => {
+  const fakeClosers = ') '.repeat(1200) + 'fi '.repeat(50) + 'esac '.repeat(50);
   // A heredoc body is inert data as far as the real shell grammar is
   // concerned — a `)`/`fi`/`esac`-looking sequence inside `<<EOF ... EOF`
   // is just text, never a real closer. An earlier version of this guard's
@@ -224,15 +211,22 @@ describe('parseSync — regression: heredoc bodies cannot be used to hide real n
   // below the guard's limit even though the real parser sees it as one
   // continuous, pathologically deep nesting.
   it('fake closer tokens inside a heredoc body cannot hide real nesting split across it', () => {
-    const fakeClosers = ') '.repeat(1200) + 'fi '.repeat(50) + 'esac '.repeat(50);
-    const input = [
-      nestedSubshells(120).slice(0, 120), // just the opening parens
-      'cat <<EOF',
-      fakeClosers,
-      'EOF',
-      nestedSubshells(120), // a second, independent batch of full nesting
-    ].join('\n');
+    // Newlines distinguish genuine subshells from the arithmetic-command `((`
+    // token. Every outer region remains open across the heredoc and inner body.
+    const input =
+      '(\n'.repeat(120) +
+      `cat <<EOF\n${fakeClosers}\nEOF\n` +
+      '(\n'.repeat(120) +
+      'true\n' +
+      ')\n'.repeat(240);
     expect(() => parseSync(input)).toThrow(ShParseMaxDepthError);
+  });
+
+  it('adjacent opening parens select arithmetic, where << is not a heredoc', () => {
+    const input = ['('.repeat(120), 'cat <<EOF', fakeClosers, 'EOF', nestedSubshells(120)].join(
+      '\n',
+    );
+    expect(() => parseSync(input)).toThrow(ParseError);
   });
 
   it('a real command substitution inside an unquoted heredoc body still counts toward depth', () => {
