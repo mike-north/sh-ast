@@ -1,5 +1,9 @@
 # Canonical transport integration validation
 
+A separate [published sh-ast 0.9.0 receipt](../performance/published-0.9.0-2026-11-05/README.md)
+retains single-artifact public measurements and stage diagnostics. It does not
+replace this paired historical campaign or establish a new gain comparison.
+
 The final public campaign meets both predeclared aggregate targets on **Node
 22.22.1, Darwin 27.2.0/arm64, Apple M5 Max (18 logical CPUs)**. This is a current
 machine result, not a claim about an M2, the earlier Linux VM, or downstream
