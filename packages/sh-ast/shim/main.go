@@ -60,6 +60,7 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 
 	"eslint-sh-shim/internal/nodeencode"
+	"eslint-sh-shim/internal/parsebudget"
 	"eslint-sh-shim/internal/syntaxbridge"
 )
 
@@ -222,7 +223,7 @@ func process(text string, dialect string, filename string) uintptr {
 		return encodeResult(resultEnvelope{Error: &errorInfo{Message: err.Error()}})
 	}
 
-	parser := syntax.NewParser(syntax.KeepComments(true), syntax.Variant(variant))
+	parser := parsebudget.NewParser(syntax.KeepComments(true), syntax.Variant(variant))
 	file, err := parser.Parse(strings.NewReader(text), filename)
 	if err != nil {
 		if info := toParseErrorInfo(err); info != nil {

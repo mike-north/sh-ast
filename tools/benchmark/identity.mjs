@@ -1,11 +1,13 @@
 /**
  * Public-output identity between two built sh-ast packages. Each package runs in
- * its own fresh process over the same corpus, and every observable result of
+ * its own fresh process over the same corpus, and the supported observable representation of
  * parseSync and parseWithPositionsSync is serialized canonically: record member
  * order, value types, byte strings, typed nils, frozenness, every snapshot
- * observation, and thrown error classes, messages and fields. A published
- * release is the independent ground truth for a local candidate whose wire
- * transport changed; the serializations must be identical, not merely similar.
+ * observation, and thrown error classes, messages and fields. An exact accepted
+ * main build is the integration ground truth; a published release can provide
+ * historical comparison where parser semantics match. The serializations must
+ * be identical, not merely similar. Dedicated tests cover alias identity,
+ * descriptors, mutation, and malformed caller graphs outside this corpus.
  *
  *   node tools/benchmark/identity.mjs --baseline <dist/index.js> --candidate <dist/index.js>
  *   node tools/benchmark/identity.mjs --prepared artifacts.json [--baseline-label 0.7.0]
@@ -31,6 +33,17 @@ const EDGE_SOURCES = [
   "# 🎉 中 e\u0301 \u2028\u2029\necho \"<>&\" '\\x' $'\\t'\n",
   "cat <<EOF\n你好 🎉 $x\nEOF\ncat <<-'Q'\n\tquoted\n\tQ\n",
   'echo a\r\necho b\r\n',
+  // Retain the accepted parser's sentinel and resource-policy behavior while
+  // comparing transport: the previous published parser predates these fixes.
+  'echo a\u0080b\neval "$x"\necho \u0081done\n',
+  "cat <<'EOF'\n" + 'a'.repeat(1010) + '\u0080é\u0081🎉\nEOF\necho done\n',
+  '(\n'.repeat(127) + ':\n' + ')\n'.repeat(127),
+  '(\n'.repeat(128) + ':\n' + ')\n'.repeat(128),
+  'echo $('.repeat(63) + 'echo ok' + ')'.repeat(63),
+  'echo $('.repeat(64) + 'echo ok' + ')'.repeat(64),
+  'echo $(( ' + 'a['.repeat(400) + '1' + ']'.repeat(400) + ' ))',
+  '# flat comment\n'.repeat(10001) + 'echo done\n',
+
   'f() { local -a xs=(1 "two" [3]=x); echo "${xs[@]:1:2}" "${x/a/b}" "${#x}" "${x,,}"; }\n',
   'for ((i = 0; i < 3; i++)); do let "j = i * 2"; echo $((j + 1)); done\n',
   '[[ -n $x && $y =~ ^a.*$ ]] || { echo no; exit 1; } # trailing\n',
@@ -81,7 +94,7 @@ function corpus() {
 /**
  * Canonical text for any value reachable from a public result. Records keep
  * their own member order; Uint8Array, frozenness and prototypes are explicit,
- * so two results serialize identically only if they are observably identical.
+ * so differences in these represented observations cannot hide behind JSON coercion.
  */
 export function describe(value, seen = new Set()) {
   if (value === null) return 'null';

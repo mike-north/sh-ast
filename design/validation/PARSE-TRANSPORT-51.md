@@ -2,7 +2,7 @@
 
 ## Contract and boundaries
 
-Baseline is `1b6f23d` (sh-ast 0.7.0 runtime). The public result of `parseSync` and
+Baseline is `1b6f23d` (sh-ast 0.7.0 runtime). For supported inputs, the public result of `parseSync` and
 `parseWithPositionsSync` is unchanged: the same records, member order, `GoString`
 values (strings and `Uint8Array`), typed nils, frozen position snapshots and
 error classes, messages, fields and precedence. The record shape, the `Type`
@@ -27,7 +27,9 @@ supported; they ship as one package.
   `isSyntaxFile` checks while replacing each well-formed tuple by the identical
   six-member record; a malformed tuple fails validation (`ShInternalError`). A
   fresh JSON.parse tree is acyclic and unshared, so this pass tracks no ancestor
-  set. Caller-input validation is unchanged.
+  set. Caller-input validation retains supported record semantics. Sparse list holes
+  are rejected as missing required records rather than materialized as explicit
+  nil elements; empty slices and explicit `null` entries retain their behavior.
 - **Encoder internals.** Per-type wire plans are prebuilt once from the
   registry; cycle tracking scans the first 32 path entries and hashes only deeper
   ones; positions are read without an interface allocation; responses are
@@ -39,7 +41,7 @@ supported; they ship as one package.
   `"Bytes"` (the producer never escapes ASCII key letters, so a Bytes key always
   appears literally); schema field lists are cached per type.
 - **Diagnostic export.** `syntaxLastParseNanoseconds` reports the most recent
-  upstream `Parser.Parse` duration so the benchmark can split WASM time into
+  parser setup plus upstream `Parser.Parse` duration so the benchmark can split WASM time into
   parse and encode. No API result depends on it.
 
 ## Independent tests
@@ -124,3 +126,45 @@ this VM with the CI build recipe:
 
 Any later transport change must re-prove the test against a go1.26.5 build and
 add sizes until at least one fails there.
+
+## Integration with accepted parser corrections
+
+The integration baseline is accepted main
+`4ecb0e625e25cd9e841db34f1c5281fda54be54d`, including the Unicode sentinel fix,
+iterative comments, and the fixed 128-unit native node-nesting policy. Historical
+published-release and Linux timing results above describe their original pins;
+they are not final integrated-candidate performance acceptance.
+
+The parse timer wraps construction/configuration of the shared budgeted parser,
+reader setup, and the `Parse` call. It is a parser-phase diagnostic, not a pure
+parser-body or native-stack measurement. Typed resource refusals
+still return before response composition or position traversal. The legacy ABI
+also retains the same shared cap. No vendor patch, grammar policy, public API
+report, or generated syntax schema changes are introduced by the transport work.
+
+Supported-input compatibility is checked against this accepted main, not a
+published parser predating its corrections. The identity corpus now includes
+U+0080/U+0081, a quoted Unicode heredoc crossing the refill boundary, accepted and
+refused native limits, arithmetic subscripts, and a 10,001-comment run. All 429
+cases match in the diagnostic integrated build, including represented member
+order, bytes, errors, and snapshot lookups. This corpus does not establish every
+possible alias, descriptor, or malformed caller-graph behavior; dedicated public
+and native tests remain part of acceptance.
+
+Sparse caller list slots are explicitly outside complete-record input shape.
+`sparse-input.test.ts` first reproduced the previous `PrintPanicError` for a hole
+and native-bound error-message difference, while empty and explicit-null controls
+passed. The integrated validator rejects the hole with `InputError`; empty arrays
+and explicit `null` entries preserve their prior behavior. This qualification
+replaces the broader claim of identity over arbitrary JavaScript graphs.
+
+The integrated heap layout was independently checked against Go 1.26.5 in an
+isolated source copy, changing only that copy's Go directive. In one run of the
+existing three-size print suite, consumer-m2 k=20/j=2 and k=30/j=3 both reproduced
+the known Go heap abort. In one run of the existing eight-size parse suite,
+k=100 and k=120 reproduced it. Both suites pass with production Go 1.26.10.
+[The source inventory and exact artifact hashes](parse-transport-integration/heap-regression.json)
+record this sensitivity check; these are correctness observations, not timings or
+failure-frequency estimates. Local diagnostic WASM is never the production
+artifact: exact-source Linux adoption and final canonical gates precede the
+separately frozen performance campaign.

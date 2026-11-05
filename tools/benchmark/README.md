@@ -69,9 +69,10 @@ runtime, not a cold OS filesystem cache. Process startup is excluded.
   slightly above the uninstrumented phases. Each stage is reported as its own
   row, `<phase>:<stage>`, and side by side in REPORT.md's stage table:
   - `input`: public call start to the first linear-memory allocation (source
-    and option validation and encoding, the nesting guard).
+    and option validation and encoding). Native nesting-budget work is in `parse`.
   - `wasm`: the `syntaxProcess` export call; always `parse` + `encode`.
-  - `parse`: upstream `Parser.Parse` inside that call, as reported by the
+  - `parse`: parser construction/configuration, reader setup, and upstream
+    `Parser.Parse` inside that call, as reported by the
     shim's `syntaxLastParseNanoseconds` export. Packages without that export
     (all published releases up to 0.7.0) report `parse` and `encode` as
     unsupported; `wasm` still covers both.
