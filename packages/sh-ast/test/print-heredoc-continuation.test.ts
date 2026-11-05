@@ -120,6 +120,18 @@ describe.each([
     },
   );
 
+  it('retains following-line layout with the known internal heredoc tab limit', () => {
+    const source = 'if true; then\ncat <<-EOF\n\tXa\\\n\tmore\n\ta\tX\n\tbbbbb\tY\n\tEOF\nfi\n';
+    const expected =
+      'if true; then\n\tcat <<-EOF\n\t\tXa\\\n\tmore\n\t\ta     X\n\t\tbbbbb Y\n\tEOF\nfi\n';
+    // The base already aligns internal HT as columns in ordinary <<- lines.
+    // Preserve that layout limit without letting a continuation change its rows.
+    expect(bashStdout(source)).toBe('Xa\tmore\na\tX\nbbbbb\tY\n');
+    const output = printText(source, options);
+    expect(output).toBe(expected);
+    expect(bashStdout(output)).toBe('Xa\tmore\na     X\nbbbbb Y\n');
+  });
+
   it('keeps plain << bodies unchanged', () => {
     const source = 'if true; then\ncat <<EOF\n\tXa\\\n\tmore\nEOF\nfi\n';
     const expected = 'if true; then\n\tcat <<EOF\n\tXa\\\n\tmore\nEOF\nfi\n';

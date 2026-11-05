@@ -1586,11 +1586,13 @@ func (e *extraIndenter) WriteByte(b byte) error {
 		e.continued = backslashes%2 != 0
 	}
 	if continued {
-		// Protect all bytes from tabwriter, including tabs on an otherwise
-		// empty line. Do not strip, add, or align continuation-line data.
+		// Protect continuation data, including tabs on an otherwise empty
+		// line. Leave newline visible so tabwriter ends the row and retains
+		// the existing alignment of subsequent logical lines.
 		e.bufWriter.WriteByte(tabwriter.Escape)
-		e.bufWriter.Write(e.curLine)
+		e.bufWriter.Write(e.curLine[:len(e.curLine)-1])
 		e.bufWriter.WriteByte(tabwriter.Escape)
+		e.bufWriter.WriteByte('\n')
 		e.curLine = e.curLine[:0]
 		return nil
 	}

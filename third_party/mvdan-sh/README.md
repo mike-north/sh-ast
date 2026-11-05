@@ -153,7 +153,9 @@ changes the document's value.
 
 The correction is confined to `extraIndenter` and its construction. It tracks
 continuations only for unquoted delimiters and writes the following physical
-line verbatim, protected from `text/tabwriter`. Even backslash runs, quoted or
+line verbatim, protecting its data from `text/tabwriter` while leaving its newline
+visible as a row boundary. This preserves alignment on subsequent logical lines.
+Even backslash runs, quoted or
 backslash-escaped delimiters, ordinary `<<` documents, and `<<-` bodies without
 continuations retain their previous layout. The indentation baseline still
 comes from the first independently indented line. Shared layout machinery,
@@ -166,7 +168,10 @@ backslash runs, expansions, and the unaffected delimiter/document forms. The
 same fixtures run on Apple Bash 3.2 and Homebrew Bash 5.3. The existing nested
 `<<-` control-byte and delimiter limits described above remain; this correction
 does not expand the nested writer's responsibilities or repair KeepPadding's
-upstream layout limits.
+upstream layout limits. A named regression also records the existing internal-HT
+limit: ordinary `<<-` body lines can still have literal internal tabs converted
+to alignment spaces. The continuation correction retains that prior layout
+without extending the fix to this unusual combination.
 
 ## Provenance and verification
 
