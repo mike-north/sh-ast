@@ -34,6 +34,11 @@ command and parameter expansions visible as nodes: `echo ${a[(r)$(printf foo)]}`
 again exposes both `echo` and `printf`, with `printf` in command-substitution
 context. Quoted forms and escaped closing brackets retain that measured contract.
 This correction does not add a pattern-word reader or quote-context state.
+Recursive flag arguments use the existing native work budget, with balanced
+accounting on error returns. The 128-unit binding policy remains terminal under
+recovery: 200 repeated `(r)` flags return a resource refusal without a partial
+tree or position snapshot, and the same native parser remains reusable. Finite
+language compatibility does not restore historical gaps in resource accounting.
 
 The pre-pin ceiling is intentional: `foo*`, the recorded `don't*` apostrophe
 contexts, and `echo "${a[(r)$'foo]}"` fail loudly. Paired dollar/apostrophes can

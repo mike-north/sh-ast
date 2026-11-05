@@ -1901,6 +1901,11 @@ func (p *Parser) zshSubFlags() *FlagsArithm {
 	if p.tok == star || p.tok == at {
 		p.tok, p.val = _LitWord, p.tok.String()
 	}
+	// Flag arguments recurse outside arithmExpr's guarded entry. Charge that
+	// expression work to the shared policy while leaving commas for ranges;
+	// defer balances the charge on ordinary and terminal error returns too.
+	p.enterNode()
+	defer p.leaveNode()
 	zf.X = p.arithmExprAssign(false)
 	return zf
 }

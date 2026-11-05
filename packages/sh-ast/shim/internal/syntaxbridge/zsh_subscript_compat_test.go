@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"eslint-sh-shim/internal/parsebudget"
+
 	"mvdan.cc/sh/v3/syntax"
 )
 
@@ -106,6 +108,43 @@ func TestZshSubscriptCompatTerminalBudget(t *testing.T) {
 			}
 			if later := response(t, operation, "echo ${a[(r)$(printf foo)]}", options); later["Error"] != nil || later["File"] == nil {
 				t.Fatalf("parser unavailable after refusal: %#v", later)
+			}
+		}
+	}
+}
+
+// Repeated flags recurse through expression parsing and must spend the same
+// binding work budget as other recursive expression edges. This single bounded
+// input tests refusal policy, not whether repeated flags are meaningful Zsh.
+func TestZshSubscriptRepeatedFlagsBudget(t *testing.T) {
+	source := "echo ${a[" + strings.Repeat("(r)", 200) + "foo]}"
+	if len(source) != 614 {
+		t.Fatal("bounded accounting fixture changed")
+	}
+	for _, recoverErrors := range []int{0, 100000} {
+		parser := parsebudget.NewParser(syntax.Variant(syntax.LangZsh), syntax.RecoverErrors(recoverErrors))
+		file, err := parser.Parse(strings.NewReader(source), "budget.sh")
+		failure, ok := err.(syntax.ParseDepthError)
+		if !ok || file != nil || failure.MaxDepth != 128 || failure.Depth != 129 {
+			t.Errorf("expected terminal 128-unit refusal without File: file=%t err=%v", file != nil, err)
+		}
+		// This is the same native Parser, not just a fresh bridge invocation.
+		file, err = parser.Parse(strings.NewReader("echo alive"), "reuse.sh")
+		if err != nil || file == nil || len(file.Stmts) != 1 {
+			t.Fatalf("same-parser reuse failed: %v", err)
+		}
+	}
+	for _, operation := range []string{"parse", "parse-with-positions"} {
+		for _, options := range []string{`{"Variant":16}`, `{"Variant":16,"RecoverErrors":100000}`} {
+			result := response(t, operation, source, options)
+			failure, ok := result["Error"].(map[string]any)
+			if len(result) != 1 || !ok || failure["Kind"] != "ParseDepthError" || failure["MaxDepth"] != json.Number("128") || failure["Depth"] != json.Number("129") {
+				t.Errorf("expected Error-only refusal at 129/128 units; keys=%v error=%v", resultKeys(result), result["Error"])
+			} else if _, ok := failure["Message"].(string); !ok {
+				t.Error("resource refusal lacks a string Message")
+			}
+			if later := response(t, operation, "echo alive", options); later["Error"] != nil || later["File"] == nil {
+				t.Fatalf("bridge reuse failed: %#v", later)
 			}
 		}
 	}
