@@ -379,7 +379,9 @@ func (p *Printer) writeLit(s string) {
 	// If p.tabWriter is nil, this is the nested printer being used to print
 	// <<- heredoc bodies, so the parent printer will add the escape bytes
 	// later.
-	if p.tabWriter != nil && strings.Contains(s, "\t") {
+	// Literal tabs, vertical tabs, and form feeds are shell data, not
+	// tabwriter cell or line separators. Escape them to preserve their bytes.
+	if p.tabWriter != nil && strings.ContainsAny(s, "\t\v\f") {
 		p.w.WriteByte(tabwriter.Escape)
 		defer p.w.WriteByte(tabwriter.Escape)
 	}
@@ -1569,7 +1571,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
 		e.bufWriter.WriteByte('\t')
 	}
 	e.bufWriter.WriteByte(tabwriter.Escape)
-	e.bufWriter.Write(trimmed)
+	// The nested <<- printer leaves literal escaping to us, after leading
+	// tabs have been stripped. VT and FF must not reach the tabwriter unescaped.
+	if bytes.ContainsAny(trimmed, "\v\f") {
+		e.bufWriter.WriteByte(tabwriter.Escape)
+		e.bufWriter.Write(trimmed)
+		e.bufWriter.WriteByte(tabwriter.Escape)
+	} else {
+		e.bufWriter.Write(trimmed)
+	}
 	e.curLine = e.curLine[:0]
 	return nil
 }
