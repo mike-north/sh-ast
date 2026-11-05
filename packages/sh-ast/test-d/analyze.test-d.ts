@@ -367,3 +367,25 @@ expectNotAssignable<EmbeddedCommandInterpreterSpec>({
   operandOptions: [],
   operandAttachment: 'anywhere',
 });
+
+// Option-boundary grammar remains data for custom interpreters, with readonly
+// collections and no required changes to existing table entries.
+expectAssignable<EmbeddedCommandInterpreterSpec>({
+  names: ['custom'],
+  operandOptions: ['o'],
+  operandAttachment: 'rest-of-cluster',
+  optionalOperandOptions: ['o'],
+  optionTerminatorLetters: ['b'],
+  optionTerminatorWords: ['+-'],
+});
+declare const interpreterSpec: EmbeddedCommandInterpreterSpec;
+expectType<readonly string[] | undefined>(interpreterSpec.optionalOperandOptions);
+expectType<readonly string[] | undefined>(interpreterSpec.optionTerminatorLetters);
+expectType<readonly string[] | undefined>(interpreterSpec.optionTerminatorWords);
+expectError((interpreterSpec.optionTerminatorLetters = []));
+expectNotAssignable<EmbeddedCommandInterpreterSpec>({
+  names: ['custom'],
+  operandOptions: [],
+  operandAttachment: 'separate-word',
+  optionalOperandOptions: true,
+});

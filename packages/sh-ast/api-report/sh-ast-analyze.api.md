@@ -472,6 +472,9 @@ export interface EmbeddedCommandInterpreterSpec {
     readonly operandAttachment: 'separate-word' | 'rest-of-cluster';
     readonly operandLongOptions?: readonly string[];
     readonly operandOptions: readonly string[];
+    readonly optionalOperandOptions?: readonly string[];
+    readonly optionTerminatorLetters?: readonly string[];
+    readonly optionTerminatorWords?: readonly string[];
     readonly plusCSelectsCommand?: boolean;
 }
 

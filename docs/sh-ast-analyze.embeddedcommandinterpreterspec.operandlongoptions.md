@@ -4,7 +4,7 @@
 
 ## EmbeddedCommandInterpreterSpec.operandLongOptions property
 
-Leading long options (exact `--name` words) that take a separate operand word, e.g. bash's `--rcfile FILE`<!-- -->. Any other `--name` word is skipped as a flag with no operand.
+Leading long options (exact `--name` or `+-name` words) that take a separate operand word, e.g. bash's `--rcfile FILE` or zsh's `--emulate sh`<!-- -->. Other long-option words are skipped without an operand.
 
 **Signature:**
 

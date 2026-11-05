@@ -343,9 +343,9 @@ export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[] = deepFreeze([
  * conservatively, since nothing is guessed about what it would run.
  *
  * Option parsing ends at the first statically known word that is not an
- * option, at `--`, and at a lone `-`; afterwards a word shaped like `-c` is an
- * ordinary script operand. A dynamic word in option position leaves the
- * question undecidable, so scanning stops and the interpreter is reported
+ * option, at `--`, at a lone `-`, or at a table-defined terminator; afterwards
+ * a word shaped like `-c` is an ordinary script operand. A dynamic word in
+ * option position leaves the question undecidable, so scanning stops and the interpreter is reported
  * exactly as before (its own static name). In that case `static: true` means
  * only that the interpreter's name is known; it does not mean the command is a
  * plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`.
@@ -360,9 +360,9 @@ export interface EmbeddedCommandInterpreterSpec {
    * The interpreter's name, matched against a static command word's final
    * path segment: `bash`, `/bin/bash` and `/usr/local/bin/bash` all match
    * `['bash']`. Only the command word is reduced to its final segment;
-   * entries containing `/` (such as `['/bin/bash']`) are accepted but never
-   * match. The first entry containing the segment wins; a later exact-path
-   * entry cannot override an earlier basename entry.
+   * entries containing `/` (such as `['/bin/bash']`) are rejected with
+   * {@link ShAnalyzeInvalidWrapperSpecError}. Use `['bash']` to recognize
+   * path-qualified invocations. The first entry containing the segment wins.
    *
    * Unlike {@link WrapperSpec.names}, which tries exact names first and
    * falls back to the final segment only for absolute paths, interpreter
@@ -393,9 +393,34 @@ export interface EmbeddedCommandInterpreterSpec {
   readonly operandAttachment: 'separate-word' | 'rest-of-cluster';
 
   /**
-   * Leading long options (exact `--name` words) that take a separate operand
-   * word, e.g. bash's `--rcfile FILE`. Any other `--name` word is skipped as a
-   * flag with no operand.
+   * Letters from {@link EmbeddedCommandInterpreterSpec.operandOptions} whose
+   * separate operand may be omitted before a word beginning with `-` or `+`.
+   * An attached operand still belongs to the option. For example, ksh93u+
+   * treats `-o -c cmd` and `+o -c cmd` as an operand-free option listing
+   * followed by `-c`; bash, dash and zsh consume `-c` as the option name.
+   * A dynamic potential operand makes this distinction undecidable.
+   */
+  readonly optionalOperandOptions?: readonly string[];
+
+  /**
+   * No-operand letters that end option scanning after the current cluster,
+   * under either sign. Remaining letters in that cluster still take effect:
+   * zsh's `-b -c script` runs the file `-c`, but `-bc cmd` selects a string.
+   * These letters must not include `c` or an operand-taking letter.
+   */
+  readonly optionTerminatorLetters?: readonly string[];
+
+  /**
+   * Additional whole words that end option scanning, like zsh's `+` and `+-`.
+   * The terminator is not a command string; an already-selected `-c` needs
+   * a following word. `--` and a lone `-` are always terminators.
+   */
+  readonly optionTerminatorWords?: readonly string[];
+
+  /**
+   * Leading long options (exact `--name` or `+-name` words) that take a
+   * separate operand word, e.g. bash's `--rcfile FILE` or zsh's
+   * `--emulate sh`. Other long-option words are skipped without an operand.
    */
   readonly operandLongOptions?: readonly string[];
 
@@ -410,11 +435,17 @@ export interface EmbeddedCommandInterpreterSpec {
  * `sh-ast/analyze`'s default {@link EmbeddedCommandInterpreterSpec} table:
  * the shells whose `-c` option makes {@link resolveArgv0} report
  * `'embedded-command'`. Each entry's option grammar is hand-derived from the
- * cited manual. It was cross-checked by running these shells on Linux: bash
- * 5.2.21, dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8 and mksh R59. Other builds were
- * not run and can differ; for example macOS's 2012 ksh93u+ behaves differently
- * from the cited 93u+m for `ksh -o c "echo X"`, and `sh` is bash 3.2 there, which
- * is why the `sh` entry also models bash's long options. It is data, not policy:
+ * cited manual. Basic clusters and required operands were cross-checked on
+ * Linux bash 5.2.21, dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8 and mksh R59.
+ * Long-option, termination and omitted-operand cases were checked on macOS
+ * bash 5.3.9 and 3.2.57 (also `/bin/sh`), Apple dash-16, zsh 5.9 and ksh93u+
+ * AJM 2012-08-01. Omitted `-o`/`+o` operands before another signed option
+ * were confirmed only on that ksh93u+ build, not ksh93u+m or mksh. Builds can
+ * differ: macOS's ksh93u+ differs from the cited 93u+m for `ksh -o c "echo X"`.
+ * The `sh` entry also models bash's long options because `sh` can be bash.
+ * Named options that change the option grammar itself (such as zsh's
+ * `shoptionletters`) are not interpreted; a custom table is needed for that
+ * grammar. It is data, not policy:
  * it names no dangerous commands and a caller can replace or extend it via
  * {@link ResolveArgv0Options.embeddedCommandInterpreters}; an empty array
  * restores the behavior in which an interpreter is an ordinary effective
@@ -462,21 +493,30 @@ export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInte
       operandAttachment: 'separate-word',
       plusCSelectsCommand: true,
     },
-    // zsh: `-o option` names an option; attached (`-oerrexit`) or separate.
+    // zsh 5.9: `-o option` takes an attached or separate name; --emulate
+    // and +-emulate consume a mode. Native -b/+b end options after their
+    // cluster; a stacked '-' and the whole words '+' / '+-' also end them.
     {
       names: ['zsh'],
       operandOptions: ['o'],
       operandAttachment: 'rest-of-cluster',
+      operandLongOptions: ['--emulate', '+-emulate'],
+      optionTerminatorLetters: ['b', '-'],
+      optionTerminatorWords: ['+', '+-'],
       plusCSelectsCommand: true,
     },
-    // ksh93: `-o[option]` is attached or separate; `+c` is accepted.
+    // ksh93u+ AJM 2012-08-01: a separate -o/+o name is omitted when the
+    // next word starts with either sign. Attached names still consume the
+    // rest of the cluster. This boundary was not rerun on ksh93u+m.
     {
       names: ['ksh', 'ksh93'],
       operandOptions: ['o'],
       operandAttachment: 'rest-of-cluster',
+      optionalOperandOptions: ['o'],
       plusCSelectsCommand: true,
     },
-    // mksh(1): like ksh93, but `+c` does not select a command string.
+    // mksh R59: -o names attach to the cluster or consume the next word;
+    // +c does not select a command string. No omitted-operand rule is assumed.
     {
       names: ['mksh'],
       operandOptions: ['o'],
@@ -936,9 +976,10 @@ function findInterpreterSpec(
  *
  * Mirrors real shell option parsing, verified against bash, dash, zsh, ksh93
  * and mksh: a cluster is read letter by letter; `c` selects the command
- * string; an operand-taking letter (`o`) consumes a following word (or, for
- * `'rest-of-cluster'` shells, the rest of its own word), so the operand `c`
- * of `-o c` is never an option.
+ * string; operand-taking letters consume words or the rest of their cluster.
+ * Optional operands and option terminators come from the same table, so a
+ * following flag remains visible when an operand is omitted, and a terminating
+ * letter affects subsequent words without discarding the rest of its cluster.
  */
 function findCommandStringOption(
   argv: readonly WordResolution[],
@@ -954,20 +995,24 @@ function findCommandStringOption(
     // that it makes the option grammar undecidable.
     if (!word.static) return selected;
     const text = word.text;
-    // `--` and a lone `-` end options in every modeled shell, so only a
+    // Terminator words end options in the modeled grammar, so only a
     // word after them can be the command string; a lone `+` and any
     // non-option word are the operand itself (a script path before `-c`
     // is selected, the command string after).
     const sign = text[0];
-    if (text === '--' || text === '-') {
+    if (text === '--' || text === '-' || spec.optionTerminatorWords?.includes(text) === true) {
       return selected !== undefined && index + 1 < argv.length ? selected : undefined;
     }
     if (text.length < 2 || (sign !== '-' && sign !== '+')) return selected;
-    if (text.startsWith('--')) {
+    if (text.startsWith('--') || text.startsWith('+-')) {
       index += spec.operandLongOptions?.includes(text) === true ? 2 : 1;
       continue;
     }
-    let pendingOperands = 0;
+    // Separate operands belong to this cluster in encounter order. Keeping
+    // their cursor explicit lets optional operands leave a following flag
+    // available to the outer scan without hiding later required operands.
+    let nextIndex = index + 1;
+    let optionsEnded = false;
     for (let i = 1; i < text.length; i += 1) {
       const letter = text[i];
       if (letter === 'c') {
@@ -976,10 +1021,22 @@ function findCommandStringOption(
         }
       } else if (spec.operandOptions.includes(letter)) {
         if (spec.operandAttachment === 'rest-of-cluster' && i < text.length - 1) break;
-        pendingOperands += 1;
+        const operand = argv.at(nextIndex);
+        if (spec.optionalOperandOptions?.includes(letter) === true && operand !== undefined) {
+          // Its expansion might be an option boundary or an option name;
+          // neither interpretation can be chosen from syntax alone.
+          if (!operand.static) return undefined;
+          if (operand.text.startsWith('-') || operand.text.startsWith('+')) continue;
+        }
+        nextIndex += 1;
+      } else if (spec.optionTerminatorLetters?.includes(letter) === true) {
+        optionsEnded = true;
       }
     }
-    index += 1 + pendingOperands;
+    if (optionsEnded) {
+      return selected !== undefined && nextIndex < argv.length ? selected : undefined;
+    }
+    index = nextIndex;
   }
   // Ran out of words: a selected `-c` has no command string (every modeled
   // shell rejects it: "option requires an argument") so nothing is embedded.
@@ -1073,9 +1130,20 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  */
 function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: number): void {
   const context = `embeddedCommandInterpreters[${String(index)}]`;
+  // The declared type cannot constrain JavaScript callers. Validate the raw
+  // entry before reading any fields, just as their raw field values are checked.
+  const entry: unknown = spec;
+  if (typeof entry !== 'object' || entry === null) {
+    throw new ShAnalyzeInvalidWrapperSpecError(`${context} must be a non-null object`);
+  }
   if (!isNonEmptyStringArray(spec.names)) {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.names must be a non-empty array of non-empty strings`,
+    );
+  }
+  if (spec.names.some((name) => name.includes('/'))) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.names must contain basenames without '/'`,
     );
   }
   if (
@@ -1091,6 +1159,47 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
   if (attachment !== 'separate-word' && attachment !== 'rest-of-cluster') {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.operandAttachment must be separate-word or rest-of-cluster`,
+    );
+  }
+  const letterFields = ['optionalOperandOptions', 'optionTerminatorLetters'] as const;
+  for (const field of letterFields) {
+    const value = spec[field];
+    if (
+      value !== undefined &&
+      !(
+        Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length === 1)
+      )
+    ) {
+      throw new ShAnalyzeInvalidWrapperSpecError(
+        `${context}.${field} must be an array of single-character strings`,
+      );
+    }
+  }
+  if (
+    spec.optionalOperandOptions?.some((letter) => !spec.operandOptions.includes(letter)) === true
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.optionalOperandOptions must be a subset of operandOptions`,
+    );
+  }
+  if (
+    spec.optionTerminatorLetters?.some(
+      (letter) => letter === 'c' || spec.operandOptions.includes(letter),
+    ) === true
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.optionTerminatorLetters must contain only no-operand letters other than 'c'`,
+    );
+  }
+  if (
+    spec.optionTerminatorWords !== undefined &&
+    !(
+      Array.isArray(spec.optionTerminatorWords) &&
+      spec.optionTerminatorWords.every((item) => typeof item === 'string' && item.length > 0)
+    )
+  ) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.optionTerminatorWords must be an array of non-empty strings`,
     );
   }
   if (

@@ -257,6 +257,20 @@ interpreter's name is known, not that the command is a plain shell invocation. `
 table; `ResolveArgv0Options.embeddedCommandInterpreters: []` restores the previous
 behavior.
 
+The table models zsh's `--emulate MODE` / `+-emulate MODE` operands and option
+terminators, including `-b` / `+b` after their current cluster (`zsh -b -c x`
+keeps `zsh`, while `zsh -bc x` is embedded). The ksh entry permits an omitted
+`-o` / `+o` operand before another signed option (`ksh +o -c x` is embedded);
+this was executed on ksh93u+ AJM 2012-08-01, not ksh93u+m or mksh. Bash, dash
+and zsh keep consuming the next word as that operand. Options that themselves
+change the grammar, such as zsh's `shoptionletters`, require a custom table.
+
+Custom interpreter names must be basenames: use `names: ['bash']` for both
+`/bin/bash` and `./bash`. Names containing `/`, null/undefined entries and
+malformed grammar fields throw `ShAnalyzeInvalidWrapperSpecError`. The first
+matching basename entry wins. Wrapper names retain their distinct policy:
+exact matches first, then a basename fallback for absolute paths only.
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

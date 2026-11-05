@@ -4,7 +4,7 @@
 
 ## EmbeddedCommandInterpreterSpec.names property
 
-The interpreter's name, matched against a static command word's final path segment: `bash`<!-- -->, `/bin/bash` and `/usr/local/bin/bash` all match `['bash']`<!-- -->. Only the command word is reduced to its final segment; entries containing `/` (such as `['/bin/bash']`<!-- -->) are accepted but never match. The first entry containing the segment wins; a later exact-path entry cannot override an earlier basename entry.
+The interpreter's name, matched against a static command word's final path segment: `bash`<!-- -->, `/bin/bash` and `/usr/local/bin/bash` all match `['bash']`<!-- -->. Only the command word is reduced to its final segment; entries containing `/` (such as `['/bin/bash']`<!-- -->) are rejected with [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->. Use `['bash']` to recognize path-qualified invocations. The first entry containing the segment wins.
 
 Unlike [WrapperSpec.names](./sh-ast-analyze.wrapperspec.names.md)<!-- -->, which tries exact names first and falls back to the final segment only for absolute paths, interpreter matching uses only the final segment, including for relative paths such as `./bash`<!-- -->. The question here is whether a command string is embedded, not which executable would be located.
 

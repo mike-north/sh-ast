@@ -8,7 +8,7 @@ A data-only description of one shell interpreter whose `-c` option makes the nex
 
 Only the option grammar needed to decide \*whether `-c` is an option\* is described: which options consume an operand word (so that `-o c` or `-o pipefail -c` are not misread) and where option parsing ends. Everything else about the interpreter — what its other options mean, whether a given option name is valid — is irrelevant to that decision and unmodeled; an invalid invocation that a real shell would reject is still reported conservatively, since nothing is guessed about what it would run.
 
-Option parsing ends at the first statically known word that is not an option, at `--`<!-- -->, and at a lone `-`<!-- -->; afterwards a word shaped like `-c` is an ordinary script operand. A dynamic word in option position leaves the question undecidable, so scanning stops and the interpreter is reported exactly as before (its own static name). In that case `static: true` means only that the interpreter's name is known; it does not mean the command is a plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`<!-- -->.
+Option parsing ends at the first statically known word that is not an option, at `--`<!-- -->, at a lone `-`<!-- -->, or at a table-defined terminator; afterwards a word shaped like `-c` is an ordinary script operand. A dynamic word in option position leaves the question undecidable, so scanning stops and the interpreter is reported exactly as before (its own static name). In that case `static: true` means only that the interpreter's name is known; it does not mean the command is a plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`<!-- -->.
 
 This shape may grow new optional fields in a \*\*minor\*\* release; existing fields' meaning never changes.
 
@@ -58,7 +58,7 @@ readonly string\[\]
 
 </td><td>
 
-The interpreter's name, matched against a static command word's final path segment: `bash`<!-- -->, `/bin/bash` and `/usr/local/bin/bash` all match `['bash']`<!-- -->. Only the command word is reduced to its final segment; entries containing `/` (such as `['/bin/bash']`<!-- -->) are accepted but never match. The first entry containing the segment wins; a later exact-path entry cannot override an earlier basename entry.
+The interpreter's name, matched against a static command word's final path segment: `bash`<!-- -->, `/bin/bash` and `/usr/local/bin/bash` all match `['bash']`<!-- -->. Only the command word is reduced to its final segment; entries containing `/` (such as `['/bin/bash']`<!-- -->) are rejected with [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->. Use `['bash']` to recognize path-qualified invocations. The first entry containing the segment wins.
 
 Unlike [WrapperSpec.names](./sh-ast-analyze.wrapperspec.names.md)<!-- -->, which tries exact names first and falls back to the final segment only for absolute paths, interpreter matching uses only the final segment, including for relative paths such as `./bash`<!-- -->. The question here is whether a command string is embedded, not which executable would be located.
 
@@ -104,7 +104,7 @@ readonly string\[\]
 
 </td><td>
 
-_(Optional)_ Leading long options (exact `--name` words) that take a separate operand word, e.g. bash's `--rcfile FILE`<!-- -->. Any other `--name` word is skipped as a flag with no operand.
+_(Optional)_ Leading long options (exact `--name` or `+-name` words) that take a separate operand word, e.g. bash's `--rcfile FILE` or zsh's `--emulate sh`<!-- -->. Other long-option words are skipped without an operand.
 
 
 </td></tr>
@@ -126,6 +126,69 @@ readonly string\[\]
 </td><td>
 
 Single option letters (without a sign) that take a name or value operand under both `-` and `+`<!-- -->, e.g. `['o']` for `-o pipefail` / `+o pipefail`<!-- -->. A letter listed here never selects the command string itself, so `bash -o c script` keeps `c` as an option \*name\*.
+
+
+</td></tr>
+<tr><td>
+
+[optionalOperandOptions?](./sh-ast-analyze.embeddedcommandinterpreterspec.optionaloperandoptions.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ Letters from [EmbeddedCommandInterpreterSpec.operandOptions](./sh-ast-analyze.embeddedcommandinterpreterspec.operandoptions.md) whose separate operand may be omitted before a word beginning with `-` or `+`<!-- -->. An attached operand still belongs to the option. For example, ksh93u+ treats `-o -c cmd` and `+o -c cmd` as an operand-free option listing followed by `-c`<!-- -->; bash, dash and zsh consume `-c` as the option name. A dynamic potential operand makes this distinction undecidable.
+
+
+</td></tr>
+<tr><td>
+
+[optionTerminatorLetters?](./sh-ast-analyze.embeddedcommandinterpreterspec.optionterminatorletters.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ No-operand letters that end option scanning after the current cluster, under either sign. Remaining letters in that cluster still take effect: zsh's `-b -c script` runs the file `-c`<!-- -->, but `-bc cmd` selects a string. These letters must not include `c` or an operand-taking letter.
+
+
+</td></tr>
+<tr><td>
+
+[optionTerminatorWords?](./sh-ast-analyze.embeddedcommandinterpreterspec.optionterminatorwords.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ Additional whole words that end option scanning, like zsh's `+` and `+-`<!-- -->. The terminator is not a command string; an already-selected `-c` needs a following word. `--` and a lone `-` are always terminators.
 
 
 </td></tr>
