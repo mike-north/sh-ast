@@ -66,6 +66,7 @@ describe('interpreter option boundaries', () => {
     ["ksh +o -- -c 'echo X'", 'ksh'],
     ["ksh -oc errexit 'echo X'", 'ksh'],
     ['ksh +o -c', 'ksh'],
+    ['ksh -c +', 'ksh'],
     ['ksh -co', 'ksh'],
     ['ksh -o "$option" -c x', 'ksh'],
     ["bash +o -c 'echo X'", 'bash'],
@@ -138,6 +139,20 @@ describe('custom interpreter boundary grammar', () => {
     } as const;
     expect(resolve('/bin/bash -c x', options).chainIndices).toEqual([0, 1]);
     expect(resolve('./bash -c x', options).chainIndices).toEqual([0, 1]);
+  });
+
+  it('rejects a custom operand letter that conflicts with the command selector', () => {
+    expect(() =>
+      resolve('q -c script', {
+        embeddedCommandInterpreters: [
+          {
+            names: ['q'],
+            operandOptions: ['c'],
+            operandAttachment: 'separate-word',
+          },
+        ],
+      }),
+    ).toThrow(ShAnalyzeInvalidWrapperSpecError);
   });
 });
 
@@ -283,6 +298,7 @@ const oracleCases: readonly (readonly [string, readonly string[], boolean])[] = 
   ['ksh', ['-co', '-c'], true],
   ['ksh', ['-o', '--', '-c'], false],
   ['ksh', ['+o', '--', '-c'], false],
+  ['ksh', ['-c', '+'], true],
   ['bash', ['+o', '-c'], false],
   ['sh', ['+o', '-c'], false],
   ['dash', ['+o', '-c'], false],

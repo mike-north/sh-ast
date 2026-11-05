@@ -146,7 +146,7 @@ readonly string\[\]
 
 </td><td>
 
-Single option letters (without a sign) that take a name or value operand under both `-` and `+`<!-- -->, e.g. `['o']` for `-o pipefail` / `+o pipefail`<!-- -->. A letter listed here never selects the command string itself, so `bash -o c script` keeps `c` as an option \*name\*.
+Single option letters (without a sign) that take a name or value operand under both `-` and `+`<!-- -->, e.g. `['o']` for `-o pipefail` / `+o pipefail`<!-- -->. A letter listed here never selects the command string itself, so `bash -o c script` keeps `c` as an option \*name\*. The selector `c` is reserved and cannot be listed as an operand option; conflicting entries throw [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->.
 
 
 </td></tr>

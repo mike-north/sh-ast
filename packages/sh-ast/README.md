@@ -281,6 +281,11 @@ multiple actual arguments, so `bash -o "$@" -c x` and
 tables and sparse grammar-field arrays are rejected just like entries
 explicitly holding `undefined`.
 
+The command selector `c` is reserved and cannot be declared an operand-taking
+option in a custom interpreter entry. Ksh's lone `+` ends option processing;
+`ksh -c +` has no command string, while `ksh -c + x` is embedded (executed on
+ksh93u+ AJM 2012-08-01).
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

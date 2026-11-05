@@ -377,6 +377,8 @@ export interface EmbeddedCommandInterpreterSpec {
    * under both `-` and `+`, e.g. `['o']` for `-o pipefail` / `+o pipefail`.
    * A letter listed here never selects the command string itself, so
    * `bash -o c script` keeps `c` as an option *name*.
+   * The selector `c` is reserved and cannot be listed as an operand option;
+   * conflicting entries throw {@link ShAnalyzeInvalidWrapperSpecError}.
    */
   readonly operandOptions: readonly string[];
 
@@ -548,6 +550,7 @@ export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInte
       operandOptions: ['o'],
       operandAttachment: 'rest-of-cluster',
       optionalOperandOptions: ['o'],
+      optionTerminatorWords: ['+'],
       plusCSelectsCommand: true,
     },
     // mksh R59: -o names attach to the cluster or consume the next word;
@@ -1201,6 +1204,11 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
   ) {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.operandOptions must be an array of single-character strings`,
+    );
+  }
+  if (spec.operandOptions.includes('c')) {
+    throw new ShAnalyzeInvalidWrapperSpecError(
+      `${context}.operandOptions must not contain the command selector 'c'`,
     );
   }
   // JavaScript callers can bypass the declared union; validate raw boundary data.
