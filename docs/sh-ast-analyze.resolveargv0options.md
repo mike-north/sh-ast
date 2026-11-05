@@ -37,6 +37,29 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[embeddedCommandInterpreters?](./sh-ast-analyze.resolveargv0options.embeddedcommandinterpreters.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly [EmbeddedCommandInterpreterSpec](./sh-ast-analyze.embeddedcommandinterpreterspec.md)<!-- -->\[\]
+
+
+</td><td>
+
+_(Optional)_ The shell interpreters whose `-c` operand is reported as an `'embedded-command'`<!-- -->. Defaults to [DEFAULT\_EMBEDDED\_COMMAND\_INTERPRETERS](./sh-ast-analyze.default_embedded_command_interpreters.md)<!-- -->. Pass a replacement array to add or drop interpreters; an empty array disables the behavior, so every interpreter resolves as an ordinary effective command.
+
+Validated at the [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) boundary like [ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md)<!-- -->: the table must be an array. A non-array value (including `null`<!-- -->) or malformed entry throws [ShAnalyzeInvalidWrapperSpecError](./sh-ast-analyze.shanalyzeinvalidwrapperspecerror.md)<!-- -->; only `undefined` uses defaults.
+
+
+</td></tr>
+<tr><td>
+
 [transparentWrappers?](./sh-ast-analyze.resolveargv0options.transparentwrappers.md)
 
 

@@ -242,6 +242,64 @@ Existing `skipAssignmentOperands: true` tables retain their ASCII shell-identifi
 rule before `--`. Wrapper assignment operands do not change `assignmentsSkipped`,
 which counts only shell-level prefixes.
 
+When the effective command is a shell interpreter (`bash`, `sh`, `dash`, `zsh`,
+`ksh`, `ksh93`, `mksh`, matched by the final path segment, so `/bin/bash` too)
+invoked with `-c`, `resolveArgv0` reports `effective: { static: false, reason:
+'embedded-command' }`, the same result as `env -S`: the command that runs is
+inside the string operand, which is never parsed. The interpreter's word stays
+available as `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
+selected `-c`. Clustered flags (`-ec`, `-lc`), preceding options (`-o pipefail`,
+`+o`, `-e`) and `--` follow each shell's own option grammar, so `bash script.sh`,
+`bash -e script.sh`, `bash -- -c` and `bash -o c` still resolve to `bash`. A
+dynamic word in option position (`bash "$opts" -c ls`, `bash -c"$y" x`) is
+undecidable and also resolves to `bash`; there `static: true` means only that the
+interpreter's name is known, not that the command is a plain shell invocation. `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS` is the overridable
+table; `ResolveArgv0Options.embeddedCommandInterpreters: []` restores the previous
+behavior.
+
+The table models zsh's `--emulate MODE` / `+-emulate MODE` operands and option
+terminators, including `-b` / `+b` after their current cluster (`zsh -b -c x`
+keeps `zsh`, while `zsh -bc x` is embedded). The ksh entry permits an omitted
+`-o` / `+o` operand before another signed option (`ksh +o -c x` is embedded);
+this was executed on ksh93u+ AJM 2012-08-01, not ksh93u+m or mksh. Bash, dash
+and zsh keep consuming the next word as that operand. Options that themselves
+change the grammar, such as zsh's `shoptionletters`, require a custom table.
+
+Custom interpreter names must be basenames: use `names: ['bash']` for both
+`/bin/bash` and `./bash`. Names containing `/`, null/undefined entries and
+malformed grammar fields throw `ShAnalyzeInvalidWrapperSpecError`. The first
+matching basename entry wins. Wrapper names retain their distinct policy:
+exact matches first, then a basename fallback for absolute paths only.
+
+Bash's single-dash long-option aliases are recognized before clusters:
+`bash -rcfile /dev/null s` and `bash -restricted s` stay static, while
+`bash -rcfile /dev/null -c x` records selector index 3. Custom grammars can
+list exact operand-free long options in `noOperandLongOptions`. Separate
+option operands must be static: an expansion such as `"$@"` may produce
+multiple actual arguments, so `bash -o "$@" -c x` and
+`bash --rcfile "$@" -c x` stop at the static interpreter. Sparse custom
+tables and sparse grammar-field arrays are rejected just like entries
+explicitly holding `undefined`.
+
+The command selector `c` is reserved and cannot be declared an operand-taking
+option in a custom interpreter entry; exact-token fields cannot contain `-c`.
+`embeddedCommandInterpreters` must be an array: `null` and other non-array
+containers throw `ShAnalyzeInvalidWrapperSpecError`; `undefined` uses defaults.
+Ksh/ksh93 `+c`, `+ec` and `+o +c` run scripts instead of selecting a string.
+Apple ksh's `-R` consumes a database-path operand. Ksh's lone `+` ends option processing;
+`ksh -c +` has no command string, while `ksh -c + x` is embedded (executed on
+ksh93u+ AJM 2012-08-01).
+
+Known limits: the table models common option spellings and is not a full
+emulation of each shell's option parser. Unusual spellings can be misclassified
+in either direction:
+
+- Bash/sh single-dash long options after a short option, e.g. `bash -e -rcfile M`.
+- `ksh -c +c M`, or a dynamic word after `-c` that expands to an option.
+- mksh's selector-bearing operands in `mksh -o -c M` and `mksh -o +c M`.
+- A lone `+` before `-c`, e.g. `bash + -c M`.
+- Zsh grammar switches, e.g. `zsh -o shoptionletters -b -c M`.
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

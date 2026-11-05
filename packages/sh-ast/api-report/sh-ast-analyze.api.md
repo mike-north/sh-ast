@@ -449,6 +449,9 @@ export interface DeclClause {
 }
 
 // @public
+export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInterpreterSpec[];
+
+// @public
 export const DEFAULT_TRANSPARENT_WRAPPERS: readonly WrapperSpec[];
 
 // @public
@@ -462,6 +465,19 @@ export const DplIn: 67;
 
 // @public
 export const DplOut: 68;
+
+// @public
+export interface EmbeddedCommandInterpreterSpec {
+    readonly names: readonly string[];
+    readonly noOperandLongOptions?: readonly string[];
+    readonly operandAttachment: 'separate-word' | 'rest-of-cluster';
+    readonly operandLongOptions?: readonly string[];
+    readonly operandOptions: readonly string[];
+    readonly optionalOperandOptions?: readonly string[];
+    readonly optionTerminatorLetters?: readonly string[];
+    readonly optionTerminatorWords?: readonly string[];
+    readonly plusCSelectsCommand?: boolean;
+}
 
 // @public
 export function enumerateCommands(root: Node_2): CommandSite[];
@@ -956,6 +972,7 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
 
 // @public
 export interface ResolveArgv0Options {
+    readonly embeddedCommandInterpreters?: readonly EmbeddedCommandInterpreterSpec[];
     readonly transparentWrappers?: readonly WrapperSpec[];
 }
 

@@ -123,9 +123,15 @@ Follows `site`<!-- -->'s argv0 through zero or more \*transparent wrappers\* —
 
 The wrapper table ([ResolveArgv0Options.transparentWrappers](./sh-ast-analyze.resolveargv0options.transparentwrappers.md)<!-- -->, defaulting to [DEFAULT\_TRANSPARENT\_WRAPPERS](./sh-ast-analyze.default_transparent_wrappers.md)<!-- -->) is plain data: each [WrapperSpec](./sh-ast-analyze.wrapperspec.md) declares how to locate the word it wraps, and neither this function nor the table encodes any safety judgment about \*which\* commands are dangerous — matching [CommandSite](./sh-ast-analyze.commandsite.md)<!-- -->'s and [resolveWord()](./sh-ast-analyze.resolveword.md)<!-- -->'s "facts only" posture. A caller can drop a default entry (that name then resolves as an ordinary, non-transparent command) or add their own (e.g. a project's `with-retry` helper) and both directions are followed identically to any built-in entry.
 
-\*\*A statically-unknowable word is never guessed through\*\* — three distinct cases all stop the chain immediately at that word rather than falling back to any other guess:
+\*\*A statically-unknowable word is never guessed through\*\* — four distinct cases all stop the chain immediately at that word rather than falling back to any other guess:
 
 1. `argv0` or any wrapper's located word itself resolves `static: false` (an expansion, tilde, glob, …) — `sudo -u x "$prog"` reports `effective: { static: false, reason: 'expansion' }` with `chain: [<sudo>, <"$prog">]`<!-- -->, not `rm`<!-- -->/`sudo`<!-- -->/anything static. 2. A \*statically known\* word shaped like a flag (`-`<!-- -->-prefixed, not `--`<!-- -->) doesn't match any flag/operand shape the current [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes — `sudo -D /tmp rm x` (`-D` isn't modeled for `sudo`<!-- -->) reports an `effective` of `static: false` with `reason: 'unknown-flag'`<!-- -->, \*\*not\*\* `rm` (the pre-fix behavior: any unrecognized word, flag-shaped or not, was silently treated as the wrapped command — a false report that hid the real effective command behind a flag this table simply hadn't modeled yet). 3. A recognized flag's value structurally embeds the real command rather than naming it as a separate word — `env -S 'rm -rf /'` reports `effective: { static: false, reason: 'embedded-command' }` (see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment).
+
+4. The effective command is a shell interpreter ([DEFAULT\_EMBEDDED\_COMMAND\_INTERPRETERS](./sh-ast-analyze.default_embedded_command_interpreters.md)<!-- -->) invoked with `-c` — `bash -c "$x"`<!-- -->, `sudo sh -ec ls` — and the command that runs is inside the string operand. The result is the same `'embedded-command'` shape `env -S` produces: the interpreter word is `chain.at(-2)` and `chainIndices.at(-1)` is the option word that selected `-c`<!-- -->. `bash script.sh`<!-- -->, `bash -e script.sh`<!-- -->, `bash -- -c` and `bash -o c` are not `-c` invocations and resolve to `bash` as before. A dynamic word in option position (`bash "$f" -c x`<!-- -->, `bash -c"$y" x`<!-- -->) is undecidable, so the interpreter stays a static `bash`<!-- -->: `static: true` then means only that the name is known, not that the command is a plain shell invocation. The `-c` string itself is never parsed.
+
+Known limits: the table models common option spellings, not a full emulation of each shell's option parser. Unusual spellings can be misclassified in either direction:
+
+- Bash/sh single-dash long options after a short option, e.g. `bash -e -rcfile M`<!-- -->. - `ksh -c +c M`<!-- -->, or a dynamic word after `-c` that expands to an option. - mksh's selector-bearing operands in `mksh -o -c M` and `mksh -o +c M`<!-- -->. - A lone `+` before `-c`<!-- -->, e.g. `bash + -c M`<!-- -->. - Zsh grammar switches, e.g. `zsh -o shoptionletters -b -c M`<!-- -->.
 
 `VAR=val` shell-assignment prefixes on the `CallExpr` itself (`CommandSite.node.Assigns`<!-- -->, e.g. `FOO=bar rm x`<!-- -->) are always skipped and counted in [Argv0Resolution.assignmentsSkipped](./sh-ast-analyze.argv0resolution.assignmentsskipped.md) — a mechanism distinct from a wrapper's own `VAR=val` \*operands\* (`env A=1 rm x`<!-- -->, `sudo A=1 rm x`<!-- -->), which [WrapperSpec.skipAssignmentOperands](./sh-ast-analyze.wrapperspec.skipassignmentoperands.md) handles per-wrapper.
 
@@ -462,6 +468,23 @@ Args can contain a mix of regular and naked assignments. The naked assignments c
 This node will only appear with `LangBash`<!-- -->.
 
 A syntax node with mutable upstream fields. Its source bounds are derived from the current fields and children.
+
+
+</td></tr>
+<tr><td>
+
+[EmbeddedCommandInterpreterSpec](./sh-ast-analyze.embeddedcommandinterpreterspec.md)
+
+
+</td><td>
+
+A data-only description of one shell interpreter whose `-c` option makes the next operand a command string run by that shell (`bash -c 'rm x'`<!-- -->). Like `env -S`<!-- -->, the command that runs lives \*inside\* an operand, so [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) reports `'embedded-command'` instead of the interpreter's own name as the effective command. The selector `c` is reserved: exact-token fields (`noOperandLongOptions`<!-- -->, `operandLongOptions`<!-- -->, `optionTerminatorWords`<!-- -->) cannot contain `-c`<!-- -->.
+
+Only the option grammar needed to decide \*whether `-c` is an option\* is described: which options consume an operand word (so that `-o c` or `-o pipefail -c` are not misread) and where option parsing ends. Everything else about the interpreter — what its other options mean, whether a given option name is valid — is irrelevant to that decision and unmodeled; an invalid invocation that a real shell would reject is still reported conservatively, since nothing is guessed about what it would run.
+
+Option parsing ends at the first statically known word that is not an option, at `--`<!-- -->, at a lone `-`<!-- -->, or at a table-defined terminator; afterwards a word shaped like `-c` is an ordinary script operand. A dynamic word in option position leaves the question undecidable, so scanning stops and the interpreter is reported exactly as before (its own static name). In that case `static: true` means only that the interpreter's name is known; it does not mean the command is a plain shell invocation, because `bash "$f" -c x` runs `x` when `$f` is `-x`<!-- -->.
+
+This shape may grow new optional fields in a \*\*minor\*\* release; existing fields' meaning never changes.
 
 
 </td></tr>
@@ -1256,6 +1279,19 @@ Upstream RedirOperator constant DashHdoc. Its numeric value is preserved exactly
 Upstream UnAritOperator constant Dec. Its numeric value is preserved exactly.
 
 --
+
+
+</td></tr>
+<tr><td>
+
+[DEFAULT\_EMBEDDED\_COMMAND\_INTERPRETERS](./sh-ast-analyze.default_embedded_command_interpreters.md)
+
+
+</td><td>
+
+`sh-ast/analyze`<!-- -->'s default [EmbeddedCommandInterpreterSpec](./sh-ast-analyze.embeddedcommandinterpreterspec.md) table: the shells whose `-c` option makes [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) report `'embedded-command'`<!-- -->. Each entry's option grammar is hand-derived from the cited manual. Basic clusters and required operands were cross-checked on Linux bash 5.2.21, dash 0.5.12, zsh 5.9, ksh93u+m 1.0.8 and mksh R59. Long-option, termination and omitted-operand cases were checked on macOS bash 5.3.9 and 3.2.57 (also `/bin/sh`<!-- -->), Apple dash-16, zsh 5.9 and ksh93u+ AJM 2012-08-01. Omitted `-o`<!-- -->/`+o` operands before another signed option were confirmed only on that ksh93u+ build, not ksh93u+m or mksh. Builds can differ: macOS's ksh93u+ differs from the cited 93u+m for `ksh -o c "echo X"`<!-- -->. The `sh` entry also models bash's long options because `sh` can be bash. Named options that change the option grammar itself (such as zsh's `shoptionletters`<!-- -->) are not interpreted; a custom table is needed for that grammar. It is data, not policy: it names no dangerous commands and a caller can replace or extend it via [ResolveArgv0Options.embeddedCommandInterpreters](./sh-ast-analyze.resolveargv0options.embeddedcommandinterpreters.md)<!-- -->; an empty array restores the behavior in which an interpreter is an ordinary effective command.
+
+Frozen, including each entry and its arrays.
 
 
 </td></tr>
@@ -2778,7 +2814,7 @@ The result of statically resolving one position in an [Argv0Resolution.chain](./
 
 Why [resolveArgv0()](./sh-ast-analyze.resolveargv0.md) couldn't identify a single, definite effective command — distinct from [WordResolutionReason](./sh-ast-analyze.wordresolutionreason.md)<!-- -->, which is about why one \*word\*'s text is unknowable at the shell-syntax level (an expansion, a glob, …). `Argv0UnresolvedReason` instead reflects `resolveArgv0`<!-- -->'s own wrapper-table-driven analysis of an otherwise statically-known word:
 
-- `'unknown-flag'` — a statically known word shaped like a flag (starts with `-`<!-- -->, isn't exactly `--`<!-- -->) for the wrapper currently being followed, but that doesn't match any flag/operand shape [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes for it. Never guessed through as the wrapped command — see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment. - `'embedded-command'` — a wrapper flag whose value structurally embeds the real command rather than naming it as a separate word (e.g. `env -S 'rm -rf /'` — see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment). - `'ambiguous-assignment'` — a statically known assignment operand whose acceptance differs across supported utility implementations, such as `env =value cmd` (GNU/glibc accepts an empty name; BSD rejects it). Neither the following command nor the operand itself is guessed as the effective command.
+- `'unknown-flag'` — a statically known word shaped like a flag (starts with `-`<!-- -->, isn't exactly `--`<!-- -->) for the wrapper currently being followed, but that doesn't match any flag/operand shape [WrapperSpec](./sh-ast-analyze.wrapperspec.md) recognizes for it. Never guessed through as the wrapped command — see [resolveArgv0()](./sh-ast-analyze.resolveargv0.md)<!-- -->'s doc comment. - `'embedded-command'` — a wrapper flag whose value structurally embeds the real command rather than naming it as a separate word (e.g. `env -S 'rm -rf /'` — see [WrapperSpec.unresolvableFlags](./sh-ast-analyze.wrapperspec.unresolvableflags.md)<!-- -->'s doc comment), or a shell interpreter's `-c` option (`bash -c 'rm x'`<!-- -->, see [EmbeddedCommandInterpreterSpec](./sh-ast-analyze.embeddedcommandinterpreterspec.md)<!-- -->). In both cases the chain's second-to-last element is the wrapper or interpreter word, so its name stays available. - `'ambiguous-assignment'` — a statically known assignment operand whose acceptance differs across supported utility implementations, such as `env =value cmd` (GNU/glibc accepts an empty name; BSD rejects it). Neither the following command nor the operand itself is guessed as the effective command.
 
 This union may grow in a \*\*minor\*\* release (mirroring `WordResolutionReason`<!-- -->'s and `CommandContext`<!-- -->'s semver policy in `resolve-word.ts`<!-- -->/`enumerate-commands.ts`<!-- -->) — a reason this version doesn't yet know about only ever accompanies `static: false`<!-- -->; an exhaustive `switch` should still include a `default` case.
 
