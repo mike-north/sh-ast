@@ -1090,12 +1090,12 @@ function findCommandStringOption(
   return undefined;
 }
 
-/** `true` iff `value` is a non-empty array of non-empty strings. */
+/** `true` iff every slot in a non-empty array holds a non-empty string, including sparse slots. */
 function isNonEmptyStringArray(value: unknown): value is readonly string[] {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
-    value.every((item) => typeof item === 'string' && item.length > 0)
+    Array.from(value).every((item) => typeof item === 'string' && item.length > 0)
   );
 }
 
@@ -1174,6 +1174,8 @@ function validateWrapperSpec(spec: WrapperSpec, index: number): void {
  * {@link ShAnalyzeInvalidWrapperSpecError} on the first problem — the same
  * boundary rule as {@link validateWrapperSpec}, so a malformed JavaScript
  * caller's table fails loudly instead of as a native `TypeError` mid-scan.
+ * Every slot in a grammar array must hold a token; sparse holes are invalid
+ * entries, not ignorable padding between names or options.
  */
 function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: number): void {
   const context = `embeddedCommandInterpreters[${String(index)}]`;
@@ -1195,7 +1197,7 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
   }
   if (
     !Array.isArray(spec.operandOptions) ||
-    !spec.operandOptions.every((item) => typeof item === 'string' && item.length === 1)
+    !Array.from(spec.operandOptions).every((item) => typeof item === 'string' && item.length === 1)
   ) {
     throw new ShAnalyzeInvalidWrapperSpecError(
       `${context}.operandOptions must be an array of single-character strings`,
@@ -1214,7 +1216,8 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
     if (
       value !== undefined &&
       !(
-        Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length === 1)
+        Array.isArray(value) &&
+        Array.from(value).every((item) => typeof item === 'string' && item.length === 1)
       )
     ) {
       throw new ShAnalyzeInvalidWrapperSpecError(
@@ -1242,7 +1245,9 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
     spec.optionTerminatorWords !== undefined &&
     !(
       Array.isArray(spec.optionTerminatorWords) &&
-      spec.optionTerminatorWords.every((item) => typeof item === 'string' && item.length > 0)
+      Array.from(spec.optionTerminatorWords).every(
+        (item) => typeof item === 'string' && item.length > 0,
+      )
     )
   ) {
     throw new ShAnalyzeInvalidWrapperSpecError(
@@ -1255,7 +1260,10 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
     const value = spec[field];
     if (
       value !== undefined &&
-      !(Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length > 0))
+      !(
+        Array.isArray(value) &&
+        Array.from(value).every((item) => typeof item === 'string' && item.length > 0)
+      )
     ) {
       throw new ShAnalyzeInvalidWrapperSpecError(
         `${context}.${field} must be an array of non-empty strings when present`,

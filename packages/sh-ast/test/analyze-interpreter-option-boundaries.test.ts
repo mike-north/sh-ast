@@ -210,6 +210,28 @@ describe('Bash long-option aliases and dynamic operands', () => {
     }
   });
 
+  // A field array promises actual strings in every slot. Array holes must
+  // not become silently ignored names, flags or operand grammar entries.
+  it.each([
+    'names',
+    'operandOptions',
+    'operandLongOptions',
+    'noOperandLongOptions',
+    'optionTerminatorLetters',
+    'optionTerminatorWords',
+    'optionalOperandOptions',
+  ])('rejects holes inside the interpreter %s field', (field) => {
+    const entry = {
+      names: ['bash'],
+      operandOptions: [],
+      operandAttachment: 'separate-word',
+      [field]: new Array<unknown>(1),
+    };
+    expect(() => resolve('bash -c x', { embeddedCommandInterpreters: [entry as never] })).toThrow(
+      ShAnalyzeInvalidWrapperSpecError,
+    );
+  });
+
   // Positional parameters yield two actual operands. The second becomes a
   // script path, so skipping the syntactic "$@" as one word would be wrong.
   const bashAvailable = spawnSync('bash', ['-c', 'exit 0']).status === 0;

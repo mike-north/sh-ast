@@ -278,7 +278,8 @@ list exact operand-free long options in `noOperandLongOptions`. Separate
 option operands must be static: an expansion such as `"$@"` may produce
 multiple actual arguments, so `bash -o "$@" -c x` and
 `bash --rcfile "$@" -c x` stop at the static interpreter. Sparse custom
-tables are rejected just like entries explicitly holding `undefined`.
+tables and sparse grammar-field arrays are rejected just like entries
+explicitly holding `undefined`.
 
 ## Migration from 0.3
 
