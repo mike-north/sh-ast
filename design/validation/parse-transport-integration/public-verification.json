@@ -1,0 +1,122 @@
+[
+  {
+    "round": 0,
+    "phase": "parse",
+    "artifact": "accepted-main",
+    "mode": "verify",
+    "warmup": 5,
+    "iterations": 30,
+    "fixture": "consumer-m2",
+    "dialect": "bash",
+    "pid": 17523,
+    "contract": "parse-source-retain-comments",
+    "status": "ok",
+    "transport": {
+      "parse": {
+        "calls": 1,
+        "payloadBytes": 11270
+      }
+    },
+    "nodeCount": 0,
+    "work": {
+      "storedRecords": 5801,
+      "functions": 100,
+      "nodes": 5801,
+      "traversal": {
+        "entries": 5701,
+        "exits": 5701,
+        "markerVisits": 0
+      }
+    }
+  },
+  {
+    "round": 0,
+    "phase": "parse",
+    "artifact": "canonical-candidate",
+    "mode": "verify",
+    "warmup": 5,
+    "iterations": 30,
+    "fixture": "consumer-m2",
+    "dialect": "bash",
+    "pid": 17610,
+    "contract": "parse-source-retain-comments",
+    "status": "ok",
+    "transport": {
+      "parse": {
+        "calls": 1,
+        "payloadBytes": 11270
+      }
+    },
+    "nodeCount": 0,
+    "work": {
+      "storedRecords": 5801,
+      "functions": 100,
+      "nodes": 5801,
+      "traversal": {
+        "entries": 5701,
+        "exits": 5701,
+        "markerVisits": 0
+      }
+    }
+  },
+  {
+    "round": 0,
+    "phase": "parse-with-positions",
+    "artifact": "accepted-main",
+    "mode": "verify",
+    "warmup": 5,
+    "iterations": 30,
+    "fixture": "consumer-m2",
+    "dialect": "bash",
+    "pid": 17644,
+    "contract": "parse-with-positions:faithful",
+    "status": "ok",
+    "transport": {
+      "parse-with-positions": {
+        "calls": 1,
+        "payloadBytes": 11270
+      }
+    },
+    "nodeCount": 0,
+    "work": {
+      "storedRecords": 5801,
+      "functions": 100,
+      "nodes": 5801,
+      "traversal": {
+        "entries": 5701,
+        "exits": 5701,
+        "markerVisits": 0
+      }
+    }
+  },
+  {
+    "round": 0,
+    "phase": "parse-with-positions",
+    "artifact": "canonical-candidate",
+    "mode": "verify",
+    "warmup": 5,
+    "iterations": 30,
+    "fixture": "consumer-m2",
+    "dialect": "bash",
+    "pid": 17684,
+    "contract": "parse-with-positions:faithful",
+    "status": "ok",
+    "transport": {
+      "parse-with-positions": {
+        "calls": 1,
+        "payloadBytes": 11270
+      }
+    },
+    "nodeCount": 0,
+    "work": {
+      "storedRecords": 5801,
+      "functions": 100,
+      "nodes": 5801,
+      "traversal": {
+        "entries": 5701,
+        "exits": 5701,
+        "markerVisits": 0
+      }
+    }
+  }
+]

@@ -1,0 +1,44 @@
+{
+  "sourceCommit": "fde98d054ef66a1ed9d62d933e28ff64da252c27",
+  "artifactCommit": "a40450d31c9cd94caf2f624525a8a11449c2df71",
+  "node": "v22.22.1",
+  "platform": "darwin",
+  "arch": "arm64",
+  "osRelease": "27.2.0",
+  "cpu": "Apple M5 Max",
+  "go": "1.26.10",
+  "binaryen": 131,
+  "typescript": "6.0.3",
+  "eslint": "10.7.0",
+  "consumer": {
+    "repository": "https://github.com/mike-north/eslint-sh",
+    "commit": "6747c0cb6aaea416c35296ded2694cfb4fad913e",
+    "lockSha256": "99cd20f47b9ee5fa9374cf37f9c08ad483041cea9c6997e6f0698bdb3d4bc9f5",
+    "sourceArchiveSha256": "51acae656b8fef37c05ec313e71a8448c9364c4a98baa54035fabec4cd712cf6",
+    "packageVersion": "0.5.0"
+  },
+  "wasmSha256": "a4c14b9bc1c17013e42429b495284a6c2569feb2ae27b8aface72727c1adc5f8",
+  "resultsSha256": "6287d89723b1dcc4275be2251d1e7094beab389753fc0e1a4ba2722bcee7bfc7",
+  "inputsSha256": "e3042b9044eddf0821c1993b6821ba3fb54506ad7f62c431e6652c2b8df19821",
+  "dependencyFiles": {
+    "dist/language/shell-language.js": "ace8a29d945eb1aabc494c526d072ffd88ede2fa1cbc0b385f79f9141e569902",
+    "node_modules/eslint/package.json": "3e8eae5f8aa1fb21967ef942c0888335fbb4c96b813662bd69af45bbdc1c03ba",
+    "node_modules/eslint/lib/api.js": "d970a38ce77982fe2c68c6eef1f5f852925f63f9276c14d43033bc18c1f842a2",
+    "node_modules/eslint/lib/linter/linter.js": "3274e543588b0e73f2c38ec1f3f39674b37d4b6031138b9b236e04db489d84bf",
+    "node_modules/eslint/lib/services/parser-service.js": "054a199633f5d5b0ac1f8342dc6eaa4355e8ac4858c0001cb29bcb0c73151079"
+  },
+  "originalHarnessFiles": {
+    "canonical-public.mjs": "45451f84dd27bf12b71beb5eeb9e6e3c2b683c84a172be46d1ea7b0c407726f6",
+    "canonical-public-child.mjs": "c08595b380eee6f295e57f719635e869dff05ad5796a8acfd7660ba55eab675d",
+    "families.mjs": "4fafedbe1a1ace59f85a72b05bca8bcafc642e77c2bf7d17c900ae8a1a229bbf",
+    "boundary-specs.json": "807a1f93bf3b32aad27520d26a2b1141e21eed238d900cad1bc9f1cb6dd7a791"
+  },
+  "recording": "Existing canonical campaign; committed portable harness was not rerun to produce these results.",
+  "publicRuntimeFiles": {
+    "packages/sh-ast/dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+    "packages/sh-ast/dist/syntax.js": "59e6f31d34c5a00f47cb36ba687a9ec6cc51c64de774ee68663c1a2550b46acb",
+    "packages/sh-ast/dist/errors.js": "440193fd2d9cc816be8d4903020768ecc305741298756b56f010fa4b7717d104",
+    "packages/sh-ast/dist/wasm-instance.js": "b13b1c83243dd648ebe045fbb0c80cd524d4bca86c281da43dccfac757a44ed3",
+    "packages/sh-ast/dist/syntax-wire.js": "0c2ad2762055e0474047753de1733e8eb53aa92e8755ba8463a059f583f873e2"
+  }
+}

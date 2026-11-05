@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-05T03:44:24.714Z",
+  "environment": {
+    "node": "v22.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18,
+    "totalMemory": 137438953472
+  },
+  "config": {
+    "rounds": 8,
+    "iterations": 30,
+    "warmup": 5,
+    "phases": ["parse-stages", "parse-with-positions-stages"],
+    "dialects": ["bash"],
+    "invocation": [
+      "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/run.mjs",
+      "--prepared",
+      "scratch/issue57-campaign/artifacts.json",
+      "--output",
+      "scratch/issue57-stages",
+      "--rounds",
+      "8",
+      "--warmup",
+      "5",
+      "--iterations",
+      "30",
+      "--fixtures",
+      "consumer-m2",
+      "--dialects",
+      "bash",
+      "--phases",
+      "parse-stages,parse-with-positions-stages"
+    ]
+  },
+  "fixtures": [
+    {
+      "name": "consumer-m2",
+      "markers": 0,
+      "dimensions": {
+        "functions": 100,
+        "ifClauses": 100,
+        "caseClauses": 100
+      },
+      "dialect": "bash",
+      "bytes": 11270,
+      "utf16Units": 11070,
+      "lines": 700,
+      "sha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562"
+    }
+  ],
+  "verification": [
+    {
+      "artifact": "accepted-main",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 46053,
+      "phase": "parse-stages",
+      "mode": "verify",
+      "contract": "parse-stages:faithful",
+      "status": "ok",
+      "transport": {
+        "parse": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "nodes": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "canonical-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 46070,
+      "phase": "parse-stages",
+      "mode": "verify",
+      "contract": "parse-stages:faithful",
+      "status": "ok",
+      "transport": {
+        "parse": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "nodes": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "accepted-main",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 48241,
+      "phase": "parse-with-positions-stages",
+      "mode": "verify",
+      "contract": "parse-with-positions-stages:faithful",
+      "status": "ok",
+      "transport": {
+        "parse-with-positions": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "nodes": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    },
+    {
+      "artifact": "canonical-candidate",
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "pid": 48244,
+      "phase": "parse-with-positions-stages",
+      "mode": "verify",
+      "contract": "parse-with-positions-stages:faithful",
+      "status": "ok",
+      "transport": {
+        "parse-with-positions": {
+          "calls": 1,
+          "payloadBytes": 11270
+        }
+      },
+      "nodeCount": 0,
+      "work": {
+        "storedRecords": 5801,
+        "functions": 100,
+        "nodes": 5801,
+        "traversal": {
+          "entries": 5701,
+          "exits": 5701,
+          "markerVisits": 0
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 25.050562500000012,
+      "median": 25.974905749999976,
+      "max": 28.295750499999997
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:input",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:input",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.08460450000001174,
+      "median": 0.08699999999998909,
+      "max": 0.09018749999995634
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:wasm",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:wasm",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 17.030437500000005,
+      "median": 17.636062250000023,
+      "max": 18.99754150000004
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:parse",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:parse",
+      "status": "unsupported",
+      "processes": 8
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:encode",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:encode",
+      "status": "unsupported",
+      "processes": 8
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:transfer",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:transfer",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 1.9646250000000691,
+      "median": 2.0143017500000155,
+      "max": 2.1592079999999214
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:decode",
+      "artifact": "accepted-main",
+      "contract": "parse-stages:faithful:decode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 6.016187500000001,
+      "median": 6.373771000000048,
+      "max": 6.868145999999967
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 8.509708500000016,
+      "median": 8.915135499999998,
+      "max": 9.248729499999996
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:input",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:input",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.08333350000000905,
+      "median": 0.08562500000000028,
+      "max": 0.08708349999999143
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:wasm",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:wasm",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 4.959020499999994,
+      "median": 5.145916499999991,
+      "max": 5.462333000000015
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:parse",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:parse",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 1.15328,
+      "median": 1.2005759999999999,
+      "max": 1.308032
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:encode",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:encode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 3.848294000000002,
+      "median": 3.919941750000004,
+      "max": 4.103512999999996
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:transfer",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:transfer",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.30277149999999153,
+      "median": 0.30719800000002095,
+      "max": 0.32531249999999545
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-stages:decode",
+      "artifact": "canonical-candidate",
+      "contract": "parse-stages:faithful:decode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 3.107395999999966,
+      "median": 3.254624750000012,
+      "max": 3.421333000000004
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 30.207875000000058,
+      "median": 30.92120825000002,
+      "max": 31.847666500000003
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:input",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:input",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.08124999999995453,
+      "median": 0.08332325000003493,
+      "max": 0.08662550000002511
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:wasm",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:wasm",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 18.044062499999995,
+      "median": 18.93717699999999,
+      "max": 19.325208500000002
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:parse",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:parse",
+      "status": "unsupported",
+      "processes": 8
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:encode",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:encode",
+      "status": "unsupported",
+      "processes": 8
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:transfer",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:transfer",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 2.223542000000009,
+      "median": 2.2926147499999843,
+      "max": 2.3665209999999774
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:decode",
+      "artifact": "accepted-main",
+      "contract": "parse-with-positions-stages:faithful:decode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 9.425749500000052,
+      "median": 9.678687499999981,
+      "max": 10.13081249999999
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 13.115103999999988,
+      "median": 13.468583499999994,
+      "max": 14.535438
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:input",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:input",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.08416649999998072,
+      "median": 0.08530199999999155,
+      "max": 0.0904589999999672
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:wasm",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:wasm",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 7.648375000000016,
+      "median": 7.919270999999981,
+      "max": 8.494729499999977
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:parse",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:parse",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 1.0442239999999998,
+      "median": 1.154944,
+      "max": 1.2823039999999999
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:encode",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:encode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 6.608896000000029,
+      "median": 6.799502749999993,
+      "max": 7.248928499999984
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:transfer",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:transfer",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 0.33691650000000095,
+      "median": 0.3464999999999847,
+      "max": 0.3548749999999927
+    },
+    {
+      "fixture": "consumer-m2",
+      "dialect": "bash",
+      "phase": "parse-with-positions-stages:decode",
+      "artifact": "canonical-candidate",
+      "contract": "parse-with-positions-stages:faithful:decode",
+      "status": "ok",
+      "processes": 8,
+      "observations": 240,
+      "count": 8,
+      "min": 4.9012500000000045,
+      "median": 5.063145999999989,
+      "max": 5.624770499999954
+    }
+  ]
+}

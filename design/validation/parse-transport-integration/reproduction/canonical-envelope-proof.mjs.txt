@@ -1,0 +1,5 @@
+// Resource failures must be small error-only responses before any File encoding.
+import assert from'node:assert/strict';import{callSyntax}from'../../packages/sh-ast/dist/wasm-instance.js';
+const source='echo $(( '+'a['.repeat(2000)+'1'+']'.repeat(2000)+' ))';const encode=s=>new TextEncoder().encode(s);
+for(const op of['parse','parse-with-positions'])for(let i=0;i<20;i++){const r=JSON.parse(callSyntax(op,encode(source),JSON.stringify({RecoverErrors:100000,KeepComments:true})));assert.deepEqual(Object.keys(r),['Error']);assert.equal(r.Error.Kind,'ParseDepthError');assert.equal(r.Error.MaxDepth,128);assert.equal(r.Error.Depth,129);assert.equal(JSON.parse(callSyntax('parse',encode('echo alive'),'{}')).File.Type,'File');}
+console.log('40 error-only faithful envelopes plus 40 subsequent parses passed');

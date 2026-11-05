@@ -1,7 +1,8 @@
 # sh-ast
 
 A synchronous TypeScript interface to the `syntax` package of
-[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1**. Parsing returns
+[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1 with maintained corrections**
+([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). These are the official Unicode sentinel backport and an owned, behavior-preserving change that scans consecutive comments iteratively. Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
@@ -92,9 +93,22 @@ unsupported constructed nodes whose requested bound panics upstream.
 `PrintError` retains ordinary upstream printer failures, and `PrintPanicError`
 retains panics from printing representable inputs. `WalkPanicError` represents
 upstream-equivalent traversal panics; callback exceptions retain their identity.
-All extend `ShAstError`. The conservative structural-depth guard throws
-`ShParseMaxDepthError` before potentially exhausting the WASM stack. It is a
-binding resource constraint and can reject deeply nested quoted or commented text.
+All extend `ShAstError`. Parsing enforces a 128-unit native node-nesting budget.
+The counter includes open statement, word, and expression work plus iterative
+construction of deep operator trees; it is not a stack-frame count or a total
+input-size limit. Exceeding it throws `ShParseMaxDepthError` with stable code
+`SH_AST_PARSE_MAX_DEPTH`, no partial File or position sidecar, and permits later
+parse calls on the same runtime. `maxDepth` is the native budget; the historical
+field name `estimatedDepth` now carries the rejected native work counter.
+Grammar errors found first retain their ordinary `ParseError` precedence.
+Flat comment runs are scanned iteratively, with no separate comment-count limit.
+
+This is an empirical binding resource constraint, not an upstream grammar rule
+or a universal stack-safety guarantee. Repeated direct and ordinary ESLint calls
+were tested on Node 22; arbitrary pre-existing JS recursion can consume the host
+stack margin. Valid syntax can exceed this budget. The policy does not establish
+safety for arbitrary constructed ASTs or other recursive operations
+([tracked separately](https://github.com/mike-north/sh-ast/issues/71)).
 Printing collects complete output; large trees or indentation widths can consume
 substantial memory and time. The parse guard does not bound arbitrary constructed
 printing inputs. No arbitrary writer, partial-output, or reusable-printer protocol
@@ -201,6 +215,19 @@ function isAndCommand(command: BinaryCmd): boolean {
 }
 const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500);
 ```
+
+`resolveArgv0` first searches the whole wrapper table for an exact name. An
+explicit path entry wins even if a plain-name entry appears earlier. Only when
+there is no exact match does an **absolute** path use its final segment
+(`/usr/bin/env`, `/usr//bin/env`); `chain` keeps the word as written. Relative
+paths (`./env`, `bin/env`) and trailing-slash paths have no such fallback, but
+can match names explicitly listed in a custom table. Custom plain names also
+acquire absolute-path aliases; path-only names do not alias other paths.
+
+Matching is a lexical analysis assumption: `PATH` and the filesystem are not
+consulted. Without an exact override, `/opt/mytools/env rm x` follows the `env`
+grammar and resolves to `rm`, even if that file is not the system utility. A
+dynamic word such as `"$dir/env"` is never matched.
 
 `resolveArgv0` follows only documented wrapper grammars. The default `env` and
 `sudo` entries accept assignment names beyond shell identifiers, such as `A-B`

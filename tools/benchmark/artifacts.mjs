@@ -31,7 +31,7 @@ export function prepare(root) {
   command('pnpm', ['--filter', 'sh-ast', 'check:api-report'], root);
   const cache = mkdtempSync(join(tmpdir(), 'sh-ast-benchmark-'));
   const artifacts = [];
-  for (const label of ['0.3.1', '0.4.0', '0.5.0', 'local']) {
+  for (const label of ['0.3.1', '0.4.0', '0.5.0', '0.7.0', 'local']) {
     const directory = join(cache, label);
     mkdirSync(directory);
     const local = label === 'local';

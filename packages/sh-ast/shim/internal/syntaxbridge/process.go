@@ -10,7 +10,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
+	"eslint-sh-shim/internal/parsebudget"
 	"eslint-sh-shim/internal/syntaxwire"
 	"mvdan.cc/sh/v3/syntax"
 )
@@ -208,29 +212,59 @@ func streamParse(source, options string, positions bool) []byte {
 	if err != nil {
 		return marshal(errorResponse("InputError", err.Error()))
 	}
-	file, parseError := syntax.NewParser(opts...).Parse(strings.NewReader(source), filename)
+	start := time.Now()
+	file, parseError := parsebudget.NewParser(opts...).Parse(strings.NewReader(source), filename)
+	lastParseDuration.Store(int64(time.Since(start)))
+	// A resource refusal has no partial-tree contract. Recognize it before any
+	// encoding or bounds traversal, which could repeat the work just refused.
+	if failure, ok := parseError.(syntax.ParseDepthError); ok {
+		return marshal(map[string]any{"Error": map[string]any{
+			"Kind": "ParseDepthError", "Message": failure.Error(),
+			"MaxDepth": failure.MaxDepth, "Depth": failure.Depth,
+		}})
+	}
 	return composeParse(file, parseError, positions)
+}
+
+// lastParseDuration is the wall time of the most recent upstream Parse call made
+// by streamParse, in nanoseconds. It is a diagnostic observation only: the
+// performance benchmark reads it after a parse to separate upstream parsing
+// from response encoding. No operation's result depends on it.
+var lastParseDuration atomic.Int64
+
+// LastParseDuration reports the most recent upstream Parse call's wall time.
+func LastParseDuration() time.Duration {
+	return time.Duration(lastParseDuration.Load())
 }
 
 // composeParse serializes syntax before invoking any bounds. Encoding failures
 // replace the entire response, including any partial bytes and parser diagnostics.
 // Parser errors retain their partial File but never receive a snapshot sidecar.
+// Every composed response is ASCII: streamed strings escape non-ASCII text and
+// the small marshaled failure is escaped the same way. The File's positions use
+// the compact tuple spelling of syntaxwire.AppendParsedFile.
+//
+// A successful response is composed in a retained scratch buffer and returned
+// as one exactly sized copy with one spare byte, so the WASM export can append
+// its NUL terminator without reallocating. Composing directly into a fresh slice
+// would instead copy the megabyte-scale response repeatedly as append grows it.
 func composeParse(file *syntax.File, parseError error, positions bool) []byte {
+	scratch := takeScratch()
+	defer releaseScratch(scratch)
 	const filePrefix = `{"File":`
 	var out []byte
 	var nodes []syntax.Node
 	var err error
-	if positions && parseError == nil {
-		out, nodes, err = syntaxwire.AppendWithOccurrences([]byte(filePrefix), file)
-	} else {
-		out, err = syntaxwire.Append([]byte(filePrefix), file)
-	}
+	out, nodes, err = syntaxwire.AppendParsedFile(append(scratch.buf[:0], filePrefix...), file, positions && parseError == nil)
+	scratch.buf = out
 	if err != nil {
 		return marshal(errorResponse("InternalError", err.Error()))
 	}
 	if parseError != nil {
 		failure, _ := json.Marshal(parseFailure(parseError))
-		errorOut := append([]byte(`{"Error":`), failure...)
+		errorOut := make([]byte, 0, len(`{"Error":`)+len(failure)+len(`,"File":`)+len(out)-len(filePrefix)+2)
+		errorOut = append(errorOut, `{"Error":`...)
+		errorOut = syntaxwire.AppendASCIIJSON(errorOut, failure)
 		errorOut = append(errorOut, `,"File":`...)
 		errorOut = append(errorOut, out[len(filePrefix):]...)
 		return append(errorOut, '}')
@@ -239,7 +273,48 @@ func composeParse(file *syntax.File, parseError error, positions bool) []byte {
 		out = append(out, ',')
 		out = appendCompactPositionSidecar(out, nodes)
 	}
-	return append(out, '}')
+	out = append(out, '}')
+	scratch.buf = out
+	result := make([]byte, len(out), len(out)+1)
+	copy(result, out)
+	return result
+}
+
+// responseScratch is reusable encoder storage. Its contents are meaningless
+// between calls; only its capacity carries over, sized by earlier responses.
+type responseScratch struct{ buf []byte }
+
+// maximumRetainedScratch bounds the memory kept alive between calls. Larger
+// responses still encode correctly; their oversized buffer is simply dropped.
+const maximumRetainedScratch = 32 << 20
+
+// retainedScratch holds at most one idle buffer. Concurrent callers (possible in
+// native tests, not in the single-threaded WASM runtime) receive fresh storage.
+var (
+	retainedScratchMu sync.Mutex
+	retainedScratch   *responseScratch
+)
+
+// takeScratch claims the idle buffer, or a new empty one if it is in use.
+func takeScratch() *responseScratch {
+	retainedScratchMu.Lock()
+	defer retainedScratchMu.Unlock()
+	scratch := retainedScratch
+	retainedScratch = nil
+	if scratch == nil {
+		scratch = &responseScratch{}
+	}
+	return scratch
+}
+
+// releaseScratch returns a buffer for reuse unless it exceeds the retention bound.
+func releaseScratch(scratch *responseScratch) {
+	if cap(scratch.buf) > maximumRetainedScratch {
+		return
+	}
+	retainedScratchMu.Lock()
+	retainedScratch = scratch
+	retainedScratchMu.Unlock()
 }
 
 // parseFailure preserves upstream structured fields and arbitrary message bytes.

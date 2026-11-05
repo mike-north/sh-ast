@@ -4,8 +4,7 @@
  * leaving ESLint locations, traversal, and policy to consumers.
  */
 import type { File, GoString, Node, SyntaxPos } from '../generated/syntax-types.js';
-import { ShInternalError } from './errors.js';
-import { assertParseDepthWithinLimit } from './parse-depth-guard.js';
+import { ShInternalError, ShParseMaxDepthError } from './errors.js';
 import { InputError, LangError, ParseError } from './syntax-errors.js';
 import {
   assertUnicodeString,
@@ -16,6 +15,7 @@ import {
   isSyntaxFile,
   isSyntaxNode,
   isSyntaxPos,
+  restoreSyntaxFile,
 } from './syntax-wire.js';
 import { callSyntax } from './wasm-instance.js';
 import { createPositionSnapshot, type ParsedFile } from './syntax-snapshot.js';
@@ -45,8 +45,9 @@ export interface ParseOptions {
 
 /**
  * Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First
- * use synchronously initializes WASM. The existing conservative nesting guard is
- * an explicit binding resource limit, not an upstream grammar restriction.
+ * use synchronously initializes WASM. Native node-nesting work has a fixed binding
+ * resource budget; exceeding it throws {@link ShParseMaxDepthError}. Subsequent
+ * parse calls remain usable after that refusal.
  * The returned File and its Node subtrees are plain syntax data: ordinary
  * structuredClone(node), without transfers, makes an independent editable copy
  * while retaining position values, byte strings, typed nils and internal aliases.
@@ -84,16 +85,16 @@ function invokeParse(
     throw new InputError('Source must be a string or Uint8Array');
   if (typeof source === 'string') assertUnicodeString(source);
   const bytes = typeof source === 'string' ? new TextEncoder().encode(source) : source;
-  // Decoding here supplies only an ASCII-structure risk estimate. The original
-  // bytes, including malformed UTF-8, are always sent unchanged to the parser.
-  assertParseDepthWithinLimit(
-    typeof source === 'string' ? source : new TextDecoder().decode(source),
-  );
   validateOptions(options);
-  const result = invoke(operation, bytes, encodeWire(options));
-  if (!isSyntaxFile(result.File))
+  const result = decodeResponse(operation, bytes, encodeWire(options));
+  // Parse responses, including partial Files beside parser errors, spell File
+  // positions compactly; one boundary validation also restores their records.
+  const file =
+    result.File === null ? null : restoreSyntaxFile(result.File) ? result.File : undefined;
+  throwResponseError(result, file);
+  if (!file)
     throw new ShInternalError('The syntax parser returned an incomplete or invalid File record');
-  return { file: result.File, response: result };
+  return { file, response: result };
 }
 
 /**
@@ -166,19 +167,59 @@ function positionOf(operation: 'pos' | 'end', node: Node): SyntaxPos {
 
 /** Decodes one complete response before translating its upstream failure kind. */
 function invoke(operation: string, payload: Uint8Array, options = '{}'): Record<string, unknown> {
+  const result = decodeResponse(operation, payload, options);
+  throwResponseError(
+    result,
+    result.File === null ? null : isSyntaxFile(result.File) ? result.File : undefined,
+  );
+  return result;
+}
+
+/** Calls the bridge and decodes its complete JSON response record. */
+function decodeResponse(
+  operation: string,
+  payload: Uint8Array,
+  options: string,
+): Record<string, unknown> {
   const result = decodeWire(callSyntax(operation, payload, options));
   if (!isRecord(result))
     throw new ShInternalError('The syntax bridge returned a non-record response');
+  return result;
+}
+
+/**
+ * Translates a response's Error member, if any, into the matching exception.
+ * file is the response's already validated File: null when absent from the
+ * bridge's perspective, undefined when missing or invalid.
+ */
+function throwResponseError(result: Record<string, unknown>, file: File | null | undefined): void {
   if (result.Error !== undefined) {
     const error = result.Error;
     if (!isRecord(error) || !isGoString(error.Message))
       throw new ShInternalError('The syntax bridge returned a malformed error');
     if (error.Kind === 'InputError') throw new InputError(error.Message);
+    if (error.Kind === 'ParseDepthError') {
+      // Resource responses contain no partial tree or snapshots. Validate the
+      // native work counters here without restricting the public constructor.
+      if (
+        typeof error.MaxDepth !== 'number' ||
+        !Number.isSafeInteger(error.MaxDepth) ||
+        error.MaxDepth <= 0 ||
+        typeof error.Depth !== 'number' ||
+        !Number.isSafeInteger(error.Depth) ||
+        error.Depth <= error.MaxDepth ||
+        Object.hasOwn(result, 'File') ||
+        Object.hasOwn(result, 'Positions') ||
+        Object.hasOwn(result, 'PositionErrors')
+      ) {
+        throw new ShInternalError('The syntax bridge returned a malformed parser resource refusal');
+      }
+      throw new ShParseMaxDepthError(error.MaxDepth, error.Depth);
+    }
     if (error.Kind === 'InternalError')
       throw new ShInternalError(
         typeof error.Message === 'string' ? error.Message : new TextDecoder().decode(error.Message),
       );
-    const file = result.File === null ? null : isSyntaxFile(result.File) ? result.File : undefined;
     if (file === undefined || !isGoString(error.Filename) || !isSyntaxPos(error.Pos))
       throw new ShInternalError('The syntax bridge dropped a partial result or error position');
     if (
@@ -216,5 +257,4 @@ function invoke(operation: string, payload: Uint8Array, options = '{}'): Record<
     }
     throw new ShInternalError('The syntax bridge returned an unknown or incomplete upstream error');
   }
-  return result;
 }

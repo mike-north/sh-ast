@@ -23,18 +23,17 @@ type boundFailures struct {
 // The caller must have successfully encoded the entire syntax graph first.
 func appendCompactPositionSidecar(dst []byte, nodes []syntax.Node) []byte {
 	dst = append(dst, `"Positions":[`...)
+	bounds := observeBounds(nodes)
 	var failures []boundFailures
-	for index, node := range nodes {
-		pos, posError := snapshotPosition(node, syntax.Node.Pos)
-		end, endError := snapshotPosition(node, syntax.Node.End)
+	for index, observed := range bounds {
 		if index > 0 {
 			dst = append(dst, ',')
 		}
-		dst = appendCompactBound(dst, pos)
+		dst = syntaxwire.AppendPositionTuple(dst, observed.pos)
 		dst = append(dst, ',')
-		dst = appendCompactBound(dst, end)
-		if posError != nil || endError != nil {
-			failures = append(failures, boundFailures{index, posError, endError})
+		dst = syntaxwire.AppendPositionTuple(dst, observed.end)
+		if observed.posError != nil || observed.endError != nil {
+			failures = append(failures, boundFailures{index, observed.posError, observed.endError})
 		}
 	}
 	dst = append(dst, `],"PositionErrors":[`...)
@@ -53,25 +52,51 @@ func appendCompactPositionSidecar(dst []byte, nodes []syntax.Node) []byte {
 	return append(dst, ']')
 }
 
-// appendCompactBound preserves every public coordinate and observation flag.
-func appendCompactBound(dst []byte, position syntaxwire.Position) []byte {
-	flags := 0
-	if position.IsValid {
-		flags |= 1
+// nodeBounds is one occurrence's pair of independent observations. A failed
+// bound keeps its zero Position and records the recovered panic text.
+type nodeBounds struct {
+	pos, end           syntaxwire.Position
+	posError, endError *string
+}
+
+// observeBounds calls Pos then End for each occurrence, in queue order, exactly
+// once each. Ordinary trees never panic, so calls run under one recovery scope
+// instead of one deferred recover per call; after a panic, observation resumes
+// with the next call, giving the same results and call sequence as recovering
+// each call separately.
+func observeBounds(nodes []syntax.Node) []nodeBounds {
+	bounds := make([]nodeBounds, len(nodes))
+	for call := 0; call < 2*len(nodes); {
+		call = observeBoundsFrom(nodes, bounds, call)
 	}
-	if position.IsRecovered {
-		flags |= 2
+	return bounds
+}
+
+// observeBoundsFrom performs calls starting at call (2*index for Pos, 2*index+1
+// for End) until all are done or one panics. A panic is recorded against the
+// failing call, and the returned index is the call after it.
+func observeBoundsFrom(nodes []syntax.Node, bounds []nodeBounds, call int) (next int) {
+	next = call
+	defer func() {
+		if caught := recover(); caught != nil {
+			message := fmt.Sprintf("upstream node position: %v", caught)
+			if next%2 == 0 {
+				bounds[next/2].posError = &message
+			} else {
+				bounds[next/2].endError = &message
+			}
+			next++
+		}
+	}()
+	for ; next < 2*len(nodes); next++ {
+		observed := &bounds[next/2]
+		if next%2 == 0 {
+			observed.pos = syntaxwire.ObservePosition(nodes[next/2].Pos())
+		} else {
+			observed.end = syntaxwire.ObservePosition(nodes[next/2].End())
+		}
 	}
-	if position.OffsetOverflow {
-		flags |= 4
-	}
-	dst = strconv.AppendUint(dst, uint64(position.Offset), 10)
-	dst = append(dst, ',')
-	dst = strconv.AppendUint(dst, uint64(position.Line), 10)
-	dst = append(dst, ',')
-	dst = strconv.AppendUint(dst, uint64(position.Col), 10)
-	dst = append(dst, ',')
-	return strconv.AppendInt(dst, int64(flags), 10)
+	return next
 }
 
 // appendSnapshotError keeps arbitrary failure bytes separate from coordinates.
@@ -80,16 +105,4 @@ func appendSnapshotError(dst []byte, failure *string) []byte {
 		return append(dst, "null"...)
 	}
 	return syntaxwire.AppendString(dst, *failure)
-}
-
-// snapshotPosition observes each method independently. Panic data never prevents
-// the other method from running, and a failed bound retains a zero placeholder.
-func snapshotPosition(node syntax.Node, read func(syntax.Node) syntax.Pos) (position syntaxwire.Position, failure *string) {
-	defer func() {
-		if caught := recover(); caught != nil {
-			message := fmt.Sprintf("upstream node position: %v", caught)
-			failure = &message
-		}
-	}()
-	return syntaxwire.ObservePosition(read(node)), nil
 }
