@@ -108,8 +108,10 @@ patch**. Go's `text/tabwriter` treats VT and FF as layout separators. Shells ret
 them as data in quoted strings, unquoted words, and here-document bodies; embedded
 comment bytes must also survive without turning the suffix into executable text.
 `writeLit` therefore protects VT and FF with the same tabwriter escape markers
-already used for literal horizontal tabs. Internal escape markers occupy no
-source column, including when `KeepPadding` measures the next comment's padding.
+already used for literal horizontal tabs. The deprecated `KeepPadding` option
+retains upstream's escape-marker column counting and shrinking-padding limit,
+tracked in [mvdan/sh#658](https://github.com/mvdan/sh/issues/658). `colCounter`
+is unmodified; ordinary and HT-only output must match the base byte-for-byte.
 When no horizontal tab is present, only VT/FF bytes are escaped, so physical
 newlines remain visible for comment alignment. Literals containing horizontal
 tabs retain upstream's whole-literal escaping and its known multiline alignment
@@ -119,6 +121,17 @@ the remaining body. Existing output without these bytes is unchanged.
 For here-document delimiters, `unquotedWord` must protect these same bytes while
 removing backslashes from an unquoted closing word. Otherwise its terminator
 would differ from the preserved opener and absorb later commands as body text.
+That protection matches the literal-writer boundary in upstream
+[0d47c1c](https://github.com/mvdan/sh/commit/0d47c1c), associated with
+[mvdan/sh#1446](https://github.com/mvdan/sh/issues/1446). This owned v3.13.1
+adaptation protects only VT/FF; it does not backport upstream's shared
+quote-removal helper or the issue's other parser/delimiter changes.
+
+Nested `<<-` documents inside a surrounding `<<-` command substitution retain a
+writer-ordering limit: VT/FF body data can still change, and nested delimiters
+can become data under Bash 3.2 or cause Bash 5.3 to reject the printed program.
+Ordinary and HT-only nested output is unchanged from the pinned base, including
+its pre-existing HT body defect. Tests document these limits against real Bash.
 
 Native and public printer regressions use explicit source expectations for single
 quotes, double quotes, literal and written-escape ANSI-C quotes, unquoted words,

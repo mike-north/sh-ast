@@ -39,18 +39,16 @@ func TestPrinterControlBytes(t *testing.T) {
 	}
 }
 
-// Control bytes must occupy the same source columns as ordinary bytes. Internal
-// tabwriter markers are not physical columns or physical newline boundaries.
+// Physical newline alignment is preserved separately from KeepPadding's known
+// escape-marker counting limit, tracked upstream at https://github.com/mvdan/sh/issues/658.
 func TestPrinterControlByteLayout(t *testing.T) {
 	for _, char := range []struct{ name, byte string }{{"VT", "\v"}, {"FF", "\f"}} {
 		t.Run(char.name+"/padding", func(t *testing.T) {
-			ordinary := "x='aqb'    # comment\ny='longword' # another\n"
-			source := strings.Replace(ordinary, "aqb", "a"+char.byte+"b", 1)
-			reference, _, _ := nativePrint(printFixture(t, ordinary), syntax.KeepPadding(true))
+			source := "x='a" + char.byte + "b'    # comment\ny='longword' # another\n"
 			first, kind, message := nativePrint(printFixture(t, source), syntax.KeepPadding(true))
 			second, _, _ := nativePrint(printFixture(t, first), syntax.KeepPadding(true))
-			if reference != ordinary || first != source || strings.Replace(first, char.byte, "q", 1) != reference || second != first || kind != "" {
-				t.Fatalf("reference=%q first=%q second=%q (%s %s); want source %q", reference, first, second, kind, message, source)
+			if first != "x='a"+char.byte+"b'  # comment\ny='longword' # another\n" || second != "x='a"+char.byte+"b' # comment\ny='longword' # another\n" || kind != "" {
+				t.Fatalf("first=%q second=%q (%s %s); want upstream KeepPadding limit", first, second, kind, message)
 			}
 		})
 		t.Run(char.name+"/multiline", func(t *testing.T) {
@@ -63,5 +61,18 @@ func TestPrinterControlByteLayout(t *testing.T) {
 				t.Fatalf("reference=%q first=%q second=%q (%s %s)", reference, first, second, kind, message)
 			}
 		})
+	}
+}
+
+// Compatibility includes the base's imperfect HT padding and tab indentation.
+func TestPrinterOrdinaryKeepPadding(t *testing.T) {
+	for _, fixture := range []struct{ source, expected string }{
+		{"if true; then\n  printf '%s' ok\nfi\n", "if true; then\n\tprintf '%s' ok\nfi\n"},
+		{"x='a\tb'    # comment\ny='longword' # another\n", "x='a\tb'  # comment\ny='longword' # another\n"},
+	} {
+		output, kind, message := nativePrint(printFixture(t, fixture.source), syntax.KeepPadding(true))
+		if output != fixture.expected || kind != "" {
+			t.Errorf("print=%q (%s %s); want baseline %q", output, kind, message, fixture.expected)
+		}
 	}
 }

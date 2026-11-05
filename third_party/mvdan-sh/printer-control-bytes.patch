@@ -1,23 +1,8 @@
 diff --git a/syntax/printer.go b/syntax/printer.go
-index 9015231..427ce7b 100644
+index 9015231..4c3213a 100644
 --- a/syntax/printer.go
 +++ b/syntax/printer.go
-@@ -190,10 +190,13 @@ type colCounter struct {
- 
- func (c *colCounter) addByte(b byte) {
- 	switch b {
-+	case tabwriter.Escape:
-+		// Escape markers are stripped by tabwriter and occupy no source column.
-+		return
- 	case '\n':
- 		c.column = 0
- 		c.lineStart = true
--	case '\t', ' ', tabwriter.Escape:
-+	case '\t', ' ':
- 	default:
- 		c.lineStart = false
- 	}
-@@ -379,9 +382,26 @@ func (p *Printer) writeLit(s string) {
+@@ -379,9 +379,26 @@ func (p *Printer) writeLit(s string) {
  	// If p.tabWriter is nil, this is the nested printer being used to print
  	// <<- heredoc bodies, so the parent printer will add the escape bytes
  	// later.
@@ -47,7 +32,7 @@ index 9015231..427ce7b 100644
  	}
  	p.w.WriteString(s)
  }
-@@ -964,6 +984,13 @@ func (p *Printer) unquotedWord(w *Word) {
+@@ -964,6 +981,13 @@ func (p *Printer) unquotedWord(w *Word) {
  		case *DblQuoted:
  			p.wordParts(wp.Parts, true)
  		case *Lit:
@@ -61,7 +46,7 @@ index 9015231..427ce7b 100644
  			for i := 0; i < len(wp.Value); i++ {
  				if b := wp.Value[i]; b == '\\' {
  					if i++; i < len(wp.Value) {
-@@ -973,6 +1000,9 @@ func (p *Printer) unquotedWord(w *Word) {
+@@ -973,6 +997,9 @@ func (p *Printer) unquotedWord(w *Word) {
  					p.w.WriteByte(b)
  				}
  			}
@@ -71,7 +56,7 @@ index 9015231..427ce7b 100644
  		}
  	}
  }
-@@ -1569,7 +1599,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
+@@ -1569,7 +1596,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
  		e.bufWriter.WriteByte('\t')
  	}
  	e.bufWriter.WriteByte(tabwriter.Escape)

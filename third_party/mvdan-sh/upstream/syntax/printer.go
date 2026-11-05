@@ -190,13 +190,10 @@ type colCounter struct {
 
 func (c *colCounter) addByte(b byte) {
 	switch b {
-	case tabwriter.Escape:
-		// Escape markers are stripped by tabwriter and occupy no source column.
-		return
 	case '\n':
 		c.column = 0
 		c.lineStart = true
-	case '\t', ' ':
+	case '\t', ' ', tabwriter.Escape:
 	default:
 		c.lineStart = false
 	}
