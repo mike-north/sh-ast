@@ -2343,10 +2343,13 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
 
 func (p *Parser) subshell(s *Stmt) {
 	sub := &Subshell{Lparen: p.pos}
-	old := p.preNested(subCmd)
+	// A subshell shares the surrounding pending heredocs, unlike a command
+	// substitution. Its next newline must still consume those document bodies.
+	old := p.quote
+	p.quote = subCmd
 	p.next()
 	sub.Stmts, sub.Last = p.followStmts("(", sub.Lparen)
-	p.postNested(old)
+	p.quote = old
 	sub.Rparen = p.matched(sub.Lparen, leftParen, rightParen)
 	s.Cmd = sub
 }

@@ -9,7 +9,8 @@
     "comment-iteration.patch": "81ec5b197f96c1c045ffa0068144d8131163be10f29c14f525a8e3e0ff3ed5ab",
     "upstream-nesting.patch": "1783a8ef3bf04ec0becff96f79564d48670ddacfe91c7de35eaeebd31bf66bba",
     "nesting-backport.patch": "261f018d887dd5dead9902b832d8b8be23420e7d5132a80c83b4f6f79e035fe1",
-    "binding-budget.patch": "e8017aa90ae6262b94e089e0a56ba0463b882412739dcd29658494805b583926"
+    "binding-budget.patch": "e8017aa90ae6262b94e089e0a56ba0463b882412739dcd29658494805b583926",
+    "subshell-heredoc.patch": "5e62c207729dd06ec7ac800e0088aa993994f532dc8a04f9756257a3d66d11d7"
   },
   "pristineFiles": {
     "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",
@@ -33,7 +34,8 @@
     "sentinel-backport.patch",
     "comment-iteration.patch",
     "nesting-backport.patch",
-    "binding-budget.patch"
+    "binding-budget.patch",
+    "subshell-heredoc.patch"
   ],
   "nestingUpstreamCommit": "0e0eb36bb6dd6a143842ffda25738e9a82dc915e"
 }
