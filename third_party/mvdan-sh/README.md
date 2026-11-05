@@ -1,7 +1,7 @@
 # mvdan/sh v3.13.1 with maintained corrections
 
 This directory contains the source closure used by the WASM shim, its tests, and
-the schema generator. It is **v3.13.1 plus six documented corrections**, not an
+the schema generator. It is **v3.13.1 plus seven documented corrections**, not an
 unmodified upstream release. No other grammar, AST, or printer change
 from newer releases is included.
 
@@ -143,6 +143,36 @@ command that must remain executable. They
 execute the original and printed fixtures in Bash against hand-written output
 values. The correction changes no parser, AST, or public API shape.
 
+## Owned tab-stripping here-document continuation correction
+
+`heredoc-continuation.patch` is maintained by sh-ast, **not an official upstream
+patch**. Bash removes leading tabs from the start of a logical line in an
+unquoted `<<-` body. After an odd trailing run of backslashes joins the next
+physical line, that next line's leading tabs are data. Adding indentation there
+changes the document's value.
+
+The correction is confined to `extraIndenter` and its construction. It tracks
+continuations only for unquoted delimiters and writes the following physical
+line verbatim, protecting its data from `text/tabwriter` while leaving its newline
+visible as a row boundary. This preserves alignment on subsequent logical lines.
+Even backslash runs, quoted or
+backslash-escaped delimiters, ordinary `<<` documents, and `<<-` bodies without
+continuations retain their previous layout. The indentation baseline still
+comes from the first independently indented line. Shared layout machinery,
+including `colCounter`, is unchanged. Space indentation and Minify already avoid
+this indenter and are unchanged.
+
+Public API tests assert hand-written printed programs and Bash stdout for
+continuation chains, zero/one/multiple following tabs, tabs-only lines, odd/even
+backslash runs, expansions, and the unaffected delimiter/document forms. The
+same fixtures run on Apple Bash 3.2 and Homebrew Bash 5.3. The existing nested
+`<<-` control-byte and delimiter limits described above remain; this correction
+does not expand the nested writer's responsibilities or repair KeepPadding's
+upstream layout limits. A named regression also records the existing internal-HT
+limit: ordinary `<<-` body lines can still have literal internal tabs converted
+to alignment spaces. The continuation correction retains that prior layout
+without extending the fix to this unusual combination.
+
 ## Provenance and verification
 
 `manifest.json` records the upstream module checksum, exact pristine SHA-256 for
@@ -159,9 +189,10 @@ node --test tools/verify-mvdan-backport.test.mjs
 ```
 
 The offline verifier checks inventory and patch digests, confirms both module
-replacements, and reverses all six patches in declared reverse application order:
-owned printer literal-byte, owned subshell here-document, binding budget, official nesting, owned comment
-iteration, official sentinel.
+replacements, and reverses all seven patches in declared reverse application order:
+owned heredoc continuation, owned printer literal-byte, owned subshell
+here-document, binding budget, official nesting, owned comment iteration, official
+sentinel.
 It then hashes every reconstructed pristine file in an isolated directory. Tests
 reject missing, reordered, altered patches, undeclared source changes, added files,
 missing licenses, and disconnected module replacements. CI verifies provenance

@@ -11,7 +11,8 @@
     "nesting-backport.patch": "261f018d887dd5dead9902b832d8b8be23420e7d5132a80c83b4f6f79e035fe1",
     "binding-budget.patch": "e8017aa90ae6262b94e089e0a56ba0463b882412739dcd29658494805b583926",
     "subshell-heredoc.patch": "5e62c207729dd06ec7ac800e0088aa993994f532dc8a04f9756257a3d66d11d7",
-    "printer-control-bytes.patch": "5b43a384faf72e6f37c1623862c7d80105bdc2935867fa010e211bff7898a70e"
+    "printer-control-bytes.patch": "5b43a384faf72e6f37c1623862c7d80105bdc2935867fa010e211bff7898a70e",
+    "heredoc-continuation.patch": "49979ba2076fa3169ae8ef18680c0be804bb4a805af01cc044f9640a262137e9"
   },
   "pristineFiles": {
     "LICENSE": "ce63850f77649f00d1394045e2794ffb09a5596beabac51c9548edd958845d7c",
@@ -37,7 +38,8 @@
     "nesting-backport.patch",
     "binding-budget.patch",
     "subshell-heredoc.patch",
-    "printer-control-bytes.patch"
+    "printer-control-bytes.patch",
+    "heredoc-continuation.patch"
   ],
   "nestingUpstreamCommit": "0e0eb36bb6dd6a143842ffda25738e9a82dc915e"
 }
