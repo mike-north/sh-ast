@@ -40,23 +40,29 @@ export interface WrapperSpec {
    * Matched only against a `static: true` word; see {@link WrapperSpec}'s
    * doc comment.
    *
-   * A word is recognized in exactly two ways:
+   * Matching first searches the entire table for an exact name. Only when
+   * no exact entry exists does it try an absolute path's final segment:
    *
    * 1. Its entire resolved text (after quote/escape removal) equals one of
-   *    `names`: `env`, or a path a caller listed verbatim.
+   *    `names`: `env`, or a path a caller listed verbatim. An exact path
+   *    entry takes precedence over a plain-name entry even if listed later.
    * 2. It is an **absolute path** (starts with `/`) whose final segment
    *    equals one of `names`: `/usr/bin/env`, `/usr/bin/sudo`, `/opt/x/nice`
    *    and `/usr//bin/env` resolve as `env`, `sudo` and `nice`. The chain
    *    keeps the word as written, so a consumer still sees the path.
    *
-   * A **relative path is never followed**, whether or not it ends in a
-   * known name: `./env`, `bin/env` and `../sudo` run whatever file sits at
-   * that location relative to the working directory, which need not be the
-   * utility. A path with a trailing slash has no final segment and never
-   * matches. This is lexical only: `PATH` is not consulted and the
-   * filesystem is not read, so an absolute path to an unrelated executable
-   * that happens to be called `env` is still treated as `env`. A word
-   * with an expansion (`"$dir/env"`) is not `static` and is never matched.
+   * Relative paths and paths with a trailing slash do not use the
+   * final-segment fallback. They can still match an explicitly listed name,
+   * such as `./with-retry` or `/opt/with-retry/`. Custom plain names also
+   * acquire absolute-path aliases; a path-only name does not acquire aliases
+   * for other paths with the same final segment.
+   *
+   * This is a lexical analysis assumption, not executable identity:
+   * `PATH` is not consulted and the filesystem is not read. Without an
+   * exact override, an unrelated executable named `/opt/mytools/env` uses
+   * the `env` entry's grammar. The chain preserves the original path so
+   * callers can apply their own policy. A word with an expansion
+   * (`"$dir/env"`) is not `static` and is never matched.
    */
   readonly names: readonly string[];
 

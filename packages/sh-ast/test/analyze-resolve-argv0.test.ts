@@ -626,6 +626,70 @@ describe('resolveArgv0 — wrappers named by absolute path are followed (issue #
     const resolution = resolveArgv0(site('./with-retry rm x'), { transparentWrappers: custom });
     expect(chainSummary(resolution)).toEqual(['./with-retry', 'rm']);
   });
+
+  // Exact entries select a caller's grammar before any basename fallback,
+  // even when the fallback entry appears earlier in the table.
+  it.each([false, true])('an exact path grammar wins with exact-first=%s', (exactFirst) => {
+    const generic: WrapperSpec = { names: ['with-retry'], noArgFlags: ['-q'] };
+    const exact: WrapperSpec = { names: ['/opt/with-retry'], stopsChainFlags: ['-q'] };
+    const wrappers: readonly WrapperSpec[] = exactFirst ? [exact, generic] : [generic, exact];
+    const resolution = resolveArgv0(site('/opt/with-retry -q task'), {
+      transparentWrappers: wrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['/opt/with-retry']);
+    expect(resolution.chainIndices).toEqual([0]);
+    expect(resolution.effective).toEqual({ static: true, text: '/opt/with-retry' });
+  });
+
+  it('an explicitly listed relative path uses its own operand grammar', () => {
+    const wrappers: readonly WrapperSpec[] = [{ names: ['./with-retry'], argFlags: ['-n'] }];
+    const resolution = resolveArgv0(site('./with-retry -n 3 task'), {
+      transparentWrappers: wrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['./with-retry', 'task']);
+    expect(resolution.chainIndices).toEqual([0, 3]);
+    expect(resolution.effective).toEqual({ static: true, text: 'task' });
+  });
+
+  // Names express a lexical analysis assumption, not executable validity.
+  // A caller can explicitly supply a spelling that has no basename match.
+  it('an explicitly listed trailing-slash name matches exactly', () => {
+    const wrappers: readonly WrapperSpec[] = [{ names: ['/opt/with-retry/'] }];
+    const resolution = resolveArgv0(site('/opt/with-retry/ task'), {
+      transparentWrappers: wrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['/opt/with-retry/', 'task']);
+    expect(resolution.chainIndices).toEqual([0, 1]);
+    expect(resolution.effective).toEqual({ static: true, text: 'task' });
+  });
+
+  it('a custom plain name acquires absolute aliases but no relative or trailing-slash aliases', () => {
+    const wrappers: readonly WrapperSpec[] = [{ names: ['with-retry'], argFlags: ['-n'] }];
+    const resolution = resolveArgv0(site('/opt/tools/with-retry -n 3 task'), {
+      transparentWrappers: wrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['/opt/tools/with-retry', 'task']);
+    expect(resolution.chainIndices).toEqual([0, 3]);
+    expect(resolution.effective).toEqual({ static: true, text: 'task' });
+    for (const command of ['./with-retry', 'bin/with-retry', '/opt/tools/with-retry/']) {
+      const unmatched = resolveArgv0(site(`${command} task`), {
+        transparentWrappers: wrappers,
+      });
+      expect(chainSummary(unmatched)).toEqual([command]);
+      expect(unmatched.chainIndices).toEqual([0]);
+      expect(unmatched.effective).toEqual({ static: true, text: command });
+    }
+  });
+
+  it('a custom path-only name does not acquire other paths with the same basename', () => {
+    const wrappers: readonly WrapperSpec[] = [{ names: ['/opt/with-retry'] }];
+    const resolution = resolveArgv0(site('/other/with-retry task'), {
+      transparentWrappers: wrappers,
+    });
+    expect(chainSummary(resolution)).toEqual(['/other/with-retry']);
+    expect(resolution.chainIndices).toEqual([0]);
+    expect(resolution.effective).toEqual({ static: true, text: '/other/with-retry' });
+  });
 });
 
 describe('resolveArgv0 — review fix: truncated/malformed invocations resolve to the wrapper itself', () => {

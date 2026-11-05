@@ -203,14 +203,18 @@ function isAndCommand(command: BinaryCmd): boolean {
 const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500);
 ```
 
-`resolveArgv0` recognizes a wrapper by its exact name (`env`) or by an
-**absolute** path whose final segment is the name (`/usr/bin/env`,
-`/usr//bin/env`); `chain` keeps the word as written. A relative path (`./env`,
-`bin/env`) is never followed, because it runs whatever file is at that location,
-and neither is a dynamic word such as `"$dir/env"`. Matching is lexical: `PATH`
-and the filesystem are not consulted, so any absolute path ending in a wrapper
-name is followed even if that file is not the system utility (`/opt/mytools/env
-rm x` resolves to `rm`).
+`resolveArgv0` first searches the whole wrapper table for an exact name. An
+explicit path entry wins even if a plain-name entry appears earlier. Only when
+there is no exact match does an **absolute** path use its final segment
+(`/usr/bin/env`, `/usr//bin/env`); `chain` keeps the word as written. Relative
+paths (`./env`, `bin/env`) and trailing-slash paths have no such fallback, but
+can match names explicitly listed in a custom table. Custom plain names also
+acquire absolute-path aliases; path-only names do not alias other paths.
+
+Matching is a lexical analysis assumption: `PATH` and the filesystem are not
+consulted. Without an exact override, `/opt/mytools/env rm x` follows the `env`
+grammar and resolves to `rm`, even if that file is not the system utility. A
+dynamic word such as `"$dir/env"` is never matched.
 
 `resolveArgv0` follows only documented wrapper grammars. The default `env` and
 `sudo` entries accept assignment names beyond shell identifiers, such as `A-B`
