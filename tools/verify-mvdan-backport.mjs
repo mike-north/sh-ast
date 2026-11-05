@@ -36,13 +36,19 @@ export function verifyBackport(root) {
   if (
     manifest.module !== 'mvdan.cc/sh/v3' ||
     manifest.version !== 'v3.13.1' ||
-    manifest.upstreamCommit !== 'dccf23ff9b34b866c92fa3c6c66e0cd00f4ad159'
+    manifest.upstreamCommit !== 'dccf23ff9b34b866c92fa3c6c66e0cd00f4ad159' ||
+    manifest.nestingUpstreamCommit !== '0e0eb36bb6dd6a143842ffda25738e9a82dc915e'
   ) {
     throw new Error('Unexpected upstream backport identity');
   }
-  // Order is semantic: the owned iteration correction is based on the official
-  // sentinel backport, and must be removed before reconstructing pristine source.
-  const appliedPatches = ['sentinel-backport.patch', 'comment-iteration.patch'];
+  // Each owned correction is reviewed against the preceding official source.
+  // Reverse the entire declared chain before comparing pristine release bytes.
+  const appliedPatches = [
+    'sentinel-backport.patch',
+    'comment-iteration.patch',
+    'nesting-backport.patch',
+    'binding-budget.patch',
+  ];
   if (JSON.stringify(manifest.appliedPatches) !== JSON.stringify(appliedPatches)) {
     throw new Error('Unexpected maintained patch order');
   }
@@ -93,5 +99,7 @@ export function verifyBackport(root) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyBackport(fileURLToPath(new URL('../', import.meta.url)));
-  console.log('Verified mvdan/sh v3.13.1 plus the Unicode backport and owned comment iteration.');
+  console.log(
+    'Verified mvdan/sh v3.13.1 with Unicode, comment iteration, and native budget corrections.',
+  );
 }

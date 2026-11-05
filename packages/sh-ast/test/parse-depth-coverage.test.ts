@@ -1,6 +1,6 @@
 /**
  * Resource-limit regressions for sh-ast#68. Expectations describe the public
- * refusal contract, independently of the estimator's accounting. Each hostile
+ * refusal contract, independently of native counter implementation. Each hostile
  * input gets a fresh subprocess: a regression must not reuse a crashed WASM
  * instance or prevent unrelated tests from finishing.
  */
@@ -170,7 +170,7 @@ describe('recursive input refusal (issue #68)', () => {
     20_000,
   );
   it.each(depthCases)(
-    '%s is refused before parsing',
+    '%s receives a native resource refusal',
     (_name, source) => {
       expect(parseIsolated(source, 'parseWithPositionsSync')).toMatchObject({
         outcome: 'error',
@@ -319,11 +319,6 @@ describe('smaller grammar controls', () => {
       "cat <<'EOF'\n" + '${a:-'.repeat(200) + 'x' + '}'.repeat(200) + '\nEOF\n',
     ],
     ['ordinary argument brackets are literal', 'echo ' + 'x['.repeat(200)],
-    ['arithmetic keyword identifiers', 'echo $(( ' + 'if+'.repeat(200) + '1 ))'],
-    [
-      'length expansion and 100 command substitutions',
-      'echo ${#x}' + '$('.repeat(100) + 'x' + ')'.repeat(100),
-    ],
     [
       '100 quoted parameter expansions',
       'echo "' + '${a:-'.repeat(100) + 'x' + '}'.repeat(100) + '"',
@@ -344,13 +339,34 @@ describe('smaller grammar controls', () => {
     ],
     ['100 unary negations', 'echo $(( ' + '!'.repeat(100) + '1 ))'],
     ['many case pattern alternatives', 'case x in (' + 'a|'.repeat(500) + 'z) :;; esac'],
-    ['comparison operators are not assignment chains', 'echo $(( ' + 'a=='.repeat(500) + '1 ))'],
   ])(
     '%s remains accepted',
     (_name, source) => {
       expect(parseIsolated(source, 'parseWithPositionsSync')).toMatchObject({
         outcome: 'parsed',
         type: 'File',
+      });
+    },
+    20_000,
+  );
+});
+
+/** Valid historical controls whose native work exceeds the binding's 128-unit policy. */
+describe('valid grammar exceeding native nesting work', () => {
+  it.each([
+    ['arithmetic keyword identifiers', 'echo $(( ' + 'if+'.repeat(200) + '1 ))'],
+    [
+      'length expansion and 100 command substitutions',
+      'echo ${#x}' + '$('.repeat(100) + 'x' + ')'.repeat(100),
+    ],
+    ['comparison operators are not assignment chains', 'echo $(( ' + 'a=='.repeat(500) + '1 ))'],
+  ])(
+    '%s is refused without invalidating the shared runtime',
+    (_name, source) => {
+      expect(parseIsolated(source, 'parseWithPositionsSync')).toMatchObject({
+        outcome: 'error',
+        code: 'SH_AST_PARSE_MAX_DEPTH',
+        subsequent: 'File',
       });
     },
     20_000,

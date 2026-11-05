@@ -114,9 +114,9 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never ha
 
 </td><td>
 
-A whole-file parse operation refused its preliminary estimate of recursive parser work before entering WASM. The estimate combines structural nesting with selected recursive operator chains, including arithmetic. Catching this refusal leaves the parser untouched and available for a subsequent input.
+A whole-file parse operation exceeded the binding's native node-nesting budget. The maintained parser counts statement, word, and expression work, including iterative construction of deep operator trees. A refusal returns no partial File or position snapshot and leaves subsequent parse calls available.
 
-This is a binding resource constraint, not an upstream grammar restriction. The lexical heuristic can reject unusually large valid inputs and is not a complete bound on parser or serializer recursion. Its empirical margin assumes an ordinary caller stack; arbitrary pre-existing JS recursion can exhaust that margin. Estimated units are not a count of actual native or JS stack frames.
+This is a binding resource constraint, not an upstream grammar restriction. The fixed 128-unit policy can refuse valid deeply nested input. Units describe native node work, not actual Go/JavaScript frames or necessarily final AST depth. The empirical margin assumes an ordinary caller stack; arbitrary pre-existing JavaScript recursion can exhaust it. This does not establish safety for arbitrary caller-constructed trees or other recursive operations.
 
 
 </td></tr>
@@ -212,7 +212,7 @@ Computes a node's starting position from its current fields using upstream's Pos
 
 </td><td>
 
-Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
+Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. Native node-nesting work has a fixed binding resource budget; exceeding it throws [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->. Subsequent parse calls remain usable after that refusal. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
 
 
 </td></tr>

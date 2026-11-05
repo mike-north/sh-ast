@@ -31,13 +31,66 @@ function fixture(action) {
 }
 
 test('accepts precisely the reviewed source closure and patch', () => {
+  const manifest = JSON.parse(
+    readFileSync(join(root, 'third_party/mvdan-sh/manifest.json'), 'utf8'),
+  );
+  assert.deepEqual(manifest.appliedPatches, [
+    'sentinel-backport.patch',
+    'comment-iteration.patch',
+    'nesting-backport.patch',
+    'binding-budget.patch',
+  ]);
   assert.doesNotThrow(() => verifyBackport(root));
+});
+
+test('rejects arithmetic parser drift outside the declared nesting corrections', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/upstream/syntax/parser_arithm.go');
+    writeFileSync(path, `${readFileSync(path, 'utf8')}\n// unreviewed arithmetic change\n`);
+    assert.throws(() => verifyBackport(directory), /pristine.*syntax\/parser_arithm.go/);
+  });
+});
+
+for (const name of ['nesting-backport.patch', 'binding-budget.patch']) {
+  test(`requires the ${name} digest`, () => {
+    fixture((directory) => {
+      const path = join(directory, 'third_party/mvdan-sh/manifest.json');
+      const manifest = JSON.parse(readFileSync(path, 'utf8'));
+      delete manifest.patches[name];
+      writeFileSync(path, JSON.stringify(manifest));
+      assert.throws(() => verifyBackport(directory), /patch digest/);
+    });
+  });
+  test(`rejects changed ${name} bytes`, () => {
+    fixture((directory) => {
+      writeFileSync(join(directory, 'third_party/mvdan-sh', name), 'unreviewed patch\n');
+      assert.throws(() => verifyBackport(directory), /patch digest/);
+    });
+  });
+}
+
+test('rejects interchanging the official nesting patch and owned binding adaptation', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/manifest.json');
+    const manifest = JSON.parse(readFileSync(path, 'utf8'));
+    manifest.appliedPatches = [
+      'sentinel-backport.patch',
+      'comment-iteration.patch',
+      'binding-budget.patch',
+      'nesting-backport.patch',
+    ];
+    writeFileSync(path, JSON.stringify(manifest));
+    assert.throws(() => verifyBackport(directory), /patch order/);
+  });
 });
 
 test('rejects a source edit outside the official backport', () => {
   fixture((directory) => {
     const path = join(directory, 'third_party/mvdan-sh/upstream/syntax/parser.go');
-    writeFileSync(path, `${readFileSync(path, 'utf8')}\n// unreviewed change\n`);
+    writeFileSync(
+      path,
+      readFileSync(path, 'utf8').replace('package syntax', '// unreviewed change\npackage syntax'),
+    );
     assert.throws(() => verifyBackport(directory), /pristine.*syntax\/parser.go/);
   });
 });

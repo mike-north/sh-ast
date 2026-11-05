@@ -4,7 +4,7 @@
 
 ## ShParseMaxDepthError.maxDepth property
 
-Fixed maximum estimated parser-work units; not caller-configurable.
+Fixed maximum native node-nesting units; not caller-configurable.
 
 **Signature:**
 

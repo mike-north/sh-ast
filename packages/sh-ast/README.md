@@ -93,18 +93,22 @@ unsupported constructed nodes whose requested bound panics upstream.
 `PrintError` retains ordinary upstream printer failures, and `PrintPanicError`
 retains panics from printing representable inputs. `WalkPanicError` represents
 upstream-equivalent traversal panics; callback exceptions retain their identity.
-All extend `ShAstError`. A preliminary lexical estimate refuses more than 150
-recursive parser-work units with `ShParseMaxDepthError`, before entering WASM.
-It counts nesting and selected arithmetic/operator chains; literal quoted text,
-quoted heredoc bodies, and comments do not themselves add nesting. Flat comment
-runs are scanned iteratively, with no separate comment-count limit.
+All extend `ShAstError`. Parsing enforces a 128-unit native node-nesting budget.
+The counter includes open statement, word, and expression work plus iterative
+construction of deep operator trees; it is not a stack-frame count or a total
+input-size limit. Exceeding it throws `ShParseMaxDepthError` with stable code
+`SH_AST_PARSE_MAX_DEPTH`, no partial File or position sidecar, and permits later
+parse calls on the same runtime. `maxDepth` is the native budget; the historical
+field name `estimatedDepth` now carries the rejected native work counter.
+Grammar errors found first retain their ordinary `ParseError` precedence.
+Flat comment runs are scanned iteratively, with no separate comment-count limit.
 
 This is an empirical binding resource constraint, not an upstream grammar rule
-or a universal stack-safety guarantee. The limit retains margin in the measured
-Node 22 / ESLint 10 ordinary parse call path. Deep pre-existing JS recursion can
-consume that margin, and the heuristic does not cover every serialization-depth
-case ([tracked separately](https://github.com/mike-north/sh-ast/issues/71)).
-Unusually large valid syntax may still be refused.
+or a universal stack-safety guarantee. Repeated direct and ordinary ESLint calls
+were tested on Node 22; arbitrary pre-existing JS recursion can consume the host
+stack margin. Valid syntax can exceed this budget. The policy does not establish
+safety for arbitrary constructed ASTs or other recursive operations
+([tracked separately](https://github.com/mike-north/sh-ast/issues/71)).
 Printing collects complete output; large trees or indentation widths can consume
 substantial memory and time. The parse guard does not bound arbitrary constructed
 printing inputs. No arbitrary writer, partial-output, or reusable-printer protocol

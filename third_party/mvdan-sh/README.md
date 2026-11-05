@@ -1,8 +1,8 @@
 # mvdan/sh v3.13.1 with maintained corrections
 
 This directory contains the source closure used by the WASM shim, its tests, and
-the schema generator. It is **v3.13.1 plus two documented corrections**, not an
-unmodified upstream release. No other grammar, AST, printer, or public API change
+the schema generator. It is **v3.13.1 plus four documented corrections**, not an
+unmodified upstream release. No other grammar, AST, or printer change
 from newer releases is included.
 
 The original [BSD license](upstream/LICENSE) and source copyright notices are
@@ -62,12 +62,36 @@ pristine v3.13.1 observations, including reader failures and refill boundaries.
 Public tests retain all 50,000 comments and their positions. The correction does
 not remove recursive parsing of nested grammar or recursive AST serialization.
 
+## Official nesting backport and owned binding budget
+
+[Official commit 0e0eb36bb6dd6a143842ffda25738e9a82dc915e](https://github.com/mvdan/sh/commit/0e0eb36bb6dd6a143842ffda25738e9a82dc915e)
+counts open statement, word, and expression work, including iterative construction
+of deep operator trees. `upstream-nesting.patch` records the full official patch;
+`nesting-backport.patch` contains its unchanged production hunks for `parser.go`
+and `parser_arithm.go`. Upstream test hunks depend on its test corpus; local tests
+instead assert explicit boundaries, grammar controls, and repeated parser reuse.
+
+`binding-budget.patch` is owned by sh-ast, **not an official upstream patch**.
+It adds `ParseNestingLimit`: zero preserves the official 10,000-unit default;
+a positive value selects a binding budget that survives parser reset. A separate
+shared shim factory fixes both faithful and retained legacy parse routes at 128.
+No TypeScript option exposes this policy. Native units are neither stack frames
+nor total tokens, and valid syntax can exceed the binding budget.
+
+The typed `ParseDepthError` follows ordinary terminal error/EOF propagation, so
+recovery options cannot resume parsing after resource refusal. `Parse` returns no
+partial File for this error. The faithful bridge emits only its resource envelope
+before composition, node encoding, or snapshots; the legacy bridge keeps its
+existing error-only response. Both routes remain usable after refusal. This is
+an empirical ordinary-caller bound, not arbitrary caller-stack or constructed-AST
+safety. The comment-iteration correction remains independently maintained.
+
 ## Provenance and verification
 
 `manifest.json` records the upstream module checksum, exact pristine SHA-256 for
-every included file, the upstream fix commit, and all patch digests, with the
+every included file, the upstream fix commits, and all patch digests, with the
 application order explicit. The baseline
-is the Go module `mvdan.cc/sh/v3@v3.13.1`. Files other than the two patched source
+is the Go module `mvdan.cc/sh/v3@v3.13.1`. Files other than the three patched source
 files are byte-for-byte copies of that baseline.
 
 Run from the repository root:
@@ -78,18 +102,17 @@ node --test tools/verify-mvdan-backport.test.mjs
 ```
 
 The offline verifier checks inventory and patch digests, confirms both module
-replacements, reverses the owned iteration patch and then the official backport
-in an isolated temporary directory, and hashes
-the reconstructed pristine files. It rejects added files as well as modified or
-missing files. Tests deliberately alter source, add an extra Go file, remove the
-license, change either applied patch, remove a patch from the declared order,
-and disconnect the generator replacement. CI runs this
-verification before using the source. Builds never download or apply a patch,
-and never mutate the shared Go module cache.
+replacements, and reverses all four patches in declared reverse application order:
+binding budget, official nesting, owned comment iteration, official sentinel.
+It then hashes every reconstructed pristine file in an isolated directory. Tests
+reject missing, reordered, altered patches, undeclared source changes, added files,
+missing licenses, and disconnected module replacements. CI verifies provenance
+before using the source. Builds never download or apply patches and never mutate
+the shared Go module cache.
 
 For a future dependency update, audit the upstream schema and grammar changes,
 regenerate artifacts, and run the full suites before changing the pin. Once an
-approved upstream version includes both corrections, remove both replacements,
-this directory, and its verifier together. If only one correction is upstreamed,
-rebase and document the remaining owned patch explicitly. Do not fold unrelated
-fixes into either patch or silently change the baseline.
+approved upstream version includes all required corrections, remove both replacements,
+this directory, and its verifier together. If only some corrections are upstreamed,
+rebase and document the remaining patches explicitly. Do not fold unrelated
+fixes into any patch or silently change the baseline.

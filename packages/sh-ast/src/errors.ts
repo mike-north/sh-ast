@@ -65,33 +65,34 @@ export class ShAnalyzeMaxDepthError extends ShAstError {
 }
 
 /**
- * A whole-file parse operation refused its preliminary estimate of recursive
- * parser work before entering WASM. The estimate combines structural nesting
- * with selected recursive operator chains, including arithmetic. Catching this
- * refusal leaves the parser untouched and available for a subsequent input.
+ * A whole-file parse operation exceeded the binding's native node-nesting budget.
+ * The maintained parser counts statement, word, and expression work, including
+ * iterative construction of deep operator trees. A refusal returns no partial
+ * File or position snapshot and leaves subsequent parse calls available.
  *
  * This is a binding resource constraint, not an upstream grammar restriction.
- * The lexical heuristic can reject unusually large valid inputs and is not a
- * complete bound on parser or serializer recursion. Its empirical margin assumes
- * an ordinary caller stack; arbitrary pre-existing JS recursion can exhaust that
- * margin. Estimated units are not a count of actual native or JS stack frames.
+ * The fixed 128-unit policy can refuse valid deeply nested input. Units describe
+ * native node work, not actual Go/JavaScript frames or necessarily final AST
+ * depth. The empirical margin assumes an ordinary caller stack; arbitrary
+ * pre-existing JavaScript recursion can exhaust it. This does not establish
+ * safety for arbitrary caller-constructed trees or other recursive operations.
  *
  * @public
  */
 export class ShParseMaxDepthError extends ShAstError {
   readonly code = 'SH_AST_PARSE_MAX_DEPTH';
-  /** Fixed maximum estimated parser-work units; not caller-configurable. */
+  /** Fixed maximum native node-nesting units; not caller-configurable. */
   readonly maxDepth: number;
   /**
-   * The conservatively estimated nesting depth that tripped the guard.
-   * Not necessarily `text`'s "true" nesting depth under a real parse — see
-   * {@link ShParseMaxDepthError}'s doc comment — only ever `> maxDepth`.
+   * Native node work at the rejected entry, greater than {@link ShParseMaxDepthError.maxDepth}.
+   * The historical field name is retained for compatibility; the value is no
+   * longer a lexical estimate and is not a count of runtime stack frames.
    */
   readonly estimatedDepth: number;
 
   constructor(maxDepth: number, estimatedDepth: number) {
     super(
-      `parseSync: input's estimated recursive parser work (${String(estimatedDepth)}+ units) exceeds the maximum this bridge accepts (${String(maxDepth)}) — refusing this input before entering the WASM parser.`,
+      `parseSync: native parser node work (${String(estimatedDepth)} units) exceeds the maximum this bridge accepts (${String(maxDepth)}) — refusing this input without a partial result.`,
     );
     this.name = 'ShParseMaxDepthError';
     this.maxDepth = maxDepth;
