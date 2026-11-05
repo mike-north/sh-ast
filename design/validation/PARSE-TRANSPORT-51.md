@@ -2,7 +2,9 @@
 
 ## Contract and boundaries
 
-Baseline is `1b6f23d` (sh-ast 0.7.0 runtime). For supported inputs, the public result of `parseSync` and
+The original prototype baseline was `1b6f23d` (sh-ast 0.7.0 runtime). Final
+canonical integration and current-machine acceptance are recorded in
+[the integration report](parse-transport-integration/README.md). For supported inputs, the public result of `parseSync` and
 `parseWithPositionsSync` is unchanged: the same records, member order, `GoString`
 values (strings and `Uint8Array`), typed nils, frozen position snapshots and
 error classes, messages, fields and precedence. The record shape, the `Type`
@@ -146,7 +148,7 @@ Supported-input compatibility is checked against this accepted main, not a
 published parser predating its corrections. The identity corpus now includes
 U+0080/U+0081, a quoted Unicode heredoc crossing the refill boundary, accepted and
 refused native limits, arithmetic subscripts, and a 10,001-comment run. All 429
-cases match in the diagnostic integrated build, including represented member
+cases match in isolated packages of the canonical integrated build, including represented member
 order, bytes, errors, and snapshot lookups. This corpus does not establish every
 possible alias, descriptor, or malformed caller-graph behavior; dedicated public
 and native tests remain part of acceptance.
@@ -170,3 +172,16 @@ artifact: exact-source Linux adoption and final canonical gates precede the
 separately frozen performance campaign.
 
 The one-time base refresh from `4ecb0e6` to `87da64f` adds the accepted wrapper documentation/tests; parser-side JavaScript, Go source, and canonical WASM are identical. The earlier heap sensitivity check therefore retains the same native source identity. Final identity and performance comparisons use `87da64f`.
+
+## Final canonical campaign
+
+The [frozen canonical campaign](parse-transport-integration/README.md) compares
+accepted main `87da64f` with measured candidate `1431a4f`. On Node 22.22.1 and
+Apple M5 Max, parse falls from 22.066062 to 7.776615 ms and positions parsing
+from 27.218437 to 11.768500 ms (medians of eight process medians). Both aggregate
+targets pass; positions gain is smaller than parse gain in two of eight paired
+rounds. All raw observations, ranges, misses, provenance, and reproduction steps
+are retained. These results do not establish an M2, Linux-VM, or downstream
+ESLint end-to-end latency target. Separate stage diagnostics report unsupported
+baseline parse/encode splits explicitly; encoder remainder includes native/call
+overhead.

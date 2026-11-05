@@ -13,9 +13,12 @@ export const stageNames = ['input', 'wasm', 'parse', 'encode', 'transfer', 'deco
 /**
  * Converts the timestamps of one call into stage durations (milliseconds).
  * marks: start/end of the public call, the first alloc, the syntaxProcess
- * export call, and the first JSON.parse after it. parseMs is the upstream
- * Parser.Parse time reported by the WASM shim, or null when an older package
- * cannot report it; parse and encode are then null while wasm still covers both.
+ * export call, and the first JSON.parse after it. parseMs includes parser
+ * construction/configuration, reader setup, and upstream
+ * Parser.Parse, as reported by the WASM shim; older packages report null. The
+ * encode value is the export-call remainder, including encoding and call overhead,
+ * not an exclusive encoder timer. Unknown parse and encode remain null while wasm
+ * still covers the full export call.
  */
 export function attributeStages(marks, parseMs) {
   const { start, alloc, exportStart, exportEnd, jsonStart, end } = marks;
