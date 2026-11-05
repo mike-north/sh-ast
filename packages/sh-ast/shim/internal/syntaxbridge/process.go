@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"eslint-sh-shim/internal/parsebudget"
 	"eslint-sh-shim/internal/syntaxwire"
 	"mvdan.cc/sh/v3/syntax"
 )
@@ -208,7 +209,15 @@ func streamParse(source, options string, positions bool) []byte {
 	if err != nil {
 		return marshal(errorResponse("InputError", err.Error()))
 	}
-	file, parseError := syntax.NewParser(opts...).Parse(strings.NewReader(source), filename)
+	file, parseError := parsebudget.NewParser(opts...).Parse(strings.NewReader(source), filename)
+	// A resource refusal has no partial-tree contract. Recognize it before any
+	// encoding or bounds traversal, which could repeat the work just refused.
+	if failure, ok := parseError.(syntax.ParseDepthError); ok {
+		return marshal(map[string]any{"Error": map[string]any{
+			"Kind": "ParseDepthError", "Message": failure.Error(),
+			"MaxDepth": failure.MaxDepth, "Depth": failure.Depth,
+		}})
+	}
 	return composeParse(file, parseError, positions)
 }
 

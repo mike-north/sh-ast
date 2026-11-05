@@ -9,5 +9,5 @@ require (
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 )
 
-// Inspect the exact parser source used by the WASM shim, including its documented backport.
+// Inspect the exact parser source used by the WASM shim, including its documented corrections.
 replace mvdan.cc/sh/v3 => ../../third_party/mvdan-sh/upstream

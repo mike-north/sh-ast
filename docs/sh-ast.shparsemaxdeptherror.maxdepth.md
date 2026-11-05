@@ -4,7 +4,7 @@
 
 ## ShParseMaxDepthError.maxDepth property
 
-The maximum structural nesting depth `parseSync` accepts; the same value every time (not caller-configurable).
+Fixed maximum native node-nesting units; not caller-configurable.
 
 **Signature:**
 

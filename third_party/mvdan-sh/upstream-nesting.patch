@@ -1,0 +1,278 @@
+diff --git a/syntax/parser.go b/syntax/parser.go
+index bee1856..0318f0b 100644
+--- a/syntax/parser.go
++++ b/syntax/parser.go
+@@ -520,9 +520,11 @@ type Parser struct {
+ 
+ 	parsingDoc bool // true if using [Parser.Document]
+ 
+-	// openNodes tracks how many entire statements or words we're currently parsing.
++	// openNodes tracks how many entire statements, words, or expressions
++	// we're currently parsing.
+ 	// A non-zero number means that we require certain tokens or words before
+ 	// reaching EOF, used for [Parser.Incomplete].
++	// It is also the nesting depth, limited by [maxNesting].
+ 	openNodes int
+ 	// openBquotes is how many levels of backquotes are open at the moment.
+ 	openBquotes int
+@@ -560,6 +562,23 @@ func (p *Parser) Incomplete() bool {
+ 
+ const bufSize = 1 << 10
+ 
++// maxNesting is how deeply statements, words, and expressions may be nested,
++// so that a small input cannot overflow the Go stack when recursively parsing
++// or walking the syntax tree. Bash fails at a few thousand nested subshells.
++const maxNesting = 10_000
++
++// enterNode increments [Parser.openNodes], failing if [maxNesting] is exceeded.
++// It must be paired with a call to [Parser.leaveNode],
++// or with restoring [Parser.openNodes] to its previous value.
++func (p *Parser) enterNode() {
++	p.openNodes++
++	if p.openNodes > maxNesting {
++		p.curErr("nesting is deeper than %d levels", maxNesting)
++	}
++}
++
++func (p *Parser) leaveNode() { p.openNodes-- }
++
+ func (p *Parser) reset() {
+ 	p.tok, p.val = illegalTok, ""
+ 	p.eqlOffs = 0
+@@ -1101,9 +1120,7 @@ loop:
+ 		if p.tok == _EOF {
+ 			break
+ 		}
+-		p.openNodes++
+ 		s := p.getStmt(true, false, false)
+-		p.openNodes--
+ 		if s == nil {
+ 			p.invalidStmtStart()
+ 			break
+@@ -1182,9 +1199,9 @@ func (p *Parser) wordParts(wps []WordPart) []WordPart {
+ 		defer func() { p.quote = noState }()
+ 	}
+ 	for {
+-		p.openNodes++
++		p.enterNode()
+ 		n := p.wordPart()
+-		p.openNodes--
++		p.leaveNode()
+ 		if n == nil {
+ 			if len(wps) == 0 {
+ 				return nil // normalize empty lists into nil
+@@ -1726,7 +1743,9 @@ func (p *Parser) paramExpParameter(pe *ParamExp) *ParamExp {
+ 		switch p.tok = left; p.tok {
+ 		case dollBrace: // ${#${nested parameter}}
+ 			p.tok = dollBrace
++			p.enterNode()
+ 			wp = p.paramExp()
++			p.leaveNode()
+ 		case dollParen: // ${#$(nested command)}
+ 			wp = p.cmdSubst()
+ 		default: // dollar
+@@ -2108,6 +2127,8 @@ func (p *Parser) doRedirect(s *Stmt) {
+ }
+ 
+ func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
++	defer func(n int) { p.openNodes = n }(p.openNodes)
++	p.enterNode()
+ 	pos, ok := p.gotRsrv("!")
+ 	s := &Stmt{Position: pos}
+ 	if ok {
+@@ -2129,6 +2150,8 @@ func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
+ 			// right recursion should only read a single element
+ 			return s
+ 		}
++		// Each operator in a chain nests the syntax tree one level deeper.
++		p.enterNode()
+ 		b := &BinaryCmd{
+ 			OpPos: p.pos,
+ 			Op:    BinCmdOperator(p.tok),
+@@ -2332,6 +2355,7 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
+ 		p.doRedirect(s)
+ 	}
+ 	// instead of using recursion, iterate manually
++	defer func(n int) { p.openNodes = n }(p.openNodes)
+ 	for p.tok == or || p.tok == orAnd {
+ 		if binCmd {
+ 			// left associativity: in a list of BinaryCmds, the
+@@ -2343,6 +2367,8 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
+ 			// we parse |& as two tokens.
+ 			break
+ 		}
++		// Each operator in a chain nests the syntax tree one level deeper.
++		p.enterNode()
+ 		b := &BinaryCmd{OpPos: p.pos, Op: BinCmdOperator(p.tok), X: s}
+ 		p.next()
+ 		p.got(_Newl)
+@@ -2408,7 +2434,10 @@ func (p *Parser) ifClause(s *Stmt) {
+ 	rootIf.ThenPos = p.followRsrv(rootIf.Position, "if <cond>", "then")
+ 	rootIf.Then, rootIf.ThenLast = p.followStmts("then", rootIf.ThenPos, "fi", "elif", "else")
+ 	curIf := rootIf
++	defer func(n int) { p.openNodes = n }(p.openNodes)
+ 	for p.tok == _LitWord && p.val == "elif" {
++		// Each elif nests the syntax tree one level deeper.
++		p.enterNode()
+ 		elf := &IfClause{Position: p.pos}
+ 		curIf.Last = p.accComs
+ 		p.accComs = nil
+@@ -2639,6 +2668,10 @@ func (p *Parser) testClause(s *Stmt) {
+ 
+ func (p *Parser) testExprBinary(pastAndOr bool) TestExpr {
+ 	p.got(_Newl)
++	if !pastAndOr {
++		p.enterNode()
++		defer p.leaveNode()
++	}
+ 	var left TestExpr
+ 	if pastAndOr {
+ 		left = p.testExprUnary()
+@@ -2797,12 +2830,16 @@ func (p *Parser) timeClause(s *Stmt) {
+ 	if _, ok := p.gotRsrv("-p"); ok {
+ 		tc.PosixFormat = true
+ 	}
++	p.enterNode()
+ 	tc.Stmt = p.gotStmtPipe(&Stmt{Position: p.pos}, false)
++	p.leaveNode()
+ 	s.Cmd = tc
+ }
+ 
+ func (p *Parser) coprocClause(s *Stmt) {
+ 	cc := &CoprocClause{Coproc: p.pos}
++	p.enterNode()
++	defer p.leaveNode()
+ 	if p.next(); isBashCompoundCommand(p.tok, p.val) {
+ 		// has no name
+ 		cc.Stmt = p.gotStmtPipe(&Stmt{Position: p.pos}, false)
+diff --git a/syntax/parser_arithm.go b/syntax/parser_arithm.go
+index 6062dac..175732d 100644
+--- a/syntax/parser_arithm.go
++++ b/syntax/parser_arithm.go
+@@ -3,6 +3,8 @@ package syntax
+ // compact specifies whether we allow spaces between expressions.
+ // This is true for let
+ func (p *Parser) arithmExpr(compact bool) ArithmExpr {
++	p.enterNode()
++	defer p.leaveNode()
+ 	return p.arithmExprComma(compact)
+ }
+ 
+@@ -29,7 +31,9 @@ func (p *Parser) arithmExprAssign(compact bool) ArithmExpr {
+ 		pos := p.pos
+ 		tok := p.tok
+ 		p.nextArithOp(compact)
++		p.enterNode()
+ 		y := p.arithmExprAssign(compact)
++		p.leaveNode()
+ 		if y == nil {
+ 			p.followErrExp(pos, tok)
+ 		}
+@@ -66,7 +70,9 @@ func (p *Parser) arithmExprTernary(compact bool) ArithmExpr {
+ 	}
+ 	colonPos := p.pos
+ 	p.nextArithOp(compact)
++	p.enterNode()
+ 	falseExpr := p.arithmExprTernary(compact)
++	p.leaveNode()
+ 	if falseExpr == nil {
+ 		p.followErrExp(colonPos, TernColon)
+ 	}
+@@ -137,7 +143,9 @@ func (p *Parser) arithmExprPower(compact bool) ArithmExpr {
+ 	op := p.tok
+ 	pos := p.pos
+ 	p.nextArithOp(compact)
++	p.enterNode()
+ 	y := p.arithmExprPower(compact)
++	p.leaveNode()
+ 	if y == nil {
+ 		p.followErrExp(pos, op)
+ 	}
+@@ -158,7 +166,10 @@ func (p *Parser) arithmExprUnary(compact bool) ArithmExpr {
+ 	case Not, BitNegation, Plus, Minus:
+ 		ue := &UnaryArithm{OpPos: p.pos, Op: UnAritOperator(p.tok)}
+ 		p.nextArithOp(compact)
+-		if ue.X = p.arithmExprUnary(compact); ue.X == nil {
++		p.enterNode()
++		ue.X = p.arithmExprUnary(compact)
++		p.leaveNode()
++		if ue.X == nil {
+ 			p.followErrExp(ue.OpPos, ue.Op)
+ 		}
+ 		return ue
+@@ -264,6 +275,7 @@ func (p *Parser) nextArithOp(compact bool) {
+ 
+ // arithmExprBinary is used for all left-associative binary operators
+ func (p *Parser) arithmExprBinary(compact bool, nextOp func(bool) ArithmExpr, operators ...BinAritOperator) ArithmExpr {
++	openNodes := p.openNodes
+ 	value := nextOp(compact)
+ 	for {
+ 		var foundOp BinAritOperator
+@@ -275,12 +287,15 @@ func (p *Parser) arithmExprBinary(compact bool, nextOp func(bool) ArithmExpr, op
+ 		}
+ 
+ 		if token(foundOp) == illegalTok || (compact && p.spaced) {
++			p.openNodes = openNodes
+ 			return value
+ 		}
+ 
+ 		if value == nil {
+ 			p.curErr("%#q must follow an expression", p.tok)
+ 		}
++		// Each operator in a chain nests the syntax tree one level deeper.
++		p.enterNode()
+ 
+ 		pos := p.pos
+ 		p.nextArithOp(compact)
+diff --git a/syntax/parser_test.go b/syntax/parser_test.go
+index 121f0a2..35bb5ef 100644
+--- a/syntax/parser_test.go
++++ b/syntax/parser_test.go
+@@ -206,6 +206,47 @@ func TestParsePosOverflow(t *testing.T) {
+ 	}
+ }
+ 
++func TestParseNestingLimit(t *testing.T) {
++	t.Parallel()
++
++	nest := func(n int, open, mid, close string) string {
++		return strings.Repeat(open, n) + mid + strings.Repeat(close, n)
++	}
++	tests := []struct {
++		name string
++		in   func(n int) string
++	}{
++		{"Subshell", func(n int) string { return nest(n, "(\n", ":", ")\n") }},
++		{"FuncBody", func(n int) string { return nest(n, "f() ", "{ :; }", "") }},
++		{"CmdSubst", func(n int) string { return nest(n, "$(", ":", ")") }},
++		{"ParamExp", func(n int) string { return nest(n, "${a:-", "x", "}") }},
++		{"AndChain", func(n int) string { return nest(n, ":&&\n", ":", "") }},
++		{"Pipeline", func(n int) string { return nest(n, ":|\n", ":", "") }},
++		{"ElifChain", func(n int) string { return nest(n, "if :; then :\nel", "if :; then :\n", "") + "fi" }},
++		{"ArithmParens", func(n int) string { return "((" + nest(n, "(", "1", ")") + "))" }},
++		{"ArithmAssign", func(n int) string { return "((" + nest(n, "a=", "1", "") + "))" }},
++		{"ArithmChain", func(n int) string { return "((" + nest(n, "1+", "1", "") + "))" }},
++		{"TestNot", func(n int) string { return "[[ " + nest(n, "! ", "x", "") + " ]]" }},
++		{"TestAndChain", func(n int) string { return "[[ " + nest(n, "x && ", "x", "") + " ]]" }},
++	}
++	for _, test := range tests {
++		t.Run(test.name, func(t *testing.T) {
++			if runtime.GOOS == "js" && strings.HasPrefix(test.name, "Arithm") {
++				// Each Go call is a wasm call, and arithmetic expressions
++				// recurse through many functions per level.
++				t.Skip("deep arithmetic recursion overflows the V8 stack")
++			}
++			t.Parallel()
++
++			p := NewParser()
++			_, err := p.Parse(strings.NewReader(test.in(1000)), "")
++			qt.Assert(t, qt.IsNil(err))
++			_, err = p.Parse(strings.NewReader(test.in(maxNesting+1)), "")
++			qt.Assert(t, qt.ErrorMatches(err, `.*: nesting is deeper than 10000 levels`))
++		})
++	}
++}
++
+ func TestMain(m *testing.M) {
+ 	internal.TestMainSetup()
+ 	m.Run()

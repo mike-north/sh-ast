@@ -13,7 +13,10 @@
       "entry": [
         "tools/benchmark/stream-encoding-prepare.mjs",
         "tools/benchmark/stream-encoding-run.mjs",
-        "tools/benchmark/stream-encoding-worker.mjs"
+        "tools/benchmark/stream-encoding-worker.mjs",
+        "design/validation/parse-depth-coverage/caller-probe.mjs",
+        "design/validation/parse-depth-coverage/caller-child.mjs",
+        "design/validation/parse-depth-coverage/evidence-check.mjs"
       ]
     }
   }

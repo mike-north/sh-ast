@@ -1,0 +1,160 @@
+[
+  {
+    "name": "subshell",
+    "n": 126,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "f5c3d83245a643124487e2e70e19a7e3d4c11a64a2d4af687830c4175c71d85c"
+  },
+  {
+    "name": "subshell",
+    "n": 127,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "94c6699e35c5f99c3cafc1b8aa68a35e680fe3528c863ddce1990ae2ee4f69ed"
+  },
+  {
+    "name": "subshell",
+    "n": 128,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "7424a4c9d87445695909c84b782fdf9d882ba3ba31f7659a5a5756c5c57d1f74"
+  },
+  {
+    "name": "cmdsub",
+    "n": 62,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "01295f64768cc1752751c95f556d322f291cd195b7708b8ccf4b0843c7c4b2ad"
+  },
+  {
+    "name": "cmdsub",
+    "n": 63,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "55aebfa2c1cf076e577c699c23aa792cd5f49f00cef09254f2243c2cba0478d9"
+  },
+  {
+    "name": "cmdsub",
+    "n": 64,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "26fe49a8d2ae5c8774885551e154f2a499c7105cabffe2c9eb7a5a5f29a6fcb1"
+  },
+  {
+    "name": "param",
+    "n": 125,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "ab29f636a70ae6ac71261666e553c45ae5eb6499ee51af6cd4d101d604470a7b"
+  },
+  {
+    "name": "param",
+    "n": 126,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "70b250644a68682a657103d9a711993895cf28b6d9f7c6f164cfc78a2b54947f"
+  },
+  {
+    "name": "param",
+    "n": 127,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "7b50f57727ef6b5c304cc9ba42c167843fb0d67edf4edbbed5790c2298a4c009"
+  },
+  {
+    "name": "arith-index",
+    "n": 124,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "61884a08e5b5a0f26c124537494c2cbfe71868759920d76701615c665d7dbb0e"
+  },
+  {
+    "name": "arith-index",
+    "n": 125,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "e1286b93ec73cf783d84317f03c75262c6f0351eb91ded27fe6bf5f112db3ead"
+  },
+  {
+    "name": "arith-index",
+    "n": 126,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "ab61d30dca7c4af9d5e5864a65e8e4bf4a92d0f669452e5b738b542d098d9db2"
+  },
+  {
+    "name": "arith-parens",
+    "n": 124,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "c537ba3d9364864adc6965591abaafe6f36eb1eb4a881eb3185c2f995528acd8"
+  },
+  {
+    "name": "arith-parens",
+    "n": 125,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "d679878c1766ed60bd4d05ad69e231e2e73abca1e7afd5a9e823bc6797b1b428"
+  },
+  {
+    "name": "arith-parens",
+    "n": 126,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "32edc849959a1a0df279c181944c12ffe9ff0e8019f7087102ce4e255422e88b"
+  },
+  {
+    "name": "iterative-add",
+    "n": 124,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "cc40514e36014f5a18db6c78dfe8a31a83e152f0461f808b88daec966e47a134"
+  },
+  {
+    "name": "iterative-add",
+    "n": 125,
+    "expected": "File",
+    "repeats": 20,
+    "sourceSha256": "f85e1ee3f1b0818827043bceb61466373b6947ac2d28d1dd64babe45cf5bb1b2"
+  },
+  {
+    "name": "iterative-add",
+    "n": 126,
+    "expected": "ShParseMaxDepthError",
+    "repeats": 20,
+    "sourceSha256": "e0a48b6f1d70ba492467bcfa28a6552bf1698a15efa5f2a09f9d5567886e40e9"
+  },
+  {
+    "name": "comments-1-true",
+    "blocks": 1,
+    "keepComments": true,
+    "expected": "File",
+    "repeats": 2,
+    "sourceSha256": "25a48ae98dc8eabc29e972c2d1cea28480c829e3ace9b5af21a30432e054f70c"
+  },
+  {
+    "name": "comments-3-true",
+    "blocks": 3,
+    "keepComments": true,
+    "expected": "File",
+    "repeats": 2,
+    "sourceSha256": "29d737410ad0644cb60d6705d73860fbe53412b9ca414f76b7832bf9c9bf9f57"
+  },
+  {
+    "name": "comments-1-false",
+    "blocks": 1,
+    "keepComments": false,
+    "expected": "File",
+    "repeats": 2,
+    "sourceSha256": "25a48ae98dc8eabc29e972c2d1cea28480c829e3ace9b5af21a30432e054f70c"
+  },
+  {
+    "name": "comments-3-false",
+    "blocks": 3,
+    "keepComments": false,
+    "expected": "File",
+    "repeats": 2,
+    "sourceSha256": "29d737410ad0644cb60d6705d73860fbe53412b9ca414f76b7832bf9c9bf9f57"
+  }
+]
