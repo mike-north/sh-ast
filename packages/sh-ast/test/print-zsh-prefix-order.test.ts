@@ -1,6 +1,7 @@
 /**
  * Zsh option prefixes precede length/existence prefixes. Printing must preserve
- * those independent meanings when the result is parsed again and run in Zsh.
+ * those independent meanings when the result is parsed again, on every host.
+ * Native stdout is additional evidence and explicitly skips without Zsh on PATH.
  * Only these hand-written programs are executed; no corpus source is run.
  */
 import { spawnSync } from 'node:child_process';
@@ -183,9 +184,15 @@ function parameter(file: File): ParamExp {
   return part;
 }
 
-/** Ignore personal startup configuration so the hand-written values are stable. */
+/** One command identity keeps discovery and optional oracle execution consistent. */
+const zshExecutable = 'zsh';
+
+/** Match the optional-native-shell pattern: require a callable Zsh on PATH. */
+const zshAvailable = spawnSync(zshExecutable, ['-f', '-c', 'exit 0']).status === 0;
+
+/** Only the availability-guarded native suite executes these synthetic programs. */
 function zshStdout(source: string): string {
-  const result = spawnSync('/bin/zsh', ['-f', '-c', source], { encoding: 'utf8' });
+  const result = spawnSync(zshExecutable, ['-f', '-c', source], { encoding: 'utf8' });
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(0);
   expect(result.stderr).toBe('');
@@ -193,31 +200,42 @@ function zshStdout(source: string): string {
 }
 
 describe.each([{}, { KeepPadding: true }])('Zsh prefix order with %j', (options) => {
-  it.each(fixtures)('retains $expression fields, spelling and real Zsh value', (fixture) => {
-    const source = `a=abc\nprintf '<%s>\\n' ${fixture.expression}\n`;
-    const expected = `a=abc\nprintf '<%s>\\n' ${fixture.canonical}\n`;
-    const file = parseSync(source, { Variant: LangZsh });
-    const output = printSync(file, options);
-    if (typeof output !== 'string') throw new Error('Expected UTF-8 source');
-    const reparsed = parseSync(output, { Variant: LangZsh });
-    // Execute both before asserting the tree so red tests exercise the shell loss.
-    const originalStdout = zshStdout(source);
-    const printedStdout = zshStdout(output);
-    expect(originalStdout).toBe(fixture.stdout);
-    const fields = {
-      Split: fixture.split,
-      GlobSubst: fixture.glob,
-      RcExpand: fixture.rc,
-      Length: fixture.length,
-      IsSet: fixture.isset,
-      Width: false,
-      Excl: false,
-      Param: { Value: 'a' },
-      Exp: null,
-    };
-    expect(parameter(file)).toMatchObject(fields);
-    expect(parameter(reparsed)).toMatchObject(fields);
-    expect(output).toBe(expected);
-    expect(printedStdout).toBe(fixture.stdout);
-  });
+  it.each(fixtures)(
+    'retains $expression public fields and spelling without native tools',
+    (fixture) => {
+      const source = `a=abc\nprintf '<%s>\\n' ${fixture.expression}\n`;
+      const expected = `a=abc\nprintf '<%s>\\n' ${fixture.canonical}\n`;
+      const file = parseSync(source, { Variant: LangZsh });
+      const output = printSync(file, options);
+      if (typeof output !== 'string') throw new Error('Expected UTF-8 source');
+      const reparsed = parseSync(output, { Variant: LangZsh });
+      const fields = {
+        Split: fixture.split,
+        GlobSubst: fixture.glob,
+        RcExpand: fixture.rc,
+        Length: fixture.length,
+        IsSet: fixture.isset,
+        Width: false,
+        Excl: false,
+        Param: { Value: 'a' },
+        Exp: null,
+      };
+      expect(parameter(file)).toMatchObject(fields);
+      expect(parameter(reparsed)).toMatchObject(fields);
+      expect(output).toBe(expected);
+    },
+  );
+
+  describe.skipIf(!zshAvailable)(
+    'native Zsh oracle (requires zsh on PATH; otherwise skipped)',
+    () => {
+      it.each(fixtures)('preserves the hand-written Zsh stdout for $expression', (fixture) => {
+        const source = `a=abc\nprintf '<%s>\\n' ${fixture.expression}\n`;
+        const output = printSync(parseSync(source, { Variant: LangZsh }), options);
+        if (typeof output !== 'string') throw new Error('Expected UTF-8 source');
+        expect(zshStdout(source)).toBe(fixture.stdout);
+        expect(zshStdout(output)).toBe(fixture.stdout);
+      });
+    },
+  );
 });

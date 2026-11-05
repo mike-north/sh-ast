@@ -159,3 +159,11 @@ Analyze-only runtime and type tests first failed on missing `OptState`, `OptUnse
 named values. The uint8 boundary and cross-family type rejection remain tested.
 Schema regeneration produces no changes; analyze API rollups and docs are current.
 Performance criterion 4 remains inconclusive and separately held.
+
+The native Zsh oracle is optional: discovery and execution use the same `zsh`
+command on PATH, with a successful `-f -c 'exit 0'` probe required to run it.
+All 30 public parse/print/reparse, field and spelling cases run unconditionally;
+the separate 30 native stdout cases explicitly skip when the executable is
+unavailable. A masked-PATH run records 30 API passes and 30 native skips; this
+host's Zsh 5.9 run records 60 passes. This is not evidence of native Zsh coverage
+on Linux hosts without Zsh. Workflows and checker configuration are unchanged.
