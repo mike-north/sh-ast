@@ -271,6 +271,15 @@ malformed grammar fields throw `ShAnalyzeInvalidWrapperSpecError`. The first
 matching basename entry wins. Wrapper names retain their distinct policy:
 exact matches first, then a basename fallback for absolute paths only.
 
+Bash's single-dash long-option aliases are recognized before clusters:
+`bash -rcfile /dev/null s` and `bash -restricted s` stay static, while
+`bash -rcfile /dev/null -c x` records selector index 3. Custom grammars can
+list exact operand-free long options in `noOperandLongOptions`. Separate
+option operands must be static: an expansion such as `"$@"` may produce
+multiple actual arguments, so `bash -o "$@" -c x` and
+`bash --rcfile "$@" -c x` stop at the static interpreter. Sparse custom
+tables are rejected just like entries explicitly holding `undefined`.
+
 ## Migration from 0.3
 
 Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit

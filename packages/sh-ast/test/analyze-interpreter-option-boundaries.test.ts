@@ -141,6 +141,101 @@ describe('custom interpreter boundary grammar', () => {
   });
 });
 
+describe('Bash long-option aliases and dynamic operands', () => {
+  // Bash 5.3.9 and 3.2.57 (also /bin/sh) ran script s for these aliases.
+  // Exact long-option words must not be mistaken for clustered short flags.
+  const rows: readonly (readonly [string, readonly number[]])[] = [
+    ['bash -rcfile /dev/null s', [0]],
+    ['bash -init-file /dev/null s', [0]],
+    ['bash -restricted s', [0]],
+    ['bash -norc s', [0]],
+    ['bash -rcfile /dev/null -c x', [0, 3]],
+    ['bash -init-file /dev/null -c x', [0, 3]],
+    ['bash -restricted -c x', [0, 2]],
+    ['bash -norc -c x', [0, 2]],
+    ['bash -noprofile -c x', [0, 2]],
+    ['bash -noediting -c x', [0, 2]],
+    ['bash -posix -c x', [0, 2]],
+    ['bash -login -c x', [0, 2]],
+    ['bash -verbose -c x', [0, 2]],
+    ['sh -rcfile /dev/null s', [0]],
+    ['sh -restricted s', [0]],
+    ['sh -init-file /dev/null -c x', [0, 3]],
+    ['sh -noprofile -c x', [0, 2]],
+  ];
+  it.each(rows)('recognizes exact long-option aliases before clusters: %s', (source, indices) => {
+    const result = resolve(source);
+    expect(result.chainIndices).toEqual(indices);
+    expect(result.effective.static).toBe(indices.length === 1);
+  });
+
+  it.each([
+    'bash -o "$@" -c x',
+    'bash +o "$@" -c x',
+    'bash -eo "$@" -c x',
+    'bash --rcfile "$@" -c x',
+    'bash --init-file "$@" -c x',
+    'bash -rcfile "$@" -c x',
+    'bash -init-file "$@" -c x',
+  ])('does not guess the argument count of a dynamic operand: %s', (source) => {
+    expect(resolve(source).effective).toEqual({ static: true, text: 'bash' });
+    expect(resolve(source).chainIndices).toEqual([0]);
+  });
+
+  it('allows a custom exact long-option flag with a single dash', () => {
+    const options = {
+      embeddedCommandInterpreters: [
+        {
+          names: ['q'],
+          operandOptions: ['o'],
+          operandAttachment: 'separate-word',
+          noOperandLongOptions: ['-profile', '-restricted'],
+        },
+      ],
+    } as const;
+    expect(resolve('q -profile -c x', options).chainIndices).toEqual([0, 2]);
+    expect(resolve('q -restricted s', options).effective).toEqual({ static: true, text: 'q' });
+  });
+
+  it('rejects sparse interpreter tables at the boundary', () => {
+    const tables: readonly (readonly unknown[])[] = [
+      new Array<unknown>(1),
+      [, { names: ['bash'], operandOptions: [], operandAttachment: 'separate-word' }],
+    ];
+    for (const table of tables) {
+      // Malformed JavaScript inputs deliberately bypass the public type.
+      expect(() => resolve('bash -c x', { embeddedCommandInterpreters: table as never })).toThrow(
+        ShAnalyzeInvalidWrapperSpecError,
+      );
+    }
+  });
+
+  // Positional parameters yield two actual operands. The second becomes a
+  // script path, so skipping the syntactic "$@" as one word would be wrong.
+  const bashAvailable = spawnSync('bash', ['-c', 'exit 0']).status === 0;
+  it.skipIf(!bashAvailable).each(['-o', '+o', '--rcfile', '-rcfile'])(
+    'real bash multi-field operand for %s',
+    (option) => {
+      const dir = mkdtempSync(join(tmpdir(), 'sh-ast-multifield-oracle-'));
+      const value = option === '-o' || option === '+o' ? 'errexit' : '/dev/null';
+      try {
+        writeFileSync(join(dir, 's'), 'printf "SCRIPT_FILE\\n"\n');
+        const source = `bash ${option} "$@" -c 'printf "COMMAND_STRING\\n"'`;
+        const ran = spawnSync('bash', ['-c', `set -- '${value}' s; ${source}`], {
+          cwd: dir,
+          input: '',
+          encoding: 'utf8',
+        });
+        expect(ran.status).toBe(0);
+        expect(ran.stdout).toBe('SCRIPT_FILE\n');
+        expect(resolve(source).effective).toEqual({ static: true, text: 'bash' });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  );
+});
+
 // Each boolean is a hand-written execution expectation, independent of the
 // resolver. A real file named `-c` makes a script invocation visibly distinct.
 const oracleCases: readonly (readonly [string, readonly string[], boolean])[] = [

@@ -66,6 +66,27 @@ Unlike [WrapperSpec.names](./sh-ast-analyze.wrapperspec.names.md)<!-- -->, which
 </td></tr>
 <tr><td>
 
+[noOperandLongOptions?](./sh-ast-analyze.embeddedcommandinterpreterspec.nooperandlongoptions.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+readonly string\[\]
+
+
+</td><td>
+
+_(Optional)_ Exact long-option words with no operand, recognized before short-option clusters. Bash's `-restricted` and `-noprofile` are whole long options, not clusters containing `c` or `o`<!-- -->. Unlisted `--name` / `+-name` words are also treated as operand-free; option validity is not checked.
+
+
+</td></tr>
+<tr><td>
+
 [operandAttachment](./sh-ast-analyze.embeddedcommandinterpreterspec.operandattachment.md)
 
 
@@ -104,7 +125,7 @@ readonly string\[\]
 
 </td><td>
 
-_(Optional)_ Leading long options (exact `--name` or `+-name` words) that take a separate operand word, e.g. bash's `--rcfile FILE` or zsh's `--emulate sh`<!-- -->. Other long-option words are skipped without an operand.
+_(Optional)_ Exact long-option words that take a separate operand, recognized before short-option clusters regardless of prefix: bash's `--rcfile FILE` and `-rcfile FILE`<!-- -->, or zsh's `--emulate sh`<!-- -->. A dynamic operand stops scanning because its expansion may produce multiple actual arguments.
 
 
 </td></tr>

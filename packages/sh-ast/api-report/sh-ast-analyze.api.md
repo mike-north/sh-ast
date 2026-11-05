@@ -469,6 +469,7 @@ export const DplOut: 68;
 // @public
 export interface EmbeddedCommandInterpreterSpec {
     readonly names: readonly string[];
+    readonly noOperandLongOptions?: readonly string[];
     readonly operandAttachment: 'separate-word' | 'rest-of-cluster';
     readonly operandLongOptions?: readonly string[];
     readonly operandOptions: readonly string[];

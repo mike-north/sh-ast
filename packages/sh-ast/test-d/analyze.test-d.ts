@@ -375,11 +375,13 @@ expectAssignable<EmbeddedCommandInterpreterSpec>({
   operandOptions: ['o'],
   operandAttachment: 'rest-of-cluster',
   optionalOperandOptions: ['o'],
+  noOperandLongOptions: ['-restricted'],
   optionTerminatorLetters: ['b'],
   optionTerminatorWords: ['+-'],
 });
 declare const interpreterSpec: EmbeddedCommandInterpreterSpec;
 expectType<readonly string[] | undefined>(interpreterSpec.optionalOperandOptions);
+expectType<readonly string[] | undefined>(interpreterSpec.noOperandLongOptions);
 expectType<readonly string[] | undefined>(interpreterSpec.optionTerminatorLetters);
 expectType<readonly string[] | undefined>(interpreterSpec.optionTerminatorWords);
 expectError((interpreterSpec.optionTerminatorLetters = []));

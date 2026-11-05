@@ -418,11 +418,20 @@ export interface EmbeddedCommandInterpreterSpec {
   readonly optionTerminatorWords?: readonly string[];
 
   /**
-   * Leading long options (exact `--name` or `+-name` words) that take a
-   * separate operand word, e.g. bash's `--rcfile FILE` or zsh's
-   * `--emulate sh`. Other long-option words are skipped without an operand.
+   * Exact long-option words that take a separate operand, recognized before
+   * short-option clusters regardless of prefix: bash's `--rcfile FILE` and
+   * `-rcfile FILE`, or zsh's `--emulate sh`. A dynamic operand stops scanning
+   * because its expansion may produce multiple actual arguments.
    */
   readonly operandLongOptions?: readonly string[];
+
+  /**
+   * Exact long-option words with no operand, recognized before short-option
+   * clusters. Bash's `-restricted` and `-noprofile` are whole long options,
+   * not clusters containing `c` or `o`. Unlisted `--name` / `+-name` words
+   * are also treated as operand-free; option validity is not checked.
+   */
+  readonly noOperandLongOptions?: readonly string[];
 
   /**
    * `true` if the interpreter also treats `+c` as selecting the command
@@ -430,6 +439,30 @@ export interface EmbeddedCommandInterpreterSpec {
    */
   readonly plusCSelectsCommand?: boolean;
 }
+
+/**
+ * Bash's operand-free single-dash long options from the 5.3.9 and Apple 3.2.57
+ * help listings. Their internal letters must not select `-c` or consume an
+ * option-name operand. Bash-backed `sh` needs the same spelling recognition.
+ */
+const BASH_SINGLE_DASH_FLAGS = [
+  '-debug',
+  '-debugger',
+  '-dump-po-strings',
+  '-dump-strings',
+  '-help',
+  '-login',
+  '-noediting',
+  '-noprofile',
+  '-norc',
+  '-posix',
+  '-pretty-print',
+  '-protected',
+  '-restricted',
+  '-verbose',
+  '-version',
+  '-wordexp',
+] as const;
 
 /**
  * `sh-ast/analyze`'s default {@link EmbeddedCommandInterpreterSpec} table:
@@ -471,7 +504,8 @@ export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInte
       names: ['bash'],
       operandOptions: ['o', 'O'],
       operandAttachment: 'separate-word',
-      operandLongOptions: ['--rcfile', '--init-file'],
+      operandLongOptions: ['--rcfile', '--init-file', '-rcfile', '-init-file'],
+      noOperandLongOptions: BASH_SINGLE_DASH_FLAGS,
       plusCSelectsCommand: true,
     },
     // POSIX `sh`: `-o option` is the only portable operand option. `sh` is
@@ -483,7 +517,8 @@ export const DEFAULT_EMBEDDED_COMMAND_INTERPRETERS: readonly EmbeddedCommandInte
       names: ['sh'],
       operandOptions: ['o', 'O'],
       operandAttachment: 'separate-word',
-      operandLongOptions: ['--rcfile', '--init-file'],
+      operandLongOptions: ['--rcfile', '--init-file', '-rcfile', '-init-file'],
+      noOperandLongOptions: BASH_SINGLE_DASH_FLAGS,
       plusCSelectsCommand: true,
     },
     // dash(1): `-o option` takes the next word, even within a cluster.
@@ -1004,8 +1039,20 @@ function findCommandStringOption(
       return selected !== undefined && index + 1 < argv.length ? selected : undefined;
     }
     if (text.length < 2 || (sign !== '-' && sign !== '+')) return selected;
-    if (text.startsWith('--') || text.startsWith('+-')) {
-      index += spec.operandLongOptions?.includes(text) === true ? 2 : 1;
+    if (spec.operandLongOptions?.includes(text) === true) {
+      // Even a quoted expansion such as "$@" can become several arguments.
+      // Advancing by one syntactic word would guess where options resume.
+      const operand = argv.at(index + 1);
+      if (operand?.static !== true) return undefined;
+      index += 2;
+      continue;
+    }
+    if (
+      spec.noOperandLongOptions?.includes(text) === true ||
+      text.startsWith('--') ||
+      text.startsWith('+-')
+    ) {
+      index += 1;
       continue;
     }
     // Separate operands belong to this cluster in encounter order. Keeping
@@ -1022,10 +1069,10 @@ function findCommandStringOption(
       } else if (spec.operandOptions.includes(letter)) {
         if (spec.operandAttachment === 'rest-of-cluster' && i < text.length - 1) break;
         const operand = argv.at(nextIndex);
-        if (spec.optionalOperandOptions?.includes(letter) === true && operand !== undefined) {
-          // Its expansion might be an option boundary or an option name;
-          // neither interpretation can be chosen from syntax alone.
-          if (!operand.static) return undefined;
+        // Required operands can expand to several fields too; neither their
+        // argument count nor an optional operand's boundary can be guessed.
+        if (operand?.static !== true) return undefined;
+        if (spec.optionalOperandOptions?.includes(letter) === true) {
           if (operand.text.startsWith('-') || operand.text.startsWith('+')) continue;
         }
         nextIndex += 1;
@@ -1202,16 +1249,18 @@ function validateInterpreterSpec(spec: EmbeddedCommandInterpreterSpec, index: nu
       `${context}.optionTerminatorWords must be an array of non-empty strings`,
     );
   }
-  if (
-    spec.operandLongOptions !== undefined &&
-    !(
-      Array.isArray(spec.operandLongOptions) &&
-      spec.operandLongOptions.every((item) => typeof item === 'string')
-    )
-  ) {
-    throw new ShAnalyzeInvalidWrapperSpecError(
-      `${context}.operandLongOptions must be an array of strings when present`,
-    );
+  // Exact option spellings have the same representation whether or not
+  // they consume an operand; validate both before scanning the table.
+  for (const field of ['operandLongOptions', 'noOperandLongOptions'] as const) {
+    const value = spec[field];
+    if (
+      value !== undefined &&
+      !(Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length > 0))
+    ) {
+      throw new ShAnalyzeInvalidWrapperSpecError(
+        `${context}.${field} must be an array of non-empty strings when present`,
+      );
+    }
   }
   if (spec.plusCSelectsCommand !== undefined && typeof spec.plusCSelectsCommand !== 'boolean') {
     throw new ShAnalyzeInvalidWrapperSpecError(
@@ -1303,7 +1352,11 @@ export function resolveArgv0(site: CommandSite, options?: ResolveArgv0Options): 
   const interpreters =
     options?.embeddedCommandInterpreters ?? DEFAULT_EMBEDDED_COMMAND_INTERPRETERS;
   if (options?.embeddedCommandInterpreters !== undefined) {
-    interpreters.forEach(validateInterpreterSpec);
+    // Every declared slot must be valid, including sparse holes that would
+    // otherwise bypass validation and later surface as native TypeErrors.
+    for (const [index, spec] of interpreters.entries()) {
+      validateInterpreterSpec(spec, index);
+    }
   }
   const assignmentsSkipped = nodeArray(site.node.Assigns).length;
   const argv = site.argv;
