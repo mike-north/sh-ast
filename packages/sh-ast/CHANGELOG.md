@@ -1,5 +1,49 @@
 # sh-ast
 
+## 0.10.0
+
+### Minor Changes
+
+- [#86](https://github.com/mike-north/sh-ast/pull/86) [`0a36f9c`](https://github.com/mike-north/sh-ast/commit/0a36f9ccec1de73c7418e3e4e2032c79f7fa89cb) Thanks [@mike-north](https://github.com/mike-north)! - Move the mvdan/sh source pin to v3.14.1, retaining the native resource budget and maintained parser/printer corrections. This 0.x minor adds required `ParamExp.Split`, `GlobSubst`, and `RcExpand` option-state fields, exports `OptState` and its constants, and adopts corrected source bounds and `IfClause.Last` traversal.
+
+  Accept array elements such as `target=(${target//@/ }[0])`, correct quoted arguments inside backticks, and retain the release's heredoc printer improvements, including internal tabs. Default output changes for backtick quoting and separated closing parentheses; KeepPadding also uses recorded command-substitution close columns. Missing heredoc terminators remain parse errors on this tag. Preserve existing constructed split-literal backslash printing pending a separate compatibility decision.
+
+  Accept the measured correctness/performance tradeoff: in the fixed ten-cell campaign, nested parse increased from 0.165666 to 0.1727085 ms (1.0425102314294852x, +4.251023142948517%), nested print from 0.9797085 to 0.9834375 ms (1.0038062342012737x), and consumer parse from 6.434646 to 6.496354 ms (1.0095899603490068x, +0.061708 ms). The other seven aggregates decreased; consumer print decreased by 4.6534785 ms. The original strict comparison remains FAIL, and these observations do not establish non-regression. All ten cells, paired rounds and unchanged raw samples are retained in `design/validation/mvdan-3.14.1/`.
+
+- [#84](https://github.com/mike-north/sh-ast/pull/84) [`211c5b7`](https://github.com/mike-north/sh-ast/commit/211c5b7d4207b5e409d3b1ed841ad629d5f03fde) Thanks [@mike-north](https://github.com/mike-north)! - Preserve the Bash value of unquoted `<<-` here-documents with backslash
+  continuations when printing. Physical lines following an active continuation
+  retain their exact tabs instead of receiving additional indentation. Quoted
+  here-documents, ordinary `<<`, and bodies without continuations keep their
+  previous output. The maintained correction leaves shared layout code unchanged;
+  existing internal-tab, nested here-document, and KeepPadding limits remain.
+
+- [#80](https://github.com/mike-north/sh-ast/pull/80) [`7d5c540`](https://github.com/mike-north/sh-ast/commit/7d5c540291b064ee4f346a8eb1d3820ea9a2dc44) Thanks [@mike-north](https://github.com/mike-north)! - Preserve literal vertical tabs and form feeds when printing quoted strings, unquoted words, here-document bodies and delimiters, and embedded comment text. These bytes previously became spaces or newlines, changing shell values and sometimes exposing comment text as commands. Written ANSI-C escapes retain their existing spelling. mvdan/sh remains pinned to v3.13.1 with a maintained printer correction; no API shape changes.
+
+  Escape VT/FF individually in literals without horizontal tabs so physical newlines still align subsequent comments. Horizontal tabs retain their upstream whole-literal escaping and multiline alignment limit. The deprecated `KeepPadding` option retains upstream's counter behavior, including shrinking padding around protected bytes; ordinary and HT-only output remains byte-identical to the base.
+
+  Nested `<<-` documents inside an outer `<<-` command substitution retain a known writer limit: VT/FF body values can still change, and malformed nested delimiters can become body data or make Bash reject the printed program. These nested cases are not covered by the byte-preservation correction.
+
+  Minify's retained-shebang path also retains upstream's VT/FF transformation; an embedded form feed can still expose following shebang comment text as code. Conservative caller guards remain justified for these unsupported cases.
+
+- [#91](https://github.com/mike-north/sh-ast/pull/91) [`38f32a3`](https://github.com/mike-north/sh-ast/commit/38f32a3c68dbc2a882dc48ff8f817f0c5987483a) Thanks [@mike-north](https://github.com/mike-north)! - Restore pre-pin Zsh reverse-subscript analysis while keeping mvdan/sh v3.14.1.
+  Previously supported command and parameter substitutions are syntax nodes again:
+  `echo ${a[(r)$(printf foo)]}` exposes `printf` to `walk` and `enumerateCommands`,
+  with command-substitution context and source byte positions. Consumers inspecting
+  these subscripts may see expansion nodes and additional command sites again.
+
+  Recursive reverse-subscript flag arguments also use the existing 128-unit native
+  work budget. Over-budget parsing returns the typed resource refusal without a
+  partial tree or position snapshot, including when error recovery is enabled;
+  subsequent parses remain available.
+
+  Unsupported pre-pin patterns, including `foo*` and unmatched apostrophe/dollar
+  forms, may again fail loudly instead of being accepted as opaque text. This
+  restores the earlier compatibility ceiling; it does not provide general Zsh
+  pattern support. The known arithmetic printing limit (`foo[0-9]` becomes
+  `foo[0 - 9]` and can change matching), and paired-dollar quoting limits, remain.
+  Broader pattern support and the character-class printing correction are tracked
+  in [#90](https://github.com/mike-north/sh-ast/issues/90).
+
 ## 0.9.0
 
 ### Minor Changes
