@@ -111,10 +111,15 @@ comment bytes must also survive without turning the suffix into executable text.
 already used for literal horizontal tabs. The nested `<<-` printer defers escaping
 until `extraIndenter` has stripped leading tabs; that writer protects VT and FF in
 the remaining body. Existing output without these bytes is unchanged.
+For here-document delimiters, `unquotedWord` must protect these same bytes while
+removing backslashes from an unquoted closing word. Otherwise its terminator
+would differ from the preserved opener and absorb later commands as body text.
 
 Native and public printer regressions use explicit source expectations for single
 quotes, double quotes, literal and written-escape ANSI-C quotes, unquoted words,
 ordinary and tab-stripping here-documents, and comments. Public tests additionally
+cover unquoted and backslash-escaped here-document delimiters with a following
+command that must remain executable. They
 execute the original and printed fixtures in Bash against hand-written output
 values. The correction changes no parser, AST, or public API shape.
 

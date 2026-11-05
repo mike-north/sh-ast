@@ -19,6 +19,8 @@ func TestPrinterControlBytes(t *testing.T) {
 			{"unquoted", "printf '<%s>' a" + char.byte + "b\n"},
 			{"heredoc", "cat <<EOF\na" + char.byte + "b\nEOF\n"},
 			{"tab-heredoc", "cat <<-EOF\n\ta" + char.byte + "b\nEOF\n"},
+			{"unquoted-delimiter", "cat <<E" + char.byte + "OF\nbody\nE" + char.byte + "OF\nprintf '%s' kept\n"},
+			{"escaped-delimiter", "cat <<E\\" + char.byte + "OF\nbody\nE" + char.byte + "OF\nprintf '%s' kept\n"},
 			{"comment", "# a" + char.byte + "b\nprintf '%s' kept\n"},
 		} {
 			t.Run(char.name+"/"+fixture.position, func(t *testing.T) {

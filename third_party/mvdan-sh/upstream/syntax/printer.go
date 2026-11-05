@@ -966,6 +966,13 @@ func (p *Printer) unquotedWord(w *Word) {
 		case *DblQuoted:
 			p.wordParts(wp.Parts, true)
 		case *Lit:
+			// Quote removal must preserve the delimiter's literal VT and FF,
+			// just as writeLit preserves them in the opening word. Nested <<-
+			// printers leave escaping to extraIndenter after stripping tabs.
+			escape := p.tabWriter != nil && strings.ContainsAny(wp.Value, "\v\f")
+			if escape {
+				p.w.WriteByte(tabwriter.Escape)
+			}
 			for i := 0; i < len(wp.Value); i++ {
 				if b := wp.Value[i]; b == '\\' {
 					if i++; i < len(wp.Value) {
@@ -974,6 +981,9 @@ func (p *Printer) unquotedWord(w *Word) {
 				} else {
 					p.w.WriteByte(b)
 				}
+			}
+			if escape {
+				p.w.WriteByte(tabwriter.Escape)
 			}
 		}
 	}
