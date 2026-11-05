@@ -41,6 +41,7 @@ test('accepts precisely the reviewed source closure and patch', () => {
     'binding-budget.patch',
     'subshell-heredoc.patch',
     'printer-control-bytes.patch',
+    'heredoc-continuation.patch',
   ]);
   assert.doesNotThrow(() => verifyBackport(root));
 });
@@ -58,6 +59,7 @@ for (const name of [
   'binding-budget.patch',
   'subshell-heredoc.patch',
   'printer-control-bytes.patch',
+  'heredoc-continuation.patch',
 ]) {
   test(`requires the ${name} digest`, () => {
     fixture((directory) => {

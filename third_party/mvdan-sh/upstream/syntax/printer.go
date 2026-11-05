@@ -489,10 +489,14 @@ func (p *Printer) flushHeredocs() {
 		p.wantNewline, p.wantNewline = false, false
 		if r.Op == DashHdoc && p.indentSpaces == 0 && !p.minify {
 			if r.Hdoc != nil {
+				// Only unquoted delimiters enable backslash-newline joining.
+				// Quoted or backslash-escaped delimiters keep literal newlines.
+				delim := r.Word.Lit()
 				extra := extraIndenter{
 					bufWriter:   p.w,
 					baseIndent:  int(p.level + 1),
 					firstIndent: -1,
+					joinLines:   delim != "" && !strings.Contains(delim, "\\"),
 				}
 				p.tabsPrinter = &Printer{
 					w: &extra,
@@ -1549,9 +1553,10 @@ const (
 	spaceWritten                    // we have just written a space or newline
 )
 
-// extraIndenter ensures that all lines in a '<<-' heredoc body have at least
-// baseIndent leading tabs. Those that had more tab indentation than the first
-// heredoc line will keep that relative indentation.
+// extraIndenter gives logical lines in a '<<-' heredoc body at least baseIndent
+// leading tabs, preserving relative indentation beyond the first line. Physical
+// lines following a continuation retain their exact bytes: Bash treats their
+// leading tabs as data rather than indentation.
 type extraIndenter struct {
 	bufWriter
 	baseIndent int
@@ -1559,11 +1564,34 @@ type extraIndenter struct {
 	firstIndent int
 	firstChange int
 	curLine     []byte
+
+	// Joining applies only to unquoted heredocs. continued describes the
+	// preceding physical line, independently of the indentation baseline.
+	joinLines bool
+	continued bool
 }
 
 func (e *extraIndenter) WriteByte(b byte) error {
 	e.curLine = append(e.curLine, b)
 	if b != '\n' {
+		return nil
+	}
+	continued := e.continued
+	if e.joinLines {
+		// Pairs quote each other; only an odd trailing run escapes newline.
+		backslashes := 0
+		for i := len(e.curLine) - 2; i >= 0 && e.curLine[i] == '\\'; i-- {
+			backslashes++
+		}
+		e.continued = backslashes%2 != 0
+	}
+	if continued {
+		// Protect all bytes from tabwriter, including tabs on an otherwise
+		// empty line. Do not strip, add, or align continuation-line data.
+		e.bufWriter.WriteByte(tabwriter.Escape)
+		e.bufWriter.Write(e.curLine)
+		e.bufWriter.WriteByte(tabwriter.Escape)
+		e.curLine = e.curLine[:0]
 		return nil
 	}
 	trimmed := bytes.TrimLeft(e.curLine, "\t")
