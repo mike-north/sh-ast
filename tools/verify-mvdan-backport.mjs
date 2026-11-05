@@ -41,13 +41,14 @@ export function verifyBackport(root) {
   ) {
     throw new Error('Unexpected upstream backport identity');
   }
-  // Each owned correction is reviewed against the preceding official source.
+  // Each correction applies to the source produced by the preceding patches.
   // Reverse the entire declared chain before comparing pristine release bytes.
   const appliedPatches = [
     'sentinel-backport.patch',
     'comment-iteration.patch',
     'nesting-backport.patch',
     'binding-budget.patch',
+    'subshell-heredoc.patch',
   ];
   if (JSON.stringify(manifest.appliedPatches) !== JSON.stringify(appliedPatches)) {
     throw new Error('Unexpected maintained patch order');
@@ -100,6 +101,6 @@ export function verifyBackport(root) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyBackport(fileURLToPath(new URL('../', import.meta.url)));
   console.log(
-    'Verified mvdan/sh v3.13.1 with Unicode, comment iteration, and native budget corrections.',
+    'Verified mvdan/sh v3.13.1 with Unicode, comment iteration, native budget, and subshell heredoc corrections.',
   );
 }

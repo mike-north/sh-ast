@@ -1,7 +1,7 @@
 # mvdan/sh v3.13.1 with maintained corrections
 
 This directory contains the source closure used by the WASM shim, its tests, and
-the schema generator. It is **v3.13.1 plus four documented corrections**, not an
+the schema generator. It is **v3.13.1 plus five documented corrections**, not an
 unmodified upstream release. No other grammar, AST, or printer change
 from newer releases is included.
 
@@ -86,6 +86,21 @@ existing error-only response. Both routes remain usable after refusal. This is
 an empirical ordinary-caller bound, not arbitrary caller-stack or constructed-AST
 safety. The comment-iteration correction remains independently maintained.
 
+## Owned subshell here-document correction
+
+`subshell-heredoc.patch` is maintained by sh-ast, **not an official upstream
+patch**. A subshell changes the lexer quote state but shares the surrounding
+pending here-documents. It must consume those documents at its next newline,
+including when that newline immediately follows `(` or `( :`. The correction
+keeps the inherited document scope instead of burying it via `preNested`.
+
+Command substitutions still use `preNested` and retain their separate document
+scope. Public parser regressions assert hand-written document attachment and
+remaining statements for both subshell layouts, with `{`, `then`, and a command
+substitution whose outer document follows `)` as controls. The unclosed outer
+document error when its apparent body lies inside `$(` remains unchanged. No lexer, AST,
+printer, or command-substitution code changes are included in this correction.
+
 ## Provenance and verification
 
 `manifest.json` records the upstream module checksum, exact pristine SHA-256 for
@@ -102,8 +117,9 @@ node --test tools/verify-mvdan-backport.test.mjs
 ```
 
 The offline verifier checks inventory and patch digests, confirms both module
-replacements, and reverses all four patches in declared reverse application order:
-binding budget, official nesting, owned comment iteration, official sentinel.
+replacements, and reverses all five patches in declared reverse application order:
+owned subshell here-document, binding budget, official nesting, owned comment
+iteration, official sentinel.
 It then hashes every reconstructed pristine file in an isolated directory. Tests
 reject missing, reordered, altered patches, undeclared source changes, added files,
 missing licenses, and disconnected module replacements. CI verifies provenance
