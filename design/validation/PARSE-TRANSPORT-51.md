@@ -129,8 +129,8 @@ add sizes until at least one fails there.
 
 ## Integration with accepted parser corrections
 
-The integration baseline is accepted main
-`4ecb0e625e25cd9e841db34f1c5281fda54be54d`, including the Unicode sentinel fix,
+The final integration baseline is accepted main
+`87da64fb2f293c2a247bb365399f0150c43ba2ea`, including the Unicode sentinel fix,
 iterative comments, and the fixed 128-unit native node-nesting policy. Historical
 published-release and Linux timing results above describe their original pins;
 they are not final integrated-candidate performance acceptance.
@@ -168,3 +168,5 @@ record this sensitivity check; these are correctness observations, not timings o
 failure-frequency estimates. Local diagnostic WASM is never the production
 artifact: exact-source Linux adoption and final canonical gates precede the
 separately frozen performance campaign.
+
+The one-time base refresh from `4ecb0e6` to `87da64f` adds the accepted wrapper documentation/tests; parser-side JavaScript, Go source, and canonical WASM are identical. The earlier heap sensitivity check therefore retains the same native source identity. Final identity and performance comparisons use `87da64f`.
