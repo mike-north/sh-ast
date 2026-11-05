@@ -27,7 +27,7 @@ pnpm run generate:sh-ast-schema
 ```
 
 This runs the generator against the mvdan/sh version pinned in this directory's own `go.mod`
-(kept in lockstep with `packages/sh-ast/shim/go.mod` — both currently pin `v3.13.1`) and then
+(kept in lockstep with `packages/sh-ast/shim/go.mod` — both currently pin `v3.14.1`) and then
 formats the output with Prettier, so the checked-in files are always diff-reviewable in the
 project's normal code style.
 

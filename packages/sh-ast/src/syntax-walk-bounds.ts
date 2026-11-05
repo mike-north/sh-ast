@@ -3,7 +3,7 @@
  * mirror the pinned mvdan/sh node methods so callback edits are visible without
  * repeatedly serializing subtrees to WASM. They are not public position APIs.
  *
- * Adapted from mvdan.cc/sh/v3 v3.13.1 syntax/nodes.go, copyright Daniel Martí.
+ * Adapted from mvdan.cc/sh/v3 v3.14.1 syntax/nodes.go, copyright Daniel Martí.
  * The upstream BSD license is retained in syntax-walk-license.ts.
  */
 import type { Node, SyntaxPos } from '../generated/syntax-types.js';
@@ -30,9 +30,17 @@ function unpack(pos: SyntaxPos): IPosition {
 function valid(pos: IPosition): boolean {
   return pos.offset <= OFFSET_MAX && pos.lineCol !== 0;
 }
-/** Position arithmetic stops on invalid input and otherwise wraps both uint32 words. */
+/** Upstream clamps offsets and drops overflowing columns without changing lines. */
 function add(pos: IPosition, n: number): IPosition {
-  return valid(pos) ? { offset: (pos.offset + n) >>> 0, lineCol: (pos.lineCol + n) >>> 0 } : pos;
+  if (!valid(pos)) {
+    return pos;
+  }
+  const previousColumn = pos.lineCol & 0x3fff;
+  const column = previousColumn > 0 ? previousColumn + n : 0;
+  return {
+    offset: Math.min(Math.max(pos.offset + n, 0), OFFSET_MAX),
+    lineCol: ((pos.lineCol & ~0x3fff) | (column >= 1 && column <= 0x3fff ? column : 0)) >>> 0,
+  };
 }
 /** Only the left operand must be valid; a right ordinary-invalid offset still orders. */
 function after(left: IPosition, right: IPosition): boolean {
@@ -127,7 +135,7 @@ function end(value: Node | null): IPosition {
         return end(node.Array);
       }
       if (node.Index !== null) {
-        return add(end(node.Index), 2);
+        return add(end(node.Index), node.Naked ? 1 : 2);
       }
       return node.Naked ? end(node.Name) : add(end(node.Name), 1);
     case 'Redirect':
@@ -142,8 +150,9 @@ function end(value: Node | null): IPosition {
       return add(unpack(node.Rbrace), 1);
     case 'IfClause':
       return add(unpack(node.FiPos), 2);
-    case 'WhileClause':
     case 'ForClause':
+      return add(unpack(node.DonePos), node.Braces ? 1 : 4);
+    case 'WhileClause':
       return add(unpack(node.DonePos), 4);
     case 'BinaryCmd':
     case 'BinaryArithm':
@@ -178,7 +187,7 @@ function end(value: Node | null): IPosition {
     case 'FlagsArithm':
       return node.X !== null ? end(node.X) : add(end(node.Flags), 1);
     case 'CaseClause':
-      return add(unpack(node.Esac), 4);
+      return add(unpack(node.Esac), node.Braces ? 1 : 4);
     case 'DeclClause':
       return node.Args?.length ? end(at(node.Args, node.Args.length - 1)) : end(node.Variant);
     case 'ExtGlob':

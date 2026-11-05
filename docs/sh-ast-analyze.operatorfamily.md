@@ -4,7 +4,7 @@
 
 ## OperatorFamily type
 
-The upstream uint32 operator families. A family name identifies the Go named type, not the spelling of one token.
+The upstream numeric families: uint32 token operators and uint8 option states. A family name identifies the Go named type, not the spelling of one token.
 
 **Signature:**
 
@@ -15,6 +15,7 @@ export type OperatorFamily =
   | 'BinTestOperator'
   | 'CaseOperator'
   | 'GlobOperator'
+  | 'OptState'
   | 'ParExpOperator'
   | 'ParNamesOperator'
   | 'ProcOperator'

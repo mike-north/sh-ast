@@ -121,6 +121,27 @@ Null preserves the upstream absence of this component.
 </td></tr>
 <tr><td>
 
+[GlobSubst](./sh-ast-analyze.paramexp.globsubst.md)
+
+
+</td><td>
+
+
+</td><td>
+
+OptState
+
+
+</td><td>
+
+$<!-- -->{<!-- -->\~a<!-- -->} / $<!-- -->{<!-- -->\~\~a<!-- -->} treat value as a glob pattern with `LangZsh`
+
+Upstream three-state option override: unset, on, or off. Explicit raw values retain the uint8 storage boundary.
+
+
+</td></tr>
+<tr><td>
+
 [Index](./sh-ast-analyze.paramexp.index.md)
 
 
@@ -287,6 +308,27 @@ Recorded source position; invalid and recovered states remain distinct.
 </td></tr>
 <tr><td>
 
+[RcExpand](./sh-ast-analyze.paramexp.rcexpand.md)
+
+
+</td><td>
+
+
+</td><td>
+
+OptState
+
+
+</td><td>
+
+$<!-- -->{<!-- -->^a<!-- -->} / $<!-- -->{<!-- -->^^a<!-- -->} RC\_EXPAND\_PARAM-style array expansion with `LangZsh`
+
+Upstream three-state option override: unset, on, or off. Explicit raw values retain the uint8 storage boundary.
+
+
+</td></tr>
+<tr><td>
+
 [Repl](./sh-ast-analyze.paramexp.repl.md)
 
 
@@ -345,6 +387,27 @@ False is an explicit upstream value and is never omitted.
 $<!-- -->{<!-- -->a:x:y<!-- -->}
 
 Null preserves the upstream absence of this component.
+
+
+</td></tr>
+<tr><td>
+
+[Split](./sh-ast-analyze.paramexp.split.md)
+
+
+</td><td>
+
+
+</td><td>
+
+OptState
+
+
+</td><td>
+
+Zsh expansion prefixes that override shell options for this expansion. They can stack with one another and with the operators above. The doubled forms ($<!-- -->{<!-- -->==a<!-- -->}<!-- -->, $<!-- -->{<!-- -->\~\~a<!-- -->}<!-- -->, $<!-- -->{<!-- -->^^a<!-- -->}<!-- -->) force the option off. $<!-- -->{<!-- -->=a<!-- -->} / $<!-- -->{<!-- -->==a<!-- -->} word splitting with `LangZsh`
+
+Upstream three-state option override: unset, on, or off. Explicit raw values retain the uint8 storage boundary.
 
 
 </td></tr>

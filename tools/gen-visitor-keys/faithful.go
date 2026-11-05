@@ -50,7 +50,7 @@ type faithfulField struct {
 }
 
 // MarshalJSON distinguishes an unnamed scalar/position domain from a named
-// operator or record domain without inventing an empty upstream type name.
+// numeric or record domain without inventing an empty upstream type name.
 func (field faithfulField) MarshalJSON() ([]byte, error) {
 	type data faithfulField
 	var typeName *string
@@ -64,7 +64,7 @@ func (field faithfulField) MarshalJSON() ([]byte, error) {
 }
 
 // faithfulConstant retains the upstream numeric identity, declared family, and
-// semantic documentation of an exported operator or language variant constant.
+// semantic documentation of an exported numeric-domain or language variant constant.
 type faithfulConstant struct {
 	Family string
 	Value  int64
@@ -111,7 +111,7 @@ func buildFaithfulSchema(loaded *packages.Package) (*faithfulSchema, error) {
 			continue
 		}
 		basic, ok := obj.Type().Underlying().(*types.Basic)
-		if ok && basic.Kind() == types.Uint32 {
+		if ok && (basic.Kind() == types.Uint32 || basic.Kind() == types.Uint8) {
 			schema.Operators[name] = nil
 		}
 	}
@@ -357,6 +357,9 @@ func faithfulFieldMeaning(field faithfulField) string {
 		boundary = "False is an explicit upstream value and is never omitted."
 	case field.Kind == "operator":
 		boundary = "Upstream operator value, preserving named tokens, zero, and explicitly represented raw uint32 values."
+		if field.Type == "OptState" {
+			boundary = "Upstream three-state option override: unset, on, or off. Explicit raw values retain the uint8 storage boundary."
+		}
 	}
 	if meaning == "" {
 		return boundary
@@ -488,17 +491,21 @@ func renderFaithfulConstantsDTS(schema *faithfulSchema, version string) string {
 		writeSemanticComment(&b, "", constantMeaning(name, value), "public")
 		fmt.Fprintf(&b, "export declare const %s: %d;\n\n", name, value.Value)
 	}
-	writeSemanticComment(&b, "", "The upstream uint32 operator families. A family name identifies the Go named type, not the spelling of one token.", "public")
+	writeSemanticComment(&b, "", "The upstream numeric families: uint32 token operators and uint8 option states. A family name identifies the Go named type, not the spelling of one token.", "public")
 	var families []string
 	for _, name := range sortedKeys(schema.Operators) {
 		families = append(families, jsString(name))
 	}
 	fmt.Fprintf(&b, "export type OperatorFamily = %s;\n\n", strings.Join(families, " | "))
-	writeSemanticComment(&b, "", "An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.", "public")
+	writeSemanticComment(&b, "", "An explicitly represented unnamed integer in one upstream numeric family. The runtime constructor checks the family storage range (uint8 for OptState, uint32 otherwise); this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.", "public")
 	b.WriteString("export type RawOperator<Family extends OperatorFamily> = number & { readonly __shAstOperatorFamily: Family };\n\n")
 	for _, name := range sortedKeys(schema.Operators) {
-		writeSemanticComment(&b, "", "The upstream "+name+" domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity.", "public")
-		values := []string{"0"}
+		meaning := "The upstream " + name + " domain: exact named tokens, the Go zero value, and explicitly validated unnamed uint32 values. Constants shared by upstream families retain their shared numeric identity."
+		if name == "OptState" {
+			meaning = "An upstream option override: OptUnset leaves shell policy unchanged, OptOn enables it, and OptOff disables it. Explicit raw values are restricted to uint8 storage."
+		}
+		writeSemanticComment(&b, "", meaning, "public")
+		var values []string
 		canonical := map[int64]string{}
 		for _, constant := range schema.Operators[name] {
 			value := schema.Constants[constant]
@@ -506,6 +513,11 @@ func renderFaithfulConstantsDTS(schema *faithfulSchema, version string) string {
 			if !exists || strings.Contains(schema.Constants[previous].Doc, "Deprecated:") {
 				canonical[value.Value] = constant
 			}
+		}
+		// A named zero constant already represents the Go zero value. Avoid
+		// duplicate union members while retaining zero for other token enums.
+		if _, namedZero := canonical[0]; !namedZero {
+			values = append(values, "0")
 		}
 		var names []string
 		for _, constant := range canonical {

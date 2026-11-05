@@ -1,12 +1,10 @@
-diff --git a/syntax/printer.go b/syntax/printer.go
 --- a/syntax/printer.go
 +++ b/syntax/printer.go
-@@ -489,10 +489,14 @@
- 		p.wantNewline, p.wantNewline = false, false
+@@ -494,10 +494,13 @@
+ 		p.wantNewline, p.mustNewline = false, false
  		if r.Op == DashHdoc && p.indentSpaces == 0 && !p.minify {
  			if r.Hdoc != nil {
-+				// Only unquoted delimiters enable backslash-newline joining.
-+				// Quoted or backslash-escaped delimiters keep literal newlines.
++				// Only unquoted delimiters join physical lines; following tabs are data.
 +				delim := r.Word.Lit()
  				extra := extraIndenter{
  					bufWriter:   p.w,
@@ -16,7 +14,7 @@ diff --git a/syntax/printer.go b/syntax/printer.go
  				}
  				p.tabsPrinter = &Printer{
  					w: &extra,
-@@ -1549,9 +1553,10 @@
+@@ -1609,9 +1612,10 @@
  	spaceWritten                    // we have just written a space or newline
  )
  
@@ -30,7 +28,7 @@ diff --git a/syntax/printer.go b/syntax/printer.go
  type extraIndenter struct {
  	bufWriter
  	baseIndent int
-@@ -1559,11 +1564,36 @@
+@@ -1619,11 +1623,36 @@
  	firstIndent int
  	firstChange int
  	curLine     []byte

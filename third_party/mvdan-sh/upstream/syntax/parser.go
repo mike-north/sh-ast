@@ -76,12 +76,16 @@ const (
 	// Its string representation is "zsh".
 	LangZsh
 
+	// langResolvedVariantsCount is the number of variants declared above,
+	// that is, langResolvedVariants.count() as a constant.
+	langResolvedVariantsCount = iota
+
 	// LangAuto corresponds to automatic language detection,
 	// commonly used by end-user applications like shfmt,
 	// which can guess a file's language variant given its filename or shebang.
 	//
 	// At this time, [Variant] does not support LangAuto.
-	LangAuto
+	LangAuto LangVariant = 1 << langResolvedVariantsCount
 
 	// langBashLegacy is what [LangBash] used to be, when it was zero.
 	// We still support it for the sake of backwards compatibility.
@@ -90,11 +94,6 @@ const (
 	// langResolvedVariants contains all known variants except [LangAuto],
 	// which is meant to resolve to another variant.
 	langResolvedVariants = LangBash | LangPOSIX | LangMirBSDKorn | LangBats | LangZsh
-
-	// langResolvedVariantsCount is langResolvedVariants.count() as a constant.
-	// TODO: Can we compute this as a constant expression somehow?
-	// For example, if we had log2, we could do log2(LangAuto).
-	langResolvedVariantsCount = 5
 
 	// langBashLike contains Bash plus all variants which are extensions of it.
 	langBashLike = LangBash | LangBats
@@ -140,7 +139,7 @@ func (l *LangVariant) Set(s string) error {
 	switch s {
 	case "bash":
 		*l = LangBash
-	case "posix", "sh":
+	case "posix", "sh", "dash":
 		*l = LangPOSIX
 	case "mksh":
 		*l = LangMirBSDKorn
@@ -537,6 +536,9 @@ type Parser struct {
 	parseDepthLimit int
 	// openBquotes is how many levels of backquotes are open at the moment.
 	openBquotes int
+	// openBquoteDbls is how many of those backquote levels began inside
+	// double quotes, where backslashes also escape double quotes.
+	openBquoteDbls int
 
 	// lastBquoteEsc is how many times the last backquote token was escaped
 	lastBquoteEsc int
@@ -609,6 +611,7 @@ func (p *Parser) reset() {
 	p.hdocStops = nil
 	p.parsingDoc = false
 	p.openBquotes = 0
+	p.openBquoteDbls = 0
 	p.accComs = nil
 	p.accComs, p.curComs = nil, &p.accComs
 	p.litBatch = nil
@@ -698,6 +701,9 @@ const (
 
 	subCmd
 	subCmdBckquo
+	// subCmdBraces is like subCmd, but for `${ stmts;}` and `${|stmts;}`,
+	// whose bodies end at a word beginning with `}`.
+	subCmdBraces
 	dblQuotes
 	hdocWord
 	hdocBody
@@ -708,17 +714,22 @@ const (
 	testExpr
 	testExprRegexp
 	switchCase
+	// paramExpArithm is a subscript like ${a[i]}, which can be a string key
+	// rather than an arithmetic expression when the array is associative.
 	paramExpArithm
+	// paramExpSlice is a slice like ${a:i:j}, which is always arithmetic.
+	paramExpSlice
 	paramExpRepl
 	paramExpExp
 	arrayElems
 
 	allKeepSpaces = runeByRune | paramExpRepl | dblQuotes | hdocBody |
 		hdocBodyTabs | paramExpRepl | paramExpExp
-	allRegTokens = noState | unquotedWordCont | subCmd | subCmdBckquo | hdocWord |
-		switchCase | arrayElems | testExpr
-	allArithmExpr = arithmExpr | arithmExprLet | arithmExprCmd | paramExpArithm
-	allParamExp   = paramExpArithm | paramExpRepl | paramExpExp
+	allRegTokens = noState | unquotedWordCont | subCmd | subCmdBckquo | subCmdBraces |
+		hdocWord | switchCase | arrayElems | testExpr
+	allArithmExpr = arithmExpr | arithmExprLet | arithmExprCmd |
+		paramExpArithm | paramExpSlice
+	allParamExp = paramExpArithm | paramExpSlice | paramExpRepl | paramExpExp
 )
 
 type saveState struct {
@@ -1020,7 +1031,8 @@ type LangError struct {
 	Filename string
 	Pos      Pos
 
-	// TODO: consider replacing the Langs slice with a bitset.
+	// TODO(v4): replace the Langs slice with a single LangVariant bitset,
+	// which is what the parser uses internally already.
 
 	// Feature briefly describes which language feature caused the error.
 	Feature string
@@ -1246,7 +1258,7 @@ func (p *Parser) wordPart() WordPart {
 				TempFile: p.r != '|',
 				ReplyVar: p.r == '|',
 			}
-			old := p.preNested(subCmd)
+			old := p.preNested(subCmdBraces)
 			p.rune() // don't tokenize '|'
 			p.next()
 			cs.Stmts, cs.Last = p.stmtList("}")
@@ -1273,6 +1285,10 @@ func (p *Parser) wordPart() WordPart {
 		ar.X = p.followArithm(left, ar.Left)
 		if ar.Bracket {
 			if p.tok != rightBrack {
+				if p.recoverError() {
+					ar.Right = recoveredPos
+					return ar
+				}
 				p.arithmMatchingErr(ar.Left, dollBrack, rightBrack)
 			}
 			p.postNested(old)
@@ -1348,6 +1364,9 @@ func (p *Parser) wordPart() WordPart {
 		cs := &CmdSubst{Left: p.pos, Backquotes: true}
 		old := p.preNested(subCmdBckquo)
 		p.openBquotes++
+		if old.quote == dblQuotes {
+			p.openBquoteDbls++
+		}
 
 		// The lexer didn't call p.rune for us, so that it could have
 		// the right p.openBquotes to properly handle backslashes.
@@ -1362,6 +1381,9 @@ func (p *Parser) wordPart() WordPart {
 		}
 		p.postNested(old)
 		p.openBquotes--
+		if old.quote == dblQuotes {
+			p.openBquoteDbls--
+		}
 		cs.Right = p.pos
 
 		// Like above, the lexer didn't call p.rune for us.
@@ -1488,27 +1510,65 @@ func (p *Parser) paramExp() *ParamExp {
 		pe.Flags = p.lit(p.pos, p.val)
 		p.rune()
 	}
+	// Zsh-only prefixes that change how the parameter is expanded.
+	// They may appear in any combination, like ${=^name}.
+	// Doubling the rune (${==a}, ${~~a}, ${^^a}) forces the option off.
+zshPrefixLoop:
+	for p.lang.in(LangZsh) {
+		var field *OptState
+		switch p.r {
+		case '=':
+			field = &pe.Split
+		case '~':
+			field = &pe.GlobSubst
+		case '^':
+			field = &pe.RcExpand
+		default:
+			break zshPrefixLoop
+		}
+		next, after := p.peekTwo()
+		state := OptOn
+		check := next
+		if rune(next) == p.r {
+			state = OptOff
+			check = after
+		}
+		if check == utf8.RuneSelf || check == '}' {
+			break zshPrefixLoop
+		}
+		// For the short form, only treat as a prefix if followed by something
+		// that could start a parameter name or another zsh prefix.
+		if pe.Short && check != '=' && check != '~' && check != '^' &&
+			!paramNameStartRune(check) {
+			break zshPrefixLoop
+		}
+		if state == OptOff {
+			p.rune() // consume the first of the doubled pair
+		}
+		p.rune()
+		*field = state
+	}
 	if !pe.Short || p.lang.in(LangZsh) {
 		// Prefixes, like ${#name} to get the length of a variable.
-		// Note that in Zsh, the short form like $#name is allowed too.
+		// Note that zsh allows the short forms $#name and $+name too,
+		// but not $%name nor $!name.
 		switch p.r {
 		case '#':
-			if p.paramNameStart() {
+			if p.paramNameStart(pe) {
 				pe.Length = true
 			}
 		case '%':
-			if p.paramNameStart() {
+			if !pe.Short && p.paramNameStart(pe) {
 				p.checkLang(pe.Pos(), LangMirBSDKorn, "`${%%foo}`")
 				pe.Width = true
 			}
 		case '!':
-			// Unlike the others, zsh has no $!foo prefix.
-			if !pe.Short && p.paramNameStart() {
+			if !pe.Short && p.paramNameStart(pe) {
 				p.checkLang(pe.Pos(), langBashLike|LangMirBSDKorn, "`${!foo}`")
 				pe.Excl = true
 			}
 		case '+':
-			if p.paramNameStart() {
+			if p.paramNameStart(pe) {
 				p.checkLang(pe.Pos(), LangZsh, "`${+foo}`")
 				pe.IsSet = true
 			}
@@ -1595,7 +1655,7 @@ func (p *Parser) paramExp() *ParamExp {
 		p.checkLang(p.pos, langBashLike|LangMirBSDKorn|LangZsh, "slicing")
 		pe.Slice = &Slice{}
 		colonPos := p.pos
-		p.quote = paramExpArithm
+		p.quote = paramExpSlice
 		if p.next(); p.tok != colon {
 			pe.Slice.Offset = p.followArithm(colon, colonPos)
 		}
@@ -1649,9 +1709,13 @@ func (p *Parser) paramExp() *ParamExp {
 	return pe
 }
 
-func (p *Parser) paramNameStart() bool {
+// paramNameStart reports whether a parameter name can begin after a prefix rune
+// such as the '#' in ${#foo}, consuming the prefix rune if so.
+// Only the long form allows a quoted nested expansion like ${#"$(foo)"} or EOF;
+// in the short form the prefix rune is the parameter itself, as in "$#" or $#"$foo".
+func (p *Parser) paramNameStart(pe *ParamExp) bool {
 	r := p.peek()
-	if r == utf8.RuneSelf || singleRuneParam(r) || paramNameRune(r) || r == '"' {
+	if paramNameStartRune(r) || (!pe.Short && (r == '"' || r == utf8.RuneSelf)) {
 		p.rune()
 		return true
 	}
@@ -1826,13 +1890,16 @@ func (p *Parser) zshSubFlags() *FlagsArithm {
 	}
 	zf.Flags = p.lit(p.pos, p.val)
 	p.rune()
-	p.quote = old
-	// Parse the expression; use arithmExprAssign so commas are left for ranges.
-	p.next()
-	if p.tok == star || p.tok == at {
-		p.tok, p.val = _LitWord, p.tok.String()
+	// Lex the argument as a raw pattern, stopping at ',' or ']',
+	// since zsh treats it as a pattern rather than an arithmetic expression.
+	argPos := p.nextPos()
+	for p.newLit(p.r); p.r != runeEOF && p.r != ',' && p.r != ']'; p.rune() {
 	}
-	zf.X = p.arithmExprAssign(false)
+	if val := p.endLit(); val != "" {
+		zf.X = p.wordOne(p.lit(argPos, val))
+	}
+	p.quote = old
+	p.next()
 	return zf
 }
 
@@ -2042,7 +2109,7 @@ func (p *Parser) doRedirect(s *Stmt) {
 	}
 	r.N = p.getLit()
 	if r.N != nil && r.N.Value[0] == '{' {
-		p.checkLang(r.N.Pos(), langBashLike, "`{varname}` redirects")
+		p.checkLang(r.N.Pos(), langBashLike|LangZsh, "`{varname}` redirects")
 	}
 	r.Op, r.OpPos = RedirOperator(p.tok), p.pos
 	switch r.Op {
@@ -2879,6 +2946,16 @@ func (p *Parser) testDecl(s *Stmt) {
 	s.Cmd = td
 }
 
+func (p *Parser) unexpectedInCallExpr(ce *CallExpr) {
+	// Note that we'll only keep the first error that happens.
+	if len(ce.Args) > 0 {
+		if cmd := ce.Args[0].Lit(); isBashCompoundCommand(_LitWord, cmd) {
+			p.checkLang(p.pos, langBashLike, "the %#q builtin", cmd)
+		}
+	}
+	p.curErr("a command can only contain words and redirects; encountered %#q", p.tok)
+}
+
 func (p *Parser) callExpr(s *Stmt, w *Word, assign bool) {
 	ce := p.call(w)
 	if w == nil {
@@ -2929,23 +3006,23 @@ loop:
 			ce.Args = append(ce.Args, p.wordAnyNumber())
 		case dblLeftParen:
 			p.curErr("%#q can only be used to open an arithmetic cmd", p.tok)
+		case leftParen:
+			if p.lang.in(LangZsh) && p.r != ')' {
+				ce.Args = append(ce.Args, p.wordAnyNumber())
+				break
+			}
+			p.unexpectedInCallExpr(ce)
 		case rightParen:
 			if p.quote == subCmd {
 				break loop
 			}
-			fallthrough
+			p.unexpectedInCallExpr(ce)
 		default:
 			if p.peekRedir() {
 				p.doRedirect(s)
 				continue
 			}
-			// Note that we'll only keep the first error that happens.
-			if len(ce.Args) > 0 {
-				if cmd := ce.Args[0].Lit(); isBashCompoundCommand(_LitWord, cmd) {
-					p.checkLang(p.pos, langBashLike, "the %#q builtin", cmd)
-				}
-			}
-			p.curErr("a command can only contain words and redirects; encountered %#q", p.tok)
+			p.unexpectedInCallExpr(ce)
 		}
 	}
 	if len(ce.Args) == 0 {

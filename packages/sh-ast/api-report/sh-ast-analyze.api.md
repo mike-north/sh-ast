@@ -756,6 +756,7 @@ export type OperatorFamily =
 | 'BinTestOperator'
 | 'CaseOperator'
 | 'GlobOperator'
+| 'OptState'
 | 'ParExpOperator'
 | 'ParNamesOperator'
 | 'ProcOperator'
@@ -790,6 +791,8 @@ export interface ParamExp {
     Excl: boolean;
     Exp: Expansion | null;
     Flags: Lit | null;
+    // Warning: (ae-forgotten-export) The symbol "OptState" needs to be exported by the entry point index.d.ts
+    GlobSubst: OptState;
     Index: ArithmExpr | null;
     IsSet: boolean;
     Length: boolean;
@@ -798,9 +801,11 @@ export interface ParamExp {
     NestedParam: WordPart | null;
     Param: Lit | null;
     Rbrace: SyntaxPos;
+    RcExpand: OptState;
     Repl: Replace | null;
     Short: boolean;
     Slice: Slice | null;
+    Split: OptState;
     Type: 'ParamExp';
     Width: boolean;
 }

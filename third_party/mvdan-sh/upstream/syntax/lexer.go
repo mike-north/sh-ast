@@ -107,8 +107,10 @@ retry:
 			}
 			// TODO: why is this necessary to ensure correct position info?
 			p.readEOF = false
-			if p.openBquotes > 0 && bquotes < p.openBquotes &&
-				p.bsp < uint(len(p.bs)) && bquoteEscaped(p.bs[p.bsp]) {
+			if p.openBquotes > 0 && p.bsp < uint(len(p.bs)) &&
+				((bquotes < p.openBquotes && bquoteEscaped(p.bs[p.bsp])) ||
+					// Backquotes within double quotes also escape double quotes.
+					(bquotes < p.openBquoteDbls && p.bs[p.bsp] == '"')) {
 				// We turn backquote command substitutions into $(),
 				// so we remove the extra backslashes needed by the backquotes.
 				bquotes++
@@ -295,8 +297,11 @@ skipSpace:
 		}
 	}
 	if p.stopAt != nil && (p.spaced || p.tok == illegalTok || p.stopToken()) {
-		w := utf8.RuneLen(r)
-		if bytes.HasPrefix(p.bs[p.bsp-uint(w):], p.stopAt) {
+		// Note that the buffer may have been refilled since we read r,
+		// such as when peeking at the byte which follows a backslash,
+		// in which case r's bytes are gone and we cannot match on them.
+		w := uint(utf8.RuneLen(r))
+		if p.bsp >= w && bytes.HasPrefix(p.bs[p.bsp-w:], p.stopAt) {
 			p.r = runeEOF
 			p.w = 1
 			p.tok = _EOF
@@ -316,7 +321,8 @@ skipSpace:
 		case '#':
 			// If we're parsing $foo#bar, ${foo}#bar, 'foo'#bar, or "foo"#bar,
 			// #bar is a continuation of the same word, not a comment.
-			if p.quote == unquotedWordCont && !p.spaced {
+			// The same applies inside [[ ]] tests, where '#' has no comment meaning.
+			if !p.spaced && (p.quote == unquotedWordCont || p.quote == testExpr) {
 				p.advanceLitNone(r)
 				return false
 			}
@@ -347,7 +353,9 @@ skipSpace:
 			}
 			return true
 		case '[':
-			if p.quote == arrayElems {
+			// `[` only starts an `[idx]=val` element when it begins a new word;
+			// otherwise it continues a glob like `foo[0-9]`.
+			if p.quote == arrayElems && (p.spaced || p.tok == leftParen || p.tok == _Newl) {
 				p.rune()
 				p.tok = leftBrack
 			} else {
@@ -386,6 +394,11 @@ skipSpace:
 		default:
 			p.advanceLitNone(r)
 		}
+	case p.quote == paramExpArithm && r == '#':
+		// '#' is mksh's unsigned prefix, which only [ArithmExp] and [ArithmCmd]
+		// can represent, so in a subscript it starts a literal instead;
+		// it can be part of an associative array key, like in ${args[cmd,#]}.
+		p.advanceLitOther(r)
 	case p.quote&allArithmExpr != 0 && arithmOps(r):
 		p.tok = p.arithmToken(r)
 	case p.quote&allParamExp != 0 && paramOps(r):
@@ -596,7 +609,7 @@ func (p *Parser) regToken(r rune) token {
 			p.rune()
 			return semiAnd
 		case '|':
-			if !p.lang.in(LangMirBSDKorn) {
+			if !p.lang.in(LangMirBSDKorn | LangZsh) {
 				break
 			}
 			p.rune()
@@ -1000,7 +1013,14 @@ func (p *Parser) endLit() (s string) {
 func (p *Parser) isLitRedir() bool {
 	lit := p.litBs[:len(p.litBs)-1]
 	if lit[0] == '{' && lit[len(lit)-1] == '}' {
-		return ValidName(string(lit[1 : len(lit)-1]))
+		name := lit[1 : len(lit)-1]
+		// Bash also allows an array element such as {name[idx]}.
+		if p.lang.in(langBashLike) && len(name) > 0 && name[len(name)-1] == ']' {
+			if i := bytes.IndexByte(name, '['); i > 0 && i < len(name)-2 {
+				name = name[:i]
+			}
+		}
+		return ValidName(string(name))
 	}
 	return numberLiteral(lit)
 }
@@ -1023,6 +1043,12 @@ func singleRuneParam[T rune | byte](r T) bool {
 
 func paramNameRune[T rune | byte](r T) bool {
 	return asciiLetter(r) || asciiDigit(r) || r == '_'
+}
+
+// paramNameStartRune reports whether a parameter name can begin with r,
+// be it a single-rune name like $@ or a regular name like $foo.
+func paramNameStartRune[T rune | byte](r T) bool {
+	return singleRuneParam(r) || paramNameRune(r)
 }
 
 func (p *Parser) advanceLitOther(r rune) {
@@ -1133,7 +1159,20 @@ loop:
 			if p.eqlOffs < 0 {
 				p.eqlOffs = len(p.litBs) - 1
 			}
+		case '}':
+			if p.quote == subCmdBraces && len(p.litBs) == 1 {
+				// A word-initial `}` closes the substitution even if
+				// more characters follow, as in `${ foo;}bar`.
+				p.rune()
+				break loop
+			}
 		case '[':
+			if p.litBs[0] == '{' && p.lang.in(langBashLike) {
+				// In bash, words beginning with '{' are always kept whole,
+				// so that {name[idx]} literals can prefix a redirect
+				// operator below.
+				break
+			}
 			if p.lang.in(langBashLike|LangMirBSDKorn|LangZsh) && len(p.litBs) > 1 && p.litBs[0] != '[' {
 				tok = _Lit
 				break loop

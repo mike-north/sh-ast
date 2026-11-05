@@ -307,10 +307,15 @@ func decodeValue(target reflect.Value, value any) error {
 		}
 		target.SetBool(boolean)
 		return nil
-	case reflect.Uint32:
+	case reflect.Uint8, reflect.Uint32:
 		number, err := readUint32(value)
 		if err != nil {
 			return err
+		}
+		// Named uint8 option states and uint32 operators retain their full
+		// storage domain; reject overflow before reflection can truncate it.
+		if target.OverflowUint(number) {
+			return fmt.Errorf("integer overflows %s", target.Type())
 		}
 		target.SetUint(number)
 		return nil
@@ -368,7 +373,9 @@ func readPosition(value any) (syntax.Pos, error) {
 	if recovered {
 		position, err = recoveredPosition()
 	} else if overflow {
-		position = overflowPosition(uint(line), uint(column))
+		// The current pin clamps arithmetic at the valid offset maximum.
+		// Recovery is now the only constructible hidden-overflow position.
+		return syntax.Pos{}, fmt.Errorf("non-recovered overflow position is not representable")
 	} else {
 		position = syntax.NewPos(uint(offset), uint(line), uint(column))
 	}
@@ -380,27 +387,4 @@ func readPosition(value any) (syntax.Pos, error) {
 		return syntax.Pos{}, fmt.Errorf("position observations are inconsistent with upstream state")
 	}
 	return position, nil
-}
-
-// overflowPosition reconstructs an observationally equivalent non-recovered
-// position using only NewPos and Comment.End. The pinned public coordinate
-// behavior has 18-bit lines and 14-bit columns. Advancing past the maximum offset
-// preserves those coordinates while making the offset hidden and After false.
-// A two-byte advance at coordinate wrap avoids accidentally creating the exact
-// recovered sentinel. Once invalid, upstream position arithmetic leaves it alone.
-func overflowPosition(line, column uint) syntax.Pos {
-	const lineMax = (1 << 18) - 1
-	const columnMax = (1 << 14) - 1
-	var start syntax.Pos
-	text := ""
-	switch {
-	case line == 0 && column <= 1:
-		start = syntax.NewPos(maximumPosition.Offset(), lineMax, columnMax-1+column)
-		text = "x"
-	case column > 0:
-		start = syntax.NewPos(maximumPosition.Offset(), line, column-1)
-	default:
-		start = syntax.NewPos(maximumPosition.Offset(), line-1, columnMax)
-	}
-	return (&syntax.Comment{Hash: start, Text: text}).End()
 }

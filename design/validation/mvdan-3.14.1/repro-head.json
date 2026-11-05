@@ -1,0 +1,439 @@
+[
+  {
+    "name": "backtick quoted argument",
+    "source": "value=\"alpha beta\"; quote() { printf \"<%s>\" \"$@\"; }; printf \"%s\\n\" \"`quote \\\"${value}\\\"`\"\n",
+    "stdout": "<alpha beta>\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "<alpha beta>\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "<alpha beta>\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "value=\"alpha beta\"\nquote() { printf \"<%s>\" \"$@\"; }\nprintf \"%s\\n\" \"$(quote \"${value}\")\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<alpha beta>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<alpha beta>\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "value=\"alpha beta\"\nquote()                     { printf \"<%s>\" \"$@\"; }\nprintf                                                      \"%s\\n\" \"$(quote \"${value}\" )\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<alpha beta>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<alpha beta>\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "adjacent bracket literal",
+    "source": "set -f; prefix=p; suffix=s; printf \"<%s>\\n\" \"${prefix}/\"{[[:digit:]][[:digit:]][[:digit:]]\"${suffix}\",\"${suffix}\"}\n",
+    "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "set -f\nprefix=p\nsuffix=s\nprintf \"<%s>\\n\" \"${prefix}/\"{[[:digit:]][[:digit:]][[:digit:]]\"${suffix}\",\"${suffix}\"}\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "set -f\nprefix=p\nsuffix=s\nprintf                             \"<%s>\\n\" \"${prefix}/\"{[[:digit:]][[:digit:]][[:digit:]]\"${suffix}\",\"${suffix}\"}\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<p/[[:digit:]][[:digit:]][[:digit:]]s>\n<p/s>\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "nested subshell closing parens",
+    "source": "value=$( (printf \"%s\" safe) ); printf \"%s\\n\" \"$value\"\n",
+    "stdout": "safe\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "safe\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "safe\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "value=$( (printf \"%s\" safe) )\nprintf \"%s\\n\" \"$value\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "value=$( (printf \"%s\" safe) )\nprintf                                \"%s\\n\" \"$value\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "stored substitution close column",
+    "source": "value=$(printf \"%s\" safe    ); printf \"%s\\n\" \"$value\"\n",
+    "stdout": "safe\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "safe\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "safe\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "value=$(printf \"%s\" safe)\nprintf \"%s\\n\" \"$value\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "value=$(printf \"%s\" safe    )\nprintf                                \"%s\\n\" \"$value\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "safe\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "pending subshell heredoc",
+    "source": "cat <<X; (\nbody\nX\nprintf \"in\\n\"\n)\n",
+    "stdout": "body\nin\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "body\nin\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "body\nin\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "cat <<X\nbody\nX\n(\n\tprintf \"in\\n\"\n)\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "body\nin\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "body\nin\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "cat <<X\nbody\nX\n(\n\tprintf \"in\\n\"\n)\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "body\nin\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "body\nin\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "missing heredoc terminator",
+    "source": "cat <<X\nbody\n",
+    "stdout": "body\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "body\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "body\n",
+        "stderr": "/opt/homebrew/bin/bash: line 2: warning: here-document at line 1 delimited by end-of-file (wanted `X')\n"
+      }
+    ],
+    "printed": [],
+    "error": {
+      "name": "ParseError",
+      "message": "1:5: unclosed here-document `X`"
+    }
+  },
+  {
+    "name": "internal heredoc tab issue 85",
+    "source": "if true; then\ncat <<-EOF\n\tname\tvalue\n\tEOF\nfi\n",
+    "stdout": "name\tvalue\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "name\tvalue\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "name\tvalue\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "if true; then\n\tcat <<-EOF\n\t\tname\tvalue\n\tEOF\nfi\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "name\tvalue\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "name\tvalue\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "if true; then\n\tcat <<-EOF\n\t\tname\tvalue\n\tEOF\nfi\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "name\tvalue\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "name\tvalue\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "array expansion issue 82",
+    "source": "target=\"alpha@beta\"; target=(${target//@/ }[0]); printf \"<%s>\\n\" \"${target[@]}\"\n",
+    "stdout": "<alpha>\n<beta[0]>\n",
+    "original": [
+      {
+        "shell": "/bin/bash",
+        "status": 0,
+        "stdout": "<alpha>\n<beta[0]>\n",
+        "stderr": ""
+      },
+      {
+        "shell": "/opt/homebrew/bin/bash",
+        "status": 0,
+        "stdout": "<alpha>\n<beta[0]>\n",
+        "stderr": ""
+      }
+    ],
+    "printed": [
+      {
+        "options": {},
+        "text": "target=\"alpha@beta\"\ntarget=(${target//@/ }[0])\nprintf \"<%s>\\n\" \"${target[@]}\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<alpha>\n<beta[0]>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<alpha>\n<beta[0]>\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "options": {
+          "KeepPadding": true
+        },
+        "text": "target=\"alpha@beta\"\ntarget=(${target//@/ }[0])\nprintf                                                  \"<%s>\\n\" \"${target[@]}\"\n",
+        "runs": [
+          {
+            "shell": "/bin/bash",
+            "status": 0,
+            "stdout": "<alpha>\n<beta[0]>\n",
+            "stderr": ""
+          },
+          {
+            "shell": "/opt/homebrew/bin/bash",
+            "status": 0,
+            "stdout": "<alpha>\n<beta[0]>\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ]
+  }
+]

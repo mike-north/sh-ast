@@ -1,8 +1,6 @@
-diff --git a/syntax/parser.go b/syntax/parser.go
-index bee1856..0318f0b 100644
 --- a/syntax/parser.go
 +++ b/syntax/parser.go
-@@ -520,9 +520,11 @@ type Parser struct {
+@@ -520,9 +520,11 @@
  
  	parsingDoc bool // true if using [Parser.Document]
  
@@ -15,10 +13,11 @@ index bee1856..0318f0b 100644
  	openNodes int
  	// openBquotes is how many levels of backquotes are open at the moment.
  	openBquotes int
-@@ -560,6 +562,23 @@ func (p *Parser) Incomplete() bool {
+@@ -559,6 +561,23 @@
+ }
  
  const bufSize = 1 << 10
- 
++
 +// maxNesting is how deeply statements, words, and expressions may be nested,
 +// so that a small input cannot overflow the Go stack when recursively parsing
 +// or walking the syntax tree. Bash fails at a few thousand nested subshells.
@@ -35,11 +34,10 @@ index bee1856..0318f0b 100644
 +}
 +
 +func (p *Parser) leaveNode() { p.openNodes-- }
-+
+ 
  func (p *Parser) reset() {
  	p.tok, p.val = illegalTok, ""
- 	p.eqlOffs = 0
-@@ -1101,9 +1120,7 @@ loop:
+@@ -1101,9 +1120,7 @@
  		if p.tok == _EOF {
  			break
  		}
@@ -49,7 +47,7 @@ index bee1856..0318f0b 100644
  		if s == nil {
  			p.invalidStmtStart()
  			break
-@@ -1182,9 +1199,9 @@ func (p *Parser) wordParts(wps []WordPart) []WordPart {
+@@ -1182,9 +1199,9 @@
  		defer func() { p.quote = noState }()
  	}
  	for {
@@ -61,7 +59,7 @@ index bee1856..0318f0b 100644
  		if n == nil {
  			if len(wps) == 0 {
  				return nil // normalize empty lists into nil
-@@ -1726,7 +1743,9 @@ func (p *Parser) paramExpParameter(pe *ParamExp) *ParamExp {
+@@ -1726,7 +1743,9 @@
  		switch p.tok = left; p.tok {
  		case dollBrace: // ${#${nested parameter}}
  			p.tok = dollBrace
@@ -71,7 +69,7 @@ index bee1856..0318f0b 100644
  		case dollParen: // ${#$(nested command)}
  			wp = p.cmdSubst()
  		default: // dollar
-@@ -2108,6 +2127,8 @@ func (p *Parser) doRedirect(s *Stmt) {
+@@ -2108,6 +2127,8 @@
  }
  
  func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
@@ -80,7 +78,7 @@ index bee1856..0318f0b 100644
  	pos, ok := p.gotRsrv("!")
  	s := &Stmt{Position: pos}
  	if ok {
-@@ -2129,6 +2150,8 @@ func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
+@@ -2129,6 +2150,8 @@
  			// right recursion should only read a single element
  			return s
  		}
@@ -89,7 +87,7 @@ index bee1856..0318f0b 100644
  		b := &BinaryCmd{
  			OpPos: p.pos,
  			Op:    BinCmdOperator(p.tok),
-@@ -2332,6 +2355,7 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
+@@ -2332,6 +2355,7 @@
  		p.doRedirect(s)
  	}
  	// instead of using recursion, iterate manually
@@ -97,7 +95,7 @@ index bee1856..0318f0b 100644
  	for p.tok == or || p.tok == orAnd {
  		if binCmd {
  			// left associativity: in a list of BinaryCmds, the
-@@ -2343,6 +2367,8 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
+@@ -2343,6 +2367,8 @@
  			// we parse |& as two tokens.
  			break
  		}
@@ -106,7 +104,7 @@ index bee1856..0318f0b 100644
  		b := &BinaryCmd{OpPos: p.pos, Op: BinCmdOperator(p.tok), X: s}
  		p.next()
  		p.got(_Newl)
-@@ -2408,7 +2434,10 @@ func (p *Parser) ifClause(s *Stmt) {
+@@ -2408,7 +2434,10 @@
  	rootIf.ThenPos = p.followRsrv(rootIf.Position, "if <cond>", "then")
  	rootIf.Then, rootIf.ThenLast = p.followStmts("then", rootIf.ThenPos, "fi", "elif", "else")
  	curIf := rootIf
@@ -117,7 +115,7 @@ index bee1856..0318f0b 100644
  		elf := &IfClause{Position: p.pos}
  		curIf.Last = p.accComs
  		p.accComs = nil
-@@ -2639,6 +2668,10 @@ func (p *Parser) testClause(s *Stmt) {
+@@ -2639,6 +2668,10 @@
  
  func (p *Parser) testExprBinary(pastAndOr bool) TestExpr {
  	p.got(_Newl)
@@ -128,7 +126,7 @@ index bee1856..0318f0b 100644
  	var left TestExpr
  	if pastAndOr {
  		left = p.testExprUnary()
-@@ -2797,12 +2830,16 @@ func (p *Parser) timeClause(s *Stmt) {
+@@ -2797,12 +2830,16 @@
  	if _, ok := p.gotRsrv("-p"); ok {
  		tc.PosixFormat = true
  	}
@@ -145,11 +143,9 @@ index bee1856..0318f0b 100644
  	if p.next(); isBashCompoundCommand(p.tok, p.val) {
  		// has no name
  		cc.Stmt = p.gotStmtPipe(&Stmt{Position: p.pos}, false)
-diff --git a/syntax/parser_arithm.go b/syntax/parser_arithm.go
-index 6062dac..175732d 100644
 --- a/syntax/parser_arithm.go
 +++ b/syntax/parser_arithm.go
-@@ -3,6 +3,8 @@ package syntax
+@@ -3,6 +3,8 @@
  // compact specifies whether we allow spaces between expressions.
  // This is true for let
  func (p *Parser) arithmExpr(compact bool) ArithmExpr {
@@ -158,7 +154,7 @@ index 6062dac..175732d 100644
  	return p.arithmExprComma(compact)
  }
  
-@@ -29,7 +31,9 @@ func (p *Parser) arithmExprAssign(compact bool) ArithmExpr {
+@@ -29,7 +31,9 @@
  		pos := p.pos
  		tok := p.tok
  		p.nextArithOp(compact)
@@ -168,7 +164,7 @@ index 6062dac..175732d 100644
  		if y == nil {
  			p.followErrExp(pos, tok)
  		}
-@@ -66,7 +70,9 @@ func (p *Parser) arithmExprTernary(compact bool) ArithmExpr {
+@@ -66,7 +70,9 @@
  	}
  	colonPos := p.pos
  	p.nextArithOp(compact)
@@ -178,7 +174,7 @@ index 6062dac..175732d 100644
  	if falseExpr == nil {
  		p.followErrExp(colonPos, TernColon)
  	}
-@@ -137,7 +143,9 @@ func (p *Parser) arithmExprPower(compact bool) ArithmExpr {
+@@ -137,7 +143,9 @@
  	op := p.tok
  	pos := p.pos
  	p.nextArithOp(compact)
@@ -188,7 +184,7 @@ index 6062dac..175732d 100644
  	if y == nil {
  		p.followErrExp(pos, op)
  	}
-@@ -158,7 +166,10 @@ func (p *Parser) arithmExprUnary(compact bool) ArithmExpr {
+@@ -158,7 +166,10 @@
  	case Not, BitNegation, Plus, Minus:
  		ue := &UnaryArithm{OpPos: p.pos, Op: UnAritOperator(p.tok)}
  		p.nextArithOp(compact)
@@ -200,7 +196,7 @@ index 6062dac..175732d 100644
  			p.followErrExp(ue.OpPos, ue.Op)
  		}
  		return ue
-@@ -264,6 +275,7 @@ func (p *Parser) nextArithOp(compact bool) {
+@@ -264,6 +275,7 @@
  
  // arithmExprBinary is used for all left-associative binary operators
  func (p *Parser) arithmExprBinary(compact bool, nextOp func(bool) ArithmExpr, operators ...BinAritOperator) ArithmExpr {
@@ -208,7 +204,7 @@ index 6062dac..175732d 100644
  	value := nextOp(compact)
  	for {
  		var foundOp BinAritOperator
-@@ -275,12 +287,15 @@ func (p *Parser) arithmExprBinary(compact bool, nextOp func(bool) ArithmExpr, op
+@@ -275,12 +287,15 @@
  		}
  
  		if token(foundOp) == illegalTok || (compact && p.spaced) {

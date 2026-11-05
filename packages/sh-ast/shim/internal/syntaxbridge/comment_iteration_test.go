@@ -1,6 +1,6 @@
 // Comment advancement must preserve upstream trees, positions, and errors while
 // consuming bounded call-stack space for a flat run of comments. The recorded
-// compatibility hashes come from pristine v3.13.1, not this maintained parser.
+// compatibility hashes come from pristine v3.14.1, not this maintained parser.
 package syntaxbridge
 
 import (

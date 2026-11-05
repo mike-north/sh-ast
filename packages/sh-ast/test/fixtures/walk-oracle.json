@@ -1,5 +1,5 @@
 {
-  "upstream": "mvdan.cc/sh/v3 v3.13.1",
+  "upstream": "mvdan.cc/sh/v3 v3.14.1",
   "cases": [
     {
       "id": "grammar-bash",
@@ -9326,6 +9326,30 @@
           "type": "Stmt"
         },
         {
+          "type": "Comment",
+          "value": "leading",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "trailing",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
+          "type": "Comment",
+          "value": "ignored",
+          "origin": "copy"
+        },
+        {
+          "type": "nil"
+        },
+        {
           "type": "CallExpr"
         },
         {
@@ -9343,14 +9367,6 @@
         },
         {
           "type": "nil"
-        },
-        {
-          "type": "nil"
-        },
-        {
-          "type": "Comment",
-          "value": "leading",
-          "origin": "copy"
         },
         {
           "type": "nil"

@@ -6,7 +6,7 @@
  * storage are not represented. Ordinary JavaScript aliases remain shared.
  * Positional work is limited to live comment placement.
  *
- * Adapted from mvdan.cc/sh/v3 v3.13.1 syntax/walk.go, copyright Daniel Martí.
+ * Adapted from mvdan.cc/sh/v3 v3.14.1 syntax/walk.go, copyright Daniel Martí.
  * The upstream BSD license is retained in syntax-walk-license.ts.
  */
 import type { Comment, Node } from '../generated/syntax-types.js';
@@ -205,6 +205,7 @@ function visit(node: Node | null, callback: ICallback): void {
         comments(node.CondLast, callback);
         list(node.Then, 'Stmt', callback);
         comments(node.ThenLast, callback);
+        comments(node.Last, callback);
         optional(node.Else, callback);
         break;
       case 'WhileClause':

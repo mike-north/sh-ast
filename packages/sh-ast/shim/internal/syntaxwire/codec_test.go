@@ -499,10 +499,10 @@ func TestPositionRoundTripPreservesAllPublicMethods(t *testing.T) {
 		{"column-only", syntax.NewPos(3, 0, 1), false},
 		{"maximum", syntax.NewPos(maximum, 1, 1), false},
 		{"recovered", file.Stmts[0].Cmd.(*syntax.Subshell).Rparen, true},
-		{"overflow", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 1)}).End(), true},
-		{"column-carry", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 16383)}).End(), true},
-		{"wrapped-zero", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16382), Text: "x"}).End(), true},
-		{"wrapped-one", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16383), Text: "x"}).End(), true},
+		{"overflow", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 1)}).End(), false},
+		{"column-carry", (&syntax.Comment{Hash: syntax.NewPos(maximum, 1, 16383)}).End(), false},
+		{"wrapped-zero", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16382), Text: "x"}).End(), false},
+		{"wrapped-one", (&syntax.Comment{Hash: syntax.NewPos(maximum, 262143, 16383), Text: "x"}).End(), false},
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture.name, func(t *testing.T) {
@@ -537,5 +537,40 @@ func TestPositionRoundTripPreservesAllPublicMethods(t *testing.T) {
 				t.Fatal("subsequent upstream position arithmetic changed")
 			}
 		})
+	}
+}
+
+// OptState is an upstream uint8 storage domain, including unnamed values. The
+// bridge preserves those values but must reject overflow rather than truncate.
+func TestOptionStatePreservesUint8Storage(t *testing.T) {
+	for _, state := range []syntax.OptState{0, syntax.OptOn, syntax.OptOff, 255} {
+		input := &syntax.ParamExp{Split: state, GlobSubst: state, RcExpand: state}
+		encoded, err := Encode(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		decoded, err := DecodeNode(encoded)
+		if err != nil {
+			t.Fatal(err)
+		}
+		actual := decoded.(*syntax.ParamExp)
+		if actual.Split != state || actual.GlobSubst != state || actual.RcExpand != state {
+			t.Fatalf("option state %d changed: %#v", state, actual)
+		}
+	}
+	valid, err := Encode(&syntax.ParamExp{Split: syntax.OptOn})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(valid), `"Split":1`) {
+		t.Fatal("missing option-state fixture")
+	}
+	for _, value := range []string{"-1", "256", "1.5"} {
+		// Preserve every other required field so only the storage boundary can
+		// cause rejection; an incomplete record would make this test vacuous.
+		invalid := strings.Replace(string(valid), `"Split":1`, `"Split":`+value, 1)
+		if _, err := DecodeNode([]byte(invalid)); err == nil {
+			t.Fatalf("accepted non-uint8 state %s", value)
+		}
 	}
 }

@@ -30,6 +30,7 @@ package nodeencode
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"reflect"
 	"sync"
@@ -57,6 +58,7 @@ func (opts EncodeOptions) Encode(w io.Writer, node syntax.Node) error {
 	}
 	encVal.Elem().Field(0).SetString(tname)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	if opts.Indent != "" {
 		enc.SetIndent("", opts.Indent)
 	}
@@ -156,8 +158,13 @@ func encodeValue(val reflect.Value) (reflect.Value, string) {
 		if val.String() != "" {
 			return val, ""
 		}
-	case reflect.Uint32:
+	case reflect.Uint8, reflect.Uint32:
 		if val.Uint() != 0 {
+			// Match upstream typedjson's token spellings; the faithful codec
+			// separately preserves numeric operator values for the public API.
+			if s, ok := reflect.TypeAssert[fmt.Stringer](val); ok {
+				return reflect.ValueOf(s.String()), ""
+			}
 			return val, ""
 		}
 	default:

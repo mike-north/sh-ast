@@ -101,7 +101,7 @@ func reflectedField(typ reflect.Type) faithfulField {
 		out.Kind = "boolean"
 	case typ.Kind() == reflect.String:
 		out.Kind = "string"
-	case typ.Kind() == reflect.Uint32:
+	case typ.Kind() == reflect.Uint8 || typ.Kind() == reflect.Uint32:
 		out.Kind, out.Type = "operator", typ.Name()
 	case typ.Kind() == reflect.Interface:
 		out.Kind, out.Type = "interface", typ.Name()
@@ -163,8 +163,8 @@ func TestFaithfulConstantValues(t *testing.T) {
 			t.Errorf("%s = %+v (present %v), want %d", name, got, ok, value)
 		}
 	}
-	if len(schema.Operators) != 11 {
-		t.Errorf("operator families = %d, want 11 from pinned tokens.go", len(schema.Operators))
+	if len(schema.Operators) != 12 {
+		t.Errorf("operator families = %d, want 12 numeric domains from pinned tokens.go and nodes.go", len(schema.Operators))
 	}
 }
 
@@ -293,6 +293,28 @@ func TestFaithfulTypedNilDeclarations(t *testing.T) {
 			if name == "TypedNil" {
 				t.Error("interface metadata must contain real upstream implementers only")
 			}
+		}
+	}
+}
+
+// Option overrides are numeric state domains, distinct from booleans; their
+// declared constants and named field type must survive schema generation.
+func TestOptionStateIsDiscoveredFromUpstream(t *testing.T) {
+	schema, err := buildFaithfulSchema(loadSyntaxPackage())
+	if err != nil {
+		t.Fatal(err)
+	}
+	field := schema.Records["ParamExp"].Fields["Split"]
+	if field.Type != "OptState" {
+		t.Fatalf("lost option-state domain: %#v", field)
+	}
+	declarations := renderFaithfulConstantsDTS(schema, "v3.14.1")
+	if strings.Contains(declarations, "export type OptState = 0 |") {
+		t.Fatal("named zero OptUnset must not be duplicated by a literal-zero union member")
+	}
+	for name, value := range map[string]int64{"OptUnset": 0, "OptOn": 1, "OptOff": 2} {
+		if got := schema.Constants[name]; got.Family != "OptState" || got.Value != value {
+			t.Fatalf("lost %s: %#v", name, got)
 		}
 	}
 }

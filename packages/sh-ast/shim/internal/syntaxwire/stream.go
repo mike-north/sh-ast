@@ -457,7 +457,7 @@ func (w *writer) appendValue(dst []byte, v reflect.Value, interfaceSlot bool, ob
 		return AppendString(dst, v.String()), nil
 	case reflect.Bool:
 		return strconv.AppendBool(dst, v.Bool()), nil
-	case reflect.Uint32:
+	case reflect.Uint8, reflect.Uint32:
 		return strconv.AppendUint(dst, v.Uint(), 10), nil
 	default:
 		return nil, fmt.Errorf("unsupported syntax value %s", v.Type())
@@ -524,7 +524,7 @@ func validateValue(v reflect.Value, interfaceSlot bool, active *ancestry) error 
 			}
 		}
 		return nil
-	case reflect.String, reflect.Bool, reflect.Uint32:
+	case reflect.String, reflect.Bool, reflect.Uint8, reflect.Uint32:
 		return nil
 	default:
 		return fmt.Errorf("unsupported syntax value %s", v.Type())

@@ -1,0 +1,175 @@
+{
+  "environment": {
+    "node": "v24.14.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Max"
+  },
+  "rounds": 9,
+  "iterations": "parse/tiny print 200; large print 20",
+  "warmup": "parse/tiny print 100; large print 20",
+  "hashes": {
+    "base": {
+      "packages/sh-ast/shim/sh-ast.wasm": "eaff64fc5dbd8e0878c43b4451c64c93eedf99ef1a2653b914c0f534a2832579",
+      "packages/sh-ast/dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+      "packages/sh-ast/dist/syntax-wire.js": "9c14552c1edeb0cfc50e3a0ec8001227ba5e7ff5caf13b8a9b24a545ae52353e"
+    },
+    "head": {
+      "packages/sh-ast/shim/sh-ast.wasm": "8e512611820d163b7f2b7547782489ec89d6eba6c9fcdf81217a003a9ea2a879",
+      "packages/sh-ast/dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+      "packages/sh-ast/dist/syntax-wire.js": "cbf450460df69013483c62698cffb5b1cb9e733505931d11b3a437f9ef872a0b"
+    }
+  },
+  "rows": [
+    {
+      "fixture": "representative-1",
+      "phase": "parse",
+      "base": {
+        "median": 0.13097850000000477,
+        "min": 0.10277100000000416,
+        "max": 0.16635450000001129
+      },
+      "head": {
+        "median": 0.14268750000002228,
+        "min": 0.10685400000000556,
+        "max": 0.23024999999999096
+      },
+      "ratio": 1.0893963513096965
+    },
+    {
+      "fixture": "representative-1",
+      "phase": "print",
+      "base": {
+        "median": 0.7687290000000218,
+        "min": 0.6685834999999827,
+        "max": 2.207292000000166
+      },
+      "head": {
+        "median": 0.8442289999999844,
+        "min": 0.7380830000000032,
+        "max": 1.1174170000000174
+      },
+      "ratio": 1.0982140650345706
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "parse",
+      "base": {
+        "median": 4.942396000000031,
+        "min": 4.100791499999957,
+        "max": 6.31237550000003
+      },
+      "head": {
+        "median": 5.438770999999974,
+        "min": 4.195041499999945,
+        "max": 9.37147850000008
+      },
+      "ratio": 1.1004320576497595
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "print",
+      "base": {
+        "median": 45.840707999999836,
+        "min": 32.81160399999999,
+        "max": 59.25849999999991
+      },
+      "head": {
+        "median": 48.17479200000025,
+        "min": 34.19306249999988,
+        "max": 209.24497900000006
+      },
+      "ratio": 1.0509172764085672
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "parse",
+      "base": {
+        "median": 0.25070849999998757,
+        "min": 0.19683299999999804,
+        "max": 0.3661250000000109
+      },
+      "head": {
+        "median": 0.2764375000000001,
+        "min": 0.17043699999999973,
+        "max": 0.3640215000000069
+      },
+      "ratio": 1.102625160295777
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "print",
+      "base": {
+        "median": 1.524208499999986,
+        "min": 1.189354499999979,
+        "max": 2.1495419999999967
+      },
+      "head": {
+        "median": 1.3359159999999974,
+        "min": 1.1574165000000107,
+        "max": 1.5479795000000252
+      },
+      "ratio": 0.8764653917098675
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "parse",
+      "base": {
+        "median": 0.07335450000000066,
+        "min": 0.06329150000000539,
+        "max": 0.1188125000000042
+      },
+      "head": {
+        "median": 0.06516700000000242,
+        "min": 0.05433299999999974,
+        "max": 0.09597950000000566
+      },
+      "ratio": 0.8883844890225117
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "print",
+      "base": {
+        "median": 0.3618749999999977,
+        "min": 0.280395999999989,
+        "max": 0.4976455000000044
+      },
+      "head": {
+        "median": 0.4000625000000042,
+        "min": 0.3170420000000007,
+        "max": 0.48422949999999787
+      },
+      "ratio": 1.1055267702936282
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "parse",
+      "base": {
+        "median": 8.43464599999993,
+        "min": 6.637000000000057,
+        "max": 9.27062500000011
+      },
+      "head": {
+        "median": 8.519271000000003,
+        "min": 6.900686999999948,
+        "max": 9.109958000000006
+      },
+      "ratio": 1.0100330233183556
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "print",
+      "base": {
+        "median": 72.14987500000007,
+        "min": 60.35347900000011,
+        "max": 84.9856665000002
+      },
+      "head": {
+        "median": 75.04820849999987,
+        "min": 62.34412499999996,
+        "max": 229.6743335000001
+      },
+      "ratio": 1.0401710120772878
+    }
+  ]
+}

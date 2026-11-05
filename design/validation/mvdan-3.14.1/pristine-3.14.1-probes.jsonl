@@ -1,0 +1,5 @@
+{"KeepPadding":false,"text":"if true; then\n\tcat \u003c\u003c-EOF\n\t\tname\tvalue\n\tEOF\nfi\n"}
+{"KeepPadding":true,"text":"if true; then\n\tcat \u003c\u003c-EOF\n\t\tname\tvalue\n\tEOF\nfi\n"}
+{"error":"1:5: unclosed here-document `X`","source":"cat \u003c\u003cX; (\nbody\nX\nprintf \"in\\n\"\n)\n"}
+{"error":"1:5: unclosed here-document `X`","source":"cat \u003c\u003cX\nbody\n"}
+{"printed":"printf '%s' 'a b'\n","source":"printf '%s' 'a\u000bb'\n"}

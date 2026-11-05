@@ -2,10 +2,10 @@
 
 `comment-oracle.json` records 140 inputs/options (14 grammar and reader cases,
 five pinned dialects, retained/discarded comments), each at seven reader chunk
-sizes. Hashes were captured from pristine `mvdan.cc/sh/v3 v3.13.1`, Go 1.26.10,
+sizes. Hashes were captured from pristine `mvdan.cc/sh/v3 v3.14.1`, Go 1.26.10,
 in an isolated module without a `replace` directive, before changing comment
 advancement. Its module checksum is
-`h1:DP3TfgZhDkT7lerUdnp6PTGKyxxzz6T+cOlY/xEvfWk=`.
+`h1:bXkhQWNHCs0KZEChF8hYS6FC+T2N9mUZLbQv9blditI=`.
 
 The SHA-256 input is the compact JSON produced by `commentSnapshot`: complete
 upstream `typedjson` File output, including all node Pos/End and stored position
