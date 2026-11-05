@@ -1,7 +1,7 @@
 # mvdan/sh v3.14.1 with maintained corrections
 
 This is the source closure consumed by the WASM shim and schema generator:
-**v3.14.1 plus eight explicitly maintained patches**. The tagged release is
+**v3.14.1 plus nine explicitly maintained patches**. The tagged release is
 commit `a3f0c75d21d918756fa38de8b5d3429efde7948b`; the manifest records its Go
 module checksum and the pristine SHA-256 of every included file. The original
 BSD license and source copyright notices are retained. The 16-file inventory
@@ -26,6 +26,29 @@ patch reverses independently, in reverse order, to reconstruct the exact release
 | Owned `heredoc-continuation.patch`                                              | Still required; adapted to upstream's corrected `mustNewline` reset and nested writer.                                                                                                                             | Public tests retain exact output and Bash stdout for continuation chains, tab counts, odd/even backslashes, expansions, and quoted/plain-document controls.                                                                             |
 | Owned `printer-backslash-compat.patch`                                          | New compatibility hold: removes upstream's per-Lit trailing-backslash doubling, which changes existing caller-constructed adjacent literal escape runs.                                                            | Existing `analyze-braces.test.ts` expectations remain unchanged. Whether to adopt that upstream change, and its improvement for a parsed lone backslash at EOF, requires a separate decision.                                           |
 | Owned `printer-zsh-prefix-order.patch`                                          | Keeps option-state prefixes before length/existence operators, matching the parser without changing grammar or other printer behavior.                                                                             | Public parse/print/reparse tests retain all state fields and hand-written spelling/stdout under default and KeepPadding; real Zsh preserves `${=#a}` as length three instead of the printed `${#=a}` value zero.                        |
+
+`zsh-subscript-compat.patch` is an owned compatibility hold restoring the
+reverse-subscript handler from sh-ast commit
+`d8534e6ddae76a05433d64651f3892c29326a9ae`. Its arithmetic-expression parser keeps
+command and parameter expansions visible as nodes: `echo ${a[(r)$(printf foo)]}`
+again exposes both `echo` and `printf`, with `printf` in command-substitution
+context. Quoted forms and escaped closing brackets retain that measured contract.
+This correction does not add a pattern-word reader or quote-context state.
+Recursive flag arguments use the existing native work budget, with balanced
+accounting on error returns. The 128-unit binding policy remains terminal under
+recovery: 200 repeated `(r)` flags return a resource refusal without a partial
+tree or position snapshot, and the same native parser remains reusable. Finite
+language compatibility does not restore historical gaps in resource accounting.
+
+The pre-pin ceiling is intentional: `foo*`, the recorded `don't*` apostrophe
+contexts, and `echo "${a[(r)$'foo]}"` fail loudly. Paired dollar/apostrophes can
+still produce a `SglQuoted` node hiding a parameter expansion. Character classes
+are still parsed as arithmetic: `foo[0-9]` prints as `foo[0 - 9]`, which can change
+matching (an array containing `foo5` before `foo9` selects `foo9` after printing,
+instead of the intended `foo5`). Both default and `KeepPadding` retain this known
+limit. Named public compatibility tests and native expansion/refusal tests
+distinguish these limits from supported analysis. Broader pattern support and
+corrected class printing are deferred to [#90](https://github.com/mike-north/sh-ast/issues/90).
 
 All owned patches are sh-ast maintenance, not official upstream fixes. The native
 nesting units count grammar work, including iteratively constructed operator

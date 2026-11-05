@@ -43,6 +43,7 @@ test('accepts precisely the reviewed source closure and patch', () => {
     'heredoc-continuation.patch',
     'printer-backslash-compat.patch',
     'printer-zsh-prefix-order.patch',
+    'zsh-subscript-compat.patch',
   ]);
   assert.doesNotThrow(() => verifyBackport(root));
 });
@@ -63,6 +64,7 @@ for (const name of [
   'heredoc-continuation.patch',
   'printer-backslash-compat.patch',
   'printer-zsh-prefix-order.patch',
+  'zsh-subscript-compat.patch',
 ]) {
   test(`requires the ${name} digest`, () => {
     fixture((directory) => {
