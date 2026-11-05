@@ -4,7 +4,7 @@
 
 ## RawOperator type
 
-An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
+An explicitly represented unnamed integer in one upstream numeric family. The runtime constructor checks the family storage range (uint8 for OptState, uint32 otherwise); this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
 
 **Signature:**
 

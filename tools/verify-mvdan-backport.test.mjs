@@ -35,13 +35,14 @@ test('accepts precisely the reviewed source closure and patch', () => {
     readFileSync(join(root, 'third_party/mvdan-sh/manifest.json'), 'utf8'),
   );
   assert.deepEqual(manifest.appliedPatches, [
-    'sentinel-backport.patch',
     'comment-iteration.patch',
     'nesting-backport.patch',
     'binding-budget.patch',
     'subshell-heredoc.patch',
     'printer-control-bytes.patch',
     'heredoc-continuation.patch',
+    'printer-backslash-compat.patch',
+    'printer-zsh-prefix-order.patch',
   ]);
   assert.doesNotThrow(() => verifyBackport(root));
 });
@@ -60,6 +61,8 @@ for (const name of [
   'subshell-heredoc.patch',
   'printer-control-bytes.patch',
   'heredoc-continuation.patch',
+  'printer-backslash-compat.patch',
+  'printer-zsh-prefix-order.patch',
 ]) {
   test(`requires the ${name} digest`, () => {
     fixture((directory) => {
@@ -83,7 +86,6 @@ test('rejects interchanging the official nesting patch and owned binding adaptat
     const path = join(directory, 'third_party/mvdan-sh/manifest.json');
     const manifest = JSON.parse(readFileSync(path, 'utf8'));
     manifest.appliedPatches = [
-      'sentinel-backport.patch',
       'comment-iteration.patch',
       'binding-budget.patch',
       'nesting-backport.patch',
@@ -131,7 +133,7 @@ test('rejects missing upstream license provenance', () => {
 
 test('rejects a changed patch before attempting to apply it', () => {
   fixture((directory) => {
-    const path = join(directory, 'third_party/mvdan-sh/sentinel-backport.patch');
+    const path = join(directory, 'third_party/mvdan-sh/comment-iteration.patch');
     writeFileSync(path, `${readFileSync(path, 'utf8')}\n`);
     assert.throws(() => verifyBackport(directory), /patch digest/);
   });

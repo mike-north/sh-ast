@@ -73,3 +73,11 @@ expectType<readonly number[]>(languageError.Langs);
 expectType<number>(languageError.LangUsed);
 expectNotAssignable<ParseError>(languageError);
 expectAssignable<ShAstError>(new InputError('invalid operation input'));
+
+// Option overrides use the upstream three-state numeric domain, not booleans.
+expectAssignable<import('../src/index.js').OptState>(0);
+expectAssignable<import('../src/index.js').OptState>(1);
+expectAssignable<import('../src/index.js').OptState>(2);
+expectAssignable<import('../src/index.js').OptState>(rawOperator('OptState', 255));
+expectNotAssignable<import('../src/index.js').OptState>(true);
+expectNotAssignable<import('../src/index.js').OptState>(256);

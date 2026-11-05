@@ -108,7 +108,7 @@ A long \*linear\* chain — `|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any re
 
 </td><td>
 
-Represents an unnamed value in an upstream uint32 operator family. Named constants remain precise literal unions; this explicit path preserves other Go values without claiming an operation such as Print accepts them.
+Represents an unnamed value in an upstream numeric family. Named constants remain precise literal unions; this explicit path preserves other Go values without claiming an operation such as Print accepts them.
 
 
 </td></tr>
@@ -1689,6 +1689,45 @@ Upstream UnAritOperator constant Not. Its numeric value is preserved exactly.
 </td></tr>
 <tr><td>
 
+[OptOff](./sh-ast-analyze.optoff.md)
+
+
+</td><td>
+
+Upstream OptState constant OptOff. Its numeric value is preserved exactly.
+
+option set to false
+
+
+</td></tr>
+<tr><td>
+
+[OptOn](./sh-ast-analyze.opton.md)
+
+
+</td><td>
+
+Upstream OptState constant OptOn. Its numeric value is preserved exactly.
+
+option set to true
+
+
+</td></tr>
+<tr><td>
+
+[OptUnset](./sh-ast-analyze.optunset.md)
+
+
+</td><td>
+
+Upstream OptState constant OptUnset. Its numeric value is preserved exactly.
+
+option not set
+
+
+</td></tr>
+<tr><td>
+
 [Or](./sh-ast-analyze.or.md)
 
 
@@ -2954,7 +2993,18 @@ The concrete records and typed nil pointers accepted by upstream syntax.Node. Ty
 
 </td><td>
 
-The upstream uint32 operator families. A family name identifies the Go named type, not the spelling of one token.
+The upstream numeric families: uint32 token operators and uint8 option states. A family name identifies the Go named type, not the spelling of one token.
+
+
+</td></tr>
+<tr><td>
+
+[OptState](./sh-ast-analyze.optstate.md)
+
+
+</td><td>
+
+An upstream option override: OptUnset leaves shell policy unchanged, OptOn enables it, and OptOff disables it. Explicit raw values are restricted to uint8 storage.
 
 
 </td></tr>
@@ -2998,7 +3048,7 @@ The upstream ProcOperator domain: exact named tokens, the Go zero value, and exp
 
 </td><td>
 
-An explicitly represented unnamed uint32 value in one upstream operator family. The runtime constructor checks integer range; this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
+An explicitly represented unnamed integer in one upstream numeric family. The runtime constructor checks the family storage range (uint8 for OptState, uint32 otherwise); this type does not claim that every value is meaningful to every parser or printer operation. The structural family marker remains interoperable across package entry points while preventing accidental cross-family assignment.
 
 
 </td></tr>

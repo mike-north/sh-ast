@@ -1,0 +1,1188 @@
+{
+  "verdict": "FAIL",
+  "policy": "No numerical tolerance: any head aggregate above baseline is unmet. No inference of stable regression from noise/overlap alone.",
+  "cells": [
+    {
+      "fixture": "representative-1",
+      "phase": "parse",
+      "baseMedianMs": 0.09860400000000169,
+      "headMedianMs": 0.09795849999999717,
+      "aggregateRatio": 0.9934536124294704,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81561,
+          "headPid": 81565,
+          "baseMedianMs": 0.09845800000000082,
+          "headMedianMs": 0.10139599999999405,
+          "ratio": 1.029840134879778
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 81567,
+          "headPid": 81566,
+          "baseMedianMs": 0.10097900000000237,
+          "headMedianMs": 0.09804199999999952,
+          "ratio": 0.9709147446498502
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81569,
+          "headPid": 81570,
+          "baseMedianMs": 0.09889599999999632,
+          "headMedianMs": 0.09733400000000358,
+          "ratio": 0.9842056301570054
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 81572,
+          "headPid": 81571,
+          "baseMedianMs": 0.09779149999999959,
+          "headMedianMs": 0.09779149999999603,
+          "ratio": 0.9999999999999637
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81573,
+          "headPid": 81574,
+          "baseMedianMs": 0.09706249999999983,
+          "headMedianMs": 0.0964375000000004,
+          "ratio": 0.9935608499678101
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 81576,
+          "headPid": 81575,
+          "baseMedianMs": 0.09914600000000462,
+          "headMedianMs": 0.09708350000000365,
+          "ratio": 0.9791973453291019
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81577,
+          "headPid": 81578,
+          "baseMedianMs": 0.09743750000000162,
+          "headMedianMs": 0.09795849999999717,
+          "ratio": 1.0053470173187484
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 81580,
+          "headPid": 81579,
+          "baseMedianMs": 0.09860400000000169,
+          "headMedianMs": 0.09920849999999959,
+          "ratio": 1.0061305829377905
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81581,
+          "headPid": 81582,
+          "baseMedianMs": 0.09937550000000073,
+          "headMedianMs": 0.09981299999999749,
+          "ratio": 1.0044024935723268
+        }
+      ]
+    },
+    {
+      "fixture": "representative-1",
+      "phase": "print",
+      "baseMedianMs": 0.5946039999999897,
+      "headMedianMs": 0.5828544999999963,
+      "aggregateRatio": 0.980239789843335,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86397,
+          "headPid": 86404,
+          "baseMedianMs": 0.57193749999999,
+          "headMedianMs": 0.5828544999999963,
+          "ratio": 1.0190877499726918
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86406,
+          "headPid": 86405,
+          "baseMedianMs": 0.644999999999996,
+          "headMedianMs": 0.592896500000009,
+          "ratio": 0.9192193798449809
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86436,
+          "headPid": 86494,
+          "baseMedianMs": 0.6391040000000032,
+          "headMedianMs": 0.6012295000000023,
+          "ratio": 0.940738127127978
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86615,
+          "headPid": 86574,
+          "baseMedianMs": 0.5780834999999911,
+          "headMedianMs": 0.5708125000000024,
+          "ratio": 0.9874222322553943
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86661,
+          "headPid": 86700,
+          "baseMedianMs": 0.5979790000000236,
+          "headMedianMs": 0.5827290000000005,
+          "ratio": 0.9744974321840357
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86727,
+          "headPid": 86701,
+          "baseMedianMs": 0.594145999999995,
+          "headMedianMs": 0.7382499999999794,
+          "ratio": 1.2425397124612227
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86790,
+          "headPid": 86794,
+          "baseMedianMs": 0.6727710000000116,
+          "headMedianMs": 0.5725205000000102,
+          "ratio": 0.8509886722227925
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86800,
+          "headPid": 86799,
+          "baseMedianMs": 0.5559579999999897,
+          "headMedianMs": 0.6172914999999932,
+          "ratio": 1.110320383913901
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86801,
+          "headPid": 86802,
+          "baseMedianMs": 0.5946039999999897,
+          "headMedianMs": 0.5612914999999958,
+          "ratio": 0.9439753180267969
+        }
+      ]
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "parse",
+      "baseMedianMs": 3.885062499999947,
+      "headMedianMs": 3.8439579999999296,
+      "aggregateRatio": 0.9894198613278377,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81632,
+          "headPid": 81660,
+          "baseMedianMs": 3.8946249999999623,
+          "headMedianMs": 3.9935625000000528,
+          "ratio": 1.0254036011169474
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 81884,
+          "headPid": 81823,
+          "baseMedianMs": 3.825207999999975,
+          "headMedianMs": 3.7945420000000354,
+          "ratio": 0.991983181045334
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 81955,
+          "headPid": 82006,
+          "baseMedianMs": 3.8051039999999716,
+          "headMedianMs": 3.809229000000016,
+          "ratio": 1.0010840702383021
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 82327,
+          "headPid": 82236,
+          "baseMedianMs": 3.836562499999957,
+          "headMedianMs": 3.837874999999997,
+          "ratio": 1.000342103119665
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 82331,
+          "headPid": 82558,
+          "baseMedianMs": 3.9607919999999694,
+          "headMedianMs": 3.8439579999999296,
+          "ratio": 0.9705023641736197
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 82701,
+          "headPid": 82699,
+          "baseMedianMs": 3.7698129999999423,
+          "headMedianMs": 3.7840834999999515,
+          "ratio": 1.0037854662817518
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 82715,
+          "headPid": 82896,
+          "baseMedianMs": 4.194187500000112,
+          "headMedianMs": 4.120083500000078,
+          "ratio": 0.9823317388647904
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83214,
+          "headPid": 82897,
+          "baseMedianMs": 4.106604000000004,
+          "headMedianMs": 4.269791499999997,
+          "ratio": 1.0397378222979357
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83334,
+          "headPid": 83337,
+          "baseMedianMs": 3.885062499999947,
+          "headMedianMs": 4.0575000000000045,
+          "ratio": 1.0443847428452078
+        }
+      ]
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "print",
+      "baseMedianMs": 37.481437500000084,
+      "headMedianMs": 36.82489600000008,
+      "aggregateRatio": 0.9824835560269,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 88540,
+          "headPid": 88726,
+          "baseMedianMs": 34.085812499999975,
+          "headMedianMs": 36.82489600000008,
+          "ratio": 1.0803584629235436
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 88994,
+          "headPid": 88881,
+          "baseMedianMs": 40.70616700000005,
+          "headMedianMs": 36.37183300000004,
+          "ratio": 0.8935214411123502
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 89073,
+          "headPid": 89555,
+          "baseMedianMs": 45.80147899999997,
+          "headMedianMs": 41.97645850000015,
+          "ratio": 0.9164869654100073
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 89909,
+          "headPid": 89786,
+          "baseMedianMs": 40.21881200000007,
+          "headMedianMs": 39.35389550000002,
+          "ratio": 0.9784947277905661
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 90107,
+          "headPid": 90113,
+          "baseMedianMs": 38.262021000000004,
+          "headMedianMs": 38.044375,
+          "ratio": 0.9943116961856249
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 90271,
+          "headPid": 90242,
+          "baseMedianMs": 37.40756250000004,
+          "headMedianMs": 38.69077100000004,
+          "ratio": 1.0343034513408886
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 90507,
+          "headPid": 90752,
+          "baseMedianMs": 37.481437500000084,
+          "headMedianMs": 33.14241649999997,
+          "ratio": 0.8842354698909265
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 90928,
+          "headPid": 90789,
+          "baseMedianMs": 33.6029585,
+          "headMedianMs": 32.815166999999974,
+          "ratio": 0.9765558886727184
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 91545,
+          "headPid": 91693,
+          "baseMedianMs": 34.737083499999926,
+          "headMedianMs": 32.29193800000007,
+          "ratio": 0.9296099368848897
+        }
+      ]
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "parse",
+      "baseMedianMs": 0.16566600000000165,
+      "headMedianMs": 0.17270849999999882,
+      "aggregateRatio": 1.0425102314294852,
+      "acceptance": "FAIL",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83387,
+          "headPid": 83388,
+          "baseMedianMs": 0.1775625000000005,
+          "headMedianMs": 0.18197899999999834,
+          "ratio": 1.0248729320661616
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83421,
+          "headPid": 83414,
+          "baseMedianMs": 0.16585400000000305,
+          "headMedianMs": 0.17577100000000456,
+          "ratio": 1.0597935533662217
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83441,
+          "headPid": 83442,
+          "baseMedianMs": 0.16566600000000165,
+          "headMedianMs": 0.1729374999999962,
+          "ratio": 1.0438925307546176
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83444,
+          "headPid": 83443,
+          "baseMedianMs": 0.16477099999999467,
+          "headMedianMs": 0.17062500000000114,
+          "ratio": 1.035528096570432
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83445,
+          "headPid": 83446,
+          "baseMedianMs": 0.16387500000000443,
+          "headMedianMs": 0.17270849999999882,
+          "ratio": 1.0539038901601474
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83449,
+          "headPid": 83447,
+          "baseMedianMs": 0.16770800000000463,
+          "headMedianMs": 0.1685629999999989,
+          "ratio": 1.005098146778891
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83450,
+          "headPid": 83463,
+          "baseMedianMs": 0.17164600000000263,
+          "headMedianMs": 0.16879200000000338,
+          "ratio": 0.9833727555550423
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83465,
+          "headPid": 83464,
+          "baseMedianMs": 0.16049950000000024,
+          "headMedianMs": 0.17031250000000142,
+          "ratio": 1.0611403773843604
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83467,
+          "headPid": 83468,
+          "baseMedianMs": 0.16404150000000328,
+          "headMedianMs": 0.17772900000000647,
+          "ratio": 1.0834392516528006
+        }
+      ]
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "print",
+      "baseMedianMs": 0.979708500000001,
+      "headMedianMs": 0.9834374999999795,
+      "aggregateRatio": 1.0038062342012737,
+      "acceptance": "FAIL",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86805,
+          "headPid": 86806,
+          "baseMedianMs": 0.9471249999999998,
+          "headMedianMs": 0.9335624999999936,
+          "ratio": 0.9856803484228521
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86822,
+          "headPid": 86807,
+          "baseMedianMs": 1.0599794999999972,
+          "headMedianMs": 1.0327919999999722,
+          "ratio": 0.9743509190507693
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86824,
+          "headPid": 86825,
+          "baseMedianMs": 1.014207999999968,
+          "headMedianMs": 1.1318745000000092,
+          "ratio": 1.1160181146274186
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 86828,
+          "headPid": 86826,
+          "baseMedianMs": 0.9841040000000021,
+          "headMedianMs": 1.0341040000000135,
+          "ratio": 1.0508076382171105
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86830,
+          "headPid": 86886,
+          "baseMedianMs": 0.9734164999999848,
+          "headMedianMs": 0.9958960000000161,
+          "ratio": 1.0230934034917547
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87067,
+          "headPid": 86987,
+          "baseMedianMs": 0.9417504999999977,
+          "headMedianMs": 0.9701040000000205,
+          "ratio": 1.0301072311615687
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87068,
+          "headPid": 87069,
+          "baseMedianMs": 0.990396000000004,
+          "headMedianMs": 0.9696875000000205,
+          "ratio": 0.9790906869575569
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87073,
+          "headPid": 87070,
+          "baseMedianMs": 0.979708500000001,
+          "headMedianMs": 0.9834374999999795,
+          "ratio": 1.0038062342012737
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87074,
+          "headPid": 87077,
+          "baseMedianMs": 0.9283125000000183,
+          "headMedianMs": 0.9239374999999939,
+          "ratio": 0.9952871473776079
+        }
+      ]
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "parse",
+      "baseMedianMs": 0.05683299999999747,
+      "headMedianMs": 0.0539164999999997,
+      "aggregateRatio": 0.948682983477946,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83474,
+          "headPid": 83475,
+          "baseMedianMs": 0.05814599999999359,
+          "headMedianMs": 0.051896500000001566,
+          "ratio": 0.8925205517147746
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83478,
+          "headPid": 83476,
+          "baseMedianMs": 0.05335399999999879,
+          "headMedianMs": 0.050125500000000045,
+          "ratio": 0.9394890729842408
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83479,
+          "headPid": 83480,
+          "baseMedianMs": 0.05654150000000158,
+          "headMedianMs": 0.053812499999999375,
+          "ratio": 0.9517345666457004
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83482,
+          "headPid": 83481,
+          "baseMedianMs": 0.05254149999999669,
+          "headMedianMs": 0.053582999999999714,
+          "ratio": 1.0198224260822986
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83483,
+          "headPid": 83508,
+          "baseMedianMs": 0.05935399999999902,
+          "headMedianMs": 0.06033349999999871,
+          "ratio": 1.016502678842196
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83522,
+          "headPid": 83509,
+          "baseMedianMs": 0.05839550000000315,
+          "headMedianMs": 0.05677099999999413,
+          "ratio": 0.9721810755964255
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83558,
+          "headPid": 83560,
+          "baseMedianMs": 0.06293700000000158,
+          "headMedianMs": 0.06095849999999814,
+          "ratio": 0.9685638018970815
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 83608,
+          "headPid": 83604,
+          "baseMedianMs": 0.056104500000003554,
+          "headMedianMs": 0.0539164999999997,
+          "ratio": 0.9610013457030414
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83612,
+          "headPid": 83659,
+          "baseMedianMs": 0.05683299999999747,
+          "headMedianMs": 0.060437499999999034,
+          "ratio": 1.0634226593704665
+        }
+      ]
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "print",
+      "baseMedianMs": 0.2666255000000035,
+      "headMedianMs": 0.2473954999999961,
+      "aggregateRatio": 0.9278763659139612,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87085,
+          "headPid": 87097,
+          "baseMedianMs": 0.2589375000000018,
+          "headMedianMs": 0.24595800000000168,
+          "ratio": 0.9498740043446776
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87116,
+          "headPid": 87115,
+          "baseMedianMs": 0.2698130000000063,
+          "headMedianMs": 0.2580419999999961,
+          "ratio": 0.9563734883048263
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87126,
+          "headPid": 87163,
+          "baseMedianMs": 0.2564999999999955,
+          "headMedianMs": 0.2473954999999961,
+          "ratio": 0.9645048732943486
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87165,
+          "headPid": 87164,
+          "baseMedianMs": 0.2666255000000035,
+          "headMedianMs": 0.24529150000000755,
+          "ratio": 0.9199851477071935
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87167,
+          "headPid": 87192,
+          "baseMedianMs": 0.25254150000000664,
+          "headMedianMs": 0.24027149999999864,
+          "ratio": 0.9514139260279689
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87229,
+          "headPid": 87196,
+          "baseMedianMs": 0.2778754999999933,
+          "headMedianMs": 0.23791699999999594,
+          "ratio": 0.8561999888439308
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87541,
+          "headPid": 87694,
+          "baseMedianMs": 0.27533400000001507,
+          "headMedianMs": 0.277958500000004,
+          "ratio": 1.009532059244368
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 87911,
+          "headPid": 87856,
+          "baseMedianMs": 0.26739599999999797,
+          "headMedianMs": 0.2693335000000019,
+          "ratio": 1.0072458077159117
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 87979,
+          "headPid": 88048,
+          "baseMedianMs": 0.25262450000000314,
+          "headMedianMs": 0.25187549999999703,
+          "ratio": 0.9970351252550481
+        }
+      ]
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "parse",
+      "baseMedianMs": 6.434646000000043,
+      "headMedianMs": 6.49635399999994,
+      "aggregateRatio": 1.0095899603490068,
+      "acceptance": "FAIL",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 83711,
+          "headPid": 84455,
+          "baseMedianMs": 6.409166500000083,
+          "headMedianMs": 6.405832999999916,
+          "ratio": 0.9994798855669974
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 84674,
+          "headPid": 84551,
+          "baseMedianMs": 6.769375499999967,
+          "headMedianMs": 6.59383349999996,
+          "ratio": 0.9740682135301834
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 84844,
+          "headPid": 84894,
+          "baseMedianMs": 6.399166499999865,
+          "headMedianMs": 6.454562500000009,
+          "ratio": 1.0086567524067618
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 85071,
+          "headPid": 85023,
+          "baseMedianMs": 6.55135400000006,
+          "headMedianMs": 6.38845850000007,
+          "ratio": 0.9751355979237286
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 85077,
+          "headPid": 85265,
+          "baseMedianMs": 6.491999999999962,
+          "headMedianMs": 6.614271000000031,
+          "ratio": 1.0188341035120254
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 85525,
+          "headPid": 85445,
+          "baseMedianMs": 6.517229499999985,
+          "headMedianMs": 6.557062999999914,
+          "ratio": 1.0061120296592179
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 85704,
+          "headPid": 85817,
+          "baseMedianMs": 6.434646000000043,
+          "headMedianMs": 6.478770999999995,
+          "ratio": 1.0068574090944475
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 85955,
+          "headPid": 85945,
+          "baseMedianMs": 6.413375500000029,
+          "headMedianMs": 6.49635399999994,
+          "ratio": 1.0129383504832845
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 86071,
+          "headPid": 86212,
+          "baseMedianMs": 6.348312499999963,
+          "headMedianMs": 6.527999999999906,
+          "ratio": 1.028304766030334
+        }
+      ]
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "print",
+      "baseMedianMs": 59.82118750000018,
+      "headMedianMs": 55.16770900000006,
+      "aggregateRatio": 0.9222101951754116,
+      "acceptance": "MEETS",
+      "pairedRounds": [
+        {
+          "round": 1,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 92572,
+          "headPid": 94008,
+          "baseMedianMs": 63.33143749999999,
+          "headMedianMs": 57.89981250000005,
+          "ratio": 0.9142349326904203
+        },
+        {
+          "round": 2,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 94483,
+          "headPid": 94303,
+          "baseMedianMs": 64.74650000000008,
+          "headMedianMs": 54.10929199999998,
+          "ratio": 0.8357099148216492
+        },
+        {
+          "round": 3,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 94656,
+          "headPid": 94667,
+          "baseMedianMs": 56.69808349999994,
+          "headMedianMs": 54.92206250000004,
+          "ratio": 0.9686758195274818
+        },
+        {
+          "round": 4,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 94782,
+          "headPid": 94732,
+          "baseMedianMs": 54.556374500000175,
+          "headMedianMs": 55.16770900000006,
+          "ratio": 1.0112055558237265
+        },
+        {
+          "round": 5,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 95024,
+          "headPid": 95082,
+          "baseMedianMs": 59.333458000000064,
+          "headMedianMs": 54.48227100000008,
+          "ratio": 0.9182385931391361
+        },
+        {
+          "round": 6,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 95270,
+          "headPid": 95176,
+          "baseMedianMs": 60.60847949999993,
+          "headMedianMs": 53.82045800000003,
+          "ratio": 0.8880021152815769
+        },
+        {
+          "round": 7,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 95398,
+          "headPid": 95611,
+          "baseMedianMs": 59.82118750000018,
+          "headMedianMs": 67.02418749999993,
+          "ratio": 1.1204088434386181
+        },
+        {
+          "round": 8,
+          "order": [
+            "head-1f4282f",
+            "base-211c5b7"
+          ],
+          "basePid": 96314,
+          "headPid": 96266,
+          "baseMedianMs": 55.7409375000002,
+          "headMedianMs": 64.19662549999998,
+          "ratio": 1.151696192766757
+        },
+        {
+          "round": 9,
+          "order": [
+            "base-211c5b7",
+            "head-1f4282f"
+          ],
+          "basePid": 96372,
+          "headPid": 96670,
+          "baseMedianMs": 72.66156250000017,
+          "headMedianMs": 62.45697949999999,
+          "ratio": 0.8595600941006442
+        }
+      ]
+    }
+  ],
+  "processes": 180,
+  "measuredCalls": 29520
+}

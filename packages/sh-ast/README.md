@@ -1,8 +1,8 @@
 # sh-ast
 
 A synchronous TypeScript interface to the `syntax` package of
-[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.13.1 with maintained corrections**
-([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). These are the official Unicode sentinel backport and an owned, behavior-preserving change that scans consecutive comments iteratively. Parsing returns
+[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.14.1 with maintained corrections**
+([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). The release already contains the Unicode sentinel correction; the remaining maintained parser and printer patches are documented there. Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
@@ -358,7 +358,7 @@ reaches the regex-test parser at all — `=~` is just another literal argument t
 `[[`.
 
 \*\* Parsing preserves upstream output: `{a,b}` remains an ordinary `Lit` word part,
-not a `BraceExp`, in every dialect. The analysis layer separately asks mvdan/sh v3.13.1's
+not a `BraceExp`, in every dialect. The analysis layer separately asks mvdan/sh v3.14.1's
 `syntax.SplitBraces` to recognize potential expansions on a private copy. `resolveWord`,
 `enumerateCommands`, and `resolveArgv0` report `static: false, reason: 'brace'` when actual
 brace-expansion parts are found, without changing the caller's tree. A bare Word carries no

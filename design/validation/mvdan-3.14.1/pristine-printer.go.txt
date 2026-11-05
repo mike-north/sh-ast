@@ -1,0 +1,21 @@
+// Probe only synthetic fixtures against a pristine upstream module, independently
+// of the maintained printer and the TypeScript/WASM bridge.
+package main
+import("bytes";"encoding/json";"fmt";"strings";"mvdan.cc/sh/v3/syntax")
+// main emits raw observations from synthetic sources under the pristine pin.
+func main(){
+ source:="if true; then\ncat <<-EOF\n\tname\tvalue\n\tEOF\nfi\n"
+ file,err:=syntax.NewParser().Parse(strings.NewReader(source),"");if err!=nil{panic(err)}
+ for _,padding:=range []bool{false,true}{
+  var out bytes.Buffer
+  if err:=syntax.NewPrinter(syntax.KeepPadding(padding)).Print(&out,file);err!=nil{panic(err)}
+  value,_:=json.Marshal(map[string]any{"KeepPadding":padding,"text":out.String()});fmt.Println(string(value))
+ }
+ for _,source := range []string{"cat <<X; (\nbody\nX\nprintf \"in\\n\"\n)\n", "cat <<X\nbody\n", "printf '%s' 'a\vb'\n"} {
+  f,err:=syntax.NewParser().Parse(strings.NewReader(source),"")
+  row:=map[string]any{"source":source}
+  if err!=nil {row["error"]=err.Error()} else {var out bytes.Buffer;syntax.NewPrinter().Print(&out,f);row["printed"]=out.String()}
+  value,_:=json.Marshal(row);fmt.Println(string(value))
+ }
+
+}

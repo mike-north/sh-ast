@@ -1,0 +1,643 @@
+{
+  "schemaVersion": 1,
+  "baseSource": "211c5b7d4207b5e409d3b1ed841ad629d5f03fde",
+  "headSource": "1f4282f5381394f1e08dda9c9ea2398d10f48b6b",
+  "host": {
+    "node": "v24.14.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.2.0",
+    "cpu": "Apple M5 Max",
+    "cpuCount": 18,
+    "totalMemory": 137438953472
+  },
+  "nodeExecutableSha256": "20a18709f0154d668f1bd6f6ea8c2a7ae001447b4b2c339732f22e57a8767a55",
+  "frozenAt": "2026-11-05T19:38:54.329Z",
+  "freezeSha256": "30816d0ae8afdbbb558fdf1cf6c0b82204a96bdad63436bbf9b2a6ba1b5dc529",
+  "acceptedPlanSha256": "0c9ff0509c3ecaf9f58d8311e8bf0c71e805613720e9665921e9ad858a397a8b",
+  "clarifiedPlanSha256": "463cde405e5f3917237c065bde327c4ecc6947bc5dae6e3f98e92a1bdc019996",
+  "shellBlocksSha256": [
+    "2297f9be318de8adc98eae81a18e738dd543533d379a21bbaf00cf0c4fc11656",
+    "105c90b128949a83ca035ea5d1981939b3f5217076d59bcc3cb8a58197ec23eb"
+  ],
+  "segments": {
+    "parse": {
+      "rawFile": "parse-samples.jsonl",
+      "rawSha256": "42d9a03f9098506d09153fcc3d2cb20808d4b8e762249d2f869cb91bcb78904c",
+      "rawBytes": 370790,
+      "originalReportSha256": "91934d0bd27dc9db328255294df54c6c3f09fa9d1040953314dfcb5a4d8003c0",
+      "processes": 90,
+      "rounds": 9,
+      "excludedWarmups": 100,
+      "iterations": 200,
+      "phases": ["parse"],
+      "dialects": ["bash"],
+      "fixtures": ["representative-1", "representative-50", "nested-8", "heredoc", "consumer-m2"],
+      "verification": [
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "representative-1",
+          "dialect": "bash",
+          "pid": 81559,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 260
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 68,
+            "functions": 1,
+            "nodes": 68,
+            "traversal": {
+              "entries": 68,
+              "exits": 68,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "representative-1",
+          "dialect": "bash",
+          "pid": 81560,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 260
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 68,
+            "functions": 1,
+            "nodes": 68,
+            "traversal": {
+              "entries": 68,
+              "exits": 68,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "representative-50",
+          "dialect": "bash",
+          "pid": 81626,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 13120
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 3351,
+            "functions": 50,
+            "nodes": 3351,
+            "traversal": {
+              "entries": 3351,
+              "exits": 3351,
+              "markerVisits": 50
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "representative-50",
+          "dialect": "bash",
+          "pid": 81631,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 13120
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 3351,
+            "functions": 50,
+            "nodes": 3351,
+            "traversal": {
+              "entries": 3351,
+              "exits": 3351,
+              "markerVisits": 50
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "nested-8",
+          "dialect": "bash",
+          "pid": 83385,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 412
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 112,
+            "functions": 1,
+            "nodes": 112,
+            "traversal": {
+              "entries": 112,
+              "exits": 112,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "nested-8",
+          "dialect": "bash",
+          "pid": 83386,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 412
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 112,
+            "functions": 1,
+            "nodes": 112,
+            "traversal": {
+              "entries": 112,
+              "exits": 112,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "heredoc",
+          "dialect": "bash",
+          "pid": 83469,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 128
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 29,
+            "functions": 1,
+            "nodes": 29,
+            "traversal": {
+              "entries": 29,
+              "exits": 29,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "heredoc",
+          "dialect": "bash",
+          "pid": 83470,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 128
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 29,
+            "functions": 1,
+            "nodes": 29,
+            "traversal": {
+              "entries": 29,
+              "exits": 29,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "consumer-m2",
+          "dialect": "bash",
+          "pid": 83700,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 11270
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 5801,
+            "functions": 100,
+            "nodes": 5801,
+            "traversal": {
+              "entries": 5701,
+              "exits": 5701,
+              "markerVisits": 0
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "consumer-m2",
+          "dialect": "bash",
+          "pid": 83705,
+          "phase": "parse",
+          "mode": "verify",
+          "contract": "parse-source-retain-comments",
+          "status": "ok",
+          "transport": {
+            "parse": {
+              "calls": 1,
+              "payloadBytes": 11270
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 5801,
+            "functions": 100,
+            "nodes": 5801,
+            "traversal": {
+              "entries": 5701,
+              "exits": 5701,
+              "markerVisits": 0
+            }
+          }
+        }
+      ]
+    },
+    "small-print": {
+      "rawFile": "small-print-samples.jsonl",
+      "rawSha256": "0b6dc6c0c932dfdc829d6d10cffd6d984c3f3ad7b2aa9545d75e6f496a30d2d1",
+      "rawBytes": 220349,
+      "originalReportSha256": "420a4f42121c871199a5ad7b564d73154d0e7962f1de3b18551f05c194e75e6a",
+      "processes": 54,
+      "rounds": 9,
+      "excludedWarmups": 100,
+      "iterations": 200,
+      "phases": ["print"],
+      "dialects": ["bash"],
+      "fixtures": ["representative-1", "nested-8", "heredoc"],
+      "verification": [
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "representative-1",
+          "dialect": "bash",
+          "pid": 86395,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 12453
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 68,
+            "functions": 1,
+            "nodes": 68,
+            "traversal": {
+              "entries": 68,
+              "exits": 68,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "representative-1",
+          "dialect": "bash",
+          "pid": 86396,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 12527
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 68,
+            "functions": 1,
+            "nodes": 68,
+            "traversal": {
+              "entries": 68,
+              "exits": 68,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "nested-8",
+          "dialect": "bash",
+          "pid": 86803,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 21106
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 112,
+            "functions": 1,
+            "nodes": 112,
+            "traversal": {
+              "entries": 112,
+              "exits": 112,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "nested-8",
+          "dialect": "bash",
+          "pid": 86804,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 21143
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 112,
+            "functions": 1,
+            "nodes": 112,
+            "traversal": {
+              "entries": 112,
+              "exits": 112,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "heredoc",
+          "dialect": "bash",
+          "pid": 87083,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 4832
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 29,
+            "functions": 1,
+            "nodes": 29,
+            "traversal": {
+              "entries": 29,
+              "exits": 29,
+              "markerVisits": 1
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "heredoc",
+          "dialect": "bash",
+          "pid": 87084,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 4832
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 29,
+            "functions": 1,
+            "nodes": 29,
+            "traversal": {
+              "entries": 29,
+              "exits": 29,
+              "markerVisits": 1
+            }
+          }
+        }
+      ]
+    },
+    "large-print": {
+      "rawFile": "large-print-samples.jsonl",
+      "rawSha256": "bc585836eeb577280ee5860860c1f4ef2e3cec728f421273ae5f87952e69d229",
+      "rawBytes": 22932,
+      "originalReportSha256": "fb02f129e9ea60716eed3d86b86a9b7c42d6f98d8b3a8fdb069dad5ceb5afb82",
+      "processes": 36,
+      "rounds": 9,
+      "excludedWarmups": 20,
+      "iterations": 20,
+      "phases": ["print"],
+      "dialects": ["bash"],
+      "fixtures": ["representative-50", "consumer-m2"],
+      "verification": [
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "representative-50",
+          "dialect": "bash",
+          "pid": 88328,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 632116
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 3351,
+            "functions": 50,
+            "nodes": 3351,
+            "traversal": {
+              "entries": 3351,
+              "exits": 3351,
+              "markerVisits": 50
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "representative-50",
+          "dialect": "bash",
+          "pid": 88475,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 635816
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 3351,
+            "functions": 50,
+            "nodes": 3351,
+            "traversal": {
+              "entries": 3351,
+              "exits": 3351,
+              "markerVisits": 50
+            }
+          }
+        },
+        {
+          "artifact": "base-211c5b7",
+          "fixture": "consumer-m2",
+          "dialect": "bash",
+          "pid": 92437,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 1142002
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 5801,
+            "functions": 100,
+            "nodes": 5801,
+            "traversal": {
+              "entries": 5701,
+              "exits": 5701,
+              "markerVisits": 0
+            }
+          }
+        },
+        {
+          "artifact": "head-1f4282f",
+          "fixture": "consumer-m2",
+          "dialect": "bash",
+          "pid": 92450,
+          "phase": "print",
+          "mode": "verify",
+          "contract": "print:faithful",
+          "status": "ok",
+          "transport": {
+            "print": {
+              "calls": 1,
+              "payloadBytes": 1153102
+            }
+          },
+          "nodeCount": 0,
+          "work": {
+            "storedRecords": 5801,
+            "functions": 100,
+            "nodes": 5801,
+            "traversal": {
+              "entries": 5701,
+              "exits": 5701,
+              "markerVisits": 0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "measuredProcesses": 180,
+  "verificationProcesses": 20,
+  "measuredCalls": 29520,
+  "excludedWarmupCalls": 15120,
+  "strictComparison": {
+    "file": "strict-comparison.json.txt",
+    "originalSha256": "ea5c31c8cec868d83ab464c74833c46b7394c4edc6618ea5f58dd8286b322bdd",
+    "verdict": "FAIL",
+    "oneShotShellExit": 1,
+    "signal": null,
+    "error": null,
+    "postIdentityMatches": true,
+    "noRetry": true
+  },
+  "preflight": {
+    "samplePolicy": {
+      "sampleMs": 1000,
+      "buildCpuPercentMinimum": 50,
+      "method": "process CPU-time delta / monotonic elapsed time"
+    },
+    "elapsedMs": 1076.0630420446396,
+    "sampledAt": "2026-11-05T19:38:54.253Z",
+    "loadAverages": [8.38232421875, 8.01416015625, 8.04248046875],
+    "busyRecognizedBuildTestRuntimes": 0,
+    "maximumRecognizedBuildTestCpuPercent": 5.575881491663659,
+    "perfPowerServicesCpuPercent": 169.13507191379767
+  },
+  "postContext": {
+    "capturedAt": "2026-11-05T19:41:52.249Z",
+    "loadAverages": [8.19384765625, 8.26171875, 8.14697265625]
+  },
+  "continuousMonitoring": false,
+  "metadataScope": "Derived provenance records selected frozen identities, schedule, host context and all 20 verification records. Original segment reports are identified by hash; raw observations and the strict comparison are retained separately byte for byte. Private execution environment and process lists are not published."
+}

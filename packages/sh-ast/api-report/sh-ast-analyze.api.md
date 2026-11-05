@@ -756,12 +756,25 @@ export type OperatorFamily =
 | 'BinTestOperator'
 | 'CaseOperator'
 | 'GlobOperator'
+| 'OptState'
 | 'ParExpOperator'
 | 'ParNamesOperator'
 | 'ProcOperator'
 | 'RedirOperator'
 | 'UnAritOperator'
 | 'UnTestOperator';
+
+// @public
+export const OptOff: 2;
+
+// @public
+export const OptOn: 1;
+
+// @public
+export type OptState = typeof OptOff | typeof OptOn | typeof OptUnset | RawOperator<'OptState'>;
+
+// @public
+export const OptUnset: 0;
 
 // @public
 export const Or: 13;
@@ -790,6 +803,7 @@ export interface ParamExp {
     Excl: boolean;
     Exp: Expansion | null;
     Flags: Lit | null;
+    GlobSubst: OptState;
     Index: ArithmExpr | null;
     IsSet: boolean;
     Length: boolean;
@@ -798,9 +812,11 @@ export interface ParamExp {
     NestedParam: WordPart | null;
     Param: Lit | null;
     Rbrace: SyntaxPos;
+    RcExpand: OptState;
     Repl: Replace | null;
     Short: boolean;
     Slice: Slice | null;
+    Split: OptState;
     Type: 'ParamExp';
     Width: boolean;
 }

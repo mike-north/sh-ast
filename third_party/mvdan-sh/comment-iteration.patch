@@ -1,6 +1,6 @@
 --- a/syntax/lexer.go
 +++ b/syntax/lexer.go
-@@ -236,15 +236,32 @@
+@@ -238,15 +238,32 @@
  	}
  }
  
@@ -35,7 +35,7 @@
  	}
  	r := p.r
  	for r == escNewl {
-@@ -255,7 +272,7 @@
+@@ -257,7 +274,7 @@
  		switch r {
  		case runeEOF:
  			p.tok = _EOF
@@ -44,7 +44,7 @@
  		case escNewl:
  			r = p.rune()
  		case ' ', '\t', '\r':
-@@ -272,7 +289,7 @@
+@@ -274,7 +291,7 @@
  			if p.quote != hdocWord && len(p.heredocs) > p.buriedHdocs {
  				p.doHeredocs()
  			}
@@ -53,7 +53,7 @@
  		default:
  			break skipSpace
  		}
-@@ -283,7 +300,7 @@
+@@ -288,7 +305,7 @@
  			p.r = runeEOF
  			p.w = 1
  			p.tok = _EOF
@@ -62,7 +62,7 @@
  		}
  	}
  	p.pos = p.nextPos()
-@@ -293,7 +310,7 @@
+@@ -298,7 +315,7 @@
  		case ';', '"', '\'', '(', ')', '$', '|', '&', '>', '<', '`':
  			if r == '<' && p.lang.in(LangZsh) && p.zshNumRange() {
  				p.advanceLitNone(r)
@@ -71,25 +71,25 @@
  			}
  			p.tok = p.regToken(r)
  		case '#':
-@@ -301,7 +318,7 @@
- 			// #bar is a continuation of the same word, not a comment.
- 			if p.quote == unquotedWordCont && !p.spaced {
+@@ -307,7 +324,7 @@
+ 			// The same applies inside [[ ]] tests, where '#' has no comment meaning.
+ 			if !p.spaced && (p.quote == unquotedWordCont || p.quote == testExpr) {
  				p.advanceLitNone(r)
 -				return
 +				return false
  			}
  			r = p.rune()
  			p.newLit(r)
-@@ -328,7 +345,7 @@
+@@ -334,7 +351,7 @@
  			} else {
  				p.litBs = nil
  			}
 -			p.next()
 +			return true
  		case '[':
- 			if p.quote == arrayElems {
- 				p.rune()
-@@ -402,6 +419,7 @@
+ 			// `[` only starts an `[idx]=val` element when it begins a new word;
+ 			// otherwise it continues a glob like `foo[0-9]`.
+@@ -415,6 +432,7 @@
  	if p.err != nil {
  		p.tok = _EOF
  	}

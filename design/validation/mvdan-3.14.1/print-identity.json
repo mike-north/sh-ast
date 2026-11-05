@@ -1,0 +1,402 @@
+[
+  {
+    "name": "nvm/nvm-exec",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm install --alias, --default and --save",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm install options after the version",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm ls-remote",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm_download keeps the Authorization header out of downloader arguments",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm_ls_current",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/fast/Unit tests/nvm_print_implicit_alias classification",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "nvm/test/slow/nvm reinstall-packages/Running 'nvm copy-packages $(nvm ls current)' should error out",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "bats-core/libexec/bats-core/bats-gather-tests",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pyenv/libexec/pyenv-latest",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pyenv/plugins/pyenv-binary/libexec/pyenv-binary-save",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pyenv/pyenv.d/install/latest.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "n/test/bin/run-all-tests",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "shunit2/lib/versions",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "shunit2/shunit2",
+    "option": "default",
+    "sameSyntax": false
+  },
+  {
+    "name": "shunit2/shunit2",
+    "option": "padding",
+    "sameSyntax": false
+  },
+  {
+    "name": "tpm/bin/clean_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/bin/install_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/bin/update_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/bindings/clean_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/bindings/install_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/bindings/update_plugins",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/clean_plugins.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/helpers/tmux_utils.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/install_plugins.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/source_plugins.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/update_plugin.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/scripts/update_plugin_prompt_handler.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tests/test_plugin_clean.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tests/test_plugin_installation.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tests/test_plugin_installation_legacy.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tests/test_plugin_sourcing.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tests/test_plugin_update.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "tpm/tpm",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "dehydrated/dehydrated",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "acme.sh/deploy/truenas_websocat.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "acme.sh/dnsapi/dns_inwx.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "rustup/ci/deploy.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "bash-it/aliases/available/git-omz.aliases.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "bash-it/plugins/available/virtualenv.plugin.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "bash-it/vendor/github.com/rcaloras/bash-preexec/script/release",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/defaults.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/drush.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/fabric-completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/fallback/docker-compose.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/fallback/docker.bash",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/gradle.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/jboss7.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/kontena.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/pip.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/pip3.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/projects.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/salt.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/sdkman.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/ssh.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/svn.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/test_kitchen.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/todo.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/completions/vault.completion.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/lib/base.sh",
+    "option": "default",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/lib/base.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/lib/git.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/lib/mo.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/plugins/bashmarks/bashmarks.plugin.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/plugins/battery/battery.plugin.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/plugins/nvm/nvm.plugin.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/themes/agnoster/agnoster.theme.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/themes/doubletime/doubletime.theme.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/themes/hawaii50/hawaii50.theme.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "oh-my-bash/themes/rana/rana.theme.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/advanced/Scripts/api.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/advanced/Scripts/piholeDebug.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/advanced/Scripts/update.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/automated install/basic-install.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/gravity.sh",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "pi-hole/pihole",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "dokku/plugins/git/functions",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "dokku/plugins/nginx-vhosts/functions",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "dokku/tests/unit/ps-dockerfile-2.bats",
+    "option": "padding",
+    "sameSyntax": true
+  },
+  {
+    "name": "dokku/tests/unit/ps-herokuish-2.bats",
+    "option": "padding",
+    "sameSyntax": true
+  }
+]

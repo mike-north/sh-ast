@@ -15,9 +15,9 @@
  * (see {@link WordResolution}'s, {@link CommandSite}'s, and
  * {@link Argv0Resolution}'s doc comments).
  *
- * The subpath also exposes the faithful record and operator types it consumes,
- * every named operator constant referenced by those types, and rawOperator for
- * unnamed uint32 values. Analyze-only consumers can construct and compare these
+ * The subpath also exposes the faithful record and numeric-domain types it consumes,
+ * every named constant referenced by those types, and rawOperator for unnamed
+ * values within their uint32 operator or uint8 option-state storage domains. Analyze-only consumers can construct and compare these
  * values without importing the root entry point. Constants retain their upstream
  * family meanings; this adds no command policy or interpretation.
  */
@@ -63,6 +63,7 @@ export type {
   CaseOperator,
   GlobOperator,
   OperatorFamily,
+  OptState,
   ParExpOperator,
   ParNamesOperator,
   ProcOperator,
@@ -72,7 +73,7 @@ export type {
   UnTestOperator,
 } from '../../generated/syntax-constants.js';
 
-// Re-export the values referenced by the retained operator unions directly from
+// Re-export the values referenced by the retained numeric unions directly from
 // their definitions; the root barrel also owns unrelated parser/schema exports.
 export {
   Add,
@@ -131,6 +132,9 @@ export {
   NamesPrefixWords,
   Neq,
   Not,
+  OptOff,
+  OptOn,
+  OptUnset,
   Or,
   OrArit,
   OrAssgn,

@@ -1,6 +1,6 @@
 --- a/syntax/parser.go
 +++ b/syntax/parser.go
-@@ -241,6 +241,8 @@
+@@ -240,6 +240,8 @@
  //
  // Parse can be called more than once, but not concurrently. That is, a
  // Parser can be reused once it is done working.
@@ -9,7 +9,7 @@
  func (p *Parser) Parse(r io.Reader, name string) (*File, error) {
  	p.reset()
  	p.f = &File{Name: name}
-@@ -252,6 +254,9 @@
+@@ -251,6 +253,9 @@
  		// EOF immediately after heredoc word so no newline to
  		// trigger the parsing error.
  		p.doHeredocs()
@@ -19,7 +19,7 @@
  	}
  	return p.f, p.err
  }
-@@ -525,8 +530,11 @@
+@@ -524,8 +529,11 @@
  	// we're currently parsing.
  	// A non-zero number means that we require certain tokens or words before
  	// reaching EOF, used for [Parser.Incomplete].
@@ -31,8 +31,8 @@
 +	parseDepthLimit int
  	// openBquotes is how many levels of backquotes are open at the moment.
  	openBquotes int
- 
-@@ -565,13 +573,23 @@
+ 	// openBquoteDbls is how many of those backquote levels began inside
+@@ -567,13 +575,23 @@
  // or walking the syntax tree. Bash fails at a few thousand nested subshells.
  const maxNesting = 10_000
  
@@ -59,7 +59,7 @@
  	}
  }
  
-@@ -2957,3 +2975,29 @@
+@@ -3034,3 +3052,29 @@
  	}
  	s.Cmd = fd
  }

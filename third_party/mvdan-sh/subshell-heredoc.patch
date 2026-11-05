@@ -1,8 +1,6 @@
-diff --git a/syntax/parser.go b/syntax/parser.go
-index c4b61f0..5329246 100644
 --- a/syntax/parser.go
 +++ b/syntax/parser.go
-@@ -2343,10 +2343,13 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
+@@ -2410,10 +2410,13 @@
  
  func (p *Parser) subshell(s *Stmt) {
  	sub := &Subshell{Lparen: p.pos}

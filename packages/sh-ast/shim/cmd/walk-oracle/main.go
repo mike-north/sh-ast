@@ -456,7 +456,7 @@ func main() {
 		Upstream string             `json:"upstream"`
 		Cases    []observation      `json:"cases"`
 		Storage  []sliceObservation `json:"storageProbes"`
-	}{Upstream: "mvdan.cc/sh/v3 v3.13.1", Storage: storageProbes()}
+	}{Upstream: "mvdan.cc/sh/v3 v3.14.1", Storage: storageProbes()}
 	for _, spec := range specifications(*fixtures) {
 		report.Cases = append(report.Cases, observe(spec))
 	}

@@ -4,7 +4,7 @@
 
 ## Redirect.N property
 
-fd<!-- -->&gt;<!-- -->, or {<!-- -->varname<!-- -->}<!-- -->&gt; in Bash
+fd<!-- -->&gt;<!-- -->, or {<!-- -->varname<!-- -->}<!-- -->&gt; with `LangBash` or `LangZsh`
 
 Null preserves the upstream absence of this component.
 

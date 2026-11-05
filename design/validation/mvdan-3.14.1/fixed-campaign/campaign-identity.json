@@ -1,0 +1,88 @@
+{
+  "node": "v24.14.0",
+  "nodePath": "<node-24.14.0>",
+  "nodeSHA256": "20a18709f0154d668f1bd6f6ea8c2a7ae001447b4b2c339732f22e57a8767a55",
+  "harness": {
+    "README.md": "759442e67ced5acb6e3a294319874e96e60d183e6912505cafac60290b1ad7a5",
+    "STREAM-ENCODING.md": "c98c0bc268b6f7bd1662b48a5bca12d02ea409b4a28cb26f4f184565b9d8f735",
+    "adapter.mjs": "bfecf44392456dbd7e57713ccdcf9e4f4ef1a2d6dd06f9d2d0aafd29bd66d98e",
+    "adapter.test.mjs": "283e719847c9a3eb4f41ac73a2dd0378074eaa00a72f3dc5ecb1448c1781a73e",
+    "artifacts.mjs": "f16765c9d76036077e38dc89d2622efd663e80f130644b6ef75819eb3c1247cd",
+    "artifacts.test.mjs": "d8680903ef5cc3550398b075ba2ab58c45766d8686811da87f6469d4f49680bd",
+    "extraction.test.mjs": "bb4733f804b1d1843aa11a1c6bd05245c8bf2f6381b7d33fa42a82a759af8c41",
+    "fixtures/consumer-m2.json": "8eb7138cc14148c707a9b6b936e3bd22ec3806ef392b1d2d9300db747d7353df",
+    "fixtures/heredoc.json": "e0e2382a6525228ff9d23a0a40e65e383beede7de04f973929e9a47ee0dfa201",
+    "fixtures/nested-16.json": "0bee7910051cc9a9a56d72bdd0f4814c3d45df6295801034791cfc8049018166",
+    "fixtures/nested-2.json": "71df124fc07113bc963f241362b149f6e9863742eb124f20c001d90a59180ba5",
+    "fixtures/nested-32.json": "871f50d1a21eb2163af8a68e9cd9662db742b3e47967cbdffb900378a6dad0ff",
+    "fixtures/nested-4.json": "75d40d5ab7b80c8f44c71eba9c21ae52a1d1e7d2a6af96df78864ef62cddec6d",
+    "fixtures/nested-64.json": "97675d51d5c071fa9cd17f425042346b7288243140b0c2dbd044c76947090074",
+    "fixtures/nested-8.json": "cd2946df4dbd84b1a81b0d2e05bf393cf25b0eb95041b8f62217e7125120548c",
+    "fixtures/representative-1.json": "34eb9f15b5460ccd1f7666e0665674f6986b56e190a7c6005bd8e1218ada3f78",
+    "fixtures/representative-20.json": "9228593253809689891ce48fca56f265cf06ca1773276d385eb39c1ef496f9a6",
+    "fixtures/representative-5.json": "a6939c4b2bf7340224472a09d77051cf559060e8e1b674600facae64bf656830",
+    "fixtures/representative-50.json": "362fe5cd34c1cc080281a0c0807b37b4ea76dac3fe7fdf13697ad947575ca648",
+    "heap-sequence.integration.mjs": "3002694ede9767c723e82b072ead1be8e867a1de13223240aab7c647eab7d495",
+    "identity.mjs": "b572b3234526db97a2670192967cc6e1f3672f6a42002043fa9e3dadf0dec4f7",
+    "model.mjs": "5495576a2195e91f99795450a2d4b3dffc299b642e631fdede43bb2e972a6f88",
+    "model.test.mjs": "8f1be8fbd512e5509b4af55d8bc1549031313a3a7ed689a72e1de3145cf51ff2",
+    "report.mjs": "f0369424c77e68c673f79b0d9dca8c300736dcee8113a11c8636fc5d62abf4f6",
+    "report.test.mjs": "cc12992cd678acdfb50fca00955f4a64635a21f62bf730bf8f8fa75760576a9f",
+    "run.mjs": "f6ecbd13ea7389074e726f1ff9279011ea3b798315f1558aec005c384acebe75",
+    "stages.mjs": "465e9bd9c0f01a482c712da36292ddbe32653cf69efbb2ac62eaab6d80c8b534",
+    "stages.test.mjs": "e73104ab7a0882292dd5449d387a71a8d4919cfd8bcf97c9cf27440dd8c5af91",
+    "stream-encoding-model.mjs": "22af02bb693de50ece856403229a0671964a7fe1a7d0c9be955ddc6853ad051a",
+    "stream-encoding-prepare.mjs": "676be4244b6aea37c9ecb3243e911ef9346c39f0084fe955a3d40174fa540d45",
+    "stream-encoding-run.mjs": "6152d817a5f943e67c1bdb8217c230ca8674c50f146591a518ea8940241f2952",
+    "stream-encoding-worker.mjs": "914433025b3b092e52579e88537121c6784d88c21115ce0a148ff74120392506",
+    "stream-encoding.test.mjs": "345c6fe11f597ac2cd78a2031bf72286dc634b76f790a643447b6443e7ac6885",
+    "transport.mjs": "11e35b6a2c4c71ff064e459bf748958f1458601e152799aafa0c87742ca87142",
+    "transport.test.mjs": "6dd24ff5ab5ff750f4f1f8cdfd9be86eb9243948805026a23b8176f37276215f",
+    "worker.integration.mjs": "5a46ad4834e07a1be1907e6a251c75f347755fcfb12f986087cb1f6562199726",
+    "worker.mjs": "5a8f10977b69ef2982adfa0da04b16985754e2b9a4f81b32e3bceb9612f4694a"
+  },
+  "fixtures": [
+    {
+      "name": "representative-1",
+      "jsonSHA256": "34eb9f15b5460ccd1f7666e0665674f6986b56e190a7c6005bd8e1218ada3f78",
+      "sourceSHA256": "568a75bc2b251dfa2110dcea42f78c35e03093aa74609de1558535adc5a73302",
+      "utf16Units": 241,
+      "bytes": 260,
+      "markers": 1
+    },
+    {
+      "name": "representative-50",
+      "jsonSHA256": "362fe5cd34c1cc080281a0c0807b37b4ea76dac3fe7fdf13697ad947575ca648",
+      "sourceSHA256": "aa9ca7f88d48cf05713e4af747434fe1cec1c334bd3f5e88193d84615fc06dcc",
+      "utf16Units": 12170,
+      "bytes": 13120,
+      "markers": 50
+    },
+    {
+      "name": "nested-8",
+      "jsonSHA256": "cd2946df4dbd84b1a81b0d2e05bf393cf25b0eb95041b8f62217e7125120548c",
+      "sourceSHA256": "bf0420269d4e915bfe0e2e06e6d1a3b25e2ea83bb6f4fb1ce23303d127a5becd",
+      "utf16Units": 393,
+      "bytes": 412,
+      "markers": 1
+    },
+    {
+      "name": "heredoc",
+      "jsonSHA256": "e0e2382a6525228ff9d23a0a40e65e383beede7de04f973929e9a47ee0dfa201",
+      "sourceSHA256": "3dba76d2e268fc22d558597085c02ef6b514369d3215d460c3bd2b45501d9078",
+      "utf16Units": 114,
+      "bytes": 128,
+      "markers": 1
+    },
+    {
+      "name": "consumer-m2",
+      "jsonSHA256": "8eb7138cc14148c707a9b6b936e3bd22ec3806ef392b1d2d9300db747d7353df",
+      "sourceSHA256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562",
+      "utf16Units": 11070,
+      "bytes": 11270,
+      "markers": 0
+    }
+  ],
+  "artifactManifestSHA256": "f4be86a1d6f3dd1b938199d54bce21b36ba65fce5ccd677bac320e01a78ee02c",
+  "timingsRun": false
+}

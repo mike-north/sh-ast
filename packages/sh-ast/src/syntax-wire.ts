@@ -5,6 +5,7 @@
  */
 import { InputError } from './syntax-errors.js';
 import { ShInternalError } from './errors.js';
+import { operatorMaximum } from './syntax-operator.js';
 import {
   SYNTAX_INTERFACES,
   SYNTAX_SCHEMA,
@@ -285,7 +286,10 @@ function matchesScalar(value: unknown, field: SyntaxFieldSchema, check: Validati
       return isSyntaxPos(value);
     case 'operator':
       return (
-        typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 0xffff_ffff
+        typeof value === 'number' &&
+        Number.isInteger(value) &&
+        value >= 0 &&
+        value <= operatorMaximum(field.type)
       );
     case 'struct':
       return isRecord(value) && value.Type === field.type && matchesRecord(value, check);

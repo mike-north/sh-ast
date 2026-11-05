@@ -212,7 +212,7 @@ func encodeValue(value reflect.Value, ancestry map[uintptr]bool) (any, error) {
 		return String(value.String()), nil
 	case reflect.Bool:
 		return value.Bool(), nil
-	case reflect.Uint32:
+	case reflect.Uint8, reflect.Uint32:
 		return value.Uint(), nil
 	default:
 		return nil, fmt.Errorf("unsupported syntax value %s", value.Type())

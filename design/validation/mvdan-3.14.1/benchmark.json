@@ -1,0 +1,175 @@
+{
+  "environment": {
+    "node": "v24.14.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5 Max"
+  },
+  "rounds": 7,
+  "iterations": 20,
+  "warmup": 5,
+  "hashes": {
+    "base": {
+      "packages/sh-ast/shim/sh-ast.wasm": "eaff64fc5dbd8e0878c43b4451c64c93eedf99ef1a2653b914c0f534a2832579",
+      "packages/sh-ast/dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+      "packages/sh-ast/dist/syntax-wire.js": "9c14552c1edeb0cfc50e3a0ec8001227ba5e7ff5caf13b8a9b24a545ae52353e"
+    },
+    "head": {
+      "packages/sh-ast/shim/sh-ast.wasm": "8e512611820d163b7f2b7547782489ec89d6eba6c9fcdf81217a003a9ea2a879",
+      "packages/sh-ast/dist/index.js": "626be75df477fc55ffe60c33cdac7d14cc6af0f9db2701c121726aa115714fa9",
+      "packages/sh-ast/dist/syntax-wire.js": "cbf450460df69013483c62698cffb5b1cb9e733505931d11b3a437f9ef872a0b"
+    }
+  },
+  "rows": [
+    {
+      "fixture": "representative-1",
+      "phase": "parse",
+      "base": {
+        "median": 0.3497500000000038,
+        "min": 0.3092500000000058,
+        "max": 0.583895499999997
+      },
+      "head": {
+        "median": 0.5050415000000044,
+        "min": 0.3156039999999969,
+        "max": 0.5549999999999997
+      },
+      "ratio": 1.4440071479628274
+    },
+    {
+      "fixture": "representative-1",
+      "phase": "print",
+      "base": {
+        "median": 1.3559164999999993,
+        "min": 1.1348539999999971,
+        "max": 1.8385005000000092
+      },
+      "head": {
+        "median": 1.489437499999994,
+        "min": 1.0636255000000006,
+        "max": 2.0932914999999923
+      },
+      "ratio": 1.0984728779390138
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "parse",
+      "base": {
+        "median": 7.918437499999996,
+        "min": 6.364937499999996,
+        "max": 9.769645499999982
+      },
+      "head": {
+        "median": 8.116020500000005,
+        "min": 6.086937499999998,
+        "max": 10.061478999999991
+      },
+      "ratio": 1.0249522712024952
+    },
+    {
+      "fixture": "representative-50",
+      "phase": "print",
+      "base": {
+        "median": 67.9014795,
+        "min": 54.82189549999998,
+        "max": 68.66718750000007
+      },
+      "head": {
+        "median": 64.24006249999991,
+        "min": 56.006812500000024,
+        "max": 72.21314550000011
+      },
+      "ratio": 0.9460775077809596
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "parse",
+      "base": {
+        "median": 0.5231670000000008,
+        "min": 0.40437550000000044,
+        "max": 0.7026249999999976
+      },
+      "head": {
+        "median": 0.5649170000000012,
+        "min": 0.38272899999999765,
+        "max": 0.6448540000000023
+      },
+      "ratio": 1.0798024340220242
+    },
+    {
+      "fixture": "nested-8",
+      "phase": "print",
+      "base": {
+        "median": 2.1217499999999987,
+        "min": 1.6208334999999963,
+        "max": 2.4107085000000126
+      },
+      "head": {
+        "median": 2.1662915,
+        "min": 1.6564169999999905,
+        "max": 2.4441249999999997
+      },
+      "ratio": 1.0209928125368215
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "parse",
+      "base": {
+        "median": 0.12879150000000195,
+        "min": 0.11958299999999866,
+        "max": 0.2427915000000027
+      },
+      "head": {
+        "median": 0.13537499999999625,
+        "min": 0.11572950000000404,
+        "max": 0.26102050000000077
+      },
+      "ratio": 1.0511175038724931
+    },
+    {
+      "fixture": "heredoc",
+      "phase": "print",
+      "base": {
+        "median": 0.503729000000007,
+        "min": 0.40339599999999365,
+        "max": 0.6692295000000001
+      },
+      "head": {
+        "median": 0.492207999999998,
+        "min": 0.43175000000000097,
+        "max": 0.6824585000000027
+      },
+      "ratio": 0.9771285750869836
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "parse",
+      "base": {
+        "median": 11.216499999999968,
+        "min": 10.063874999999982,
+        "max": 14.389229
+      },
+      "head": {
+        "median": 12.489125000000001,
+        "min": 9.393103999999994,
+        "max": 14.103145499999982
+      },
+      "ratio": 1.1134600811304807
+    },
+    {
+      "fixture": "consumer-m2",
+      "phase": "print",
+      "base": {
+        "median": 99.76654199999996,
+        "min": 68.45002099999999,
+        "max": 125.67597899999998
+      },
+      "head": {
+        "median": 102.28583299999997,
+        "min": 71.15904149999994,
+        "max": 160.06860400000005
+      },
+      "ratio": 1.0252518624931393
+    }
+  ]
+}
