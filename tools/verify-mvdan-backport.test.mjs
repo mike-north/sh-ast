@@ -40,6 +40,7 @@ test('accepts precisely the reviewed source closure and patch', () => {
     'nesting-backport.patch',
     'binding-budget.patch',
     'subshell-heredoc.patch',
+    'printer-control-bytes.patch',
   ]);
   assert.doesNotThrow(() => verifyBackport(root));
 });
@@ -52,7 +53,12 @@ test('rejects arithmetic parser drift outside the declared nesting corrections',
   });
 });
 
-for (const name of ['nesting-backport.patch', 'binding-budget.patch', 'subshell-heredoc.patch']) {
+for (const name of [
+  'nesting-backport.patch',
+  'binding-budget.patch',
+  'subshell-heredoc.patch',
+  'printer-control-bytes.patch',
+]) {
   test(`requires the ${name} digest`, () => {
     fixture((directory) => {
       const path = join(directory, 'third_party/mvdan-sh/manifest.json');
@@ -93,6 +99,14 @@ test('rejects a source edit outside the official backport', () => {
       readFileSync(path, 'utf8').replace('package syntax', '// unreviewed change\npackage syntax'),
     );
     assert.throws(() => verifyBackport(directory), /pristine.*syntax\/parser.go/);
+  });
+});
+
+test('rejects printer drift outside the declared literal-byte correction', () => {
+  fixture((directory) => {
+    const path = join(directory, 'third_party/mvdan-sh/upstream/syntax/printer.go');
+    writeFileSync(path, `${readFileSync(path, 'utf8')}\n// unreviewed printer change\n`);
+    assert.throws(() => verifyBackport(directory), /pristine.*syntax\/printer.go/);
   });
 });
 

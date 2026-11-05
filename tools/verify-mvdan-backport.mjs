@@ -49,6 +49,7 @@ export function verifyBackport(root) {
     'nesting-backport.patch',
     'binding-budget.patch',
     'subshell-heredoc.patch',
+    'printer-control-bytes.patch',
   ];
   if (JSON.stringify(manifest.appliedPatches) !== JSON.stringify(appliedPatches)) {
     throw new Error('Unexpected maintained patch order');
@@ -101,6 +102,6 @@ export function verifyBackport(root) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   verifyBackport(fileURLToPath(new URL('../', import.meta.url)));
   console.log(
-    'Verified mvdan/sh v3.13.1 with Unicode, comment iteration, native budget, and subshell heredoc corrections.',
+    'Verified mvdan/sh v3.13.1 with Unicode, comment iteration, native budget, subshell heredoc, and printer literal-byte corrections.',
   );
 }

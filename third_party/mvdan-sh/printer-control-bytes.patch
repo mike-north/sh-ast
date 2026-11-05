@@ -1,0 +1,75 @@
+diff --git a/syntax/printer.go b/syntax/printer.go
+index 9015231..4c3213a 100644
+--- a/syntax/printer.go
++++ b/syntax/printer.go
+@@ -379,9 +379,26 @@ func (p *Printer) writeLit(s string) {
+ 	// If p.tabWriter is nil, this is the nested printer being used to print
+ 	// <<- heredoc bodies, so the parent printer will add the escape bytes
+ 	// later.
+-	if p.tabWriter != nil && strings.Contains(s, "\t") {
+-		p.w.WriteByte(tabwriter.Escape)
+-		defer p.w.WriteByte(tabwriter.Escape)
++	// Preserve the upstream whole-literal escaping for horizontal tabs. For
++	// VT/FF alone, protect just those data bytes so physical newlines remain
++	// visible to tabwriter's alignment of subsequent lines and comments.
++	if p.tabWriter != nil && strings.ContainsAny(s, "\t\v\f") {
++		if strings.Contains(s, "\t") {
++			p.w.WriteByte(tabwriter.Escape)
++			defer p.w.WriteByte(tabwriter.Escape)
++		} else {
++			for {
++				i := strings.IndexAny(s, "\v\f")
++				if i < 0 {
++					break
++				}
++				p.w.WriteString(s[:i])
++				p.w.WriteByte(tabwriter.Escape)
++				p.w.WriteByte(s[i])
++				p.w.WriteByte(tabwriter.Escape)
++				s = s[i+1:]
++			}
++		}
+ 	}
+ 	p.w.WriteString(s)
+ }
+@@ -964,6 +981,13 @@ func (p *Printer) unquotedWord(w *Word) {
+ 		case *DblQuoted:
+ 			p.wordParts(wp.Parts, true)
+ 		case *Lit:
++			// Quote removal must preserve the delimiter's literal VT and FF,
++			// just as writeLit preserves them in the opening word. Nested <<-
++			// printers leave escaping to extraIndenter after stripping tabs.
++			escape := p.tabWriter != nil && strings.ContainsAny(wp.Value, "\v\f")
++			if escape {
++				p.w.WriteByte(tabwriter.Escape)
++			}
+ 			for i := 0; i < len(wp.Value); i++ {
+ 				if b := wp.Value[i]; b == '\\' {
+ 					if i++; i < len(wp.Value) {
+@@ -973,6 +997,9 @@ func (p *Printer) unquotedWord(w *Word) {
+ 					p.w.WriteByte(b)
+ 				}
+ 			}
++			if escape {
++				p.w.WriteByte(tabwriter.Escape)
++			}
+ 		}
+ 	}
+ }
+@@ -1569,7 +1596,15 @@ func (e *extraIndenter) WriteByte(b byte) error {
+ 		e.bufWriter.WriteByte('\t')
+ 	}
+ 	e.bufWriter.WriteByte(tabwriter.Escape)
+-	e.bufWriter.Write(trimmed)
++	// The nested <<- printer leaves literal escaping to us, after leading
++	// tabs have been stripped. VT and FF must not reach the tabwriter unescaped.
++	if bytes.ContainsAny(trimmed, "\v\f") {
++		e.bufWriter.WriteByte(tabwriter.Escape)
++		e.bufWriter.Write(trimmed)
++		e.bufWriter.WriteByte(tabwriter.Escape)
++	} else {
++		e.bufWriter.Write(trimmed)
++	}
+ 	e.curLine = e.curLine[:0]
+ 	return nil
+ }

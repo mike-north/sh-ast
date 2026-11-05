@@ -1,7 +1,7 @@
 # mvdan/sh v3.13.1 with maintained corrections
 
 This directory contains the source closure used by the WASM shim, its tests, and
-the schema generator. It is **v3.13.1 plus five documented corrections**, not an
+the schema generator. It is **v3.13.1 plus six documented corrections**, not an
 unmodified upstream release. No other grammar, AST, or printer change
 from newer releases is included.
 
@@ -101,12 +101,54 @@ substitution whose outer document follows `)` as controls. The unclosed outer
 document error when its apparent body lies inside `$(` remains unchanged. No lexer, AST,
 printer, or command-substitution code changes are included in this correction.
 
+## Owned printer literal-byte correction
+
+`printer-control-bytes.patch` is maintained by sh-ast, **not an official upstream
+patch**. Go's `text/tabwriter` treats VT and FF as layout separators. Shells retain
+them as data in quoted strings, unquoted words, and here-document bodies; embedded
+comment bytes must also survive without turning the suffix into executable text.
+`writeLit` therefore protects VT and FF with the same tabwriter escape markers
+already used for literal horizontal tabs. The deprecated `KeepPadding` option
+retains upstream's escape-marker column counting and shrinking-padding limit,
+tracked in [mvdan/sh#658](https://github.com/mvdan/sh/issues/658). `colCounter`
+is unmodified; ordinary and HT-only output must match the base byte-for-byte.
+When no horizontal tab is present, only VT/FF bytes are escaped, so physical
+newlines remain visible for comment alignment. Literals containing horizontal
+tabs retain upstream's whole-literal escaping and its known multiline alignment
+limit. The nested `<<-` printer defers escaping
+until `extraIndenter` has stripped leading tabs; that writer protects VT and FF in
+the remaining body. Existing output without these bytes is unchanged.
+For here-document delimiters, `unquotedWord` must protect these same bytes while
+removing backslashes from an unquoted closing word. Otherwise its terminator
+would differ from the preserved opener and absorb later commands as body text.
+That protection matches the literal-writer boundary in upstream
+[0d47c1c](https://github.com/mvdan/sh/commit/0d47c1c), associated with
+[mvdan/sh#1446](https://github.com/mvdan/sh/issues/1446). This owned v3.13.1
+adaptation protects only VT/FF; it does not backport upstream's shared
+quote-removal helper or the issue's other parser/delimiter changes.
+
+Nested `<<-` documents inside a surrounding `<<-` command substitution retain a
+writer-ordering limit: VT/FF body data can still change, and nested delimiters
+can become data under Bash 3.2 or cause Bash 5.3 to reject the printed program.
+Ordinary and HT-only nested output is unchanged from the pinned base, including
+its pre-existing HT body defect. Tests document these limits against real Bash.
+Minify's retained-shebang path also keeps its upstream VT/FF transformation;
+an embedded FF can expose following shebang comment text as executable code.
+
+Native and public printer regressions use explicit source expectations for single
+quotes, double quotes, literal and written-escape ANSI-C quotes, unquoted words,
+ordinary and tab-stripping here-documents, and comments. Public tests additionally
+cover unquoted and backslash-escaped here-document delimiters with a following
+command that must remain executable. They
+execute the original and printed fixtures in Bash against hand-written output
+values. The correction changes no parser, AST, or public API shape.
+
 ## Provenance and verification
 
 `manifest.json` records the upstream module checksum, exact pristine SHA-256 for
 every included file, the upstream fix commits, and all patch digests, with the
 application order explicit. The baseline
-is the Go module `mvdan.cc/sh/v3@v3.13.1`. Files other than the three patched source
+is the Go module `mvdan.cc/sh/v3@v3.13.1`. Files other than the four patched source
 files are byte-for-byte copies of that baseline.
 
 Run from the repository root:
@@ -117,8 +159,8 @@ node --test tools/verify-mvdan-backport.test.mjs
 ```
 
 The offline verifier checks inventory and patch digests, confirms both module
-replacements, and reverses all five patches in declared reverse application order:
-owned subshell here-document, binding budget, official nesting, owned comment
+replacements, and reverses all six patches in declared reverse application order:
+owned printer literal-byte, owned subshell here-document, binding budget, official nesting, owned comment
 iteration, official sentinel.
 It then hashes every reconstructed pristine file in an isolated directory. Tests
 reject missing, reordered, altered patches, undeclared source changes, added files,
