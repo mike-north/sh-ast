@@ -253,14 +253,14 @@ describe('interpreter -c — paths and env (criterion 3)', () => {
     expect(resolution.effective).toEqual({ static: true, text: '/bin/notbash' });
   });
 
-  // `env` is matched by exact name only (see `WrapperSpec.names`), so
-  // `/usr/bin/env` is not a transparent wrapper today and this behavior is
-  // deliberately unchanged here: following it into `bash -c` would also
-  // change `/usr/bin/env rm x`, which is a separate public-output decision.
-  it('leaves /usr/bin/env as an ordinary effective command (exact-name wrapper policy)', () => {
+  // Wrapper lookup tries exact names first, then the final segment of an
+  // absolute path. `/usr/bin/env` therefore leads into the interpreter;
+  // real `/usr/bin/env bash -c 'printf ...'` runs the command string.
+  it('follows an absolute env wrapper into an embedded command', () => {
     const resolution = resolveArgv0(site(sh`/usr/bin/env bash -c x`));
-    expect(chainSummary(resolution)).toEqual(['/usr/bin/env']);
-    expect(resolution.effective).toEqual({ static: true, text: '/usr/bin/env' });
+    expect(chainSummary(resolution)).toEqual(['/usr/bin/env', 'bash', '<embedded-command>']);
+    expect(resolution.chainIndices).toEqual([0, 1, 2]);
+    expect(resolution.effective).toEqual(EMBEDDED);
   });
 });
 
