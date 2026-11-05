@@ -114,9 +114,9 @@ Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never ha
 
 </td><td>
 
-Thrown by [parseSync()](./sh-ast.parsesync.md) when `text`<!-- -->'s conservatively estimated structural nesting depth (subshells, command/process substitutions, `if`<!-- -->/`case`<!-- -->/loop/function bodies, `{ }` blocks, backtick or `$(...)` command substitution, `$((...))` arithmetic — see `parse-depth-guard.ts`<!-- -->'s module doc for the exact heuristic) exceeds the limit `parseSync` accepts. Thrown \*before\* `text` is ever handed to the WASM shim: mvdan/sh's own recursive-descent parser has no recovery path for exhausting its call stack on pathologically deep input (a stack overflow deep inside the shared WASM instance is not a normal, catchable JS error the way a parse syntax error is), so this bridge estimates the risk up front and fails closed with a typed error instead of ever making that call — the shared WASM instance is therefore never put at risk of wedging on this class of input; a `parseSync` call right after catching this error works exactly as it would if this input had never been attempted.
+A whole-file parse operation exceeded the binding's native node-nesting budget. The maintained parser counts statement, word, and expression work, including iterative construction of deep operator trees. A refusal returns no partial File or position snapshot and leaves subsequent parse calls available.
 
-Like [ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)<!-- -->, this is pathological-input protection, not a normal-usage ceiling: a legitimately deep (but realistic) script parses fine. The estimate can \*over\*-count relative to mvdan/sh's real grammar (rejecting some legitimate-but-unusually-deep input) but is designed to never \*under\*-count relative to it — see `parse-depth-guard.ts` for the documented false-positive sources this trades off against ever letting a genuinely crash-inducing input through.
+This is a binding resource constraint, not an upstream grammar restriction. The fixed 128-unit policy can refuse valid deeply nested input. Units describe native node work, not actual Go/JavaScript frames or necessarily final AST depth. The empirical margin assumes an ordinary caller stack; arbitrary pre-existing JavaScript recursion can exhaust it. This does not establish safety for arbitrary caller-constructed trees or other recursive operations.
 
 
 </td></tr>
@@ -212,7 +212,7 @@ Computes a node's starting position from its current fields using upstream's Pos
 
 </td><td>
 
-Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. The existing conservative nesting guard is an explicit binding resource limit, not an upstream grammar restriction. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
+Parses exact source bytes, or well-formed Unicode text encoded as UTF-8. First use synchronously initializes WASM. Native node-nesting work has a fixed binding resource budget; exceeding it throws [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->. Subsequent parse calls remain usable after that refusal. The returned File and its Node subtrees are plain syntax data: ordinary structuredClone(node), without transfers, makes an independent editable copy while retaining position values, byte strings, typed nils and internal aliases.
 
 
 </td></tr>

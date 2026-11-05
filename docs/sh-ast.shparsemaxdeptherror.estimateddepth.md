@@ -4,7 +4,7 @@
 
 ## ShParseMaxDepthError.estimatedDepth property
 
-The conservatively estimated nesting depth that tripped the guard. Not necessarily `text`<!-- -->'s "true" nesting depth under a real parse — see [ShParseMaxDepthError](./sh-ast.shparsemaxdeptherror.md)<!-- -->'s doc comment — only ever `> maxDepth`<!-- -->.
+Native node work at the rejected entry, greater than [ShParseMaxDepthError.maxDepth](./sh-ast.shparsemaxdeptherror.maxdepth.md)<!-- -->. The historical field name is retained for compatibility; the value is no longer a lexical estimate and is not a count of runtime stack frames.
 
 **Signature:**
 

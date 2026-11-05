@@ -241,6 +241,8 @@ func NewParser(options ...ParserOption) *Parser {
 //
 // Parse can be called more than once, but not concurrently. That is, a
 // Parser can be reused once it is done working.
+// A binding limit selected with ParseNestingLimit returns ParseDepthError without
+// a partial File; the parser remains reusable through its ordinary reset path.
 func (p *Parser) Parse(r io.Reader, name string) (*File, error) {
 	p.reset()
 	p.f = &File{Name: name}
@@ -252,6 +254,9 @@ func (p *Parser) Parse(r io.Reader, name string) (*File, error) {
 		// EOF immediately after heredoc word so no newline to
 		// trigger the parsing error.
 		p.doHeredocs()
+	}
+	if _, ok := p.err.(ParseDepthError); ok {
+		return nil, p.err
 	}
 	return p.f, p.err
 }
@@ -521,10 +526,15 @@ type Parser struct {
 
 	parsingDoc bool // true if using [Parser.Document]
 
-	// openNodes tracks how many entire statements or words we're currently parsing.
+	// openNodes tracks how many entire statements, words, or expressions
+	// we're currently parsing.
 	// A non-zero number means that we require certain tokens or words before
 	// reaching EOF, used for [Parser.Incomplete].
+	// It is also the nesting work limited by the upstream or binding policy.
 	openNodes int
+	// parseDepthLimit selects binding policy without changing per-input state.
+	// Zero retains maxNesting; reset clears openNodes but preserves this option.
+	parseDepthLimit int
 	// openBquotes is how many levels of backquotes are open at the moment.
 	openBquotes int
 
@@ -557,6 +567,33 @@ func (p *Parser) Incomplete() bool {
 }
 
 const bufSize = 1 << 10
+
+// maxNesting is how deeply statements, words, and expressions may be nested,
+// so that a small input cannot overflow the Go stack when recursively parsing
+// or walking the syntax tree. Bash fails at a few thousand nested subshells.
+const maxNesting = 10_000
+
+// enterNode increments [Parser.openNodes], enforcing the selected nesting limit.
+// It must be paired with a call to [Parser.leaveNode],
+// or with restoring [Parser.openNodes] to its previous value.
+func (p *Parser) enterNode() {
+	p.openNodes++
+	limit := maxNesting
+	if p.parseDepthLimit > 0 {
+		limit = p.parseDepthLimit
+	}
+	if p.openNodes > limit {
+		if p.parseDepthLimit > 0 {
+			// Use the existing terminal EOF path so recovery options cannot turn a
+			// resource refusal into resumed parsing or a successful partial tree.
+			p.errPass(ParseDepthError{MaxDepth: limit, Depth: p.openNodes})
+		} else {
+			p.curErr("nesting is deeper than %d levels", limit)
+		}
+	}
+}
+
+func (p *Parser) leaveNode() { p.openNodes-- }
 
 func (p *Parser) reset() {
 	p.tok, p.val = illegalTok, ""
@@ -1089,9 +1126,7 @@ loop:
 		if p.tok == _EOF {
 			break
 		}
-		p.openNodes++
 		s := p.getStmt(true, false, false)
-		p.openNodes--
 		if s == nil {
 			p.invalidStmtStart()
 			break
@@ -1170,9 +1205,9 @@ func (p *Parser) wordParts(wps []WordPart) []WordPart {
 		defer func() { p.quote = noState }()
 	}
 	for {
-		p.openNodes++
+		p.enterNode()
 		n := p.wordPart()
-		p.openNodes--
+		p.leaveNode()
 		if n == nil {
 			if len(wps) == 0 {
 				return nil // normalize empty lists into nil
@@ -1662,7 +1697,9 @@ func (p *Parser) paramExpParameter(pe *ParamExp) *ParamExp {
 		switch p.tok = left; p.tok {
 		case dollBrace: // ${#${nested parameter}}
 			p.tok = dollBrace
+			p.enterNode()
 			wp = p.paramExp()
+			p.leaveNode()
 		case dollParen: // ${#$(nested command)}
 			wp = p.cmdSubst()
 		default: // dollar
@@ -2041,6 +2078,8 @@ func (p *Parser) doRedirect(s *Stmt) {
 }
 
 func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
+	defer func(n int) { p.openNodes = n }(p.openNodes)
+	p.enterNode()
 	pos, ok := p.gotRsrv("!")
 	s := &Stmt{Position: pos}
 	if ok {
@@ -2062,6 +2101,8 @@ func (p *Parser) getStmt(readEnd, binCmd, fnBody bool) *Stmt {
 			// right recursion should only read a single element
 			return s
 		}
+		// Each operator in a chain nests the syntax tree one level deeper.
+		p.enterNode()
 		b := &BinaryCmd{
 			OpPos: p.pos,
 			Op:    BinCmdOperator(p.tok),
@@ -2265,6 +2306,7 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
 		p.doRedirect(s)
 	}
 	// instead of using recursion, iterate manually
+	defer func(n int) { p.openNodes = n }(p.openNodes)
 	for p.tok == or || p.tok == orAnd {
 		if binCmd {
 			// left associativity: in a list of BinaryCmds, the
@@ -2276,6 +2318,8 @@ func (p *Parser) gotStmtPipe(s *Stmt, binCmd bool) *Stmt {
 			// we parse |& as two tokens.
 			break
 		}
+		// Each operator in a chain nests the syntax tree one level deeper.
+		p.enterNode()
 		b := &BinaryCmd{OpPos: p.pos, Op: BinCmdOperator(p.tok), X: s}
 		p.next()
 		p.got(_Newl)
@@ -2341,7 +2385,10 @@ func (p *Parser) ifClause(s *Stmt) {
 	rootIf.ThenPos = p.followRsrv(rootIf.Position, "if <cond>", "then")
 	rootIf.Then, rootIf.ThenLast = p.followStmts("then", rootIf.ThenPos, "fi", "elif", "else")
 	curIf := rootIf
+	defer func(n int) { p.openNodes = n }(p.openNodes)
 	for p.tok == _LitWord && p.val == "elif" {
+		// Each elif nests the syntax tree one level deeper.
+		p.enterNode()
 		elf := &IfClause{Position: p.pos}
 		curIf.Last = p.accComs
 		p.accComs = nil
@@ -2572,6 +2619,10 @@ func (p *Parser) testClause(s *Stmt) {
 
 func (p *Parser) testExprBinary(pastAndOr bool) TestExpr {
 	p.got(_Newl)
+	if !pastAndOr {
+		p.enterNode()
+		defer p.leaveNode()
+	}
 	var left TestExpr
 	if pastAndOr {
 		left = p.testExprUnary()
@@ -2730,12 +2781,16 @@ func (p *Parser) timeClause(s *Stmt) {
 	if _, ok := p.gotRsrv("-p"); ok {
 		tc.PosixFormat = true
 	}
+	p.enterNode()
 	tc.Stmt = p.gotStmtPipe(&Stmt{Position: p.pos}, false)
+	p.leaveNode()
 	s.Cmd = tc
 }
 
 func (p *Parser) coprocClause(s *Stmt) {
 	cc := &CoprocClause{Coproc: p.pos}
+	p.enterNode()
+	defer p.leaveNode()
 	if p.next(); isBashCompoundCommand(p.tok, p.val) {
 		// has no name
 		cc.Stmt = p.gotStmtPipe(&Stmt{Position: p.pos}, false)
@@ -2919,4 +2974,30 @@ func (p *Parser) funcDecl(s *Stmt, pos Pos, long, withParens bool, names ...*Lit
 		p.followErr(fd.Pos(), "foo()", noQuote("a statement"))
 	}
 	s.Cmd = fd
+}
+
+// ParseDepthError is a binding resource refusal, not a shell grammar diagnostic.
+// It carries no source position or partial tree and is distinct from ParseError.
+type ParseDepthError struct {
+	// MaxDepth is the configured binding policy in native node-nesting units.
+	MaxDepth int
+	// Depth is the rejected work count, not a number of runtime stack frames.
+	Depth int
+}
+
+// Error describes resource accounting without presenting it as invalid grammar.
+func (e ParseDepthError) Error() string {
+	return fmt.Sprintf("parse resource limit: native node nesting work (%d units) exceeds %d", e.Depth, e.MaxDepth)
+}
+
+// ParseNestingLimit selects a binding node-nesting budget without changing shell
+// grammar. Zero retains the official default; configuration survives parser reuse.
+// Negative limits panic, like other invalid parser options. The typed resource
+// failure uses ordinary terminal error propagation in every parser entrypoint;
+// Parse additionally omits its partial File when returning that failure.
+func ParseNestingLimit(limit int) ParserOption {
+	if limit < 0 {
+		panic("negative parse nesting limit")
+	}
+	return func(p *Parser) { p.parseDepthLimit = limit }
 }
