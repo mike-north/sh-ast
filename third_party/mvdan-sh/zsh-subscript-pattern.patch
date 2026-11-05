@@ -1,0 +1,83 @@
+diff --git a/syntax/parser.go b/syntax/parser.go
+index d509dd8..5dc672b 100644
+--- a/syntax/parser.go
++++ b/syntax/parser.go
+@@ -1890,19 +1890,70 @@ func (p *Parser) zshSubFlags() *FlagsArithm {
+ 	}
+ 	zf.Flags = p.lit(p.pos, p.val)
+ 	p.rune()
+-	// Lex the argument as a raw pattern, stopping at ',' or ']',
+-	// since zsh treats it as a pattern rather than an arithmetic expression.
+-	argPos := p.nextPos()
+-	for p.newLit(p.r); p.r != runeEOF && p.r != ',' && p.r != ']'; p.rune() {
+-	}
+-	if val := p.endLit(); val != "" {
+-		zf.X = p.wordOne(p.lit(argPos, val))
+-	}
++	// Flags select a pattern argument, not arithmetic. Preserve its word parts
++	// so traversal sees expansions and printing cannot rewrite character classes.
++	zf.X = p.zshSubPattern()
+ 	p.quote = old
+ 	p.next()
+ 	return zf
+ }
+ 
++// zshSubPattern reads the word after subscript flags while runeByRune is active.
++// Only an unescaped comma or closing bracket outside balanced brackets ends it.
++// Bracket depth belongs to this pattern, so nested expansions cannot disturb it;
++// those expansions use the ordinary word parser and its nesting/refusal policy.
++func (p *Parser) zshSubPattern() *Word {
++	w := &Word{}
++	brackets := 0
++patternLoop:
++	for p.r != runeEOF && p.err == nil {
++		if brackets == 0 && (p.r == ',' || p.r == ']') {
++			break
++		}
++		pos := p.nextPos()
++		switch p.r {
++		case '$', '`', '\'', '"':
++			p.pos = pos
++			p.tok = p.regToken(p.r)
++			p.enterNode()
++			part := p.wordPart()
++			p.leaveNode()
++			if part == nil {
++				break patternLoop
++			}
++			w.Parts = append(w.Parts, part)
++		default:
++			p.newLit(p.r)
++		literalLoop:
++			for p.r != runeEOF {
++				switch p.r {
++				case '\\':
++					p.rune() // The escaped rune is data, including brackets and commas.
++				case '[':
++					brackets++
++				case ']':
++					if brackets == 0 {
++						break literalLoop
++					}
++					brackets--
++				case ',':
++					if brackets == 0 {
++						break literalLoop
++					}
++				case '$', '`', '\'', '"':
++					break literalLoop
++				}
++				p.rune()
++			}
++			w.Parts = append(w.Parts, p.lit(pos, p.endLit()))
++		}
++	}
++	if len(w.Parts) == 0 {
++		return nil
++	}
++	return w
++}
++
+ func (p *Parser) stopToken() bool {
+ 	switch p.tok {
+ 	case _EOF, _Newl, semicolon, and, or, andAnd, orOr, orAnd, andPipe, andBang,
