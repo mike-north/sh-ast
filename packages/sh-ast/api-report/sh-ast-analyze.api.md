@@ -1427,6 +1427,7 @@ export interface WrapperSpec {
     readonly noArgFlagPattern?: RegExp;
     readonly noArgFlags?: readonly string[];
     readonly positionalOperandsBeforeCommand?: number;
+    readonly shellBuiltin?: boolean;
     readonly skipAssignmentOperands?: boolean;
     readonly stopsChainFlags?: readonly string[];
     readonly unresolvableFlags?: readonly string[];
