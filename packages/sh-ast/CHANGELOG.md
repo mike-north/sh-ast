@@ -1,5 +1,13 @@
 # sh-ast
 
+## 0.9.0
+
+### Minor Changes
+
+- [#76](https://github.com/mike-north/sh-ast/pull/76) [`cd340e6`](https://github.com/mike-north/sh-ast/commit/cd340e62d41e7c41ba8ddcd457d7a1818bc1bdf1) Thanks [@mike-north](https://github.com/mike-north)! - Add `WrapperSpec.shellBuiltin` to identify shell builtin wrappers and exclude them from absolute-path basename matching. The default `command` and `exec` entries now match only exact names, so `/tmp/command eval "$x"` resolves to `/tmp/command` rather than `eval`. Custom tables can mark their own builtins; omitted or false retains existing utility matching. mvdan/sh remains pinned to v3.13.1.
+
+- [#79](https://github.com/mike-north/sh-ast/pull/79) [`5a08b91`](https://github.com/mike-north/sh-ast/commit/5a08b91259517af2746f8a99c2e91da790d27b10) Thanks [@mike-north](https://github.com/mike-north)! - Read pending here-document bodies when the operator's line ends in `(` or `( :`, attaching the body to its original command. Command-substitution scope is unchanged. mvdan/sh remains pinned to v3.13.1 with a maintained subshell parser correction.
+
 ## 0.8.0
 
 ### Minor Changes
