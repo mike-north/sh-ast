@@ -3,8 +3,7 @@
  * Both proposed changes and publishable versions must remain below the stable
  * series; only an owner-directed policy change can remove this boundary.
  */
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { basename, join, resolve } from 'node:path';
 
@@ -55,20 +54,18 @@ function checkVersion(version, source) {
   }
 }
 
-/** CLI status computes dependency/fixed/linked effects without applying version changes. */
+/**
+ * Compute the installed CLI's real dependency/fixed/linked/prerelease effects
+ * from local manifests, changesets, and configuration without applying versions.
+ * A version ceiling is independent of Git change eligibility: a version commit
+ * has already consumed its changesets, and a shallow PR may lack main's history.
+ * CLI status additionally validates those states before emitting its plan, so
+ * use its planner without a history ref. Planning/configuration errors still
+ * propagate to the gate's failure handler; no substitute plan is accepted.
+ */
 function releasePlan(root) {
-  const directory = mkdtempSync(join(root, '.release-gate-'));
-  try {
-    const output = join(directory, 'plan.json');
-    const cli = join(cliManifest, '..', 'bin.js');
-    execFileSync(process.execPath, [cli, 'status', '--output', output], {
-      cwd: root,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return JSON.parse(readFileSync(output, 'utf8'));
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
+  const getReleasePlan = cliRequire('@changesets/get-release-plan').default;
+  return getReleasePlan(root);
 }
 
 try {
@@ -89,7 +86,7 @@ try {
       const manifest = JSON.parse(readFileSync(path, 'utf8'));
       if (manifest.private !== true) checkVersion(manifest.version, path);
     }
-    for (const release of releasePlan(root).releases)
+    for (const release of (await releasePlan(root)).releases)
       checkVersion(release.newVersion, `Changesets next version for ${release.name}`);
   }
   console.log(`0.x release gate passed (${mode}).`);
