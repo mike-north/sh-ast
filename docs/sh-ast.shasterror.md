@@ -4,7 +4,7 @@
 
 ## ShAstError class
 
-Common base for every package failure, including upstream syntax errors and analysis errors. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
+Common base for syntax package failures, including upstream syntax errors and binding resource refusals. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
 
 **Signature:**
 

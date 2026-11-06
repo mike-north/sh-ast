@@ -74,30 +74,6 @@ Upstream Printer.Print panicked for a representable tree or option value. Partia
 </td></tr>
 <tr><td>
 
-[ShAnalyzeInvalidWrapperSpecError](./sh-ast.shanalyzeinvalidwrapperspecerror.md)
-
-
-</td><td>
-
-Thrown by `sh-ast/analyze`<!-- -->'s `resolveArgv0` when a caller-supplied `options.transparentWrappers` array contains a malformed `WrapperSpec` entry — e.g. a non-array or empty `names`<!-- -->, or a flag field that isn't an array of strings. Fails closed with a clear, specific message at the point the malformed table is supplied, rather than letting the bad shape reach flag-matching logic and surface as a confusing native `TypeError` (or, worse, a silently wrong match) far from its actual cause.
-
-
-</td></tr>
-<tr><td>
-
-[ShAnalyzeMaxDepthError](./sh-ast.shanalyzemaxdeptherror.md)
-
-
-</td><td>
-
-Thrown by `sh-ast/analyze`<!-- -->'s `enumerateCommands` when a tree's genuinely nested structure — subshells within subshells, chained command/process substitutions, deeply nested `if`<!-- -->/`case`<!-- -->/loop/function/`time`<!-- -->/`{ }` bodies, deeply chained `elif` — exceeds its defensive recursion-depth guard. \*\*Not\*\* thrown for a long \*linear\* chain (`|`<!-- -->/`|&`<!-- -->/`&&`<!-- -->/`||` of any realistic length): `enumerateCommands` traverses those iteratively, so chain length alone never grows this guard's depth counter — only genuine tree nesting does.
-
-`enumerateCommands` deliberately fails closed here rather than returning a truncated, partial result: a partial `CommandSite[]` silently omits real command sites, which is a false negative for a permission-hook-style consumer that treats "command not found in the enumeration" as "nothing to worry about" — an explicit, documented throw is safer than a silent under-report. Gate-style consumers should treat this error as `deny`<!-- -->, not fall back to "no commands found, so allow".
-
-
-</td></tr>
-<tr><td>
-
 [ShInternalError](./sh-ast.shinternalerror.md)
 
 
@@ -153,7 +129,7 @@ Description
 
 </td><td>
 
-Common base for every package failure, including upstream syntax errors and analysis errors. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
+Common base for syntax package failures, including upstream syntax errors and binding resource refusals. The stable code discriminator supports programmatic handling without interpreting display messages. Only concrete subclasses are thrown.
 
 
 </td></tr>

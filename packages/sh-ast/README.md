@@ -188,12 +188,11 @@ fields, while the original `PositionSnapshot` stays tied to the original source.
 Every copied node is a new identity and has no entry in that snapshot. Keep the
 original node when a consumer needs an original source span for a printed fix.
 
-Copies remain valid inputs to `walk`, `nodePos`, `nodeEnd`, `printSync` and
-`sh-ast/analyze` under each operation's existing input and failure rules. In
+Copies remain valid inputs to `walk`, `nodePos`, `nodeEnd` and `printSync`
+under each operation's existing input and failure rules. In
 particular, printable roots remain File, Stmt, Word, Assign, Command and WordPart;
 other Nodes are not made printable by copying. Preserving a `TypedNil` tag does not
-promise that traversing, observing or printing that nil value succeeds. Analysis
-retains its function-specific input domains and unsupported-byte results.
+promise that traversing, observing or printing that nil value succeeds.
 
 Printing applies upstream formatting to the edited tree. It does not preserve
 original source bytes, re-indent a subtree to its original column, or guarantee
@@ -239,133 +238,20 @@ Refusals leave the supplied Word unchanged. No fixed depth acceptance or arbitra
 caller-stack guarantee is made; catching an unexpected native engine trap alone
 does not establish native runtime health.
 
-`sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
-command, and wrapper analysis consumes the faithful records; it does not define
-parser behavior or the core tree representation. The analyze entry point also
-exports the faithful record/operator types, the named operator constants those
-types reference, and `rawOperator` for unnamed uint32 values. Analyze-only code can
-compare a `BinaryCmd.Op` with `AndStmt` or `Pipe` and construct family-branded raw
-values without a second import from the root entry point. For example,
-`rawOperator('BinCmdOperator', 500)` returns `500` as a `RawOperator<'BinCmdOperator'>`.
-The shared constructor validates a known family and an integral uint32 value;
-it does not promise that every upstream operation accepts that value.
+## Responsibility boundary
 
-```ts
-import { AndStmt, rawOperator, type BinaryCmd, type RawOperator } from 'sh-ast/analyze';
+The root entry point exports syntax records, constants, parsing, traversal,
+printing and position operations. Word resolution, command inventory, wrapper
+resolution and interpreter-invocation observations belong in the independent
+[`mike-north/sh-analysis`](https://github.com/mike-north/sh-analysis) repository,
+with selected npm package name `sh-analysis`. Extraction and publication status
+are tracked there. This package exposes no `sh-ast/analyze` subpath or analysis
+error classes, and has no dependency on analysis or ESLint.
 
-function isAndCommand(command: BinaryCmd): boolean {
-  return command.Op === AndStmt;
-}
-const unnamed: RawOperator<'BinCmdOperator'> = rawOperator('BinCmdOperator', 500);
-```
-
-`resolveArgv0` first searches the whole wrapper table for an exact name. An
-explicit path entry wins even if a plain-name entry appears earlier. Only when
-there is no exact match does an **absolute** path use its final segment
-(`/usr/bin/env`, `/usr//bin/env`); `chain` keeps the word as written. Relative
-paths (`./env`, `bin/env`) and trailing-slash paths have no such fallback, but
-can match names explicitly listed in a custom table. Custom plain names also
-acquire absolute-path aliases unless marked as builtins; path-only names do
-not alias other paths.
-
-`WrapperSpec.shellBuiltin: true` identifies a shell builtin, which can only
-match an exact entry in `names`. A path reaches an external executable rather
-than a builtin, so the default `command` and `exec` entries do not match
-`/tmp/command` or `/tmp/exec`. For example, `/tmp/command eval "$x"` keeps
-`/tmp/command` as its static effective command; `command eval "$x"` still
-resolves to `eval`. The external wrappers `env`, `sudo`, `nice`, `nohup`,
-`timeout` and `time` retain their absolute-path aliases. Custom tables may
-mark their own builtin (`{ names: ['builtin'], shellBuiltin: true }`);
-false or omitted retains the existing matching behavior. Explicit path entries
-still match exactly. Non-boolean values throw `ShAnalyzeInvalidWrapperSpecError`.
-
-Matching is a lexical analysis assumption: `PATH` and the filesystem are not
-consulted. Without an exact override, `/opt/mytools/env rm x` follows the `env`
-grammar and resolves to `rm`, even if that file is not the system utility. A
-dynamic word such as `"$dir/env"` is never matched.
-
-`resolveArgv0` follows only documented wrapper grammars. The default `env` and
-`sudo` entries accept assignment names beyond shell identifiers, such as `A-B`
-or `名`. `env` recognizes assignments after `--` and ends option scanning at its
-first assignment; `sudo` permits options between assignments, excludes names
-beginning with `/` or `=`, and stops recognizing assignments after `--`. An empty
-`env` assignment name (`=value`) reports `ambiguous-assignment`, since supported
-implementations differ. These are syntactic facts, not execution guarantees.
-Custom tables can choose `WrapperSpec.assignmentOperands` (`'shell-identifier'`,
-`'env'`, or `'sudo'`); this explicit grammar overrides `skipAssignmentOperands`.
-Existing `skipAssignmentOperands: true` tables retain their ASCII shell-identifier
-rule before `--`. Wrapper assignment operands do not change `assignmentsSkipped`,
-which counts only shell-level prefixes.
-
-When the effective command is a shell interpreter (`bash`, `sh`, `dash`, `zsh`,
-`ksh`, `ksh93`, `mksh`, matched by the final path segment, so `/bin/bash` too)
-invoked with `-c`, `resolveArgv0` reports `effective: { static: false, reason:
-'embedded-command' }`, the same result as `env -S`: the command that runs is
-inside the string operand, which is never parsed. The interpreter's word stays
-available as `chain.at(-2)` and `chainIndices.at(-1)` is the option word that
-selected `-c`. Clustered flags (`-ec`, `-lc`), preceding options (`-o pipefail`,
-`+o`, `-e`) and `--` follow each shell's own option grammar, so `bash script.sh`,
-`bash -e script.sh`, `bash -- -c` and `bash -o c` still resolve to `bash`. A
-dynamic word in option position (`bash "$opts" -c ls`, `bash -c"$y" x`) is
-undecidable and also resolves to `bash`; there `static: true` means only that the
-interpreter's name is known, not that the command is a plain shell invocation. `DEFAULT_EMBEDDED_COMMAND_INTERPRETERS` is the overridable
-table; `ResolveArgv0Options.embeddedCommandInterpreters: []` restores the previous
-behavior.
-
-The table models zsh's `--emulate MODE` / `+-emulate MODE` operands and option
-terminators, including `-b` / `+b` after their current cluster (`zsh -b -c x`
-keeps `zsh`, while `zsh -bc x` is embedded). The ksh entry permits an omitted
-`-o` / `+o` operand before another signed option (`ksh +o -c x` is embedded);
-this was executed on ksh93u+ AJM 2012-08-01, not ksh93u+m or mksh. Bash, dash
-and zsh keep consuming the next word as that operand. Options that themselves
-change the grammar, such as zsh's `shoptionletters`, require a custom table.
-
-Custom interpreter names must be basenames: use `names: ['bash']` for both
-`/bin/bash` and `./bash`. Names containing `/`, null/undefined entries and
-malformed grammar fields throw `ShAnalyzeInvalidWrapperSpecError`. The first
-matching basename entry wins. Wrapper names retain their distinct policy:
-exact matches first, then a basename fallback for absolute paths only.
-
-Bash's single-dash long-option aliases are recognized before clusters:
-`bash -rcfile /dev/null s` and `bash -restricted s` stay static, while
-`bash -rcfile /dev/null -c x` records selector index 3. Custom grammars can
-list exact operand-free long options in `noOperandLongOptions`. Separate
-option operands must be static: an expansion such as `"$@"` may produce
-multiple actual arguments, so `bash -o "$@" -c x` and
-`bash --rcfile "$@" -c x` stop at the static interpreter. Sparse custom
-tables and sparse grammar-field arrays are rejected just like entries
-explicitly holding `undefined`.
-
-The command selector `c` is reserved and cannot be declared an operand-taking
-option in a custom interpreter entry; exact-token fields cannot contain `-c`.
-`embeddedCommandInterpreters` must be an array: `null` and other non-array
-containers throw `ShAnalyzeInvalidWrapperSpecError`; `undefined` uses defaults.
-Ksh/ksh93 `+c`, `+ec` and `+o +c` run scripts instead of selecting a string.
-Apple ksh's `-R` consumes a database-path operand. Ksh's lone `+` ends option processing;
-`ksh -c +` has no command string, while `ksh -c + x` is embedded (executed on
-ksh93u+ AJM 2012-08-01).
-
-Known limits: the table models common option spellings and is not a full
-emulation of each shell's option parser. Unusual spellings can be misclassified
-in either direction:
-
-- Bash/sh single-dash long options after a short option, e.g. `bash -e -rcfile M`.
-- `ksh -c +c M`, or a dynamic word after `-c` that expands to an option.
-- mksh's selector-bearing operands in `mksh -o -c M` and `mksh -o +c M`.
-- A lone `+` before `-c`, e.g. `bash + -c M`.
-- Zsh grammar switches, e.g. `zsh -o shoptionletters -b -c M`.
-
-## Migration from 0.3
-
-Fields now use upstream spelling (`Type`, `Stmts`, `Cmd`, `Value`) and explicit
-null/default values. Replace dialect strings with numeric `Variant` constants,
-request comments explicitly, and handle structured errors and byte positions.
-The root no longer exports normalized `ShNode`/`ShNodes`, `range`/`loc`, or
-`visitorKeys`. The new walker uses entry/null-exit callbacks rather than the former
-structural helper's protocol. Consumers such as ESLint own their source-coordinate
-and traversal views. Whole-file parsing, collected printing and the live walker
-with the mutation limits above form this candidate's scope. Stateful/incremental parser protocols
-and full syntax-package parity are deferred.
+Whole-file parsing, collected printing and the live walker with the mutation
+limits above form this package's scope. Stateful/incremental parser protocols
+and full syntax-package parity are deferred. Consumers such as ESLint own their
+source-coordinate and traversal views.
 
 The [design collection](../../design/ARCHITECTURE.md) and
 [implementation evidence](../../design/IMPLEMENTATION.md) describe the release
@@ -401,32 +287,13 @@ reaches the regex-test parser at all — `=~` is just another literal argument t
 `[[`.
 
 \*\* Parsing preserves upstream output: `{a,b}` remains an ordinary `Lit` word part,
-not a `BraceExp`, in every dialect. The analysis layer separately asks mvdan/sh v3.14.1's
-`syntax.SplitBraces` to recognize potential expansions on a private copy. `resolveWord`,
-`enumerateCommands`, and `resolveArgv0` report `static: false, reason: 'brace'` when actual
-brace-expansion parts are found, without changing the caller's tree. A bare Word carries no
-dialect or shell-option state, so this conservative observation also applies to POSIX-parsed
-records; it does not assert that POSIX sh performs brace expansion.
-
-Quoted or fully escaped opening braces within one literal part remain literal. Brace candidates containing other
-backslashes report `unsupported`: pinned upstream's escape handling differs from Bash, and
-analysis does not guess through that discrepancy. For example, `\{a,b\}` remains static,
-while `a{b\,c}` is conservatively unsupported. Any unquoted backslash escape crossing word-part boundaries in a constructed
-word is also unsupported, including boundaries into quoted parts: such a split
-can expose otherwise quoted syntax, and analysis does not reconstruct shell
-tokenization to infer a literal value. Malformed or singleton unescaped forms such as
-`a{b` and `{a}` remain static. See [the brace-classification decision](../../design/BRACE-CLASSIFICATION-DECISION.md).
+not a `BraceExp`, in every dialect. Brace splitting is a separate operation
+owned by Go's syntax package; parsing alone does not perform shell expansion.
 
 \*\*\* zsh's lexer never tokenizes `@(` as an extended-glob opener at all — deliberately, to avoid
 ambiguity with zsh's own glob qualifiers like `*(N)`. So `ls @(a|b)` parses without error under
 `Variant: LangZsh`, but produces plain `Lit` word parts rather than an `ExtGlob` node; the
 `checkLang` gate that rejects extended globs under posix is never reached for zsh.
-
-Reason descriptions do not promise universal precedence. Whole-word `unsupported`
-preflight still applies when a constructed word already contains a `BraceExp`.
-Independently quoted or fully protected literal siblings preserve `brace`; an
-escape crossing parts or an escape-uncertain brace candidate remains unsupported.
-Existing tilde/glob resolution order also remains applicable.
 
 ### `[[ ... ]]` and `let` under posix: accepted by design
 

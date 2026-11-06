@@ -29,13 +29,7 @@ export { walk, WalkPanicError } from './syntax-walk.js';
 export type * from '../generated/syntax-types.js';
 export * from '../generated/syntax-constants.js';
 export type { SyntaxFieldSchema, SyntaxRecordSchema } from '../generated/syntax-schema.js';
-export {
-  ShAnalyzeInvalidWrapperSpecError,
-  ShAnalyzeMaxDepthError,
-  ShAstError,
-  ShInternalError,
-  ShParseMaxDepthError,
-} from './errors.js';
+export { ShAstError, ShInternalError, ShParseMaxDepthError } from './errors.js';
 
 /**
  * Complete upstream field metadata for validating or adapting syntax records.

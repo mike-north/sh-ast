@@ -39,8 +39,8 @@ function-bearing `Positions` lookup.
 A structurally valid acyclic copied subtree is accepted by operations under the
 same rules as the original. `walk` preserves its existing traversal and mutation
 contract. `nodePos` and `nodeEnd` retain independent upstream success or failure.
-`sh-ast/analyze` keeps each function's input domain and conservative outcomes,
-including unsupported byte-bearing words.
+Analysis of copied syntax belongs to the independent `sh-analysis` layer; its
+function-specific input domains and results are outside this syntax contract.
 
 `printSync` supports File, Stmt, Word, Assign, Command and WordPart roots. Copying
 other Nodes does not make them printable. File output alone has the upstream
@@ -71,7 +71,6 @@ API-comment changes and passes against the unchanged implementation:
 | Exact syntax entry order                                                                                                                                   | `walks the copied subtree in the hand-derived original syntax order`                                 |
 | Non-UTF-8 byte buffer ownership, represented typed-nil data, successful supported printing and unchanged upstream error boundaries                         | `retains Uint8Array bytes and TypedNil data without changing existing printer semantics`             |
 | Internal aliases and independent external holders                                                                                                          | `preserves aliases inside the reachable copy while external holders keep original objects`           |
-| Analysis results and retained command identity belong to the copy                                                                                          | `supports analyze inputs without sharing their retained command identities`                          |
 
 Printed expected strings/bytes and traversal sequence are hand-derived, rather
 than produced by the operation being tested. The fixtures include emoji, CJK and
