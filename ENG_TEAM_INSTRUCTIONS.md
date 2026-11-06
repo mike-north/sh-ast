@@ -1,10 +1,13 @@
 # Engineering team instructions
 
 Working agreement for everyone (human or agent) shipping code in this repo. `sh-ast` is a
-**synchronous, fully-typed mvdan/sh shell AST for JavaScript** — parsing plus a syntactic
-analysis layer (`sh-ast/analyze`). It was extracted from the eslint-sh monorepo
-(`mike-north/eslint-sh` @ `bdd55b3`), whose `design/ARCHITECTURE.md` remains the reference
-for the serialization contract, byte→UTF-16 conversion, and normalized node shape.
+**faithful synchronous TypeScript/WASM binding to Go syntax**. Read
+[AGENTS.md](AGENTS.md) for enforceable layer and fork rules and
+[the accepted architecture](design/ARCHITECTURE.md#responsibilities) for their meaning.
+It was extracted from the eslint-sh monorepo (`mike-north/eslint-sh` @ `bdd55b3`),
+but ESLint's normalized nodes and byte→UTF-16 projection belong to that consumer.
+Existing `sh-ast/analyze` is to be extracted into an independent analysis layer;
+its presence does not authorize adding interpretation to this binding.
 
 ## Work queue
 
@@ -65,10 +68,12 @@ for the serialization contract, byte→UTF-16 conversion, and normalized node sh
   Grepping that the fix is _present_ is not tracing that it is _correct_.
 - Multibyte fixtures (emoji, CJK, combining marks) are mandatory for anything touching
   ranges, positions, or offsets.
-- **Facts, not verdicts.** The analyze layer reports syntactic facts (argv, staticness,
+- **Facts, not verdicts.** The independent analysis layer reports syntactic facts (argv, staticness,
   context, wrapper chains); it never embeds a caller's policy (no safety judgments, no
   hardcoded wrapper/command lists beyond documented, overridable defaults). "Unknowable" is
   a first-class result, not an error.
-- Any change to normalized-AST output or analyze results on unchanged input is at least a
-  **minor** release; the changelog names the pinned mvdan/sh version.
+- Observable syntax/binding changes use the applicable 0.x **minor** release;
+  the changelog names the exact Go dependency, including a fork revision when used.
+  There are no users to preserve compatibility for: make necessary hard breaks and
+  update consumers, without aliases or migration layers.
 - Never touch release/Version PRs; releases happen only through the CI pipeline.

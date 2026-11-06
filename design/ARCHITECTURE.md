@@ -10,6 +10,14 @@ The accepted direction below comes from the user's voice decisions, carried into
 the planning assignment on 2026-11-01. API proposals remain proposals. Current
 implementation facts and revisions are recorded separately.
 
+The responsibility clarification accepted from the user on 2026-11-05 governs
+new work and review: syntax fixes belong in a maintained Go fork, `sh-ast` is the
+faithful synchronous binding, and interpretation belongs in an independent
+analysis layer. This supersedes the earlier decision to retain analysis as a
+`sh-ast` subpath. The existing implementation has not yet been realigned; see
+[the bounded implementation handoff](LAYER-REALIGNMENT.md) and
+[agent/reviewer instructions](../AGENTS.md).
+
 ## Reading map
 
 - [Fidelity assessment](FIDELITY-ASSESSMENT.md): declared implementation baseline,
@@ -34,10 +42,13 @@ remain descriptions of the implemented API.
 | D2  | Restrained TypeScript adaptations are appropriate: typed exceptions that retain error/result information, precise numeric/operator domains, and unions matching upstream alternatives. Do not invent asynchronous behavior for ergonomics. Repeated callbacks and control callbacks must retain their completion and stop semantics. |
 | D3  | A synchronous path is essential for ESLint language support, including first-use WASM initialization. A synchronous warm call after mandatory asynchronous setup does not satisfy this requirement.                                                                                                                                  |
 | D4  | Two successive minor releases in the 0.x series: first excellent synchronous parsing and a complete, faithfully typed syntax tree; next faithful walking/traversal and printing, supporting transformations and lint autofixes. Release A must retain the information Release B needs. No 1.0 release is planned.                    |
-| D5  | Neither sh-ast nor eslint-sh has users yet. Breaking API changes are permitted during 0.x. Compatibility is a migration task, not a reason to preserve an incompatible abstraction.                                                                                                                                                  |
+| D5  | Neither sh-ast nor eslint-sh has users yet. Breaking API changes are permitted during 0.x. D9 clarifies that compatibility and migration support are not requirements; update consumers directly.                                                                                                                                    |
 | D6  | sh-ast tests the syntax and position invariants needed by ESLint, without implementing an ESLint integration here. Real ESLint integration lives in eslint-sh. Before release, locally link the built candidate and run consumer tests with evidence identifying the actual build.                                                   |
 | D7  | The eventual upstream boundary is the syntax package. The shell interpreter, runner, and a newly invented shell model are outside that boundary.                                                                                                                                                                                     |
 | D8  | Software changes start with specification-derived tests. Modules, types, constants, and functions document durable meaning, responsibilities, boundaries, and invariants. Progress notes belong in work records.                                                                                                                     |
+| D9  | There are no users of the TypeScript library. Hard breaks are preferred over preserving earlier APIs or output; compatibility and migration support are not requirements. This explicitly reaffirms D5.                                                                                                                              |
+| D10 | Changes to the underlying Go library require a maintained fork. Depend on an immutable revision containing our fixes and build WASM from it without waiting for upstream merge. Maintain the fork by observing and incorporating upstream changes; return to upstream when it contains the required behavior.                        |
+| D11 | Word/command analysis belongs in an independent middle layer consuming `sh-ast`. The TypeScript library remains a faithful binding to the selected Go syntax implementation, with synchronous first use. ESLint consumes both layers and owns its projections and policy.                                                            |
 
 Release B's later [accepted mutation representation](WALK-MUTATION-DECISION.md)
 elaborates D1/D2 for live traversal: keep ordinary TypeScript arrays and the
@@ -51,10 +62,15 @@ printing guarantee follows from the accepted autofix purpose.
 
 ## Responsibilities
 
-**Upstream syntax** owns grammar, dialect behavior, AST structure and field
-meaning, position semantics, traversal order/control, and printer behavior. Pin
-the version and name it in release notes. Do not silently fix perceived shell
-semantics in the binding.
+**The Go syntax implementation** owns grammar, dialect behavior, AST structure
+and field meaning, position semantics, traversal order/control, valid/invalid
+input handling, and printer behavior. Use upstream or an immutable revision of
+our maintained fork. Any changes to that library go into the fork, with tests
+and an independent correctness rationale, rather than a semantic patch stack in
+this binding repository. Pin and name the exact source in release notes; build
+WASM and derive the schema from that same source. Upstream acceptance is not a
+shipping gate. Maintaining the fork includes observing and incorporating upstream
+changes and retiring our deltas when the required behavior is available upstream.
 
 **The WASM bridge** transports source, options, trees, and errors without losing
 upstream-observable information. It owns memory lifetimes, runtime initialization,
@@ -66,6 +82,19 @@ lossy encoding is not proof of syntax fidelity.
 same model. Discriminants may identify upstream interface alternatives. They must
 not turn auxiliary structs into syntax nodes or invent source spans. Any numeric
 adaptation must account for the pinned Go/WASM widths and upstream domain rules.
+It does not interpret words, enumerate command meaning/context, follow wrappers,
+or model shell-interpreter invocation options. Faithful exposure of an operation
+already owned by the Go syntax package is distinct from inventing an analysis
+result or a competing syntax model.
+
+**The independent analysis layer** consumes faithful syntax and reports word
+resolution, command sites/context, wrapper resolution, and interpreter-invocation
+observations with explicit uncertainty and assumptions. It owns interpretation,
+not parser output, syntax validation, shell execution, or caller policy. Its
+selected home is the independent private repository `mike-north/sh-analysis`,
+with npm package name `sh-analysis`. This identity decision does not claim that
+extraction or publication is complete. `sh-ast` must not
+depend on it; an analysis requirement cannot change syntax records in the binding.
 
 **The consumer adapter** translates syntax into ESLint's locations, visitation,
 comments, diagnostics, and fixes. It owns ESLint-specific objects and policies.
@@ -183,16 +212,18 @@ release acceptance; evidence and remaining gates are in [IMPLEMENTATION.md](IMPL
   using `TypedNil` tags restricted to actual implementer types. This matters even
   for successful position operations: a long ParamExp with a typed nil Index can
   return both bounds. A transport limitation must not turn that into rejection.
-- Analysis remains a separate subpath, migrated to the faithful model. Consumers
+- In the original candidate, analysis remained a separate subpath, migrated to
+  the faithful model. D11 now supersedes that packaging decision. Consumers
   own their UTF-16 locations and traversal views; sh-ast exports no public Walk or
   Print in this candidate.
 - The conservative nesting guard remains a documented, tested binding constraint.
 
 ## Responsibility boundaries
 
-The faithful parser model is the source of truth for upstream syntax values.
-`sh-ast/analyze` retains useful syntactic interpretation as a separate subpath;
-its limitations cannot change parser output. The consumer owns source-coordinate
-projection and presentation-oriented traversal. The original planning questions
-are resolved by the candidate choices above, subject to their independent
-acceptance evidence and remaining release gates.
+The selected Go implementation is the source of truth for syntax values and
+behavior. The TypeScript binding exposes that model faithfully. Analysis is a
+consumer in an independent middle layer; ESLint owns source-coordinate projection,
+presentation-oriented traversal, and lint policy. Existing `sh-ast/analyze`
+exports and maintained Go patches are current implementation facts to realign,
+not exceptions to D9-D11. The earlier Release A/B candidate details above remain
+historical where they describe a delivered or superseded candidate.
