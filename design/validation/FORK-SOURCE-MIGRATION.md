@@ -123,3 +123,37 @@ only two old assertions changed during this cycle were analysis-owned printer
 spellings from the removed compatibility hold; independent native printer tests
 now state those selected-Go byte outcomes. No printer behavior was changed to
 preserve the old expectations.
+
+## SplitBraces stack-boundary correction
+
+Root's isolated public probe found that a shallow raw Word containing 1,000 nested
+brace spellings parsed successfully, while recursive JavaScript validation of the
+valid Go result threw an untyped RangeError. Tests were written first for that
+exact source, 2,000 levels, byte-bearing results, and a constructed deep input.
+They failed with raw RangeErrors on normal Node 22.22.1 and 24.14.0 stacks.
+Scoped JavaScript stage guards retain the original engine error as `cause` and
+leave native error-family dispatch and unrelated RangeErrors unchanged.
+
+The 2,000-level case also exposed a native transport stack trap. Catch-only
+adaptation was rejected: an eight-iteration Node 22 probe succeeded, but separate
+Node 24 runs spun or corrupted Go GC state after three apparently reusable
+refusals. The owned hung child was terminated; no shared process was killed.
+This evidence does not support claiming a caught VM trap leaves the runtime healthy.
+
+The approved prevention is an operation-local, iterative Go-shim preflight after
+exact `syntax.SplitBraces`, before retained-path construction and recursive
+encoding. It limits nested Go struct records to 256, including position values;
+arrays and pointer/interface wrappers add no units. This conservative empirical
+transport policy is distinct from syntax validity and native parser work. The
+input remains unchanged because the transformed result is still private. The
+preflight uses container cursors and memory proportional to bounded depth, without
+brace scanning, AST visitation rules, or a general codec rewrite.
+
+Native tests first failed because the valid deep result was returned instead of
+a bridge refusal, then passed with explicit 1,000/2,000-level refusals and ordinary
+1/20/100-level controls. Child probes require eight repeated 2,000-level refusals
+interleaved with parse, position snapshots, live bounds, printing, and a later
+SplitBraces call on Node 22/24. The canonical binary recorded earlier predates
+this shim correction; a fresh hosted Linux artifact is required before final
+public regression and composition acceptance. The underlying Go fork pin and
+schema source remain unchanged.

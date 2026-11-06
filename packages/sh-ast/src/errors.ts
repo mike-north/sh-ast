@@ -12,12 +12,12 @@ export abstract class ShAstError extends Error {
 }
 
 /**
- * Thrown by {@link parseSync} for failures that should never happen given a
- * correctly-behaving WASM shim: a malformed result envelope, an unexpected
- * root node type, or any other shim contract violation. Distinct from
- * {@link InputError} and {@link ParseError}, both of which
- * indicate a foreseeable, actionable user mistake rather than an internal
- * defect.
+ * A failure at the syntax binding/runtime boundary: a malformed result envelope,
+ * an unexpected root type, or inability to transport or validate represented
+ * values within host runtime resources. A bridge resource refusal can involve
+ * valid upstream syntax; it does not mean the Go parser rejected the input.
+ * Distinct from {@link InputError} and {@link ParseError}, which describe caller
+ * representation errors and ordinary upstream parsing failures respectively.
  *
  * @public
  */

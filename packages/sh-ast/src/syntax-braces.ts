@@ -25,15 +25,28 @@ import { callSyntax } from './wasm-instance.js';
  *
  * InputError identifies unrepresentable input. A panic from the selected native
  * operation becomes ShInternalError and leaves the supplied Word unchanged.
+ * Native output has a separate bridge limit of 256 nested Go struct records,
+ * checked iteratively after rewriting and before recursive transport. This can
+ * refuse a valid Go result with ShInternalError; it is not parser work or grammar.
+ * JavaScript input/output stack exhaustion also becomes ShInternalError with its
+ * original RangeError as `cause`. Both refusals leave the supplied Word unchanged.
+ * No fixed depth acceptance or arbitrary caller-stack guarantee follows.
+ * An unexpected native engine stack trap also retains its cause, but adaptation
+ * alone does not establish the health of the native runtime after such a trap.
  * This operation does not change parser output before explicitly being called.
  * @public
  */
 export function splitBraces(word: Word): boolean {
-  if (!isWordRecord(word)) {
-    throw new InputError('SplitBraces requires a complete, acyclic Word record');
-  }
-  const originalParts = word.Parts ?? [];
-  const result = decodeWire(callSyntax('split-braces', new TextEncoder().encode(encodeWire(word))));
+  const { originalParts, payload } = withinHostStack('input validation and encoding', () => {
+    if (!isWordRecord(word)) {
+      throw new InputError('SplitBraces requires a complete, acyclic Word record');
+    }
+    return { originalParts: word.Parts ?? [], payload: new TextEncoder().encode(encodeWire(word)) };
+  });
+  // An engine stack refusal during native transport is distinct from a Go
+  // panic returned in an Error envelope; that existing dispatch remains below.
+  const response = withinHostStack('native transport', () => callSyntax('split-braces', payload));
+  const result = withinHostStack('output decoding', () => decodeWire(response));
   if (!isRecord(result)) {
     throw new ShInternalError('SplitBraces returned a non-record response');
   }
@@ -58,15 +71,43 @@ export function splitBraces(word: Word): boolean {
   if (
     result.Changed !== true ||
     Object.keys(result).length !== 3 ||
-    !isWordRecord(result.Word) ||
     !Array.isArray(result.RetainedParts)
   ) {
     throw new ShInternalError('SplitBraces returned an invalid transformation');
   }
-  const transformed = result.Word;
+  const transformed = withinHostStack('output validation', () => {
+    if (!isWordRecord(result.Word)) {
+      throw new ShInternalError('SplitBraces returned an invalid transformation');
+    }
+    return result.Word;
+  });
   restorePartIdentities(transformed, result.RetainedParts, originalParts);
   word.Parts = transformed.Parts;
   return true;
+}
+
+/**
+ * A valid Go transformation can exceed the JavaScript stack while its records
+ * are validated or transported, including native response serialization.
+ * Adapt that specific engine refusal without
+ * treating other RangeErrors, native panics, or caller failures as the same event.
+ * Caller-owned records are not changed until all guarded stages have completed.
+ */
+function withinHostStack<T>(stage: string, operation: () => T): T {
+  try {
+    return operation();
+  } catch (error) {
+    if (!(error instanceof RangeError) || error.message !== 'Maximum call stack size exceeded') {
+      throw error;
+    }
+    const failure = new ShInternalError(
+      `SplitBraces: host call stack exhausted during ${stage}: ${error.message}`,
+    );
+    // Error.cause retains the actual engine failure and its transport stack
+    // without changing the shared public exception constructor or taxonomy.
+    Object.defineProperty(failure, 'cause', { value: error, configurable: true, writable: true });
+    throw failure;
+  }
 }
 
 /** Only a complete Word record can be the operation's mutable root. */

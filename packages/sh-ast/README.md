@@ -227,6 +227,17 @@ transformed records directly rather than assuming traversal is extended.
 The operation does not expand fields, repair escaping, or
 assert which dialect or shell options will expand a word.
 
+A shallow literal can produce a deeply nested brace graph. The binding checks the
+native result iteratively before recursive transport and refuses more than 256
+nested Go struct records with `ShInternalError`. Struct values, including
+positions, count as records; slices and interface/pointer wrappers add no units.
+This is an empirical bridge transport constraint on valid Go results, separate
+from parser work or grammar. JavaScript input/output stack exhaustion is also
+adapted to `ShInternalError`, with the original `RangeError` retained as `cause`.
+Refusals leave the supplied Word unchanged. No fixed depth acceptance or arbitrary
+caller-stack guarantee is made; catching an unexpected native engine trap alone
+does not establish native runtime health.
+
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
 command, and wrapper analysis consumes the faithful records; it does not define
 parser behavior or the core tree representation. The analyze entry point also
