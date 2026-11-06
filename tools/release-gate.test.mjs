@@ -52,19 +52,22 @@ function commit(root, message) {
 }
 
 /** Each fixture owns its Git root and main ref; no ancestor checkout can supply history. */
-function fixture(action, { version = '0.10.0', bump = 'minor', privatePackage = false } = {}) {
+function fixture(
+  action,
+  { version = '0.10.0', bump = 'minor', privatePackage = false, packageName = 'example' } = {},
+) {
   mkdirSync(resolve('scratch'), { recursive: true });
   const root = mkdtempSync(resolve('scratch/release-gate-'));
   try {
     mkdirSync(join(root, '.changeset'));
-    mkdirSync(join(root, 'packages/example'), { recursive: true });
+    mkdirSync(join(root, 'packages', packageName), { recursive: true });
     writeFileSync(
       join(root, 'package.json'),
       JSON.stringify({ private: true, workspaces: ['packages/*'] }),
     );
     writeFileSync(
-      join(root, 'packages/example/package.json'),
-      JSON.stringify({ name: 'example', version, private: privatePackage }),
+      join(root, 'packages', packageName, 'package.json'),
+      JSON.stringify({ name: packageName, version, private: privatePackage }),
     );
     writeFileSync(
       join(root, '.changeset/config.json'),
@@ -82,7 +85,7 @@ function fixture(action, { version = '0.10.0', bump = 'minor', privatePackage = 
     if (bump)
       writeFileSync(
         join(root, '.changeset/change.md'),
-        `---\n"example": ${bump}\n---\n\nChange.\n`,
+        `---\n"${packageName}": ${bump}\n---\n\nChange.\n`,
       );
     succeeded(git(root, 'init', '-b', 'main'));
     commit(root, 'Initial release fixture');
@@ -130,6 +133,145 @@ function plannedVersions(root) {
     JSON.parse(result.stdout).releases.map(({ name, newVersion }) => [name, newVersion]),
   );
 }
+
+/**
+ * Preserve actual CLI output and input bytes when collecting regression evidence.
+ * This test-only destination never supplies or changes a release plan.
+ */
+function recordInferredEvidence(root, label, oracle, intent, versions) {
+  const destination = process.env.RELEASE_GATE_TEST_EVIDENCE_DIR;
+  if (!destination) return;
+  const directory = join(destination, label);
+  mkdirSync(directory, { recursive: true });
+  const files = [
+    'package.json',
+    'packages/a/package.json',
+    'packages/b/package.json',
+    '.changeset/config.json',
+    '.changeset/change.md',
+    '.release-gate-oracle.json',
+  ];
+  for (const file of files) {
+    const path = join(directory, file);
+    mkdirSync(join(path, '..'), { recursive: true });
+    writeFileSync(path, readFileSync(join(root, file)));
+  }
+  for (const [name, result] of Object.entries({ oracle, intent, versions })) {
+    writeFileSync(join(directory, `${name}.stdout.log`), result.stdout);
+    writeFileSync(join(directory, `${name}.stderr.log`), result.stderr);
+  }
+  writeFileSync(
+    join(directory, 'receipt.json'),
+    JSON.stringify(
+      {
+        root,
+        head: succeeded(git(root, 'rev-parse', 'HEAD')),
+        node: process.execPath,
+        cli,
+        oracle: {
+          argv: [process.execPath, cli, 'status', '--output', '.release-gate-oracle.json'],
+          exit: oracle.status,
+        },
+        intent: { argv: [process.execPath, script, 'changesets'], exit: intent.status },
+        versions: { argv: [process.execPath, script, 'versions'], exit: versions.status },
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+/**
+ * A minor provider release can require a major peer-dependent release even in
+ * the 0.x series. Group constraints may then raise both planned versions. The
+ * oracle's order is left intact: diagnostics must still identify dependent b.
+ */
+for (const relationship of ['plain', 'fixed', 'linked']) {
+  test(`G2 names the inferred stable dependent in an actual CLI ${relationship} plan`, () =>
+    fixture(
+      (root) => {
+        mkdirSync(join(root, 'packages/b'));
+        writeFileSync(
+          join(root, 'packages/b/package.json'),
+          JSON.stringify({
+            name: 'b',
+            version: '0.3.0',
+            peerDependencies: { a: '^0.8.0' },
+          }),
+        );
+        const configPath = join(root, '.changeset/config.json');
+        const config = JSON.parse(readFileSync(configPath));
+        if (relationship !== 'plain') config[relationship] = [['a', 'b']];
+        writeFileSync(configPath, JSON.stringify(config));
+        commit(root, 'Two-package baseline');
+        succeeded(git(root, 'checkout', '-b', 'feature'));
+        writeFileSync(join(root, 'packages/a/index.js'), 'export const value = 2;\n');
+        writeFileSync(join(root, '.changeset/change.md'), '---\n"a": minor\n---\n\nChange.\n');
+        commit(root, 'Minor provider change');
+        const oracle = changeset(root, 'status', '--output', '.release-gate-oracle.json');
+        succeeded(oracle);
+        const plan = JSON.parse(readFileSync(join(root, '.release-gate-oracle.json')));
+        const releases = Object.fromEntries(
+          plan.releases.map(({ name, type, newVersion }) => [name, { type, newVersion }]),
+        );
+        const intent = gate(root, 'changesets');
+        const versions = gate(root, 'versions');
+        recordInferredEvidence(root, relationship, oracle, intent, versions);
+        assert.deepEqual(releases, {
+          a:
+            relationship === 'plain'
+              ? { type: 'minor', newVersion: '0.9.0' }
+              : { type: 'major', newVersion: '1.0.0' },
+          b: { type: 'major', newVersion: '1.0.0' },
+        });
+        succeeded(intent);
+        assert.equal(versions.status, 1);
+        assert.match(versions.stderr, /Changesets next version for b:.*1\.0\.0/);
+        if (relationship !== 'plain')
+          assert.match(versions.stderr, /Changesets next version for a:.*1\.0\.0/);
+        assert.match(versions.stderr, policy);
+      },
+      { version: '0.8.0', bump: null, packageName: 'a' },
+    ));
+}
+
+/** Ordinary dependencies use a patch for an out-of-range update under the default config. */
+test('G2 accepts the actual CLI ordinary-dependent 0.x control', () =>
+  fixture(
+    (root) => {
+      mkdirSync(join(root, 'packages/b'));
+      writeFileSync(
+        join(root, 'packages/b/package.json'),
+        JSON.stringify({
+          name: 'b',
+          version: '0.3.0',
+          dependencies: { a: '^0.8.0' },
+        }),
+      );
+      commit(root, 'Two-package baseline');
+      succeeded(git(root, 'checkout', '-b', 'feature'));
+      writeFileSync(join(root, '.changeset/change.md'), '---\n"a": minor\n---\n\nChange.\n');
+      commit(root, 'Minor provider change');
+      const oracle = changeset(root, 'status', '--output', '.release-gate-oracle.json');
+      succeeded(oracle);
+      const intent = gate(root, 'changesets');
+      const versions = gate(root, 'versions');
+      recordInferredEvidence(root, 'safe-ordinary-dependent', oracle, intent, versions);
+      const plan = JSON.parse(readFileSync(join(root, '.release-gate-oracle.json')));
+      assert.deepEqual(
+        Object.fromEntries(
+          plan.releases.map(({ name, type, newVersion }) => [name, { type, newVersion }]),
+        ),
+        {
+          a: { type: 'minor', newVersion: '0.9.0' },
+          b: { type: 'patch', newVersion: '0.3.1' },
+        },
+      );
+      succeeded(intent);
+      succeeded(versions);
+    },
+    { version: '0.8.0', bump: null, packageName: 'a' },
+  ));
 
 test('G2 accepts an actual Version Packages commit after its changeset is consumed', () =>
   fixture(

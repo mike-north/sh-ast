@@ -86,8 +86,18 @@ try {
       const manifest = JSON.parse(readFileSync(path, 'utf8'));
       if (manifest.private !== true) checkVersion(manifest.version, path);
     }
-    for (const release of (await releasePlan(root)).releases)
-      checkVersion(release.newVersion, `Changesets next version for ${release.name}`);
+    // Group constraints can make the provider and its dependent stable together.
+    // Evaluate the complete plan so an earlier violation cannot hide a later
+    // dependent's forbidden version. Every validation failure still rejects.
+    const violations = [];
+    for (const release of (await releasePlan(root)).releases) {
+      try {
+        checkVersion(release.newVersion, `Changesets next version for ${release.name}`);
+      } catch (error) {
+        violations.push(error.message);
+      }
+    }
+    if (violations.length) throw new Error(violations.join('\n'));
   }
   console.log(`0.x release gate passed (${mode}).`);
 } catch (error) {
