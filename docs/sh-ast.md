@@ -79,7 +79,7 @@ Upstream Printer.Print panicked for a representable tree or option value. Partia
 
 </td><td>
 
-Thrown by [parseSync()](./sh-ast.parsesync.md) for failures that should never happen given a correctly-behaving WASM shim: a malformed result envelope, an unexpected root node type, or any other shim contract violation. Distinct from [InputError](./sh-ast.inputerror.md) and [ParseError](./sh-ast.parseerror.md)<!-- -->, both of which indicate a foreseeable, actionable user mistake rather than an internal defect.
+A failure at the syntax binding/runtime boundary: a malformed result envelope, an unexpected root type, or inability to transport or validate represented values within host runtime resources. A bridge resource refusal can involve valid upstream syntax; it does not mean the Go parser rejected the input. Distinct from [InputError](./sh-ast.inputerror.md) and [ParseError](./sh-ast.parseerror.md)<!-- -->, which describe caller representation errors and ordinary upstream parsing failures respectively.
 
 
 </td></tr>
@@ -238,7 +238,7 @@ Applies the selected Go syntax.SplitBraces operation synchronously to a mutable 
 
 The Word keeps its identity. False preserves its Parts array and children; true replaces Parts as Go does, retaining input WordPart objects that Go reuses, including inside new brace elements. Newly split literals retain Go's copied position values; new nodes have no entry in an original PositionSnapshot. Existing aliases to an old Parts array continue to observe that old array. Selected Go Walk rejects BraceExp nodes; callers can inspect the transformed records directly. This operation does not extend traversal's supported nodes.
 
-InputError identifies unrepresentable input. A panic from the selected native operation becomes ShInternalError and leaves the supplied Word unchanged. This operation does not change parser output before explicitly being called.
+InputError identifies unrepresentable input. A panic from the selected native operation becomes ShInternalError and leaves the supplied Word unchanged. Input and output each have a bridge limit of 256 nested Go struct records, including positions; slices and pointer/interface wrappers add no units. Input is checked iteratively before recursive validation, encoding or native entry; output is checked after rewriting and before recursive transport. These checks can refuse valid Go data with ShInternalError; they are not parser work or grammar. JavaScript input/output stack exhaustion also becomes ShInternalError with its original RangeError as `cause`<!-- -->. All refusals leave the supplied Word unchanged. No fixed depth acceptance or arbitrary caller-stack guarantee follows. An unexpected native engine stack trap also retains its cause, but adaptation alone does not establish the health of the native runtime after such a trap. This operation does not change parser output before explicitly being called.
 
 
 </td></tr>

@@ -123,3 +123,75 @@ only two old assertions changed during this cycle were analysis-owned printer
 spellings from the removed compatibility hold; independent native printer tests
 now state those selected-Go byte outcomes. No printer behavior was changed to
 preserve the old expectations.
+
+## SplitBraces stack-boundary correction
+
+Root's isolated public probe found that a shallow raw Word containing 1,000 nested
+brace spellings parsed successfully, while recursive JavaScript validation of the
+valid Go result threw an untyped RangeError. Tests were written first for that
+exact source, 2,000 levels, byte-bearing results, and a constructed deep input.
+They failed with raw RangeErrors on normal Node 22.22.1 and 24.14.0 stacks.
+Scoped JavaScript stage guards retain the original engine error as `cause` and
+leave native error-family dispatch and unrelated RangeErrors unchanged.
+
+The 2,000-level case also exposed a native transport stack trap. Catch-only
+adaptation was rejected: an eight-iteration Node 22 probe succeeded, but separate
+Node 24 runs spun or corrupted Go GC state after three apparently reusable
+refusals. The owned hung child was terminated; no shared process was killed.
+This evidence does not support claiming a caught VM trap leaves the runtime healthy.
+
+The approved prevention is an operation-local, iterative Go-shim preflight after
+exact `syntax.SplitBraces`, before retained-path construction and recursive
+encoding. It limits nested Go struct records to 256, including position values;
+arrays and pointer/interface wrappers add no units. This conservative empirical
+transport policy is distinct from syntax validity and native parser work. The
+input remains unchanged because the transformed result is still private. The
+preflight uses container cursors and memory proportional to bounded depth, without
+brace scanning, AST visitation rules, or a general codec rewrite.
+
+Native tests first failed because the valid deep result was returned instead of
+a bridge refusal, then passed with explicit 1,000/2,000-level refusals and ordinary
+1/20/100-level controls. Child probes require eight repeated 2,000-level refusals
+interleaved with parse, position snapshots, live bounds, printing, and a later
+SplitBraces call on Node 22/24. The canonical binary recorded earlier predates
+this shim correction; a fresh hosted Linux artifact is required before final
+public regression and composition acceptance. The underlying Go fork pin and
+schema source remain unchanged.
+
+The replacement hosted Linux build is run `42171105574`, source
+`16df152092d610435e779e47d08b0acdf400cc8c`. Its exact downloaded WASM SHA-256 is
+`50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`.
+The native tests, provenance check, build and upload passed; comparison with the
+previous committed binary failed as expected. The candidate now commits these
+hosted bytes. Later input protection changes only TypeScript, leaving native
+source and this artifact unchanged.
+
+Independent warmed-input probing then found a second transport path: a caller-built
+1,600-level Word/BraceExp chain can pass optimized JavaScript validation and trap
+inside the recursive native decoder. A cold-only stack-exhaustion test had not
+covered that path. Tests were added first for the exact record-budget fencepost,
+cold and warmed deep inputs, aliases revisited through deeper paths, shared byte
+values and cycles. An operation-local iterative input preflight now applies the
+same 256-record budget before recursive validation, encoding, WASM initialization
+or native entry. Generated Go field metadata defines traversal; position values
+count, container wrappers do not. Only active ancestors detect cycles, so a shared
+subgraph cannot evade the budget through an earlier shallower visit. Cycles retain
+InputError, while excess represented depth is ShInternalError without a fabricated
+engine cause.
+
+The six new input tests failed before the preflight and passed afterwards.
+Independent instrumentation on Node 22.22.1 and 24.14.0 proved that cold 1,600-level
+refusal performs zero module compilations, instances or native calls; 40 warmed
+refusals add no native calls. Exact 256-record inputs are accepted, 257-record
+inputs and deeper alias paths are refused, and cyclic inputs retain InputError.
+All slots and identities remain unchanged on refusal. Repeated successful parse,
+position, print and split operations reuse the same one WASM module and instance;
+no reset or reinitialization is used to simulate recovery.
+
+Final local uncached build/check/test and regenerated API documentation pass on
+Node 22.22.1 with pnpm 11.12.0, Nx parallelism 2 and Vitest maximum workers 2:
+69 runtime files / 1,567 tests, public type tests, 39 benchmark unit cases and four
+real-worker integrations. The independent reviewer also reran the exact 96-case
+warm-up sequence followed by eight 1,600-level input refusals and 42 deep output
+refusals on both Node 22.22.1 and 24.14.0. Hosted final-head reproducibility and
+code review remain separate gates; these local results do not establish them.

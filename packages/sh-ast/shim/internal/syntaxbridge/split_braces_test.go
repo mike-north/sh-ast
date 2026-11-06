@@ -6,6 +6,7 @@ package syntaxbridge
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"eslint-sh-shim/internal/syntaxwire"
@@ -106,5 +107,35 @@ func TestSplitBracesFailuresDoNotInventAnalysisResults(t *testing.T) {
 	failure, ok := result["Error"].(map[string]any)
 	if !ok || failure["Kind"] != "InternalError" {
 		t.Fatalf("native panic was hidden: %#v", result)
+	}
+}
+
+// Valid brace text can create a much deeper output record graph than its input
+// Word. The bridge refuses this graph before recursive transport, not as grammar.
+func TestSplitBracesOutputRecordDepthRefusal(t *testing.T) {
+	for _, depth := range []int{1000, 2000} {
+		source := strings.Repeat("{a,", depth) + "x" + strings.Repeat("}", depth)
+		payload := encodedBraceWord(t, braceWord(t, source))
+		result := response(t, "split-braces", payload, `{}`)
+		failure, ok := result["Error"].(map[string]any)
+		if !ok || len(result) != 1 || failure["Kind"] != "InternalError" {
+			t.Fatalf("expected bridge-only resource refusal at %d; keys=%v error=%v", depth, resultKeys(result), result["Error"])
+		}
+		const expected = "SplitBraces output record depth 257 exceeds the bridge transport limit 256"
+		if failure["Message"] != expected {
+			t.Fatalf("resource origin lost: %#v", failure)
+		}
+	}
+}
+
+// These controls establish useful ordinary nested transformations, without
+// claiming the transport budget is a universal host-stack safety guarantee.
+func TestSplitBracesOutputRecordDepthOrdinaryControls(t *testing.T) {
+	for _, depth := range []int{1, 20, 100} {
+		source := strings.Repeat("{a,", depth) + "x" + strings.Repeat("}", depth)
+		result := response(t, "split-braces", encodedBraceWord(t, braceWord(t, source)), `{}`)
+		if result["Error"] != nil || result["Changed"] != true || result["Word"] == nil {
+			t.Fatalf("ordinary transformation refused at %d: %#v", depth, result)
+		}
 	}
 }

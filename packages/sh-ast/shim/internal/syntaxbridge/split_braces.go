@@ -5,6 +5,8 @@ package syntaxbridge
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 
 	"eslint-sh-shim/internal/syntaxwire"
 	"mvdan.cc/sh/v3/syntax"
@@ -28,6 +30,11 @@ func splitBraces(payload string) map[string]any {
 	}
 	if !syntax.SplitBraces(word) {
 		return map[string]any{"Changed": false}
+	}
+	if depth := splitBracesOutputDepth(word); depth > 0 {
+		return errorResponse("InternalError", fmt.Sprintf(
+			"SplitBraces output record depth %d exceeds the bridge transport limit %d", depth, maxSplitBracesOutputDepth,
+		))
 	}
 	retained := retainedBraceParts(word, origins)
 	encoded, err := syntaxwire.Encode(word)
@@ -83,4 +90,78 @@ func retainedBraceParts(word *syntax.Word, origins map[syntax.WordPart][]int) []
 		}
 	}
 	return retained
+}
+
+// maxSplitBracesOutputDepth bounds recursive response encoding after the exact
+// upstream transformation. One shallow literal can produce a very deep graph.
+// This conservative empirical transport policy counts Go struct records,
+// including position values; slices and interface/pointer wrappers add no units.
+// It is distinct from parser work, grammar validity, and an arbitrary caller-stack
+// guarantee. Refusing before serialization also avoids poisoning the shared VM.
+const maxSplitBracesOutputDepth = 256
+
+// splitOutputFrame retains one container cursor, so the preflight uses memory
+// proportional to bounded depth rather than the width of a flat parts list.
+type splitOutputFrame struct {
+	value   reflect.Value
+	depth   int
+	next    int
+	entered bool
+}
+
+// splitBracesOutputDepth iteratively inspects the result's structural records,
+// without parsing brace text or imposing AST visitation semantics. The input
+// codec and SplitBraces provide an acyclic data graph; unexported Go state is not
+// transport data. Zero means within budget; otherwise the first excess is returned.
+func splitBracesOutputDepth(word *syntax.Word) int {
+	stack := []splitOutputFrame{{value: reflect.ValueOf(word)}}
+	for len(stack) > 0 {
+		frame := &stack[len(stack)-1]
+		if !frame.entered {
+			for frame.value.IsValid() && (frame.value.Kind() == reflect.Pointer || frame.value.Kind() == reflect.Interface) {
+				if frame.value.IsNil() {
+					frame.value = reflect.Value{}
+					break
+				}
+				frame.value = frame.value.Elem()
+			}
+			if !frame.value.IsValid() {
+				stack = stack[:len(stack)-1]
+				continue
+			}
+			frame.entered = true
+			if frame.value.Kind() == reflect.Struct {
+				frame.depth++
+				if frame.depth > maxSplitBracesOutputDepth {
+					return frame.depth
+				}
+			}
+		}
+		var child reflect.Value
+		switch frame.value.Kind() {
+		case reflect.Struct:
+			if frame.next >= frame.value.NumField() {
+				stack = stack[:len(stack)-1]
+				continue
+			}
+			index := frame.next
+			frame.next++
+			if frame.value.Type().Field(index).PkgPath != "" {
+				continue
+			}
+			child = frame.value.Field(index)
+		case reflect.Slice, reflect.Array:
+			if frame.next >= frame.value.Len() {
+				stack = stack[:len(stack)-1]
+				continue
+			}
+			child = frame.value.Index(frame.next)
+			frame.next++
+		default:
+			stack = stack[:len(stack)-1]
+			continue
+		}
+		stack = append(stack, splitOutputFrame{value: child, depth: frame.depth})
+	}
+	return 0
 }

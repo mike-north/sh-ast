@@ -226,6 +226,18 @@ transformed records directly rather than assuming traversal is extended.
 The operation does not expand fields, repair escaping, or
 assert which dialect or shell options will expand a word.
 
+A shallow literal can produce a deeply nested brace graph. The binding checks
+input iteratively before recursive validation, encoding or native entry, and
+checks the native result after rewriting and before recursive transport. Either
+side refuses more than 256 nested Go struct records with `ShInternalError`. Struct values, including
+positions, count as records; slices and interface/pointer wrappers add no units.
+This is an empirical bridge transport constraint on valid Go data, separate
+from parser work or grammar. JavaScript input/output stack exhaustion is also
+adapted to `ShInternalError`, with the original `RangeError` retained as `cause`.
+Refusals leave the supplied Word unchanged. No fixed depth acceptance or arbitrary
+caller-stack guarantee is made; catching an unexpected native engine trap alone
+does not establish native runtime health.
+
 ## Responsibility boundary
 
 The root entry point exports syntax records, constants, parsing, traversal,
