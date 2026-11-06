@@ -17,7 +17,7 @@ const identity = {
   fork: 'github.com/mike-north/sh/v3',
   version,
   revision,
-  upstream: { version: 'v3.14.1', revision: 'a3f0c75d21d918756fa38de8b5d3429efde7948b' },
+  upstream: { version: 'v3.14.1' },
 };
 
 /** Isolated manifests and effective module metadata never rewrite real build inputs. */
@@ -79,6 +79,15 @@ test('checks both Go consumers and the downloaded full Git revision', () => {
 });
 
 for (const directory of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
+  test(`rejects ${directory} original requirement drift despite the same replacement`, () => {
+    fixture(
+      (root, run) => assert.throws(() => verifyGoSource(root, run), /effective source/),
+      ({ modules }) => {
+        modules.find((m) => m.directory === directory).Version = 'v3.14.0';
+      },
+    );
+  });
+
   for (const replacement of [
     { Path: '../../../third_party/mvdan-sh/upstream' },
     { Path: 'github.com/mvdan/sh/v3', Version: version },
@@ -93,6 +102,26 @@ for (const directory of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
       );
     });
   }
+}
+
+for (const upstream of [
+  { version: 'v3.14.0' },
+  { version: 'main' },
+  {},
+  { version: 'v3.14.1', revision: 'a3f0c75d21d918756fa38de8b5d3429efde7948b' },
+]) {
+  test(`rejects drift or unverified fields in the recorded original requirement: ${JSON.stringify(upstream)}`, () => {
+    fixture(
+      (root, run) =>
+        assert.throws(() => verifyGoSource(root, run), /effective source|original requirement/),
+      ({ root }) => {
+        writeFileSync(
+          join(root, 'tools/go-source.json'),
+          JSON.stringify({ ...identity, upstream }),
+        );
+      },
+    );
+  });
 }
 
 test('rejects a different full commit even when its abbreviated suffix collides', () => {

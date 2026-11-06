@@ -2,6 +2,8 @@
  * Verifies the actual Go source selected by both syntax consumers. Release labels
  * alone cannot identify a fork: the immutable pseudo-version, full Git revision,
  * and Go content checksum must agree before schema generation or WASM builds.
+ * The original requirement label must agree across both module graphs as well;
+ * that label does not establish the consumed fork's Git ancestry.
  * Go downloads use its normal checksum verification; no semantic patches are
  * applied by this binding repository.
  */
@@ -26,6 +28,19 @@ export function verifyGoSource(root, run = execFileSync) {
   ) {
     throw new Error('Expected an immutable fork identity with a full Git revision');
   }
+  // upstream.version records the required original module label. Only the fork
+  // pin, origin and content checks below identify consumed bytes. An ancestry
+  // revision belongs in the historical audit, not in unverified machine metadata.
+  if (
+    identity.upstream === null ||
+    typeof identity.upstream !== 'object' ||
+    Array.isArray(identity.upstream) ||
+    Object.keys(identity.upstream).length !== 1 ||
+    typeof identity.upstream.version !== 'string' ||
+    !/^v3\.\d+\.\d+$/.test(identity.upstream.version)
+  ) {
+    throw new Error('Expected only a tagged original requirement version in upstream metadata');
+  }
   const env = { ...process.env, GOWORK: 'off', GOFLAGS: '-mod=readonly' };
   const modules = ['packages/sh-ast/shim', 'tools/gen-visitor-keys'].map((directory) => {
     const module = JSON.parse(
@@ -37,6 +52,7 @@ export function verifyGoSource(root, run = execFileSync) {
     );
     if (
       module.Path !== identity.module ||
+      module.Version !== identity.upstream.version ||
       module.Replace?.Path !== identity.fork ||
       module.Replace?.Version !== identity.version ||
       typeof module.Replace?.Sum !== 'string' ||

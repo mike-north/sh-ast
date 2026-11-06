@@ -339,10 +339,13 @@ position operations. Reconstructed edited trees retain the information those
 operations observe.
 
 Before either build, `node tools/verify-go-source.mjs` verifies both effective Go
-module graphs, the full fork Git revision and Go content checksum, and the actual
-downloaded archive and expanded source bytes. A local replacement or external
+module graphs against the recorded original requirement version, the full fork
+Git revision and Go content checksum, and the actual downloaded archive and
+expanded source bytes. A local replacement or external
 Go workspace cannot substitute a different implementation. The generator records
 the resolved fork module path and immutable version in its output headers.
+The `upstream.version` metadata is the required original module label; it does not
+prove Git ancestry. The fork's maintenance record documents the historical baseline.
 
 The canonical binary is built by Linux/amd64 CI with the Go toolchain pinned in
 `shim/go.mod` and the checksum-pinned Binaryen version in

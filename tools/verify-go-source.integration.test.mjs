@@ -27,7 +27,7 @@ function copyEntry(source, destination) {
   cpSync(source, destination, { recursive: true });
 }
 
-test('rejects altered cached fork source even when pin, origin and zip remain unchanged', () => {
+test('rejects real original-requirement drift and altered cache despite the same fork pin', async (t) => {
   const identity = JSON.parse(readFileSync(join(repository, 'tools/go-source.json'), 'utf8'));
   const env = { ...process.env, GOWORK: 'off', GOFLAGS: '-mod=readonly' };
   const goRoot = execFileSync('go', ['env', 'GOROOT'], {
@@ -84,6 +84,35 @@ replace ${identity.module} => ${identity.fork} ${identity.version}
         },
       );
     assert.doesNotThrow(() => verifyGoSource(root, run));
+    // A replacement keeps its exact source even when the original require label
+    // changes. Both real module graphs must still agree with the recorded label.
+    for (const consumer of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
+      const manifest = join(root, consumer, 'go.mod');
+      const baseline = readFileSync(manifest, 'utf8');
+      await t.test(`refuses ${consumer} original-version drift`, () => {
+        try {
+          writeFileSync(
+            manifest,
+            baseline.replace('require mvdan.cc/sh/v3 v3.14.1', 'require mvdan.cc/sh/v3 v3.14.0'),
+          );
+          assert.throws(() => verifyGoSource(root, run), /Incorrect effective source/);
+        } finally {
+          writeFileSync(manifest, baseline);
+        }
+      });
+    }
+    const sourceIdentity = join(root, 'tools/go-source.json');
+    await t.test('refuses recorded original-version drift', () => {
+      try {
+        writeFileSync(
+          sourceIdentity,
+          JSON.stringify({ ...identity, upstream: { version: 'v3.14.0' } }),
+        );
+        assert.throws(() => verifyGoSource(root, run), /Incorrect effective source/);
+      } finally {
+        writeFileSync(sourceIdentity, JSON.stringify(identity));
+      }
+    });
     const parser = join(cache, relative(originalCache, downloaded.Dir), 'syntax/parser.go');
     chmodSync(parser, 0o644);
     writeFileSync(

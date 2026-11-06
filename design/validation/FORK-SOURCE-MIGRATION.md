@@ -48,6 +48,14 @@ now live in the Go repository. Canonical Linux binary receipt and final head
 checks will be recorded after they exist. No locally built Darwin WASM is
 accepted as release evidence.
 
+The historical baseline is upstream v3.14.1 at
+`a3f0c75d21d918756fa38de8b5d3429efde7948b`, documented in the fork's
+[maintenance record](https://github.com/mike-north/sh/blob/bbc7c4ace575d5de375726fdaa2a5c001c46564c/FORK-MAINTENANCE.md).
+Machine identity retains only `upstream.version`, the required original module
+label checked against both effective module graphs. That label does not prove
+Git ancestry. The immutable fork revision, origin and content checks identify
+consumed bytes; the historical baseline audit is separate evidence.
+
 ## Analysis extraction inventory
 
 Current public syntax APIs already supply faithful records/constants,
@@ -195,3 +203,31 @@ real-worker integrations. The independent reviewer also reran the exact 96-case
 warm-up sequence followed by eight 1,600-level input refusals and 42 deep output
 refusals on both Node 22.22.1 and 24.14.0. Hosted final-head reproducibility and
 code review remain separate gates; these local results do not establish them.
+
+## Substantive review follow-up
+
+The exact-head Lite review at `a375be2d32b7b5cb8c3ab385ec3306aadb56e466`
+identified an unchecked original module requirement and a historical link into
+the deleted vendor tree. Tests written before the fix reproduced false acceptance
+for original-version drift in each consumer and recorded-version drift while the
+fork replacement remained identical. Real isolated Go module graphs reproduced
+all three cases independently of the synthetic runner. Retained metadata now has
+an explicit version-only shape; the unverified upstream ancestry revision was
+removed from machine identity and preserved in the historical prose above.
+The historical validation README now links the immutable fork maintenance record
+and this migration record.
+
+The tests-first run reported 10 failures / 13 passes, counting the enclosing real
+integration test and its three failed subtests. After comparing each original
+module version and validating the retained metadata, all 23 source tests pass.
+The same real integration fixture still proves modified-cache refusal. These
+changes affect build verification and documentation only; runtime TypeScript,
+generated schema, native Go and canonical WASM bytes remain unchanged.
+
+The follow-up passes the full uncached Node 22.22.1 build/check/test gates,
+including the same 1,567 runtime tests, public type tests, 39 benchmark unit cases
+and four integrations. Independently built and packed packages from `a375be2`
+and the corrected source have the same 111 members. All 109 shipped runtime,
+schema and WASM assets are byte-identical; the package manifest is identical and
+only the shipped README changes. The WASM SHA-256 remains
+`50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`.
