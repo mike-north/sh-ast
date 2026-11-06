@@ -222,7 +222,9 @@ identity. `false` leaves its Parts array and children untouched; `true` replaces
 Parts while retaining input WordPart objects that Go reuses, including inside
 new brace elements. Old array aliases retain the original array. New literal
 records retain Go's copied position values and have no entry in an original
-position snapshot. The operation does not expand fields, repair escaping, or
+position snapshot. Selected Go Walk rejects BraceExp nodes; inspect the
+transformed records directly rather than assuming traversal is extended.
+The operation does not expand fields, repair escaping, or
 assert which dialect or shell options will expand a word.
 
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,

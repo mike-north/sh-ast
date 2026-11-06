@@ -20,6 +20,8 @@ import { callSyntax } from './wasm-instance.js';
  * including inside new brace elements. Newly split literals retain Go's copied
  * position values; new nodes have no entry in an original PositionSnapshot.
  * Existing aliases to an old Parts array continue to observe that old array.
+ * Selected Go Walk rejects BraceExp nodes; callers can inspect the transformed
+ * records directly. This operation does not extend traversal's supported nodes.
  *
  * InputError identifies unrepresentable input. A panic from the selected native
  * operation becomes ShInternalError and leaves the supplied Word unchanged.

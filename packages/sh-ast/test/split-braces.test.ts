@@ -133,7 +133,17 @@ describe('faithful splitBraces', () => {
     const oldQuotePositions = parsed.Positions.get(quoted);
     expect(nodes(input).some((node) => node.Type === 'BraceExp')).toBe(false);
     expect(splitBraces(input)).toBe(true);
-    expect(nodes(input).find((node) => node.Type === 'DblQuoted')).toBe(quoted);
+    const brace = input.Parts?.find((part) => part?.Type === 'BraceExp');
+    if (brace?.Type !== 'BraceExp') {
+      throw new Error('Expected a new BraceExp');
+    }
+    // Selected Go Walk itself rejects BraceExp; inspect the faithful records
+    // directly rather than silently extending traversal in the binding.
+    expect(
+      brace.Elems?.flatMap((element) => element?.Parts ?? []).find(
+        (part) => part?.Type === 'DblQuoted',
+      ),
+    ).toBe(quoted);
     expect(parsed.Positions.get(quoted)).toBe(oldQuotePositions);
     const prefix = input.Parts?.[0];
     if (prefix?.Type !== 'Lit') {

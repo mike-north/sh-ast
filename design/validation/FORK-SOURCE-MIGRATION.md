@@ -87,3 +87,19 @@ A syntax-node inventory cannot infer that no nested command executes. The future
 analysis contract must report the resulting uncertainty or explicitly limit its
 claim to represented syntax nodes; changing parser output to satisfy inventory
 completeness is outside its ownership.
+
+## Canonical Linux candidate
+
+WASM source build: GitHub Actions WASM reproducibility run `42165152448`, source
+head `43db64d48e97eeab654aa40f72785cc1e51f922d`, Ubuntu/Linux amd64, Go 1.26.10,
+Binaryen version_131. Exact fork verification, native Go tests, rebuild, and
+artifact upload passed. The initial final comparison failed as intended because
+the previous committed binary was stale. The downloaded hosted artifact is
+SHA-256 `57c46bac7d59913a585a6bd3b7d7e489fa310bd044f13cc2ca1ee012e270ba94`.
+No Darwin-built binary was used.
+
+The first public run of the canonical binary passed 23/24 focused cases. The one
+remaining test incorrectly asked upstream Walk to traverse newly created
+BraceExp, which the selected Go walker intentionally rejects. The test now
+inspects faithful records directly; traversal is not changed to conceal that
+upstream constraint. Public operation documentation names the same limitation.
