@@ -27,5 +27,6 @@ jobs:
       - name: Verify exact fork identity and tamper rejection
         run: node tools/verify-go-source.mjs && node --test tools/verify-go-source*.test.mjs
       - run: pnpm build
+      # Includes strict TypeScript lint, API report/docs drift, and syncpack lint.
       - run: pnpm check
       - run: pnpm test

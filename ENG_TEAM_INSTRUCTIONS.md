@@ -6,8 +6,9 @@ Working agreement for everyone (human or agent) shipping code in this repo. `sh-
 [the accepted architecture](design/ARCHITECTURE.md#responsibilities) for their meaning.
 It was extracted from the eslint-sh monorepo (`mike-north/eslint-sh` @ `bdd55b3`),
 but ESLint's normalized nodes and byte→UTF-16 projection belong to that consumer.
-Existing `sh-ast/analyze` is to be extracted into an independent analysis layer;
-its presence does not authorize adding interpretation to this binding.
+The `sh-ast/analyze` subpath was removed in PR #94. Analysis lives independently
+in `mike-north/sh-analysis`; the parser binding remains in `sh-ast` and does not
+interpret words or commands.
 
 ## Work queue
 
@@ -33,8 +34,13 @@ its presence does not authorize adding interpretation to this binding.
 - Commands: `pnpm install` → `pnpm build` → `pnpm check` → `pnpm test`, all green before
   every push; prettier before every push. Never `rm` build outputs — `pnpm run clean` /
   `pnpm --filter <pkg> run clean`.
+- `check:typecheck` checks source, runtime tests, and generated declarations with the
+  compiler, and type-contract fixtures with tsd across `.ts`, `.tsx`, `.mts`, and
+  `.cts`. Typed ESLint does not report compiler diagnostics. Intentional malformed
+  runtime fixtures need a local, explained `@ts-expect-error`; rejected API calls
+  in type-contract fixtures retain their `expectError` assertions.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
-  commit both — no CI gate covers committed docs. If the docs regeneration alone would push
+  commit both — CI checks the API report and regenerated documentation. If the docs regeneration alone would push
   the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
   churn in its own commit and note it in the PR so the reviewer can review the source diff;
   a documented manual substantive review substitutes when Copilot declines the PR size.
