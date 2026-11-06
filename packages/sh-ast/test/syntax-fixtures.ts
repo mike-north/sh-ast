@@ -1,4 +1,4 @@
-/** Test constructors supply complete upstream zero values; expected analysis outcomes stay explicit. */
+/** Test constructors supply complete upstream zero values; expected syntax outcomes stay explicit. */
 import { SYNTAX_SCHEMA } from '../generated/syntax-schema.js';
 import type { Node, SyntaxPos } from '../generated/syntax-types.js';
 

@@ -1,7 +1,6 @@
 /** Independent editable syntax uses the platform clone algorithm; expectations describe consumer outcomes. */
 import { describe, expect, it } from 'vitest';
 import type { CallExpr, File, Node, Stmt, Word } from '../generated/syntax-types.js';
-import { enumerateCommands, resolveWord } from '../src/analyze/index.js';
 import {
   nodeEnd,
   nodePos,
@@ -216,19 +215,5 @@ describe('structuredClone syntax contract', () => {
     expect(printSync(original)).toBe('echo old old');
     expect(externalWord).toBe(original.Args?.[1]);
     expect(printSync(externalWord)).toBe('old');
-  });
-
-  it('supports analyze inputs without sharing their retained command identities', () => {
-    const original = parseSync("echo '🎉 你好 e\u0301'\n");
-    const copy = structuredClone(original);
-    const sites = enumerateCommands(copy);
-    expect(sites).toHaveLength(1);
-    expect(sites[0].node).toBe(copy.Stmts?.[0]?.Cmd);
-    expect(sites[0].node).not.toBe(original.Stmts?.[0]?.Cmd);
-    expect(sites[0].argv).toEqual([
-      { static: true, text: 'echo' },
-      { static: true, text: '🎉 你好 e\u0301' },
-    ]);
-    expect(resolveWord(operand(sites[0].node))).toEqual({ static: true, text: '🎉 你好 e\u0301' });
   });
 });

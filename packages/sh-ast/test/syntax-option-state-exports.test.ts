@@ -1,9 +1,9 @@
-/** Analyze-only callers can construct every named state consumed by ParamExp. */
+/** Syntax callers can construct every named state consumed by ParamExp. */
 import { expect, it } from 'vitest';
-import { OptUnset, OptOn, OptOff, rawOperator } from '../src/analyze/index.js';
-import type { OptState, ParamExp } from '../src/analyze/index.js';
+import { OptUnset, OptOn, OptOff, rawOperator } from '../src/index.js';
+import type { OptState, ParamExp } from '../src/index.js';
 
-it('exports the complete option-state domain through analyze alone', () => {
+it('exports the complete option-state domain through the syntax root', () => {
   const fields: Pick<ParamExp, 'Split' | 'GlobSubst' | 'RcExpand'> = {
     Split: OptOn,
     GlobSubst: OptOff,

@@ -16,8 +16,10 @@ syntax operations, and reject dependencies toward consumer layers.
 
 The binding migration owner controls the shim, faithful public `splitBraces`,
 selected fork pin and canonical Linux WASM. Cleanup must preserve those changes
-and stack on their source commit. Existing `analyze-*` tests are analysis-owned;
-pure syntax tests using their fixture helper will retain a renamed syntax helper.
+and stack on their source commit. Existing interpretation-focused `analyze-*` tests are analysis-owned;
+pure syntax tests using their fixture helper retain a renamed syntax helper.
+Operator-domain runtime/type tests are preserved under syntax filenames and
+import the root directly, including uint8 option-state and uint32 family checks.
 Mixed structured-clone coverage retains syntax observations and retires only its
 analysis-specific case. Zsh syntax regression coverage must survive and follow
 the selected fork's tested syntax contract rather than compatibility expectations.
@@ -36,3 +38,8 @@ showing both analysis error names were present in the root type namespace.
 Commands: `pnpm --filter sh-ast build`, `pnpm --filter sh-ast check:api-report`,
 `pnpm --filter sh-ast exec vitest run test/package-boundary.test.ts --maxWorkers=2`,
 and `pnpm --filter sh-ast exec tsd --files test-d/package-boundary.test-d.ts`.
+
+The artifact-exclusion test also failed before cleaning build outputs: a package
+packed after source removal still carried stale `dist/analyze` from the preceding
+build. `pnpm --filter sh-ast clean` is required before the fresh build so removed
+source cannot survive into the installed artifact.

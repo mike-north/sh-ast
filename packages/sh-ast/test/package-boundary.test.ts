@@ -3,7 +3,7 @@
  * boundary independently of workspace aliases and source-relative imports.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,6 +50,12 @@ function probe(source: string): string {
 }
 
 describe('installed syntax-only package', () => {
+  it('excludes retired analysis runtime and declaration artifacts', () => {
+    const installed = join(consumer, 'node_modules/sh-ast');
+    expect(existsSync(join(installed, 'dist/analyze'))).toBe(false);
+    expect(existsSync(join(installed, 'dist/analyze.d.ts'))).toBe(false);
+  });
+
   it('keeps first-use parse, traversal, bounds, printing and syntax constants synchronous', () => {
     expect(
       probe(`

@@ -1,4 +1,4 @@
-/** Analyze-only consumers can name faithful operators and construct unnamed family values. */
+/** Syntax consumers can name faithful operators and construct unnamed family values. */
 import { describe, expect, it } from 'vitest';
 import {
   Add,
@@ -7,6 +7,7 @@ import {
   CmdIn,
   DefaultUnset,
   GlobOne,
+  InputError,
   NamesPrefix,
   Not,
   Pipe,
@@ -14,12 +15,11 @@ import {
   RdrOut,
   TsExists,
   TsReMatch,
-} from '../src/analyze/index.js';
-import { InputError, rawOperator as rootRawOperator } from '../src/index.js';
+} from '../src/index.js';
 
-describe('analyze operator exports', () => {
+describe('syntax operator exports', () => {
   it('exposes named values from every referenced upstream operator family', () => {
-    // These pinned mvdan/sh values are independent of the subpath export list.
+    // These pinned mvdan/sh values are independent of the binding's export list.
     expect({
       Add,
       AndStmt,
@@ -49,15 +49,14 @@ describe('analyze operator exports', () => {
     });
   });
 
-  it('shares the root constructor and preserves uint32 values exactly', () => {
-    expect(rawOperator).toBe(rootRawOperator);
+  it('preserves unnamed uint32 values exactly', () => {
     expect(rawOperator('BinCmdOperator', 0)).toBe(0);
     expect(rawOperator('BinCmdOperator', 0xffff_ffff)).toBe(0xffff_ffff);
     expect(rawOperator('RedirOperator', 500)).toBe(500);
   });
 
   it.each([-1, 0.5, 0x1_0000_0000, NaN, Infinity])(
-    'rejects non-uint32 operator value %s through the analyze entry',
+    'rejects non-uint32 operator value %s through the syntax entry',
     (value) => {
       expect(() => rawOperator('BinCmdOperator', value)).toThrow(InputError);
     },

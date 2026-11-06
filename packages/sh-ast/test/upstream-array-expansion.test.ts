@@ -77,7 +77,7 @@ it('preserves upstream Zsh option overrides as three-state numeric fields', asyn
 it('checks the uint8 storage boundary for unnamed option states', async () => {
   const { rawOperator, InputError } = await import('../src/index.js');
   const { isSyntaxNode } = await import('../src/syntax-wire.js');
-  const { syntheticNode } = await import('./analyze-fixtures.js');
+  const { syntheticNode } = await import('./syntax-fixtures.js');
   const node = syntheticNode('ParamExp', { Split: rawOperator('OptState', 255) });
   expect(isSyntaxNode(node)).toBe(true);
   expect(isSyntaxNode({ ...node, Split: 256 })).toBe(false);

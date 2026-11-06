@@ -2,7 +2,7 @@
 import { expect, it } from 'vitest';
 import { newPos } from '../src/index.js';
 import { atStatementEnd } from '../src/syntax-walk-bounds.js';
-import { syntheticNode } from './analyze-fixtures.js';
+import { syntheticNode } from './syntax-fixtures.js';
 
 it('places comments after naked indexed assignments and braced clauses at their actual end', () => {
   const index = syntheticNode('Word', {

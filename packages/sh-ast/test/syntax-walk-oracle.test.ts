@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Comment, GoString, Node, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { parseSync } from '../src/index.js';
 import { walk, WalkPanicError } from '../src/syntax-walk.js';
-import { syntheticNode } from './analyze-fixtures.js';
+import { syntheticNode } from './syntax-fixtures.js';
 import oracle from './fixtures/walk-oracle.json' with { type: 'json' };
 
 /** Fixtures use independently chosen byte coordinates, including an ordinary invalid position. */

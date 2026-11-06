@@ -1,15 +1,6 @@
-/** This consumer names and constructs faithful operators using only the analyze subpath. */
+/** The syntax root names and constructs faithful operators with distinct operator-family domains. */
 import { expectAssignable, expectError, expectNotAssignable, expectType } from 'tsd';
-import {
-  AndStmt,
-  OptUnset,
-  OptOn,
-  OptOff,
-  Pipe,
-  rawOperator,
-  RdrOut,
-  TsReMatch,
-} from 'sh-ast/analyze';
+import { AndStmt, OptUnset, OptOn, OptOff, Pipe, rawOperator, RdrOut, TsReMatch } from 'sh-ast';
 import type {
   BinaryCmd,
   BinCmdOperator,
@@ -18,7 +9,7 @@ import type {
   ParamExp,
   RawOperator,
   RedirOperator,
-} from 'sh-ast/analyze';
+} from 'sh-ast';
 
 declare const command: BinaryCmd;
 expectType<boolean>(command.Op === AndStmt);
@@ -36,7 +27,7 @@ expectNotAssignable<BinCmdOperator>(rawOperator('RedirOperator', 500));
 expectError((command.Op = rawOperator('RedirOperator', 500)));
 expectError(rawOperator('UnknownFamily', 1));
 
-// Every required ParamExp state is nameable without importing the root entry.
+// Every required ParamExp state is nameable from the syntax entry point.
 declare const parameter: ParamExp;
 expectType<OptState>(parameter.Split);
 expectType<OptState>(parameter.GlobSubst);

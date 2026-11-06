@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { Comment, GoString, Node, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { printSync } from '../src/syntax-print.js';
 import { walk, WalkPanicError } from '../src/syntax-walk.js';
-import { syntheticNode } from './analyze-fixtures.js';
+import { syntheticNode } from './syntax-fixtures.js';
 
 /** Small valid coordinates make comment placement independent of parser output. */
 function position(offset: number): SyntaxPos {

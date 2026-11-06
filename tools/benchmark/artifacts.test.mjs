@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { verifyEntrypoints } from './artifacts.mjs';
 
-test('preparation rejects missing root and analyze declaration rollups', () => {
+test('preparation rejects missing declared runtime and type entrypoints', () => {
   const directory = mkdtempSync(join(tmpdir(), 'sh-ast-entrypoints-test-'));
   try {
     mkdirSync(join(directory, 'dist'));
@@ -16,13 +16,10 @@ test('preparation rejects missing root and analyze declaration rollups', () => {
       types: './dist/sh-ast.d.ts',
       exports: {
         '.': { default: './dist/index.js', types: './dist/sh-ast.d.ts' },
-        './analyze': { default: './dist/index.js', types: './dist/analyze.d.ts' },
       },
     };
     assert.throws(() => verifyEntrypoints(directory, manifest), /sh-ast.d.ts/);
     writeFileSync(join(directory, 'dist/sh-ast.d.ts'), 'export {};');
-    assert.throws(() => verifyEntrypoints(directory, manifest), /analyze.d.ts/);
-    writeFileSync(join(directory, 'dist/analyze.d.ts'), 'export {};');
     assert.doesNotThrow(() => verifyEntrypoints(directory, manifest));
   } finally {
     rmSync(directory, { recursive: true, force: true });
