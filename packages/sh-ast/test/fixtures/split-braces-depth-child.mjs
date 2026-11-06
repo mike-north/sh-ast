@@ -50,7 +50,7 @@ function unchanged(records) {
 
 function makeWord() {
   let word;
-  if (mode === 'input') {
+  if (mode === 'input' || mode === 'warm-input') {
     word = {
       Type: 'Word',
       Parts: [{ Type: 'Lit', Value: 'leaf', ValuePos: zero, ValueEnd: zero }],
@@ -79,6 +79,54 @@ function makeWord() {
   }
   return word;
 }
+/** Same public recovery sequence follows every accepted or refused warm-up. */
+function warmReuse() {
+  assert.equal(parseSync('echo retained').Stmts.length, 1);
+  const parsed = parseWithPositionsSync('echo retained');
+  assert.equal(parsed.Positions.get(parsed.File).Pos.Offset, 0);
+  assert.equal(nodePos(parsed.File).Offset, 0);
+  assert.equal(printSync(parsed.File), 'echo retained\n');
+}
+
+if (mode === 'warm-input') {
+  for (const count of [30, 100, 127, 200, 400, 800]) {
+    for (const withBrace of [false, true]) {
+      for (let attempt = 0; attempt < 8; attempt++) {
+        let candidate = {
+          Type: 'Word',
+          Parts: [{ Type: 'Lit', Value: 'leaf', ValuePos: zero, ValueEnd: zero }],
+        };
+        for (let index = 0; index < count; index++) {
+          candidate = {
+            Type: 'Word',
+            Parts: [{ Type: 'BraceExp', Sequence: false, Elems: [candidate] }],
+          };
+        }
+        if (withBrace)
+          candidate.Parts.push({ Type: 'Lit', Value: '{a,b}', ValuePos: zero, ValueEnd: zero });
+        const snapshot = capture(candidate);
+        if (count <= 100) assert.equal(splitBraces(candidate), withBrace);
+        else {
+          assert.throws(
+            () => splitBraces(candidate),
+            (error) => {
+              assert.ok(error instanceof ShInternalError);
+              assert.equal(
+                error.message,
+                'SplitBraces input record depth 257 exceeds the bridge transport limit 256',
+              );
+              assert.equal(error.cause, undefined);
+              return true;
+            },
+          );
+          unchanged(snapshot);
+        }
+        warmReuse();
+      }
+    }
+  }
+}
+
 const observations = [];
 for (let iteration = 0; iteration < attempts; iteration++) {
   const word = makeWord();
@@ -86,39 +134,33 @@ for (let iteration = 0; iteration < attempts; iteration++) {
   let outcome = 'success';
   let stage;
   try {
-    assert.equal(splitBraces(word), mode !== 'input');
+    assert.equal(splitBraces(word), mode !== 'input' && mode !== 'warm-input');
   } catch (error) {
     assert.ok(
       error instanceof ShInternalError,
       `raw or wrong failure: ${error.name}: ${error.message}`,
     );
     assert.equal(error.code, 'SH_AST_INTERNAL');
-    const preflight =
+    const inputRefusal =
+      error.message === 'SplitBraces input record depth 257 exceeds the bridge transport limit 256';
+    const outputRefusal =
       error.message ===
       'SplitBraces output record depth 257 exceeds the bridge transport limit 256';
-    if (preflight) {
-      assert.notEqual(mode, 'input');
-      assert.equal(error.cause, undefined, 'prevention must not fabricate an engine failure');
-      stage = 'output depth preflight';
-    } else {
-      assert.match(error.message, /SplitBraces.*stack.*(input|output)/);
-      assert.ok(error.cause instanceof RangeError, 'original stack failure must remain the cause');
-      assert.match(error.cause.message, /Maximum call stack size exceeded/);
-      assert.match(error.cause.stack, /syntax-wire/);
-      stage = error.message.includes('input') ? 'input' : 'output';
-      assert.equal(stage, mode === 'input' ? 'input' : 'output');
-    }
+    assert.ok(inputRefusal || outputRefusal, 'known deep graphs must be refused before a VM trap');
+    assert.equal(error.cause, undefined, 'prevention must not fabricate an engine failure');
+    stage = inputRefusal ? 'input depth preflight' : 'output depth preflight';
+    assert.equal(inputRefusal, mode === 'input' || mode === 'warm-input');
     unchanged(before);
     outcome = 'bridge-resource-failure';
   }
-  if (mode !== 'input' && depth >= 1000) {
+  if (mode !== 'input' && mode !== 'warm-input' && depth >= 1000) {
     assert.equal(
       stage,
       'output depth preflight',
       'known deep output must be refused before a VM trap',
     );
   }
-  if (mode !== 'input' && depth <= 100) assert.equal(outcome, 'success');
+  if (mode !== 'input' && mode !== 'warm-input' && depth <= 100) assert.equal(outcome, 'success');
   const reused = parseSync('echo retained');
   assert.equal(reused.Stmts.length, 1);
   const positioned = parseWithPositionsSync('echo retained');
@@ -126,8 +168,8 @@ for (let iteration = 0; iteration < attempts; iteration++) {
   assert.equal(nodePos(positioned.File).Offset, 0);
   assert.equal(printSync(positioned.File), 'echo retained\n');
   assert.equal(splitBraces({ Type: 'Word', Parts: null }), false);
-  // A future engine may support this depth; successful rewriting remains allowed.
-  // The regression forbids raw stack failures, not a fixed acceptance/refusal limit.
+  // These deliberately over-budget graphs must fail before either recursive
+  // transport boundary, independently of JIT warm-up or host stack margins.
   observations.push({ iteration, outcome, stage, unchanged: outcome !== 'success', reused: true });
 }
 console.log(

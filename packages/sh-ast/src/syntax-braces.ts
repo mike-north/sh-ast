@@ -6,6 +6,7 @@
 import type { Word, WordPart } from '../generated/syntax-types.js';
 import { ShInternalError } from './errors.js';
 import { InputError } from './syntax-errors.js';
+import { assertSplitBracesInputDepth } from './syntax-braces-input.js';
 import { decodeWire, encodeWire, isGoString, isRecord, isSyntaxNode } from './syntax-wire.js';
 import { callSyntax } from './wasm-instance.js';
 
@@ -25,11 +26,13 @@ import { callSyntax } from './wasm-instance.js';
  *
  * InputError identifies unrepresentable input. A panic from the selected native
  * operation becomes ShInternalError and leaves the supplied Word unchanged.
- * Native output has a separate bridge limit of 256 nested Go struct records,
- * checked iteratively after rewriting and before recursive transport. This can
- * refuse a valid Go result with ShInternalError; it is not parser work or grammar.
+ * Input and output each have a bridge limit of 256 nested Go struct records,
+ * including positions; slices and pointer/interface wrappers add no units. Input
+ * is checked iteratively before recursive validation, encoding or native entry;
+ * output is checked after rewriting and before recursive transport. These checks
+ * can refuse valid Go data with ShInternalError; they are not parser work or grammar.
  * JavaScript input/output stack exhaustion also becomes ShInternalError with its
- * original RangeError as `cause`. Both refusals leave the supplied Word unchanged.
+ * original RangeError as `cause`. All refusals leave the supplied Word unchanged.
  * No fixed depth acceptance or arbitrary caller-stack guarantee follows.
  * An unexpected native engine stack trap also retains its cause, but adaptation
  * alone does not establish the health of the native runtime after such a trap.
@@ -38,6 +41,7 @@ import { callSyntax } from './wasm-instance.js';
  */
 export function splitBraces(word: Word): boolean {
   const { originalParts, payload } = withinHostStack('input validation and encoding', () => {
+    assertSplitBracesInputDepth(word);
     if (!isWordRecord(word)) {
       throw new InputError('SplitBraces requires a complete, acyclic Word record');
     }

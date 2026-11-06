@@ -18,6 +18,7 @@ describe('SplitBraces host stack boundary', () => {
     ['output', 2000, 8],
     ['bytes', 1000, 1],
     ['input', 2000, 1],
+    ['warm-input', 1600, 8],
   ])(
     'keeps %s depth %i failures typed, atomic, and reusable',
     (mode, depth, attempts) => {

@@ -157,3 +157,41 @@ SplitBraces call on Node 22/24. The canonical binary recorded earlier predates
 this shim correction; a fresh hosted Linux artifact is required before final
 public regression and composition acceptance. The underlying Go fork pin and
 schema source remain unchanged.
+
+The replacement hosted Linux build is run `42171105574`, source
+`16df152092d610435e779e47d08b0acdf400cc8c`. Its exact downloaded WASM SHA-256 is
+`50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`.
+The native tests, provenance check, build and upload passed; comparison with the
+previous committed binary failed as expected. The candidate now commits these
+hosted bytes. Later input protection changes only TypeScript, leaving native
+source and this artifact unchanged.
+
+Independent warmed-input probing then found a second transport path: a caller-built
+1,600-level Word/BraceExp chain can pass optimized JavaScript validation and trap
+inside the recursive native decoder. A cold-only stack-exhaustion test had not
+covered that path. Tests were added first for the exact record-budget fencepost,
+cold and warmed deep inputs, aliases revisited through deeper paths, shared byte
+values and cycles. An operation-local iterative input preflight now applies the
+same 256-record budget before recursive validation, encoding, WASM initialization
+or native entry. Generated Go field metadata defines traversal; position values
+count, container wrappers do not. Only active ancestors detect cycles, so a shared
+subgraph cannot evade the budget through an earlier shallower visit. Cycles retain
+InputError, while excess represented depth is ShInternalError without a fabricated
+engine cause.
+
+The six new input tests failed before the preflight and passed afterwards.
+Independent instrumentation on Node 22.22.1 and 24.14.0 proved that cold 1,600-level
+refusal performs zero module compilations, instances or native calls; 40 warmed
+refusals add no native calls. Exact 256-record inputs are accepted, 257-record
+inputs and deeper alias paths are refused, and cyclic inputs retain InputError.
+All slots and identities remain unchanged on refusal. Repeated successful parse,
+position, print and split operations reuse the same one WASM module and instance;
+no reset or reinitialization is used to simulate recovery.
+
+Final local uncached build/check/test and regenerated API documentation pass on
+Node 22.22.1 with pnpm 11.12.0, Nx parallelism 2 and Vitest maximum workers 2:
+69 runtime files / 1,567 tests, public type tests, 39 benchmark unit cases and four
+real-worker integrations. The independent reviewer also reran the exact 96-case
+warm-up sequence followed by eight 1,600-level input refusals and 42 deep output
+refusals on both Node 22.22.1 and 24.14.0. Hosted final-head reproducibility and
+code review remain separate gates; these local results do not establish them.
