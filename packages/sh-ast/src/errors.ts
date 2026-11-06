@@ -2,8 +2,9 @@
 
 /**
  * Common base for syntax package failures, including upstream syntax errors
- * and binding resource refusals. The stable code discriminator supports programmatic handling
- * without interpreting display messages. Only concrete subclasses are thrown.
+ * and binding resource refusals. The stable code discriminator supports
+ * programmatic handling without interpreting display messages. Only concrete
+ * subclasses are thrown.
  * @public
  */
 export abstract class ShAstError extends Error {
@@ -51,8 +52,8 @@ export class ShParseMaxDepthError extends ShAstError {
   readonly maxDepth: number;
   /**
    * Native node work at the rejected entry, greater than {@link ShParseMaxDepthError.maxDepth}.
-   * The historical field name is retained for compatibility; the value is no
-   * longer a lexical estimate and is not a count of runtime stack frames.
+   * Units describe native parser work, not a lexical estimate or a count of
+   * runtime stack frames.
    */
   readonly estimatedDepth: number;
 
