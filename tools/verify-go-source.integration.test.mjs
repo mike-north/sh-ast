@@ -45,13 +45,13 @@ test('rejects altered cached fork source even when pin, origin and zip remain un
     }),
   );
   const directory = mkdtempSync(join(tmpdir(), 'sh-ast-fork-cache-test-'));
+  const cache = join(directory, 'cache');
   try {
     const checker = join(directory, 'verify-module-source');
     execFileSync(goBinary, ['build', '-o', checker, './verify-source'], {
       cwd: join(repository, 'tools/gen-visitor-keys'),
       env,
     });
-    const cache = join(directory, 'cache');
     const root = join(directory, 'repository');
     copyEntry(join(repository, 'tools/go-source.json'), join(root, 'tools/go-source.json'));
     // The minimal graphs select precisely the fork being verified, avoiding any
@@ -100,6 +100,13 @@ replace ${identity.module} => ${identity.fork} ${identity.version}
       },
     );
   } finally {
+    // Go's expanded module directories are read-only on Linux. Its own cache
+    // cleaner removes only this isolated copy without weakening the fixture or
+    // changing permissions in the shared cache used by actual builds.
+    execFileSync(goBinary, ['clean', '-modcache'], {
+      env: { ...env, GOMODCACHE: cache, GOTOOLCHAIN: 'local' },
+      stdio: 'pipe',
+    });
     rmSync(directory, { recursive: true, force: true });
   }
 });

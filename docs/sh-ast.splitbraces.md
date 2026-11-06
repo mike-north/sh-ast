@@ -6,7 +6,7 @@
 
 Applies the selected Go syntax.SplitBraces operation synchronously to a mutable Word and returns its exact boolean. First use initializes WASM synchronously. `true` does not imply that a BraceExp exists: malformed or singleton brace text can return true while being represented again as literals. No fields expand.
 
-The Word keeps its identity. False preserves its Parts array and children; true replaces Parts as Go does, retaining input WordPart objects that Go reuses, including inside new brace elements. Newly split literals retain Go's copied position values; new nodes have no entry in an original PositionSnapshot. Existing aliases to an old Parts array continue to observe that old array.
+The Word keeps its identity. False preserves its Parts array and children; true replaces Parts as Go does, retaining input WordPart objects that Go reuses, including inside new brace elements. Newly split literals retain Go's copied position values; new nodes have no entry in an original PositionSnapshot. Existing aliases to an old Parts array continue to observe that old array. Selected Go Walk rejects BraceExp nodes; callers can inspect the transformed records directly. This operation does not extend traversal's supported nodes.
 
 InputError identifies unrepresentable input. A panic from the selected native operation becomes ShInternalError and leaves the supplied Word unchanged. This operation does not change parser output before explicitly being called.
 

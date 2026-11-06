@@ -234,3 +234,20 @@ func TestPrinterRejectsUnrepresentableInputWithoutChangingOptionDomains(t *testi
 		}
 	}
 }
+
+// Constructed adjacent parts follow the selected Go printer, including its
+// per-literal trailing-backslash doubling. These exact bytes are not a claim
+// that printing preserves the shell meaning of every constructed Word.
+func TestSelectedPrinterSplitLiteralBackslashes(t *testing.T) {
+	for _, fixture := range []struct {
+		word *syntax.Word
+		want string
+	}{
+		{&syntax.Word{Parts: []syntax.WordPart{&syntax.Lit{Value: "\\"}, &syntax.Lit{Value: "\\{a,b}"}}}, strings.Repeat("\\", 3) + "{a,b}"},
+		{&syntax.Word{Parts: []syntax.WordPart{&syntax.Lit{Value: "\\"}, &syntax.DblQuoted{Parts: []syntax.WordPart{&syntax.Lit{Value: "{a,b}"}}}, &syntax.Lit{Value: "\\"}, &syntax.DblQuoted{Parts: []syntax.WordPart{&syntax.Lit{Value: "x"}}}}}, strings.Repeat("\\", 2) + `"{a,b}"` + strings.Repeat("\\", 2) + `"x"`},
+	} {
+		if actual := comparePrint(t, fixture.word, `{}`); actual != fixture.want {
+			t.Fatalf("selected constructed-word bytes = %q, want %q", actual, fixture.want)
+		}
+	}
+}
