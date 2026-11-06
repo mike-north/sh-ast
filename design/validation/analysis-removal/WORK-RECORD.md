@@ -104,3 +104,31 @@ repacking. Repository version metadata and release PRs were untouched. A fresh
 consumer installation of that prospective artifact passed synchronous multibyte
 parse/print, public SplitBraces, absent analysis errors/operations, and rejection
 of the former analysis subpath. This is a local candidate, not a publication.
+
+## Independently pinned checksum follow-up
+
+Inherited binding follow-up `523033b6e1770147e99cb69796af78d9abb231f2`, which
+records independently SumDB-verified module/archive and go.mod checksums and
+compares both resolved Go consumer graphs plus downloaded/cache bytes against
+those pins. Coherent tampering of cached source/archive/go.mod and both local
+go.sum files is not an accepted authority. This changes source verification,
+its tests and provenance documentation, without changing syntax runtime, types,
+schema or committed canonical WASM.
+
+The selected fork remains `bbc7c4ace575d5de375726fdaa2a5c001c46564c`; the
+canonical WASM remains
+`50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`,
+built from native binding source `16df152092d610435e779e47d08b0acdf400cc8c`.
+Compared with reviewed cleanup `7e7449ee846cbc6e3892cc8313703d45632121c2` and
+prospective package SHA-256
+`66c3875a6f67fb385ca695bd42209073d1b88e1a40c7eafc8133e7713905e957`,
+the package member set is unchanged and every non-README/non-manifest asset is
+byte-identical. README provenance text changes, so final packaging is refreshed
+rather than reusing that earlier archive.
+
+The reviewed independent analysis source does not need a metadata-only source
+commit for this equivalent syntax runtime. Final build, installed-package and
+exact member/hash evidence is recorded in `/tmp/sh-ast-final-checksum-523033-bw_zkyw3/receipt.json`, with the
+prospective artifact isolated there. Only temporary manifest version metadata
+may differ from this source package; no actual publication, release dispatch,
+registry lockfile fabrication or committed version rewrite is part of this work.

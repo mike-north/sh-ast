@@ -1,16 +1,26 @@
 /**
  * Verifies the actual Go source selected by both syntax consumers. Release labels
  * alone cannot identify a fork: the immutable pseudo-version, full Git revision,
- * and Go content checksum must agree before schema generation or WASM builds.
+ * and review-owned Go content checksums must agree before generation or builds.
  * The original requirement label must agree across both module graphs as well;
  * that label does not establish the consumed fork's Git ancestry.
- * Go downloads use its normal checksum verification; no semantic patches are
- * applied by this binding repository.
+ * Fixed checksums anchor consistency independently of mutable consumer go.sum
+ * files and cache reports. They do not protect against arbitrary repository
+ * changes or prove ancestry. No semantic patches are applied by this binding.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+/** Go h1 identities are canonical base64 encodings of a 32-byte SHA-256 digest. */
+function isGoChecksum(value) {
+  return (
+    typeof value === 'string' &&
+    /^h1:[A-Za-z0-9+/]{43}=$/.test(value) &&
+    Buffer.from(value.slice(3), 'base64').toString('base64') === value.slice(3)
+  );
+}
 
 /**
  * Checks an isolated repository root; the runner seam lets tests model effective
@@ -27,6 +37,11 @@ export function verifyGoSource(root, run = execFileSync) {
     !identity.version.endsWith(`-${identity.revision.slice(0, 12)}`)
   ) {
     throw new Error('Expected an immutable fork identity with a full Git revision');
+  }
+  // These values are reviewed source identity, refreshed from a clean SumDB-
+  // verified download when the pin changes, never from the reports being tested.
+  if (!isGoChecksum(identity.sum) || !isGoChecksum(identity.goModSum)) {
+    throw new Error('Expected canonical pinned Go checksums for source and go.mod');
   }
   // upstream.version records the required original module label. Only the fork
   // pin, origin and content checks below identify consumed bytes. An ancestry
@@ -55,8 +70,8 @@ export function verifyGoSource(root, run = execFileSync) {
       module.Version !== identity.upstream.version ||
       module.Replace?.Path !== identity.fork ||
       module.Replace?.Version !== identity.version ||
-      typeof module.Replace?.Sum !== 'string' ||
-      !module.Replace.Sum.startsWith('h1:')
+      module.Replace?.Sum !== identity.sum ||
+      module.Replace?.GoModSum !== identity.goModSum
     ) {
       throw new Error(`Incorrect effective source in ${directory}`);
     }
@@ -75,7 +90,13 @@ export function verifyGoSource(root, run = execFileSync) {
     downloaded.Version !== identity.version ||
     typeof downloaded.Dir !== 'string' ||
     typeof downloaded.Zip !== 'string' ||
-    modules.some((module) => module.Replace.Sum !== downloaded.Sum)
+    typeof downloaded.GoMod !== 'string' ||
+    downloaded.Sum !== identity.sum ||
+    downloaded.GoModSum !== identity.goModSum ||
+    modules.some(
+      (module) =>
+        module.Replace.Sum !== downloaded.Sum || module.Replace.GoModSum !== downloaded.GoModSum,
+    )
   ) {
     throw new Error('The downloaded source differs from the selected Go modules');
   }
@@ -103,7 +124,11 @@ export function verifyGoSource(root, run = execFileSync) {
       '-version',
       identity.version,
       '-sum',
-      downloaded.Sum,
+      identity.sum,
+      '-go-mod',
+      downloaded.GoMod,
+      '-go-mod-sum',
+      identity.goModSum,
     ],
     { cwd: join(root, 'tools/gen-visitor-keys'), env, encoding: 'utf8' },
   );

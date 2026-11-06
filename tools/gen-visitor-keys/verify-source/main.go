@@ -2,11 +2,14 @@
 // with Go's own module checksum algorithm. go mod verify walks original module
 // paths and does not verify a remotely replaced module under its replacement
 // path, even though compilation reads that replacement's expanded directory.
+// The expected checksums are independent repository identity pins, not values
+// inferred from the mutable cache or consumer go.sum files being inspected.
 package main
 
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"golang.org/x/mod/sumdb/dirhash"
@@ -17,10 +20,23 @@ func main() {
 	archive := flag.String("zip", "", "downloaded Go module archive")
 	module := flag.String("module", "", "replacement module path")
 	version := flag.String("version", "", "immutable replacement version")
-	expected := flag.String("sum", "", "Go content checksum from the verified module graph")
+	expected := flag.String("sum", "", "review-owned Go source content checksum")
+	goMod := flag.String("go-mod", "", "downloaded module metadata file")
+	goModSum := flag.String("go-mod-sum", "", "review-owned Go module metadata checksum")
 	flag.Parse()
-	if *directory == "" || *archive == "" || *module == "" || *version == "" || *expected == "" || flag.NArg() != 0 {
+	if *directory == "" || *archive == "" || *module == "" || *version == "" || *expected == "" || *goMod == "" || *goModSum == "" || flag.NArg() != 0 {
 		fail("all source identity arguments are required")
+	}
+	// Go hashes a module's separately cached .mod file as a single go.mod entry.
+	// Check those actual bytes too, rather than trusting a reported GoModSum.
+	modHash, err := dirhash.Hash1([]string{"go.mod"}, func(string) (io.ReadCloser, error) {
+		return os.Open(*goMod)
+	})
+	if err != nil {
+		fail("hash module metadata: %v", err)
+	}
+	if modHash != *goModSum {
+		fail("go.mod has been modified: got %s, want %s", modHash, *goModSum)
 	}
 	zipped, err := dirhash.HashZip(*archive, dirhash.DefaultHash)
 	if err != nil {

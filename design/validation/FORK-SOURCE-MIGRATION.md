@@ -231,3 +231,51 @@ and the corrected source have the same 111 members. All 109 shipped runtime,
 schema and WASM assets are byte-identical; the package manifest is identical and
 only the shipped README changes. The WASM SHA-256 remains
 `50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`.
+
+## Fixed checksum identity follow-up
+
+The substantive Lite re-review of `8f5311169e1225dc26d6b0e9d0f8abbca1e47ae9`
+identified that matching Go reports and actual source hashes still lacked a
+separate expected checksum. A real tests-first fixture changed only an isolated
+copied cache and temporary consumer files: append to parser source, regenerate
+its module archive using Go's canonical ZIP writer, update `.ziphash` and both
+consumer `go.sum` entries. The original gate accepted the resulting coherent
+altered source even though the reported full Git revision remained unchanged.
+Existing single-file tamper refusal was useful but did not establish that
+independent expected identity.
+
+The repository identity now pins source and module-metadata `h1` checksums.
+These are review-owned values, not regenerated from the consumer reports being
+checked. Two independent downloads used empty temporary module caches outside
+repository module graphs, explicit `proxy.golang.org` and `sum.golang.org`, and
+no checksum exclusions. Both reported the same exact fork revision and hashes:
+
+- Source: `h1:dm2hfQDs8359vB9QziwgnoY/Nsp02ut9jUY0HibSPBc=`.
+- `go.mod`: `h1:syYCoFET8w9tvevxiXUtY8/ICrU+l26jHmhJDra3Vwo=`.
+
+Both consumer replacement reports and the download report must match those pins.
+The standard Go `dirhash` checker hashes actual archive, expanded source and
+cached `.mod` bytes against them. A test holds baseline metadata fixed while
+changing only the copied `.mod` file, proving the file check independently of
+Go's own preceding checksum checks. Synthetic tests also cover malformed or
+noncanonical pins and coherent false source/metadata reports. All 41 focused
+tests pass, preserving the original-version, origin and cache-tamper checks.
+
+This is a source-identity consistency anchor against coupled cache/`go.sum`
+drift, not protection against arbitrary repository compromise or proof of Git
+ancestry. The fork, parser/runtime Go, generated schema and WASM are unchanged;
+the Go checker and fixture changes belong only to build verification.
+
+Full uncached Node 22.22.1 build/check/test and generator Go tests pass after
+this correction: 1,567 runtime tests, public type tests, 39 benchmark unit cases
+and four integrations. Real before/after package archives built from `8f53111`
+and the correction contain the same 111 members. All 109 runtime/schema/WASM
+assets and the manifest are byte-identical; only the shipped README differs.
+The canonical Linux WASM SHA-256 remains
+`50f0e4434fba8255bf60f74cfe5f6f550defb75352e31523102c01aca54001c7`.
+
+The retired `sh-ast/analyze` implementation is removed by PR #94 before the
+combined 0.11 release. The separate `sh-analysis` package explicitly documents
+typed operational/resource failures as distinct from completed semantic
+`unsupported` results. This follow-up does not add compatibility handling or
+swallow failures in the retired core analysis implementation.
