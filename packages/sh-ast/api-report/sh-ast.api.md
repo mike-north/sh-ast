@@ -1060,21 +1060,6 @@ export interface SglQuoted {
 }
 
 // @public
-export class ShAnalyzeInvalidWrapperSpecError extends ShAstError {
-    constructor(message: string);
-    // (undocumented)
-    readonly code = "SH_AST_ANALYZE_INVALID_WRAPPER_SPEC";
-}
-
-// @public
-export class ShAnalyzeMaxDepthError extends ShAstError {
-    constructor(maxDepth: number);
-    // (undocumented)
-    readonly code = "SH_AST_ANALYZE_MAX_DEPTH";
-    readonly maxDepth: number;
-}
-
-// @public
 export abstract class ShAstError extends Error {
     abstract readonly code: string;
 }

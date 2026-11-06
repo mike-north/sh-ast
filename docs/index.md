@@ -26,14 +26,5 @@ Description
 
 
 </td></tr>
-<tr><td>
-
-[sh-ast-analyze](./sh-ast-analyze.md)
-
-
-</td><td>
-
-
-</td></tr>
 </tbody></table>
 

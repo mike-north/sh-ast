@@ -43,3 +43,31 @@ The artifact-exclusion test also failed before cleaning build outputs: a package
 packed after source removal still carried stale `dist/analyze` from the preceding
 build. `pnpm --filter sh-ast clean` is required before the fresh build so removed
 source cannot survive into the installed artifact.
+
+## Source candidate validation
+
+Rebased cleanup onto binding source commit `43db64d` (`fork-build-migration`).
+The conflict resolution preserved public `splitBraces`, its identity guarantees,
+README documentation, and the selected-fork/opaque-Zsh syntax tests. Only the
+analysis observer adapter was removed. The selected Go dependency and canonical
+Linux WASM remain owned by the binding migration; its source-only commit still
+contains the preceding canonical binary, so this is not final runtime evidence
+for the new fork or split operation.
+
+After `pnpm run clean`, the uncached build, API report regeneration and uncached
+docs regeneration passed. `pnpm check` passed (two existing forgotten-export
+warnings in `syntax-snapshot.ts`, no errors). Eight focused Vitest files passed
+98 tests with two workers: package boundary, structured clone, operator exports,
+option-state exports, syntax walk bounds/oracle/mutation, and upstream array
+expansion. All tsd tests passed, including the new absent-analysis type checks.
+
+The installed artifact has one root export and no analysis runtime/declaration
+artifacts. A fresh consumer process exercised first-use parse before a queued
+microtask, multibyte bounds, walk, printing, and retained error inheritance. The
+former analysis import failed with `ERR_PACKAGE_PATH_NOT_EXPORTED`; namespace
+probes found neither analysis error nor interpretation operations. API report
+and generated docs were inspected to confirm analysis declarations were absent.
+
+Generated documentation changes are kept in their own commit because removal
+of the retired analysis documentation exceeds the automated review file limit.
+Final full-suite and exact canonical artifact validation are pending.

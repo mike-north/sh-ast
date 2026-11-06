@@ -108,7 +108,7 @@ number
 
 </td><td>
 
-Native node work at the rejected entry, greater than [ShParseMaxDepthError.maxDepth](./sh-ast.shparsemaxdeptherror.maxdepth.md)<!-- -->. The historical field name is retained for compatibility; the value is no longer a lexical estimate and is not a count of runtime stack frames.
+Native node work at the rejected entry, greater than [ShParseMaxDepthError.maxDepth](./sh-ast.shparsemaxdeptherror.maxdepth.md)<!-- -->. Units describe native parser work, not a lexical estimate or a count of runtime stack frames.
 
 
 </td></tr>
