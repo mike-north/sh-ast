@@ -14,9 +14,11 @@ The responsibility clarification accepted from the user on 2026-11-05 governs
 new work and review: syntax fixes belong in a maintained Go fork, `sh-ast` is the
 faithful synchronous binding, and interpretation belongs in an independent
 analysis layer. This supersedes the earlier decision to retain analysis as a
-`sh-ast` subpath. The existing implementation has not yet been realigned; see
-[the bounded implementation handoff](LAYER-REALIGNMENT.md) and
-[agent/reviewer instructions](../AGENTS.md).
+`sh-ast` subpath. PR #94 removed that subpath; the parser binding remains in
+`sh-ast`. Analysis extraction and publication status are tracked in the independent
+analysis repository. See [the bounded implementation handoff](LAYER-REALIGNMENT.md)
+for the historical plan and [agent/reviewer instructions](../AGENTS.md) for the
+current ownership rules.
 
 ## Reading map
 
@@ -92,8 +94,9 @@ resolution, command sites/context, wrapper resolution, and interpreter-invocatio
 observations with explicit uncertainty and assumptions. It owns interpretation,
 not parser output, syntax validation, shell execution, or caller policy. Its
 selected home is the independent private repository `mike-north/sh-analysis`,
-with npm package name `sh-analysis`. This identity decision does not claim that
-extraction or publication is complete. `sh-ast` must not
+with npm package name `sh-analysis`. The `sh-ast/analyze` subpath was removed
+in PR #94; extraction and publication status are tracked in the analysis
+repository, without implying that consumer migration is ready. `sh-ast` must not
 depend on it; an analysis requirement cannot change syntax records in the binding.
 
 **The consumer adapter** translates syntax into ESLint's locations, visitation,

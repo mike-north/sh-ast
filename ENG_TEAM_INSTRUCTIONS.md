@@ -6,8 +6,9 @@ Working agreement for everyone (human or agent) shipping code in this repo. `sh-
 [the accepted architecture](design/ARCHITECTURE.md#responsibilities) for their meaning.
 It was extracted from the eslint-sh monorepo (`mike-north/eslint-sh` @ `bdd55b3`),
 but ESLint's normalized nodes and byte→UTF-16 projection belong to that consumer.
-Existing `sh-ast/analyze` is to be extracted into an independent analysis layer;
-its presence does not authorize adding interpretation to this binding.
+The `sh-ast/analyze` subpath was removed in PR #94. Analysis lives independently
+in `mike-north/sh-analysis`; the parser binding remains in `sh-ast` and does not
+interpret words or commands.
 
 ## Work queue
 

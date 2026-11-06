@@ -14,9 +14,10 @@ reviewing a change. These rules apply to humans, coding agents, and reviewers.
 | ESLint integration in `eslint-sh`                             | ESLint nodes and visitors, byte-to-UTF-16 projection, diagnostics, rule policy, and fixes                                                                                                             | Defining syntax semantics or pushing lint requirements into the binding                                           |
 
 The middle layer is npm package `sh-analysis` in the selected independent private
-repository `mike-north/sh-analysis`. Existing `sh-ast/analyze` code is extraction
-work, not permission to expand `sh-ast`'s
-responsibility. Follow [the realignment plan](design/LAYER-REALIGNMENT.md).
+repository `mike-north/sh-analysis`. The `sh-ast/analyze` subpath was removed
+in PR #94; analysis lives independently, while the parser binding remains in
+`sh-ast`. Analysis requirements do not expand the binding's responsibility.
+The [realignment plan](design/LAYER-REALIGNMENT.md) records the ownership rationale.
 Dependencies point from consumers toward syntax: analysis depends on `sh-ast`;
 ESLint consumes syntax and analysis. `sh-ast` must not depend on either consumer.
 
@@ -57,7 +58,7 @@ This repository is one layer of a five-layer system. Each layer owns one concern
 
 | Layer | Owns | Must not do |
 |---|---|---|
-| **sh-ast** | Shell syntax: a faithful TypeScript binding of the Go mvdan/sh parser via WASM. Parsing, the AST and its types, positions, traversal, printing. | Interpret words, resolve commands, track working directories, or express any policy. |
+| **sh-ast** | Shell syntax: a faithful TypeScript binding, via WASM, of the maintained Go fork of mvdan/sh (mike-north/sh). The grammar itself lives in that fork; sh-ast owns the binding, the AST and its types, positions, traversal, printing. Grammar or lexer changes go to the fork and arrive here through the binding. | Interpret words, resolve commands, track working directories, or express any policy. Reimplement any part of the grammar in TypeScript. |
 | **sh-analysis** | Observations over sh-ast syntax: word resolution, command sites and argv0, wrapper chains (sudo, env, command, xargs and the like), interpreter invocations, working-directory and path facts, each with explicit uncertainty. Facts only. | Parse shell itself, decide what is allowed, format diagnostics, or know about ESLint, hosts, or agents. |
 | **eslint-sh** | Lint policy for shell files on disk: the ESLint language, rules, presets, fixes, and the projection of sh-analysis facts into diagnostics. | Intercept commands at run time, reimplement word or command resolution, or approve tools. |
 | **command-steering** | Invocation-time steering of an agent's shell commands: the rule schema (matcher and action), the engine, host adapters, the daemon and shell shim, decision logs. Consumes sh-ast and sh-analysis for canonicalization. Owns the rule format that other layers register into. | Build, vet, or approve tools; act as a sandbox or permission system; reimplement parsing or analysis. |
@@ -65,7 +66,7 @@ This repository is one layer of a five-layer system. Each layer owns one concern
 
 Signs an implementation has strayed, each a reason to stop and move the work:
 
-- A shell lexer, tokenizer, or heredoc handling written anywhere but sh-ast.
+- A shell lexer, tokenizer, or heredoc handling written in TypeScript anywhere (grammar changes belong in the Go fork that sh-ast binds).
 - sh-analysis code that returns a verdict, a severity, or advice instead of a fact.
 - eslint-sh code that reads hook payloads, sockets, or live commands.
 - command-steering code that stages, hashes, or approves a tool, or that inspects words by regex instead of asking sh-analysis.
