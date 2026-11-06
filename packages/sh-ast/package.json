@@ -75,7 +75,7 @@
     "fix:lint-ts": "eslint . --fix",
     "prepack": "api-extractor run",
     "test": "concurrently -n vitest,tsd \"pnpm run test:ts\" \"pnpm run test:types\"",
-    "test:ts": "vitest run",
+    "test:ts": "vitest run --maxWorkers=2",
     "test:types": "tsd",
     "uplevel-api-reports": "mkdir -p ../../api-report-combined ../../api-docs-temp && cp api-report/sh-ast.api.md ../../api-report-combined/ && cp temp/sh-ast.api.json ../../api-docs-temp/"
   },

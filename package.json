@@ -47,7 +47,7 @@
     "check:knip": "knip",
     "check:packages": "NX_TUI=false nx run-many -t check --exclude=sh-ast-workspace",
     "check:syncpack": "syncpack lint",
-    "check:workspace": "concurrently -n format,knip,syncpack,lint,api-docs --prefix \"[{name}]\" \"pnpm run check:format\" \"pnpm run check:knip\" \"pnpm run check:syncpack\" \"pnpm run check:lint-ts\" \"pnpm run check:api-docs\" && pnpm run check:release",
+    "check:workspace": "concurrently -n format,knip,syncpack,lint,types,api-docs --prefix \"[{name}]\" \"pnpm run check:format\" \"pnpm run check:knip\" \"pnpm run check:syncpack\" \"pnpm run check:lint-ts\" \"pnpm run check:typecheck\" \"pnpm run check:api-docs\" && pnpm run check:release",
     "clean": "rimraf --glob \"packages/*/dist\" \"packages/*/temp/*\" \"packages/*/*.tsbuildinfo\" \"api-report-combined\" \"api-docs-temp\" \".nx\"",
     "fix": "concurrently -n packages,format,syncpack \"pnpm run fix:packages\" \"pnpm run fix:format\" \"pnpm run fix:syncpack\"",
     "fix:format": "prettier --write .",
@@ -66,7 +66,8 @@
     "test:release-gate": "node --test tools/release-gate.test.mjs",
     "test:tooling": "node --test tools/tooling/*.test.mjs",
     "check:lint-ts": "eslint .",
-    "check:api-docs": "NX_TUI=false nx run-many -t uplevel-api-reports --exclude=sh-ast-workspace --skip-nx-cache && node tools/tooling/check-api-docs.mjs"
+    "check:api-docs": "NX_TUI=false nx run-many -t uplevel-api-reports --exclude=sh-ast-workspace --skip-nx-cache && node tools/tooling/check-api-docs.mjs",
+    "check:typecheck": "tsc --noEmit -p packages/sh-ast && tsc -p packages/sh-ast/test && tsc -p packages/sh-ast/generated && pnpm --filter sh-ast test:types --files \"test-d/**/*.{ts,tsx,mts,cts}\""
   },
   "type": "module"
 }

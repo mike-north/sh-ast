@@ -34,6 +34,11 @@ interpret words or commands.
 - Commands: `pnpm install` → `pnpm build` → `pnpm check` → `pnpm test`, all green before
   every push; prettier before every push. Never `rm` build outputs — `pnpm run clean` /
   `pnpm --filter <pkg> run clean`.
+- `check:typecheck` checks source, runtime tests, and generated declarations with the
+  compiler, and type-contract fixtures with tsd across `.ts`, `.tsx`, `.mts`, and
+  `.cts`. Typed ESLint does not report compiler diagnostics. Intentional malformed
+  runtime fixtures need a local, explained `@ts-expect-error`; rejected API calls
+  in type-contract fixtures retain their `expectError` assertions.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
   commit both — CI checks the API report and regenerated documentation. If the docs regeneration alone would push
   the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
