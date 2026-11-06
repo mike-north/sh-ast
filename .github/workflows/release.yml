@@ -19,9 +19,12 @@ jobs:
           node-version: '24.14.0'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Enforce owner-controlled 0.x releases before versioning or publishing
+        run: pnpm run check:release
       - run: pnpm build
       - uses: changesets/action@v1
         with:
+          version: pnpm version-packages
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,6 +22,8 @@ jobs:
         with:
           go-version-file: packages/sh-ast/shim/go.mod
       - run: pnpm install --frozen-lockfile
+      - name: Enforce owner-controlled 0.x releases
+        run: pnpm run check:release && pnpm run test:release-gate
       - name: Verify exact fork identity and tamper rejection
         run: node tools/verify-go-source.mjs && node --test tools/verify-go-source*.test.mjs
       - run: pnpm build

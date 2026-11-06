@@ -46,7 +46,7 @@
     "check:knip": "knip",
     "check:packages": "NX_TUI=false nx run-many -t check --exclude=sh-ast-workspace",
     "check:syncpack": "syncpack lint",
-    "check:workspace": "concurrently -n format,knip,syncpack --prefix \"[{name}]\" \"pnpm run check:format\" \"pnpm run check:knip\" \"pnpm run check:syncpack\"",
+    "check:workspace": "concurrently -n format,knip,syncpack --prefix \"[{name}]\" \"pnpm run check:format\" \"pnpm run check:knip\" \"pnpm run check:syncpack\" && pnpm run check:release",
     "clean": "rimraf --glob \"packages/*/dist\" \"packages/*/temp/*\" \"packages/*/*.tsbuildinfo\" \"api-report-combined\" \"api-docs-temp\" \".nx\"",
     "fix": "concurrently -n packages,format,syncpack \"pnpm run fix:packages\" \"pnpm run fix:format\" \"pnpm run fix:syncpack\"",
     "fix:format": "prettier --write .",
@@ -54,11 +54,15 @@
     "fix:syncpack": "syncpack fix && syncpack format",
     "generate:sh-ast-schema": "go run -C tools/gen-visitor-keys . -out ../../packages/sh-ast/generated && prettier --write packages/sh-ast/generated",
     "prepare": "husky",
-    "release": "pnpm build && changeset publish",
-    "test": "pnpm run test:benchmark && NX_TUI=false nx run-many -t test --exclude=sh-ast-workspace",
-    "version-packages": "changeset version",
+    "release": "pnpm build && pnpm run check:release && changeset publish",
+    "test": "pnpm run test:release-gate && pnpm run test:benchmark && NX_TUI=false nx run-many -t test --exclude=sh-ast-workspace",
+    "version-packages": "pnpm run check:release && changeset version",
     "benchmark": "node tools/benchmark/run.mjs",
-    "test:benchmark": "node --test tools/benchmark/*.test.mjs && pnpm build && node --test tools/benchmark/*.integration.mjs"
+    "test:benchmark": "node --test tools/benchmark/*.test.mjs && pnpm build && node --test tools/benchmark/*.integration.mjs",
+    "check:release:changesets": "node tools/release-gate.mjs changesets",
+    "check:release:versions": "node tools/release-gate.mjs versions",
+    "check:release": "pnpm run check:release:changesets && pnpm run check:release:versions",
+    "test:release-gate": "node --test tools/release-gate.test.mjs"
   },
   "type": "module"
 }
