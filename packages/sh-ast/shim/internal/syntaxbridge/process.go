@@ -34,8 +34,8 @@ func Process(operation, payload, options string) (result []byte) {
 		return streamParse(payload, options, false)
 	case "parse-with-positions":
 		return streamParse(payload, options, true)
-	case "word-braces":
-		return marshal(wordBraces(payload))
+	case "split-braces":
+		return marshal(splitBraces(payload))
 	case "print":
 		return marshal(printNode(payload, options))
 	case "bounds":

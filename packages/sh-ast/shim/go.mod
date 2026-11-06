@@ -4,5 +4,5 @@ go 1.26.10
 
 require mvdan.cc/sh/v3 v3.14.1
 
-// v3.14.1 with maintained parser corrections; see the replacement's README.
-replace mvdan.cc/sh/v3 => ../../../third_party/mvdan-sh/upstream
+// Syntax corrections live in the maintained Go fork; schema and WASM use this immutable source.
+replace mvdan.cc/sh/v3 => github.com/mike-north/sh/v3 v3.14.2-0.20261106043227-bbc7c4ace575

@@ -5,6 +5,9 @@ on:
   # Stacked candidates need the same checks as PRs targeting main.
   pull_request:
 env:
+  # An external workspace or mutable graph must not redirect canonical builds.
+  GOWORK: 'off'
+  GOFLAGS: -mod=readonly
   # Pinned binaryen release providing wasm-opt — see packages/sh-ast/shim's
   # README.md "The WASM shim" for why wasm-opt is part of the build and why
   # its version must be pinned (a different wasm-opt version can produce a
@@ -26,9 +29,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - name: Verify the pinned parser backport before building
+      - name: Verify the exact fork source before building
         working-directory: .
-        run: node tools/verify-mvdan-backport.mjs
+        run: node tools/verify-go-source.mjs
       - name: Run the shim's Go test suite
         run: go test ./...
       - name: Install pinned wasm-opt (binaryen)

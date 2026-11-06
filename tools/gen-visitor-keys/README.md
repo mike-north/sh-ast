@@ -38,9 +38,15 @@ mvdan/sh version bump.
 ## Determinism
 
 - Every map is walked in sorted key order (node types, fields, interface implementers).
-- The only mvdan/sh-version-derived text in the output is the resolved module version reported by
-  `go/packages`' `Package.Module.Version` — a fact about the pinned dependency (`go.sum`), not a
-  timestamp or VCS stamp.
+- Source-derived output identifies the resolved module path and version from
+  `go/packages`, including `Package.Module.Replace` when the selected source is
+  the maintained fork. An unchanged original `mvdan.cc/sh/v3 v3.14.1` requirement
+  cannot conceal a different fork revision. Unversioned replacements are refused.
+- `node tools/verify-go-source.mjs` checks both the generator and shim against
+  `tools/go-source.json`, the downloaded full Git revision, and Go checksums.
+  The `verify-source` build helper uses Go's standard module hash algorithm for
+  the replacement's archive and expanded source; ordinary `go mod verify` alone
+  does not check that remote replacement cache path.
 - No wall-clock time, hostname, or build-machine detail appears anywhere in the output.
 
 ## Faithful schema validation
@@ -61,12 +67,12 @@ index signature. Upstream semantic comments and their license accompany the
 generated declarations; runtime validation still owns numeric ranges and coherent
 position values.
 
-## Known gap: `BraceExp` is unreachable
+## Parser-unreachable `BraceExp`
 
-`BraceExp` is a real mvdan/sh node type (`Word.Parts` can hold one), but mvdan/sh only produces it
-when something explicitly calls `syntax.SplitBraces` on a parsed word — the shim
-(`packages/sh-ast/shim/main.go`) never does. The generator still emits a schema entry for it (it's
-a real struct implementing `syntax.Node`), but the kitchen-sink coverage test carves it
-out as a documented, single exception rather than silently under-covering. Making it reachable
-would mean calling `syntax.SplitBraces` from the shim — a parser-behavior change, deliberately out
-of scope for this generator work (see design/MILESTONES.md M1 / issue #6's non-goals).
+`BraceExp` is a real mvdan/sh node type (`Word.Parts` can hold one), but parsing
+does not produce it. The kitchen-sink parser coverage test retains this explicit
+exception. The public `splitBraces(word)` syntax operation invokes Go's
+`syntax.SplitBraces` only when requested; it transforms an existing Word and
+preserves the native boolean. The generator includes BraceExp because it is a
+real Node, independently of whether a parser fixture reaches it. No eager
+transformation is added to parsing.

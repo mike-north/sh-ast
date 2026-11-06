@@ -1,0 +1,10 @@
+{
+  "module": "mvdan.cc/sh/v3",
+  "fork": "github.com/mike-north/sh/v3",
+  "version": "v3.14.2-0.20261106043227-bbc7c4ace575",
+  "revision": "bbc7c4ace575d5de375726fdaa2a5c001c46564c",
+  "upstream": {
+    "version": "v3.14.1",
+    "revision": "a3f0c75d21d918756fa38de8b5d3429efde7948b"
+  }
+}

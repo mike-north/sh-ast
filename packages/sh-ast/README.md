@@ -1,8 +1,13 @@
 # sh-ast
 
 A synchronous TypeScript interface to the `syntax` package of
-[mvdan/sh](https://github.com/mvdan/sh), pinned to **v3.14.1 with maintained corrections**
-([source and provenance](https://github.com/mike-north/sh-ast/tree/main/third_party/mvdan-sh)). The release already contains the Unicode sentinel correction; the remaining maintained parser and printer patches are documented there. Parsing returns
+[mvdan/sh](https://github.com/mvdan/sh), using the maintained Go fork at
+[`bbc7c4ace575`](https://github.com/mike-north/sh/tree/bbc7c4ace575d5de375726fdaa2a5c001c46564c),
+based on **v3.14.1**. The [immutable source pin](../../tools/go-source.json) supplies
+both the generated schema and the WASM bundle. Native corrections and their
+upstream status live in the fork's
+[maintenance record](https://github.com/mike-north/sh/blob/bbc7c4ace575d5de375726fdaa2a5c001c46564c/FORK-MAINTENANCE.md);
+this binding applies no Go semantic patch stack. Parsing returns
 mutable records preserving upstream fields, defaults, nulls, numeric operators,
 byte strings, and token positions. First use initializes WebAssembly synchronously
 in Node.js; no initialization promise is required.
@@ -195,6 +200,30 @@ original source bytes, re-indent a subtree to its original column, or guarantee
 that parsing printed output reconstructs every represented value such as a
 `TypedNil` tag. The [copying decision](../../design/STRUCTURED-CLONE-DECISION.md)
 records this boundary and its tests.
+
+`splitBraces(word)` explicitly applies the selected Go `syntax.SplitBraces`
+transformation to a mutable Word and returns its exact boolean. Parsing itself
+continues to leave brace text as literal parts. For an isolated observation,
+copy the Word first:
+
+```ts
+import { splitBraces, type Word } from 'sh-ast';
+
+function rewrittenBraces(input: Word): Word {
+  const copy = structuredClone(input);
+  splitBraces(copy);
+  return copy;
+}
+```
+
+The boolean is not a brace-expansion classifier: `{a}`, `{}`, and malformed
+brace text can return `true` without producing a `BraceExp`. The Word keeps its
+identity. `false` leaves its Parts array and children untouched; `true` replaces
+Parts while retaining input WordPart objects that Go reuses, including inside
+new brace elements. Old array aliases retain the original array. New literal
+records retain Go's copied position values and have no entry in an original
+position snapshot. The operation does not expand fields, repair escaping, or
+assert which dialect or shell options will expand a word.
 
 `sh-ast/analyze` remains a separate syntactic interpretation layer. Its word,
 command, and wrapper analysis consumes the faithful records; it does not define
@@ -424,9 +453,15 @@ fixtures check fidelity; regeneration alone checks only drift.
 The `syntaxProcess` linear-memory ABI transports exact byte payloads and a
 reversible record encoding. `shim/internal/syntaxwire` preserves all exported
 fields, nil/default values, arbitrary strings, and observable position behavior.
-`shim/internal/syntaxbridge` invokes upstream parsing and position operations.
-Private Go printing tests verify that reconstructed edited trees retain the
-information needed for the future public printer.
+`shim/internal/syntaxbridge` invokes the selected Go parsing, printing, and
+position operations. Reconstructed edited trees retain the information those
+operations observe.
+
+Before either build, `node tools/verify-go-source.mjs` verifies both effective Go
+module graphs, the full fork Git revision and Go content checksum, and the actual
+downloaded archive and expanded source bytes. A local replacement or external
+Go workspace cannot substitute a different implementation. The generator records
+the resolved fork module path and immutable version in its output headers.
 
 The canonical binary is built by Linux/amd64 CI with the Go toolchain pinned in
 `shim/go.mod` and the checksum-pinned Binaryen version in
