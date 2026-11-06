@@ -17,6 +17,8 @@ const identity = {
   fork: 'github.com/mike-north/sh/v3',
   version,
   revision,
+  sum: 'h1:dm2hfQDs8359vB9QziwgnoY/Nsp02ut9jUY0HibSPBc=',
+  goModSum: 'h1:syYCoFET8w9tvevxiXUtY8/ICrU+l26jHmhJDra3Vwo=',
   upstream: { version: 'v3.14.1' },
 };
 
@@ -30,12 +32,19 @@ function fixture(action, change = () => {}) {
       directory,
       Path: identity.module,
       Version: 'v3.14.1',
-      Replace: { Path: identity.fork, Version: version, Sum: 'h1:reviewed-module-content' },
+      Replace: {
+        Path: identity.fork,
+        Version: version,
+        Sum: identity.sum,
+        GoModSum: identity.goModSum,
+      },
     }));
     const download = {
       Path: identity.fork,
       Version: version,
-      Sum: 'h1:reviewed-module-content',
+      Sum: identity.sum,
+      GoModSum: identity.goModSum,
+      GoMod: '/module-cache/fork.mod',
       Dir: '/module-cache/fork-source',
       Zip: '/module-cache/fork.zip',
       Origin: { VCS: 'git', URL: 'https://github.com/mike-north/sh', Hash: revision },
@@ -71,6 +80,13 @@ test('checks both Go consumers and the downloaded full Git revision', () => {
     );
     assert.ok(calls.some((c) => c.args[1] === 'download'));
     assert.ok(calls.some((c) => c.args[0] === 'run' && c.args[1] === './verify-source'));
+    const sourceCheck = calls.find((c) => c.args[0] === 'run');
+    assert.equal(sourceCheck.args[sourceCheck.args.indexOf('-sum') + 1], identity.sum);
+    assert.equal(sourceCheck.args[sourceCheck.args.indexOf('-go-mod-sum') + 1], identity.goModSum);
+    assert.equal(
+      sourceCheck.args[sourceCheck.args.indexOf('-go-mod') + 1],
+      '/module-cache/fork.mod',
+    );
     assert.deepEqual(
       calls.filter((c) => c.args[1] === 'verify').map((c) => c.cwd),
       [join(root, 'packages/sh-ast/shim'), join(root, 'tools/gen-visitor-keys')],
@@ -79,6 +95,16 @@ test('checks both Go consumers and the downloaded full Git revision', () => {
 });
 
 for (const directory of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
+  for (const field of ['Sum', 'GoModSum']) {
+    test(`rejects ${directory} replacement ${field} drift from the repository pin`, () => {
+      fixture(
+        (root, run) => assert.throws(() => verifyGoSource(root, run), /effective source/),
+        ({ modules }) => {
+          modules.find((m) => m.directory === directory).Replace[field] = `h1:${'A'.repeat(43)}=`;
+        },
+      );
+    });
+  }
   test(`rejects ${directory} original requirement drift despite the same replacement`, () => {
     fixture(
       (root, run) => assert.throws(() => verifyGoSource(root, run), /effective source/),
@@ -98,6 +124,42 @@ for (const directory of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
         (root, run) => assert.throws(() => verifyGoSource(root, run), /effective source/),
         ({ modules }) => {
           modules.find((m) => m.directory === directory).Replace = replacement;
+        },
+      );
+    });
+  }
+}
+
+for (const field of ['Sum', 'GoModSum']) {
+  test(`rejects coherent false ${field} reports despite unchanged fork revision`, () => {
+    fixture(
+      (root, run) =>
+        assert.throws(() => verifyGoSource(root, run), /effective source|downloaded source/),
+      ({ modules, download }) => {
+        const falseSum = `h1:${'A'.repeat(43)}=`;
+        for (const module of modules) module.Replace[field] = falseSum;
+        download[field] = falseSum;
+      },
+    );
+  });
+}
+
+for (const field of ['sum', 'goModSum']) {
+  for (const value of [
+    undefined,
+    null,
+    'h1:unverified',
+    `h2:${'A'.repeat(43)}=`,
+    `h1:${'A'.repeat(42)}B=`,
+  ]) {
+    test(`rejects invalid pinned ${field}: ${JSON.stringify(value)}`, () => {
+      fixture(
+        (root, run) => assert.throws(() => verifyGoSource(root, run), /pinned Go checksums/),
+        ({ root }) => {
+          writeFileSync(
+            join(root, 'tools/go-source.json'),
+            JSON.stringify({ ...identity, [field]: value }),
+          );
         },
       );
     });

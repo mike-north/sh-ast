@@ -52,6 +52,11 @@ test('rejects real original-requirement drift and altered cache despite the same
       cwd: join(repository, 'tools/gen-visitor-keys'),
       env,
     });
+    const repack = join(directory, 'repack-module');
+    execFileSync(goBinary, ['build', '-o', repack, '../test-fixtures/repack-module.go'], {
+      cwd: join(repository, 'tools/gen-visitor-keys'),
+      env,
+    });
     const root = join(directory, 'repository');
     copyEntry(join(repository, 'tools/go-source.json'), join(root, 'tools/go-source.json'));
     // The minimal graphs select precisely the fork being verified, avoiding any
@@ -113,6 +118,48 @@ replace ${identity.module} => ${identity.fork} ${identity.version}
         writeFileSync(sourceIdentity, JSON.stringify(identity));
       }
     });
+    // Hold the real baseline Go metadata fixed to isolate the file check from
+    // Go's own earlier go.mod verification. The source checker must inspect the
+    // actual cache file even when all surrounding reports still agree.
+    const baselineModules = new Map(
+      ['packages/sh-ast/shim', 'tools/gen-visitor-keys'].map((consumer) => [
+        join(root, consumer),
+        run('go', ['list', '-m', '-json', identity.module], {
+          cwd: join(root, consumer),
+          env,
+          encoding: 'utf8',
+        }),
+      ]),
+    );
+    const baselineDownload = run(
+      'go',
+      ['mod', 'download', '-json', `${identity.fork}@${identity.version}`],
+      {
+        cwd: join(root, 'packages/sh-ast/shim'),
+        env,
+        encoding: 'utf8',
+      },
+    );
+    await t.test('refuses altered cached go.mod bytes with unchanged checksum reports', () => {
+      const manifest = join(cache, relative(originalCache, downloaded.GoMod));
+      const baseline = readFileSync(manifest, 'utf8');
+      try {
+        chmodSync(manifest, 0o644);
+        writeFileSync(manifest, `${baseline}\n// altered cached module metadata\n`);
+        const heldReports = (command, args, options) => {
+          if (args[0] === 'list') return baselineModules.get(options.cwd);
+          if (args[0] === 'mod' && args[1] === 'download') return baselineDownload;
+          if (args[0] === 'mod' && args[1] === 'verify') return '';
+          return run(command, args, options);
+        };
+        assert.throws(
+          () => verifyGoSource(root, heldReports),
+          (error) => /go.mod has been modified/.test(String(error.stderr)),
+        );
+      } finally {
+        writeFileSync(manifest, baseline);
+      }
+    });
     const parser = join(cache, relative(originalCache, downloaded.Dir), 'syntax/parser.go');
     chmodSync(parser, 0o644);
     writeFileSync(
@@ -126,6 +173,46 @@ replace ${identity.module} => ${identity.fork} ${identity.version}
       (error) => {
         assert.match(String(error.stderr), /expanded source has been modified/);
         return true;
+      },
+    );
+    await t.test(
+      'refuses coherent altered source, archive, cache sums and both consumer go.sum files',
+      () => {
+        const archive = join(cache, relative(originalCache, downloaded.Zip));
+        const source = join(cache, relative(originalCache, downloaded.Dir));
+        chmodSync(archive, 0o644);
+        const alteredSum = execFileSync(
+          repack,
+          [source, archive, identity.fork, identity.version],
+          {
+            encoding: 'utf8',
+          },
+        ).trim();
+        assert.notEqual(alteredSum, downloaded.Sum);
+        writeFileSync(`${archive}hash`, alteredSum);
+        for (const consumer of ['packages/sh-ast/shim', 'tools/gen-visitor-keys']) {
+          const sums = join(root, consumer, 'go.sum');
+          writeFileSync(sums, readFileSync(sums, 'utf8').replace(downloaded.Sum, alteredSum));
+          const actual = JSON.parse(
+            run('go', ['list', '-m', '-json', identity.module], {
+              cwd: join(root, consumer),
+              env,
+              encoding: 'utf8',
+            }),
+          );
+          assert.equal(actual.Replace.Sum, alteredSum);
+        }
+        const actual = JSON.parse(
+          run('go', ['mod', 'download', '-json', `${identity.fork}@${identity.version}`], {
+            cwd: join(root, 'packages/sh-ast/shim'),
+            env,
+            encoding: 'utf8',
+          }),
+        );
+        assert.equal(actual.Sum, alteredSum);
+        assert.equal(actual.Origin.Hash, identity.revision);
+        // The prior consistency-only gate accepted this coherent altered source.
+        assert.throws(() => verifyGoSource(root, run), /effective source|downloaded source/);
       },
     );
   } finally {

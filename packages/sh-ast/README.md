@@ -473,8 +473,12 @@ operations observe.
 
 Before either build, `node tools/verify-go-source.mjs` verifies both effective Go
 module graphs against the recorded original requirement version, the full fork
-Git revision and Go content checksum, and the actual downloaded archive and
-expanded source bytes. A local replacement or external
+Git revision and review-owned source and `go.mod` checksum pins. Go's standard
+checksum algorithm checks the actual downloaded archive, expanded source and
+cached `go.mod` bytes against those fixed pins. Coupled cache and consumer
+`go.sum` changes cannot silently redefine the expected source identity; updates
+to the pins require a separately verified download and review. This consistency
+anchor does not protect against arbitrary repository changes. A local replacement or external
 Go workspace cannot substitute a different implementation. The generator records
 the resolved fork module path and immutable version in its output headers.
 The `upstream.version` metadata is the required original module label; it does not
