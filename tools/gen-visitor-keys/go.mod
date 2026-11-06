@@ -9,5 +9,5 @@ require (
 	mvdan.cc/sh/v3 v3.14.1 // indirect
 )
 
-// Inspect the exact parser source used by the WASM shim, including its documented corrections.
-replace mvdan.cc/sh/v3 => ../../third_party/mvdan-sh/upstream
+// Inspect the same immutable Go fork source that supplies the WASM syntax implementation.
+replace mvdan.cc/sh/v3 => github.com/mike-north/sh/v3 v3.14.2-0.20261106043227-bbc7c4ace575

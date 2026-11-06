@@ -21,6 +21,7 @@ export {
   rawOperator,
 } from './syntax.js';
 export type { ParseOptions, ParsedFile, PositionSnapshot, NodePositions } from './syntax.js';
+export { splitBraces } from './syntax-braces.js';
 export { printSync } from './syntax-print.js';
 export type { PrintOptions } from './syntax-print.js';
 export { PrintError, PrintPanicError } from './syntax-print-errors.js';

@@ -5,16 +5,15 @@
  * uncertainty. Ordinary words never cross the WASM boundary for this check.
  */
 import type { Word } from '../../generated/syntax-types.js';
-import { ShInternalError } from '../errors.js';
-import { decodeWire, encodeWire, isRecord } from '../syntax-wire.js';
-import { callSyntax } from '../wasm-instance.js';
+import { InputError } from '../syntax-errors.js';
+import { splitBraces } from '../syntax-braces.js';
 
 /** A positive observation is distinct from inability to trust upstream escape handling. @internal */
 export type BraceObservation = boolean | 'unsupported';
 
 /**
- * Reports current word content, never an identity cache. Go reconstructs an
- * isolated Word before SplitBraces mutates it. v3.13.1's SplitBraces mishandles
+ * Reports current word content, never an identity cache. The analyzer copies its
+ * Word before the public SplitBraces operation mutates it. v3.13.1's SplitBraces mishandles
  * escapes, so candidates containing backslashes remain unknown instead of
  * introducing a competing brace grammar or claiming a false static value.
  * @internal
@@ -52,13 +51,12 @@ export function observeBraces(word: Word): BraceObservation {
   if (escapeCrossesPart) return 'unsupported';
   if (!candidate) return false;
   if (escaped) return 'unsupported';
-  const response = decodeWire(
-    callSyntax('word-braces', new TextEncoder().encode(encodeWire(word))),
-  );
-  if (!isRecord(response)) throw new ShInternalError('Invalid brace observation response');
-  if (isRecord(response.Error) && response.Error.Kind === 'InputError') return 'unsupported';
-  if (typeof response.Brace !== 'boolean' || Object.keys(response).length !== 1) {
-    throw new ShInternalError('Invalid brace observation response');
+  const observation = structuredClone(word);
+  try {
+    splitBraces(observation);
+  } catch (error) {
+    if (error instanceof InputError) return 'unsupported';
+    throw error;
   }
-  return response.Brace;
+  return observation.Parts?.some((part) => part?.Type === 'BraceExp') ?? false;
 }

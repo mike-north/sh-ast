@@ -4,6 +4,10 @@ on:
     branches: [main]
   # Stacked candidates need the same checks as PRs targeting main.
   pull_request:
+env:
+  # An external workspace or mutable graph must not redirect canonical builds.
+  GOWORK: 'off'
+  GOFLAGS: -mod=readonly
 jobs:
   build-check-test:
     runs-on: ubuntu-latest
@@ -14,9 +18,12 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: packages/sh-ast/shim/go.mod
       - run: pnpm install --frozen-lockfile
-      - name: Verify the pinned parser backport and tamper rejection
-        run: node tools/verify-mvdan-backport.mjs && node --test tools/verify-mvdan-backport.test.mjs
+      - name: Verify exact fork identity and tamper rejection
+        run: node tools/verify-go-source.mjs && node --test tools/verify-go-source*.test.mjs
       - run: pnpm build
       - run: pnpm check
       - run: pnpm test

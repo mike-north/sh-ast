@@ -5,7 +5,9 @@ The baseline is main `211c5b7d4207b5e409d3b1ed841ad629d5f03fde`, including
 `a3f0c75d21d918756fa38de8b5d3429efde7948b`, the latest tagged release at the
 comparison. Choosing the tag avoids importing later grammar decisions, notably
 #1428's EOF-terminated missing heredocs. The source closure and correction audit
-are in [the vendor README](../../../third_party/mvdan-sh/README.md).
+were recorded with the former vendored source. That source now lives in the
+maintained fork; see its [source closure and correction audit](https://github.com/mike-north/sh/blob/bbc7c4ace575d5de375726fdaa2a5c001c46564c/FORK-MAINTENANCE.md)
+and the binding's [fork-source migration record](../FORK-SOURCE-MIGRATION.md).
 
 ## Corpus
 

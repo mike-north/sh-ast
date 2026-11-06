@@ -5,6 +5,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"go/types"
 	"log"
 	"os"
@@ -33,7 +34,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("gen-visitor-keys: faithful schema: %v", err)
 	}
-	version := mvdanShVersion(loaded)
+	version, err := syntaxSourceIdentity(loaded.Module)
+	if err != nil {
+		log.Fatalf("gen-visitor-keys: source identity: %v", err)
+	}
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
 		log.Fatalf("gen-visitor-keys: %v", err)
 	}
@@ -51,20 +55,28 @@ func writeFile(path, contents string) {
 	}
 }
 
-// mvdanShVersion reports the resolved mvdan.cc/sh/v3 module version for the
-// loaded package, straight from the Go module graph `go list` consulted —
-// never a hand-typed literal, so it can't drift from the actual pinned
-// dependency in go.mod/go.sum.
-func mvdanShVersion(pkg *packages.Package) string {
-	if pkg.Module == nil {
-		log.Fatal("gen-visitor-keys: no module info available for the loaded package")
+// syntaxSourceIdentity names the source that actually provided compiler types.
+// The original requirement can retain a release label while a fork replacement
+// changes its implementation; generated provenance must identify the replacement.
+// Local replacements have no immutable module identity and are not build inputs.
+func syntaxSourceIdentity(module *packages.Module) (string, error) {
+	if module == nil {
+		return "", fmt.Errorf("no module info available for the loaded package")
 	}
-	return pkg.Module.Version
+	if module.Replace != nil {
+		module = module.Replace
+	}
+	if module.Path == "" || module.Version == "" {
+		return "", fmt.Errorf("source must have a versioned module identity")
+	}
+	return module.Path + "@" + module.Version, nil
 }
 
 // loadSyntaxPackage resolves the pinned compiler types, source comments, and module identity.
 func loadSyntaxPackage() *packages.Package {
 	cfg := &packages.Config{
+		// Workspace overrides and mutable dependency resolution cannot supply schema input.
+		Env: append(os.Environ(), "GOWORK=off", "GOFLAGS=-mod=readonly"),
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo |
 			packages.NeedSyntax | packages.NeedDeps | packages.NeedImports | packages.NeedModule,
 	}

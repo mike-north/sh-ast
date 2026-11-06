@@ -1115,6 +1115,9 @@ export interface Slice {
 }
 
 // @public
+export function splitBraces(word: Word): boolean;
+
+// @public
 export interface Stmt {
     Background: boolean;
     Cmd: Command | null;
