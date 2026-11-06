@@ -4,7 +4,9 @@ The user accepted the ownership, hard-break, and maintained-fork rules on
 2026-11-05. [Architecture D9-D11](ARCHITECTURE.md#accepted-direction) owns those
 decisions; [AGENTS.md](../AGENTS.md) supplies implementation/review rules.
 The work sequence below is proposed, not a claim that extraction or fork setup
-has happened. The middle layer's package/repository name remains unselected.
+has happened. The selected destination is the independent private repository
+`mike-north/sh-analysis`, with npm package name `sh-analysis`; this identity
+decision does not claim extraction or publication is complete.
 
 ## Observed implementation
 
@@ -30,8 +32,9 @@ The analysis layer is already substantial enough to extract: word resolution,
 command inventory/context, wrapper grammars, and interpreter-invocation analysis
 are implemented and consumed by ESLint. A renamed subpath in the same syntax
 package would not establish the requested independent responsibility boundary.
-Physical repository placement remains open; independent package ownership and
-dependency direction are required.
+The selected independent private repository `mike-north/sh-analysis` establishes
+its destination; the extraction must preserve independent package ownership and
+the required dependency direction.
 
 ## Proposed work sequence
 

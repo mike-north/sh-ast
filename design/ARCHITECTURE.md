@@ -42,7 +42,7 @@ remain descriptions of the implemented API.
 | D2  | Restrained TypeScript adaptations are appropriate: typed exceptions that retain error/result information, precise numeric/operator domains, and unions matching upstream alternatives. Do not invent asynchronous behavior for ergonomics. Repeated callbacks and control callbacks must retain their completion and stop semantics. |
 | D3  | A synchronous path is essential for ESLint language support, including first-use WASM initialization. A synchronous warm call after mandatory asynchronous setup does not satisfy this requirement.                                                                                                                                  |
 | D4  | Two successive minor releases in the 0.x series: first excellent synchronous parsing and a complete, faithfully typed syntax tree; next faithful walking/traversal and printing, supporting transformations and lint autofixes. Release A must retain the information Release B needs. No 1.0 release is planned.                    |
-| D5  | Neither sh-ast nor eslint-sh has users yet. Breaking API changes are permitted during 0.x. Compatibility is a migration task, not a reason to preserve an incompatible abstraction.                                                                                                                                                  |
+| D5  | Neither sh-ast nor eslint-sh has users yet. Breaking API changes are permitted during 0.x. D9 clarifies that compatibility and migration support are not requirements; update consumers directly.                                                                                                                                    |
 | D6  | sh-ast tests the syntax and position invariants needed by ESLint, without implementing an ESLint integration here. Real ESLint integration lives in eslint-sh. Before release, locally link the built candidate and run consumer tests with evidence identifying the actual build.                                                   |
 | D7  | The eventual upstream boundary is the syntax package. The shell interpreter, runner, and a newly invented shell model are outside that boundary.                                                                                                                                                                                     |
 | D8  | Software changes start with specification-derived tests. Modules, types, constants, and functions document durable meaning, responsibilities, boundaries, and invariants. Progress notes belong in work records.                                                                                                                     |
@@ -91,7 +91,9 @@ result or a competing syntax model.
 resolution, command sites/context, wrapper resolution, and interpreter-invocation
 observations with explicit uncertainty and assumptions. It owns interpretation,
 not parser output, syntax validation, shell execution, or caller policy. Its
-package/repository name is still an implementation choice. `sh-ast` must not
+selected home is the independent private repository `mike-north/sh-analysis`,
+with npm package name `sh-analysis`. This identity decision does not claim that
+extraction or publication is complete. `sh-ast` must not
 depend on it; an analysis requirement cannot change syntax records in the binding.
 
 **The consumer adapter** translates syntax into ESLint's locations, visitation,

@@ -13,8 +13,9 @@ reviewing a change. These rules apply to humans, coding agents, and reviewers.
 | Independent analysis middle layer                             | Word resolution, command enumeration/context, wrapper resolution, interpreter-invocation observations, and explicit analysis uncertainty over faithful syntax                                         | Changing parser output to improve analysis, executing shell programs, or deciding a caller's lint/security policy |
 | ESLint integration in `eslint-sh`                             | ESLint nodes and visitors, byte-to-UTF-16 projection, diagnostics, rule policy, and fixes                                                                                                             | Defining syntax semantics or pushing lint requirements into the binding                                           |
 
-The middle layer's package/repository name is not yet selected. Existing
-`sh-ast/analyze` code is extraction work, not permission to expand `sh-ast`'s
+The middle layer is npm package `sh-analysis` in the selected independent private
+repository `mike-north/sh-analysis`. Existing `sh-ast/analyze` code is extraction
+work, not permission to expand `sh-ast`'s
 responsibility. Follow [the realignment plan](design/LAYER-REALIGNMENT.md).
 Dependencies point from consumers toward syntax: analysis depends on `sh-ast`;
 ESLint consumes syntax and analysis. `sh-ast` must not depend on either consumer.
