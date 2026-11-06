@@ -1,6 +1,6 @@
-/** The root type namespace describes syntax capabilities without analysis aliases. */
+/** The published root declaration describes syntax capabilities without analysis aliases. */
 import { expectNotAssignable } from 'tsd';
-import * as syntax from '../src/index.js';
+import * as syntax from 'sh-ast';
 
 expectNotAssignable<keyof typeof syntax>('ShAnalyzeMaxDepthError');
 expectNotAssignable<keyof typeof syntax>('ShAnalyzeInvalidWrapperSpecError');

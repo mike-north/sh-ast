@@ -71,3 +71,10 @@ and generated docs were inspected to confirm analysis declarations were absent.
 Generated documentation changes are kept in their own commit because removal
 of the retired analysis documentation exceeds the automated review file limit.
 Final full-suite and exact canonical artifact validation are pending.
+
+The packed-candidate contract additionally invokes public `splitBraces` with the
+hand-derived `{a,b}` result (true and a two-element BraceExp). Before canonical
+artifact inheritance, it fails with `InputError: unknown syntax operation
+"split-braces"`, proving that source-only exports cannot satisfy the installed
+runtime gate. The type boundary probe imports `sh-ast` itself so it verifies the
+published declaration rollup rather than the source entry point.

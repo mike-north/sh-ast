@@ -90,6 +90,22 @@ describe('installed syntax-only package', () => {
     ).toContain('analysis subpath absent');
   });
 
+  it('ships the public Go brace transformation with its matching runtime', () => {
+    expect(
+      probe(`
+      import assert from 'node:assert/strict';
+      import { parseSync, splitBraces } from 'sh-ast';
+      const file = parseSync('echo {a,b}');
+      const word = file.Stmts[0].Cmd.Args[1];
+      assert.equal(word.Parts[0].Type, 'Lit');
+      assert.equal(splitBraces(word), true);
+      assert.equal(word.Parts[0].Type, 'BraceExp');
+      assert.equal(word.Parts[0].Elems.length, 2);
+      console.log('matching syntax runtime');
+    `),
+    ).toContain('matching syntax runtime');
+  });
+
   it('exports no analysis operations or analysis failure classes from the root', () => {
     expect(
       probe(`
