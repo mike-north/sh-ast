@@ -6,8 +6,8 @@ The accepted 2026-11-05 four-layer direction puts all changes to the underlying
 Go syntax library in a maintained Go fork. This binding consumes one immutable
 revision for both schema and WASM; it does not apply a semantic patch stack.
 This work handles dependency/build routing and inventory for later analysis
-extraction. Analysis remains in its existing location until its independent
-package destination and public-operation contracts are selected.
+extraction. Analysis extraction into `sh-analysis` and removal from this package proceed as
+separate stacked changes; this PR supplies the faithful syntax operation they need.
 
 ## Tests-first evidence
 
@@ -28,7 +28,8 @@ package destination and public-operation contracts are selected.
 - Selected-Go Zsh expectations failed against the former patch stack (wildcard
   refusal, hidden substitutions, and recursive work on opaque text), then the
   native bridge tests passed against the published fork. Public TypeScript
-  expectations also fail against the previous binary, pending canonical rebuild.
+  expectations also failed against the previous binary, then passed against the
+  canonical Linux artifact recorded below.
 
 ## Selected source
 
@@ -103,3 +104,22 @@ remaining test incorrectly asked upstream Walk to traverse newly created
 BraceExp, which the selected Go walker intentionally rejects. The test now
 inspects faithful records directly; traversal is not changed to conceal that
 upstream constraint. Public operation documentation names the same limitation.
+
+All 24 focused public API/cold-start/selected-Zsh cases passed against that exact
+hosted binary. Final-head hosted WASM and schema reproducibility passed at
+`21195218aeea9343988ef6f365921bb49c25b682`. Hosted CI run `42165548739` exposed
+an isolated test-fixture cleanup error after its modified-source refusal had
+already succeeded: Linux's read-only expanded module directories caused ordinary
+recursive deletion to fail. The fixture now invokes the selected Go toolchain's
+`go clean -modcache` with `GOMODCACHE` set only to its temporary copied cache.
+Production source checks are unchanged; all 14 provenance tests pass locally.
+The following hosted revision must prove Linux cleanup succeeds as well.
+
+Final local uncached validation on the canonical binary passed `pnpm check` and
+`pnpm test` with Node 22.22.1, pnpm 11.12.0, Nx parallelism 2, and Vitest maximum
+workers 2. The test gate includes 39 benchmark unit cases, four real-worker
+integrations, all 66 runtime files / 1,549 tests, and all public type tests. The
+only two old assertions changed during this cycle were analysis-owned printer
+spellings from the removed compatibility hold; independent native printer tests
+now state those selected-Go byte outcomes. No printer behavior was changed to
+preserve the old expectations.

@@ -99,7 +99,9 @@ describe('upstream-backed brace classification', () => {
       { ...lit, Value: '\\' },
       { ...lit, Value: '\\{a,b}' },
     ];
-    expect(printSync(word)).toBe(String.raw`\\{a,b}`);
+    // Selected Go doubles a trailing backslash in each constructed Lit;
+    // these records are not preserved by a binding-specific printer hold.
+    expect(printSync(word)).toBe(String.raw`\\\{a,b}`);
     expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
   });
 
@@ -145,7 +147,7 @@ describe('upstream-backed brace classification', () => {
     const suffixQuote = argument('"x"').Parts?.[0];
     if (lit?.Type !== 'Lit' || !braceQuote || !suffixQuote) throw new Error('missing test parts');
     word.Parts = [{ ...lit, Value: '\\' }, braceQuote, { ...lit, Value: '\\' }, suffixQuote];
-    expect(printSync(word)).toBe(String.raw`\"{a,b}"\"x"`);
+    expect(printSync(word)).toBe(String.raw`\\"{a,b}"\\"x"`);
     expect(resolveWord(word)).toEqual({ static: false, reason: 'unsupported' });
   });
 
