@@ -78,3 +78,29 @@ artifact inheritance, it fails with `InputError: unknown syntax operation
 "split-braces"`, proving that source-only exports cannot satisfy the installed
 runtime gate. The type boundary probe imports `sh-ast` itself so it verifies the
 published declaration rollup rather than the source entry point.
+
+## Canonical runtime and full local gates
+
+Cleanup source head `76b2dac71080fe53db8c312cdafa84af50451b77` inherits canonical
+artifact commit `21195218aeea9343988ef6f365921bb49c25b682`. WASM SHA-256 is
+`57c46bac7d59913a585a6bd3b7d7e489fa310bd044f13cc2ca1ee012e270ba94`, matching
+the Linux artifact from hosted run 42165152448, built from binding source
+`43db64d` and selected Go fork `bbc7c4ace575d5de375726fdaa2a5c001c46564c`.
+No Darwin-built WASM was committed or used for this candidate.
+
+On Node 22.22.1 / pnpm 11.12.0, uncached `pnpm build`, `pnpm check`, and
+`env -u NO_COLOR pnpm test` passed with `NX_PARALLEL=2` and
+`VITEST_MAX_WORKERS=2`. This includes 39 benchmark unit tests, four benchmark
+integration tests, all 56 Vitest files / 884 tests, and all tsd tests. All six
+installed-tarball boundary cases passed, including the previously failing
+SplitBraces runtime case.
+
+The independent analysis owner received local prospective tarball
+`/tmp/sh-ast-cleanup-76b2dac-x1rmk2ag/sh-ast-0.11.0.tgz` and sibling `receipt.json`.
+Tarball SHA-256: `0fb24b570aa5fc6fa8d1d6c9957640485c0f04db3731c7359c05860b9b41637d`.
+Only a temporary extracted manifest version changed from source 0.10.0 to
+prospective 0.11.0; every non-manifest asset was compared byte-identical after
+repacking. Repository version metadata and release PRs were untouched. A fresh
+consumer installation of that prospective artifact passed synchronous multibyte
+parse/print, public SplitBraces, absent analysis errors/operations, and rejection
+of the former analysis subpath. This is a local candidate, not a publication.
