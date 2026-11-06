@@ -1,4 +1,9 @@
 {
+  "extends": "./tsconfig.base.json",
   "files": [],
-  "references": [{ "path": "packages/sh-ast" }]
+  "references": [
+    {
+      "path": "packages/sh-ast"
+    }
+  ]
 }

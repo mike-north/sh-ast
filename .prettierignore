@@ -4,3 +4,6 @@ api-report-combined/
 api-docs-temp/
 docs/
 pnpm-lock.yaml
+
+# AGENTS.md includes an owner-supplied responsibility map that must remain verbatim.
+AGENTS.md
