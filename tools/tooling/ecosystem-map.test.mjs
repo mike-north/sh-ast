@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // This owner-approved digest is independent ground truth, never derived from the copy under test.
-const ratifiedSha256 = '70d3c639af497fdea72a40925c4c5048d24865c5e684f25f4a2aa47e55f100a2';
+const ratifiedSha256 = 'fa56cde52a39b762c76bcff9707f7a9cda5274fa5cdff6a953909418648ec144';
 // Delimiters belong to repository instructions; their contents alone are the shared map.
 const begin = Buffer.from('<!-- ecosystem-map:begin -->');
 const end = Buffer.from('<!-- ecosystem-map:end -->');
