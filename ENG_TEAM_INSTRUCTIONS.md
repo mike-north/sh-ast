@@ -6,8 +6,9 @@ Working agreement for everyone (human or agent) shipping code in this repo. `sh-
 [the accepted architecture](design/ARCHITECTURE.md#responsibilities) for their meaning.
 It was extracted from the eslint-sh monorepo (`mike-north/eslint-sh` @ `bdd55b3`),
 but ESLint's normalized nodes and byte→UTF-16 projection belong to that consumer.
-Existing `sh-ast/analyze` is to be extracted into an independent analysis layer;
-its presence does not authorize adding interpretation to this binding.
+The `sh-ast/analyze` subpath was removed in PR #94. Analysis lives independently
+in `mike-north/sh-analysis`; the parser binding remains in `sh-ast` and does not
+interpret words or commands.
 
 ## Work queue
 
@@ -47,11 +48,16 @@ its presence does not authorize adding interpretation to this binding.
 - Commands: `pnpm install` → `pnpm build` → `pnpm check` → `pnpm test`, all green before
   every push; prettier before every push. Never `rm` build outputs — `pnpm run clean` /
   `pnpm --filter <pkg> run clean`.
+- `check:typecheck` checks source, runtime tests, and generated declarations with the
+  compiler, and type-contract fixtures with tsd across `.ts`, `.tsx`, `.mts`, and
+  `.cts`. Typed ESLint does not report compiler diagnostics. Intentional malformed
+  runtime fixtures need a local, explained `@ts-expect-error`; rejected API calls
+  in type-contract fixtures retain their `expectError` assertions.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
-  commit both — no CI gate covers committed docs. Keep large generated-doc changes in
-  their own commit and identify them in the PR so reviewers can inspect the source
-  diff separately. Manual substantive review does not substitute for the required
-  Codex presence check.
+  commit both — CI checks the API report and regenerated documentation. Keep large
+  generated-doc changes in their own commit and identify them in the PR so reviewers
+  can inspect the source diff separately. Manual substantive review does not
+  substitute for the required Codex presence check.
 - Nx cache is unreliable for doc-comment-only edits (no API shape change): a cached
   `check:api-report`/docs regen can show "no diff" when the real output changed. After any
   doc-comment edit, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`) and

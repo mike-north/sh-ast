@@ -109,8 +109,11 @@ function construct(entry: (typeof oracle.cases)[number]): Node {
     case 'param-aux':
       return syntheticNode('ParamExp', {
         Param: syntheticNode('Lit', { Value: 'p' }),
+        // @ts-expect-error -- The native Go-shaped auxiliary fixture deliberately omits its wire discriminator.
         Slice: { Offset: word('first', 1), Length: word('old-length', 2) },
+        // @ts-expect-error -- The native Go-shaped auxiliary fixture deliberately omits its wire discriminator.
         Repl: { All: false, Orig: word('orig', 3), With: word('old-with', 4) },
+        // @ts-expect-error -- The native Go-shaped auxiliary fixture deliberately omits its wire discriminator.
         Exp: { Op: 0, Word: word('fallback', 5) },
       });
     case 'nil-parts':
@@ -263,6 +266,7 @@ describe('native syntax.Walk oracle', () => {
         }
         if (node.Value === 'first' && root.Type === 'ParamExp') {
           if (entry.mode === 'aux-replace') {
+            // @ts-expect-error -- Preserve the native untagged replacement record and its child identity.
             root.Slice = { Offset: null, Length: word('new-length', 6) };
           }
           if (entry.mode === 'aux-nil') {
@@ -270,6 +274,7 @@ describe('native syntax.Walk oracle', () => {
           }
         }
         if (node.Value === 'orig' && entry.mode === 'aux-replace' && root.Type === 'ParamExp') {
+          // @ts-expect-error -- Preserve the native untagged replacement record and its child identity.
           root.Repl = { All: false, Orig: null, With: word('new-with', 7) };
         }
         if (node.Value === 'orig' && entry.mode === 'repl-nil' && root.Type === 'ParamExp') {

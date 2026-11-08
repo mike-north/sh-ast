@@ -4,3 +4,9 @@ api-report-combined/
 api-docs-temp/
 docs/
 pnpm-lock.yaml
+
+# API checks generate raw reference pages while the workspace formatter runs concurrently.
+/tools/tooling/.api-docs-*/
+
+# AGENTS.md includes an owner-supplied responsibility map that must remain verbatim.
+AGENTS.md
