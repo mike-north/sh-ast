@@ -8,21 +8,16 @@ on:
   # Clean reviews update a completion comment instead of submitting a review.
   issue_comment:
     types: [created, edited, deleted]
-  # Review-event code is unprivileged. This evaluator loads from the default
-  # branch and reads no artifacts or execution results from that relay.
-  workflow_run:
-    workflows: [Codex review event]
-    types: [completed]
 concurrency:
-  group: codex-review-gate-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.display_title }}
+  group: codex-review-gate-${{ github.event.pull_request.number || github.event.issue.number }}
   # Finish explicit check writes instead of orphaning an in-progress head check.
   cancel-in-progress: false
 permissions:
   pull-requests: read
   checks: write
 jobs:
-  # The evaluator's native check may be on the default branch. Only the explicit
-  # Checks API run named codex-review-present is the required PR-head result.
+  # The native job reports evaluator health. Expected absence affects only the
+  # explicit codex-review-present check; API or execution failures fail the job.
   evaluate-codex-review:
     name: Evaluate Codex review evidence
     if: github.event_name != 'issue_comment' || github.event.issue.pull_request
@@ -34,34 +29,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Only default/base-branch events may enter this check-writing path.
-            // The permissionless relay's decimal title routes a PR number; even
-            // a forged title can only request a fresh API evaluation, never pass
-            // evidence. Fork PR association arrays may be empty, so no artifact
-            // or association-array fallback is needed or trusted.
-            if (!['pull_request_target', 'issue_comment', 'workflow_run'].includes(context.eventName)) {
+            // Trusted lifecycle/comment events route a PR number, never evidence.
+            // All decisions use fresh API comments and the API-reported head.
+            if (!['pull_request_target', 'issue_comment'].includes(context.eventName)) {
               throw new Error('Unexpected evaluator event');
             }
             if (context.eventName === 'issue_comment' && !context.payload.issue?.pull_request) return;
-            let number;
-            if (context.eventName === 'workflow_run') {
-              const relay = context.payload.workflow_run;
-              if (relay?.name !== 'Codex review event' ||
-                  relay.path !== '.github/workflows/codex-review-event.yml' ||
-                  relay.event !== 'pull_request_review' ||
-                  typeof relay.display_title !== 'string' || !/^[1-9][0-9]*$/.test(relay.display_title)) {
-                throw new Error('Unexpected review relay identity or PR routing');
-              }
-              number = Number(relay.display_title);
-            } else {
-              number = context.eventName === 'issue_comment'
-                ? context.payload.issue?.number : context.payload.pull_request?.number;
-            }
+            const number = context.eventName === 'issue_comment'
+              ? context.payload.issue?.number : context.payload.pull_request?.number;
             if (!Number.isSafeInteger(number) || number <= 0) {
               throw new Error('Missing valid pull request identity in event');
             }
             // Repository identity always comes from the base Actions context,
-            // never relay metadata, fork URLs, or text supplied by the PR.
+            // never fork URLs or text supplied by the PR.
             const pr = { ...context.repo, pull_number: number };
             const { data: current } = await github.rest.pulls.get(pr);
             const head = current?.head?.sha;
@@ -72,33 +52,41 @@ jobs:
             // Only API author.login authenticates Codex; body text cannot grant
             // identity. Both authorized login spellings identify the same bot.
             const authors = new Set(['chatgpt-codex-connector', 'chatgpt-codex-connector[bot]']);
-            const completed = new Set(['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED']);
-
-            // A completion record must unambiguously say the code review finished
-            // on this full SHA. Prose, abbreviated receipts, and security-only
-            // activity do not establish that fact. Finding flags are not policy.
+            // One unambiguous marker establishes either a receipt prefix or a
+            // structured full-head completion. Never infer identity or completion
+            // from prose. Finding flags do not decide approval or resolution.
             function isCompletion(comment) {
               if (!authors.has(comment?.author?.login) || typeof comment.body !== 'string') return false;
-              const records = [...comment.body.matchAll(/^<!-- codex-review-state:v1 (.+) -->$/gm)];
-              if (records.length !== 1) return false;
+              const body = comment.body;
+              const markers = [...body.matchAll(/codex-review-(?:receipt|state):/g)];
+              if (markers.length !== 1) return false;
+              if (/^<!-- codex-review-receipt:v1 -->$/m.test(body)) {
+                // Count even malformed duplicate fields: a second declaration
+                // must not be silently ignored in favor of a matching first one.
+                if ([...body.matchAll(/\*\*Reviewed commit:\*\*/g)].length !== 1) return false;
+                const token = body.match(/^\*\*Reviewed commit:\*\* `([0-9a-fA-F]{7,40})`$/m)?.[1];
+                return token !== undefined && head.startsWith(token.toLowerCase());
+              }
+              const record = body.match(/^<!-- codex-review-state:v1 (.+) -->$/m);
+              if (!record) return false;
               try {
-                const code = JSON.parse(records[0][1])?.code_review;
+                const code = JSON.parse(record[1])?.code_review;
                 return code?.status === 'completed' && code.commit_sha === head;
               } catch {
                 return false;
               }
             }
 
-            // Only these two code-owned connections/selections are supplied. Read
-            // every page, validating its live head; later API errors must not be
-            // concealed by an earlier match or a match from the other path.
-            async function readConnection(field, selection) {
+            // Conversation comments are the sole evidence source. Read every
+            // page, even after a match, and require its API-owned head to remain
+            // unchanged. Later API or pagination failures invalidate all evidence.
+            async function readComments() {
               const query = `query($owner: String!, $repo: String!, $number: Int!, $after: String) {
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $number) {
                     headRefOid
-                    ${field}(first: 100, after: $after) {
-                      nodes { ${selection} }
+                    comments(first: 100, after: $after) {
+                      nodes { author { login } body }
                       pageInfo { hasNextPage endCursor }
                     }
                   }
@@ -110,10 +98,17 @@ jobs:
               for (;;) {
                 const result = await github.graphql(query, { ...context.repo, number, after });
                 const pull = result?.repository?.pullRequest;
-                const connection = pull?.[field];
+                const connection = pull?.comments;
                 if (pull?.headRefOid !== head || !Array.isArray(connection?.nodes) ||
                     typeof connection?.pageInfo?.hasNextPage !== 'boolean') {
                   throw new Error('Incomplete evidence response or changed PR head');
+                }
+                // A partial/malformed API record is an infrastructure failure,
+                // even beside matching evidence. A null author is legitimate for
+                // a deleted account and simply cannot authenticate completion.
+                if (connection.nodes.some(comment => !comment || typeof comment.body !== 'string' ||
+                    (comment.author !== null && typeof comment.author?.login !== 'string'))) {
+                  throw new Error('Incomplete comment record from GitHub');
                 }
                 nodes.push(...connection.nodes);
                 if (!connection.pageInfo.hasNextPage) return nodes;
@@ -146,10 +141,8 @@ jobs:
 
             let found;
             try {
-              const reviews = await readConnection('reviews', 'author { login } state commit { oid }');
-              const comments = await readConnection('comments', 'author { login } body');
-              found = reviews.some(review => authors.has(review?.author?.login) &&
-                completed.has(review.state) && review.commit?.oid === head) || comments.some(isCompletion);
+              const comments = await readComments();
+              found = comments.some(isCompletion);
               // A synchronize event may race pagination. Re-read immediately
               // before publishing success; its own event will check the new head.
               const { data: latest } = await github.rest.pulls.get(pr);
@@ -162,4 +155,6 @@ jobs:
               ? 'Codex completed a code review at this PR head. Lead review must assess findings and readiness.'
               : 'No completed Codex code review at the current PR head; request one and wait for completion.';
             await finish(found ? 'success' : 'failure', summary);
-            if (!found) core.setFailed(summary);
+            // Missing/pending evidence is an expected decision, so the native
+            // evaluator succeeds. Exceptions and failed check writes still escape
+            // and fail the job; no continue-on-error can hide broken evaluation.

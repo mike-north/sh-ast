@@ -22,17 +22,23 @@ interpret words or commands.
   the orchestrator runs review and merge. Reply to every review thread; only the
   orchestrator resolves threads.
 - The required review-presence check is `codex-review-present`, implemented by
-  `.github/workflows/codex-review-gate.yml`. It accepts either a submitted review
-  in COMMENTED, APPROVED, or CHANGES_REQUESTED state at the current PR head, or a
-  completion comment whose `codex-review-state:v1` metadata identifies a completed
-  code review at that full head SHA. The API author login must be
-  `chatgpt-codex-connector` or `chatgpt-codex-connector[bot]` for either path.
-  Pending/dismissed reviews, stale or abbreviated SHAs, missing evidence, and other
-  authors do not satisfy it. Body text claiming bot identity is never authority.
-  The gate writes this check explicitly on the API-reported PR head, including for
-  comment events whose native workflow checks run on the default branch. Review
-  events use a permissionless relay; the default-branch evaluator reads fresh API
-  evidence rather than trusting relay results or artifacts. It does
+  `.github/workflows/codex-review-gate.yml`. Only fresh PR conversation-thread
+  comments count. A comment must have actual API author login
+  `chatgpt-codex-connector` or `chatgpt-codex-connector[bot]` and exactly one of:
+  an exact `<!-- codex-review-receipt:v1 -->` marker with a **Reviewed commit:**
+  backticked hexadecimal prefix of at least seven characters matching the current
+  head, or a `codex-review-state:v1` JSON marker whose `code_review.status` is
+  `completed` and `code_review.commit_sha` equals the full current head SHA.
+  Finding flags do not affect presence. Other authors, stale heads, malformed or
+  ambiguous markers, prose, security-only state, and submitted review objects do
+  not satisfy it. Body text claiming bot identity is never authority.
+  The gate reads every comment page and rechecks the head before completing the
+  explicit `codex-review-present` check on the API-reported PR head. Trusted
+  `pull_request_target` lifecycle and `issue_comment` created/edited/deleted events
+  request fresh evaluations; event payloads cannot supply completion evidence.
+  Missing/pending evidence fails only the explicit check. The distinct native
+  evaluator job reports infrastructure health: API/script failures fail it and
+  the head check when that check can be written. The workflow does
   not check out or execute PR code. Request review with a PR conversation comment
   `@codex review`, once on each new head, then verify completed evidence actually
   landed; a request alone is insufficient. Presence is not approval or finding resolution.

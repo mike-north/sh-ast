@@ -74,27 +74,6 @@ function commentContext(action = 'created') {
   };
 }
 
-/** A permissionless relay may route a PR number but cannot attest to any evidence. */
-function relayContext(overrides = {}) {
-  return {
-    repo: { owner: 'mike-north', repo: 'sh-ast' },
-    eventName: 'workflow_run',
-    sha: defaultBranch,
-    payload: {
-      workflow_run: {
-        name: 'Codex review event',
-        path: '.github/workflows/codex-review-event.yml',
-        event: 'pull_request_review',
-        display_title: '99',
-        pull_requests: [],
-        head_sha: stale,
-        conclusion: 'success',
-        ...overrides,
-      },
-    },
-  };
-}
-
 /**
  * Emulate github-script globals, recording API identity and every check write.
  * Exceptions are Action failures, including errors after partial matching data.
@@ -201,7 +180,7 @@ function assertSuccess(result) {
   assert.equal(result.updates[0].repo, 'sh-ast');
 }
 
-/** Missing evidence or known-head errors must complete the required check as failing. */
+/** Infrastructure errors must fail both the evaluator and the head-bound check. */
 function assertFailure(result) {
   assert.ok(result.failures.length > 0);
   assert.equal(result.creates.length, 1);
@@ -212,245 +191,285 @@ function assertFailure(result) {
   assert.equal(result.updates[0].conclusion, 'failure');
 }
 
-test('the required head check has its own name, distinct from the evaluator job', () => {
-  assert.equal(existsSync('.github/workflows/copilot-review-gate.yml'), false);
+/**
+ * Receipts use the actual bot's Markdown field observed on PR #98. Prefix
+ * boundaries below are handwritten requirements, independent of the evaluator.
+ */
+function receipt(sha = head.slice(0, 10), login = 'chatgpt-codex-connector') {
+  return {
+    author: login === null ? null : { login },
+    body: `<!-- codex-review-receipt:v1 -->\n\nCodex Review: Didn't find any major issues.\n\n**Reviewed commit:** \`${sha}\`\n`,
+  };
+}
+
+/** Absence is a review decision, not a broken evaluator or duplicate job verdict. */
+function assertMissing(result) {
+  assert.deepEqual(result.failures, []);
+  assert.equal(result.creates.length, 1);
+  assert.equal(result.creates[0].name, 'codex-review-present');
+  assert.equal(result.creates[0].head_sha, head);
+  assert.equal(result.updates.length, 1);
+  assert.equal(result.updates[0].check_run_id, 7001);
+  assert.equal(result.updates[0].conclusion, 'failure');
+  assert.equal(result.updates[0].status, 'completed');
+}
+
+/** Native evaluator health remains distinct from the explicit review decision. */
+test('one explicit decision context never shares its name with a successful native job', () => {
   const gate = workflow('codex-review-gate');
   assert.equal(gate.name, 'Codex review gate');
   assert.deepEqual(Object.keys(gate.jobs), ['evaluate-codex-review']);
-  assert.equal(gate.jobs['evaluate-codex-review'].name, 'Evaluate Codex review evidence');
+  const job = gate.jobs['evaluate-codex-review'];
+  assert.equal(job.name, 'Evaluate Codex review evidence');
+  assert.equal(job['continue-on-error'], undefined);
+  assert.equal(job.steps.length, 1);
+  assert.equal(job.steps[0]['continue-on-error'], undefined);
 });
 
-test('only trusted lifecycle, comment, and review-relay completion events evaluate evidence', () => {
+test('only trusted lifecycle and conversation comment events route evaluations', () => {
   assert.deepEqual(workflow('codex-review-gate').on, {
     pull_request_target: { types: ['opened', 'synchronize', 'reopened', 'ready_for_review'] },
     issue_comment: { types: ['created', 'edited', 'deleted'] },
-    workflow_run: { workflows: ['Codex review event'], types: ['completed'] },
   });
+  assert.equal(existsSync('.github/workflows/codex-review-event.yml'), false);
+  assert.equal(existsSync('.github/workflows/copilot-review-gate.yml'), false);
 });
 
-test('the review relay has no permissions, secrets, checkout, imports, or PR-code execution', () => {
-  const relay = workflow('codex-review-event');
-  assert.deepEqual(Object.keys(relay).sort(), ['jobs', 'name', 'on', 'permissions', 'run-name']);
-  assert.equal(relay.name, 'Codex review event');
-  assert.equal(relay['run-name'], '${{ github.event.pull_request.number }}');
-  assert.deepEqual(relay.on, { pull_request_review: { types: ['submitted', 'dismissed'] } });
-  assert.deepEqual(relay.permissions, {});
-  assert.deepEqual(relay.jobs, {
-    signal: {
-      'runs-on': 'ubuntu-latest',
-      steps: [{ name: 'Record review-event delivery', run: ':' }],
-    },
-  });
-});
-
-test('minimal check-write permission never accompanies checkout, imports, or interpolated event text', () => {
+test('minimal check permissions never accompany checkout, imports or executable PR text', () => {
   const gate = workflow('codex-review-gate');
   assert.deepEqual(gate.permissions, { 'pull-requests': 'read', checks: 'write' });
   assert.deepEqual(gate.concurrency, {
-    group:
-      'codex-review-gate-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.display_title }}',
+    group: 'codex-review-gate-${{ github.event.pull_request.number || github.event.issue.number }}',
     'cancel-in-progress': false,
   });
   const job = gate.jobs['evaluate-codex-review'];
   assert.equal(job.if, "github.event_name != 'issue_comment' || github.event.issue.pull_request");
   assert.equal(job['runs-on'], 'ubuntu-latest');
   assert.equal(job.permissions, undefined);
-  assert.equal(job['continue-on-error'], undefined);
-  assert.equal(job.steps.length, 1);
   assert.equal(job.steps[0].uses, 'actions/github-script@v7');
   assert.deepEqual(Object.keys(job.steps[0]).sort(), ['name', 'uses', 'with']);
   assert.deepEqual(Object.keys(job.steps[0].with), ['script']);
   assert.doesNotMatch(job.steps[0].with.script, /\$\{\{|\brequire\s*\(|\bimport\b|\beval\s*\(/);
 });
 
-test('the actual normal CI step runs this suite after Node setup without privileged CI events', () => {
+test('normal CI runs the actual workflow harness after Node setup', () => {
   const ci = workflow('ci');
   assert.deepEqual(ci.on, { push: { branches: ['main'] }, pull_request: null });
   const steps = ci.jobs['build-check-test'].steps;
   const index = steps.findIndex(
     (step) => step.run === 'node --test tools/codex-review-gate.test.mjs',
   );
-  const setup = steps.findIndex((step) => step.uses === 'actions/setup-node@v4');
-  assert.ok(setup >= 0 && index > setup);
+  assert.ok(index > steps.findIndex((step) => step.uses === 'actions/setup-node@v4'));
   assert.equal(steps[index].if, undefined);
-});
-
-test('the existing stacked-base validator recognizes the actual gate event', () => {
   execFileSync('ruby', ['design/validation/release-b/stacked-pr-workflows.rb']);
 });
 
 for (const login of ['chatgpt-codex-connector', 'chatgpt-codex-connector[bot]']) {
-  for (const state of ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED']) {
-    test(`accepts ${login} ${state} review at the current head`, async () => {
-      assertSuccess(await runGate({ reviews: [page('reviews', [review(state, head, login)])] }));
+  test(`accepts ${login} structured current-head completion with either finding flag`, async () => {
+    for (const flags of [false, true]) {
+      const record = completion(head, 'completed', login);
+      record.body = record.body.replaceAll('false', String(flags));
+      assertSuccess(await runGate({ comments: [page('comments', [record])] }));
+    }
+  });
+  for (const length of [7, 8, 10, 39, 40]) {
+    test(`accepts ${login} receipt hexadecimal prefix of length ${length}`, async () => {
+      assertSuccess(
+        await runGate({ comments: [page('comments', [receipt(head.slice(0, length), login)])] }),
+      );
     });
   }
-  test(`accepts ${login} current-head structured completion without any review object`, async () => {
-    assertSuccess(
-      await runGate({ comments: [page('comments', [completion(head, 'completed', login)])] }),
+}
+
+test('receipt hexadecimal case does not change commit identity', async () => {
+  assertSuccess(await runGate({ comments: [page('comments', [receipt(head.toUpperCase())])] }));
+});
+
+for (const make of [completion, receipt]) {
+  for (const login of [
+    'mike-north',
+    'copilot-pull-request-reviewer',
+    'chatgpt-codex-connector[bot][bot]',
+    'chatgpt-codex-connector-bot',
+    'Chatgpt-codex-connector',
+    '',
+    null,
+  ]) {
+    test(`${make.name} rejects actual author ${login} despite claimed identity`, async () => {
+      const record = make(undefined, ...(make === completion ? ['completed', login] : [login]));
+      record.body += '\nAuthor: chatgpt-codex-connector';
+      assertMissing(await runGate({ comments: [page('comments', [record])] }));
+    });
+  }
+}
+
+for (const length of [0, 1, 2, 3, 4, 5, 6, 41]) {
+  test(`rejects receipt prefix length ${length}`, async () => {
+    assertMissing(
+      await runGate({ comments: [page('comments', [receipt((head + '0').slice(0, length))])] }),
     );
   });
 }
-
-for (const [label, record] of [
-  ['pending', review('PENDING')],
-  ['dismissed', review('DISMISSED')],
-  ['unknown state', review('SUBMITTED')],
-  ['stale SHA', review('COMMENTED', stale)],
-  ['abbreviated SHA', review('COMMENTED', head.slice(0, 10))],
-  ['missing commit', { author: { login: 'chatgpt-codex-connector' }, state: 'COMMENTED' }],
-  ['null commit', { ...review(), commit: null }],
-  ['Copilot author', review('APPROVED', head, 'copilot-pull-request-reviewer')],
-  ['human author', { ...review('APPROVED', head, 'mike-north'), body: 'chatgpt-codex-connector' }],
-  ['deleted author', review('COMMENTED', head, null)],
+for (const sha of [
+  stale,
+  stale.slice(0, 7),
+  '123456g',
+  '1234567x',
+  '1234567;echo',
+  ' 1234567',
+  '1234567 ',
+  '0x1234567',
 ]) {
-  test(`rejects review with ${label}`, async () => {
-    assertFailure(await runGate({ reviews: [page('reviews', [record])] }));
+  test(`rejects nonmatching or invalid receipt token ${sha}`, async () => {
+    assertMissing(await runGate({ comments: [page('comments', [receipt(sha)])] }));
   });
 }
 
 for (const [label, record] of [
-  ['stale SHA', completion(stale)],
-  ['abbreviated SHA', completion(head.slice(0, 10))],
+  ['stale state', completion(stale)],
+  ['abbreviated state', completion(head.slice(0, 10))],
   ['missing SHA', completion(null)],
-  ['pending status', completion(head, 'pending')],
-  ['running status', completion(head, 'in_progress')],
+  ['pending state', completion(head, 'pending')],
+  ['running state', completion(head, 'in_progress')],
   ['missing status', completion(head, null)],
-  [
-    'human author claiming bot identity',
-    { ...completion(head, 'completed', 'mike-north'), login: 'chatgpt-codex-connector' },
-  ],
-  ['deleted author', completion(head, 'completed', null)],
-  ['other bot author', completion(head, 'completed', 'copilot-pull-request-reviewer')],
-  [
-    'abbreviated receipt',
-    {
-      ...completion(),
-      body: `<!-- codex-review-receipt:v1 -->\nReviewed commit: ${head.slice(0, 10)}`,
-    },
-  ],
-  [
-    'unstructured identity/SHA prose',
-    { ...completion(), body: `chatgpt-codex-connector completed review ${head}` },
-  ],
   ['malformed JSON', { ...completion(), body: '<!-- codex-review-state:v1 {invalid} -->' }],
   ['null JSON', { ...completion(), body: '<!-- codex-review-state:v1 null -->' }],
   ['unknown version', { ...completion(), body: completion().body.replace(':v1', ':v2') }],
   [
-    'security review only',
+    'security only',
     {
       ...completion(),
-      body: `<!-- codex-review-state:v1 ${JSON.stringify({ security_review: { commit_sha: head, status: 'completed' } })} -->`,
+      body: `<!-- codex-review-state:v1 {"security_review":{"commit_sha":"${head}","status":"completed"}} -->`,
     },
   ],
+  ['prose only', { ...completion(), body: `Codex completed code review ${head}` }],
+  ['duplicate states', { ...completion(), body: completion().body + '\n' + completion().body }],
   [
-    'conflicting metadata blocks',
-    { ...completion(), body: `${completion().body}\n${completion(stale).body}` },
+    'valid plus malformed state',
+    { ...completion(), body: completion().body + '\n<!-- codex-review-state:v1 invalid -->' },
+  ],
+  [
+    'missing receipt marker',
+    { ...receipt(), body: receipt().body.replace('<!-- codex-review-receipt:v1 -->', '') },
+  ],
+  [
+    'malformed receipt marker',
+    { ...receipt(), body: receipt().body.replace(':v1 -->', ':v1 extra -->') },
+  ],
+  ['unknown receipt version', { ...receipt(), body: receipt().body.replace(':v1', ':v2') }],
+  ['missing receipt field', { ...receipt(), body: '<!-- codex-review-receipt:v1 -->' }],
+  [
+    'unformatted receipt field',
+    { ...receipt(), body: `<!-- codex-review-receipt:v1 -->\nReviewed commit: ${head}` },
+  ],
+  ['duplicate receipts', { ...receipt(), body: receipt().body + receipt().body }],
+  [
+    'duplicate receipt fields',
+    { ...receipt(), body: receipt().body + `\n**Reviewed commit:** \`${stale}\`` },
+  ],
+  ['mixed evidence markers', { ...receipt(), body: receipt().body + completion().body }],
+  [
+    'valid plus malformed receipt marker',
+    { ...receipt(), body: receipt().body + '\n<!-- codex-review-receipt:v1 extra -->' },
+  ],
+  [
+    'valid plus malformed receipt field',
+    { ...receipt(), body: receipt().body + '\n**Reviewed commit:** invalid' },
   ],
 ]) {
-  test(`rejects completion comment with ${label}`, async () => {
-    assertFailure(await runGate({ comments: [page('comments', [record])] }));
+  test(`rejects ${label} without failing the evaluator`, async () => {
+    assertMissing(await runGate({ comments: [page('comments', [record])] }));
   });
 }
 
-test('missing review and comment evidence produces a failing head check', async () => {
-  assertFailure(await runGate());
-});
-
-test('presence is not finding resolution: completed metadata may report findings', async () => {
-  const record = completion();
-  record.body = record.body
-    .replace('"has_any_findings":false', '"has_any_findings":true')
-    .replace('"has_unresolved_findings":false', '"has_unresolved_findings":true');
-  assertSuccess(await runGate({ comments: [page('comments', [record])] }));
-});
-
-test('stale evidence does not suppress valid current-head evidence in the other path', async () => {
-  assertSuccess(
-    await runGate({
-      reviews: [page('reviews', [review('COMMENTED', stale)])],
-      comments: [page('comments', [completion()])],
-    }),
-  );
-  assertSuccess(
-    await runGate({
-      reviews: [page('reviews', [review()])],
-      comments: [page('comments', [completion(stale)])],
-    }),
-  );
-});
-
-for (const field of ['reviews', 'comments']) {
-  test(`paginates ${field} beyond 100 unrelated records`, async () => {
-    const other =
-      field === 'reviews'
-        ? review('COMMENTED', head, 'mike-north')
-        : completion(head, 'completed', 'mike-north');
-    const valid = field === 'reviews' ? review() : completion();
-    const result = await runGate({
-      [field]: [
-        page(
-          field,
-          Array.from({ length: 100 }, () => other),
-          true,
-          'cursor-100',
-        ),
-        page(field, [valid]),
-      ],
-    });
-    assertSuccess(result);
+test('submitted review objects never supply evidence and are never requested', async () => {
+  for (const state of ['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED', 'PENDING', 'DISMISSED']) {
+    const result = await runGate({ reviews: [page('reviews', [review(state)])] });
+    assertMissing(result);
     assert.deepEqual(
-      result.queries.filter((call) => call.field === field).map(({ variables }) => variables),
-      [
-        { owner: 'mike-north', repo: 'sh-ast', number: 91, after: null },
-        { owner: 'mike-north', repo: 'sh-ast', number: 91, after: 'cursor-100' },
-      ],
+      result.queries.map((call) => call.field),
+      ['comments'],
     );
-  });
-  test(`${field} API errors fail the head check even after matching earlier data`, async () => {
-    const valid = field === 'reviews' ? review() : completion();
-    for (const pages of [
-      [new Error('API unavailable')],
-      [page(field, [valid], true, 'next'), new Error('API unavailable')],
-    ]) {
-      assertFailure(await runGate({ [field]: pages }));
-    }
-  });
-  test(`${field} pagination fails on missing or cyclic cursors`, async () => {
-    for (const pages of [
-      [page(field, [], true, null)],
-      [page(field, [], true, 'same'), page(field, [], true, 'same')],
-      [page(field, [], true, 'one'), page(field, [], true, 'two'), page(field, [], true, 'one')],
-    ])
-      assertFailure(await runGate({ [field]: pages }));
-  });
-  test(`${field} response schema and head identity must remain complete`, async () => {
-    for (const response of [
-      { repository: null },
-      { repository: { pullRequest: null } },
-      { repository: { pullRequest: { headRefOid: head } } },
-      page(field, null),
-      page(field, [], 'false'),
-      page(field, [], false, null, stale),
-    ])
-      assertFailure(await runGate({ [field]: [response] }));
-  });
-}
+    assert.doesNotMatch(result.queries[0].query, /\breviews\b|\bcommit\s*\{/);
+  }
+});
 
-test('comments API failure invalidates partial success from the review path', async () => {
-  assertFailure(
+test('missing evidence fails only the explicit check while API failure also fails evaluator', async () => {
+  assertMissing(await runGate());
+  assertFailure(await runGate({ comments: [new Error('API unavailable')] }));
+});
+
+test('all comment pages are requested even after a match', async () => {
+  const result = await runGate({
+    comments: [
+      page('comments', [receipt()], true, 'cursor-100'),
+      page(
+        'comments',
+        Array.from({ length: 100 }, () => completion(stale)),
+        true,
+        'cursor-200',
+      ),
+      page('comments', [completion()]),
+    ],
+  });
+  assertSuccess(result);
+  assert.deepEqual(
+    result.queries.map(({ field, variables }) => ({ field, variables })),
+    [null, 'cursor-100', 'cursor-200'].map((after) => ({
+      field: 'comments',
+      variables: { owner: 'mike-north', repo: 'sh-ast', number: 91, after },
+    })),
+  );
+});
+
+test('later-page match is found after 100 unrelated comments', async () => {
+  assertSuccess(
     await runGate({
-      reviews: [page('reviews', [review()])],
-      comments: [new Error('API unavailable')],
+      comments: [
+        page(
+          'comments',
+          Array.from({ length: 100 }, () => completion(stale)),
+          true,
+          'next',
+        ),
+        page('comments', [receipt()]),
+      ],
     }),
   );
+});
+
+test('API and pagination failures cannot be hidden by an earlier matching comment', async () => {
+  for (const pages of [
+    [new Error('API unavailable')],
+    [page('comments', [receipt()], true, 'next'), new Error('API unavailable')],
+    [page('comments', [receipt()], true, null)],
+    [page('comments', [receipt()], true, 'same'), page('comments', [], true, 'same')],
+    [
+      page('comments', [], true, 'one'),
+      page('comments', [], true, 'two'),
+      page('comments', [], true, 'one'),
+    ],
+  ])
+    assertFailure(await runGate({ comments: pages }));
+});
+
+test('incomplete connection shapes and changed page heads fail closed', async () => {
+  for (const response of [
+    { repository: null },
+    { repository: { pullRequest: null } },
+    { repository: { pullRequest: { headRefOid: head } } },
+    page('comments', null),
+    page('comments', [], 'false'),
+    page('comments', [], false, null, stale),
+  ])
+    assertFailure(await runGate({ comments: [response] }));
 });
 
 for (const action of ['created', 'edited', 'deleted']) {
-  test(`issue_comment ${action} writes the required check on the API current head`, async () => {
+  test(`issue_comment ${action} uses only fresh comments at the API current head`, async () => {
     const result = await runGate({
       context: commentContext(action),
-      comments: [page('comments', [completion()])],
+      comments: [page('comments', [receipt()])],
     });
     assertSuccess(result);
     assert.equal(result.reads[0].pull_number, 98);
@@ -460,122 +479,56 @@ for (const action of ['created', 'edited', 'deleted']) {
   });
 }
 
-test('a valid-looking triggering payload is not evidence if absent from the current API records', async () => {
+test('triggering comment payload never substitutes for a deleted API record', async () => {
   const context = commentContext('deleted');
-  context.payload.comment = { user: { login: 'chatgpt-codex-connector' }, body: completion().body };
-  assertFailure(await runGate({ context }));
+  context.payload.comment = { user: { login: 'chatgpt-codex-connector' }, body: receipt().body };
+  assertMissing(await runGate({ context }));
 });
 
-test('ordinary issues cannot be treated as PRs or create a required check', async () => {
+test('ordinary issues create no checks and perform no API requests', async () => {
   const context = commentContext();
   delete context.payload.issue.pull_request;
   const result = await runGate({ context });
+  assert.deepEqual(result.failures, []);
   assert.deepEqual(result.creates, []);
   assert.deepEqual(result.reads, []);
   assert.deepEqual(result.queries, []);
 });
 
-test('review relay delivery re-reads PR head and evidence without trusting fork/default event SHAs', async () => {
-  const result = await runGate({ reviews: [page('reviews', [review()])], context: relayContext() });
-  assertSuccess(result);
-  assert.deepEqual(result.reads, [
-    { owner: 'mike-north', repo: 'sh-ast', pull_number: 99 },
-    { owner: 'mike-north', repo: 'sh-ast', pull_number: 99 },
-  ]);
-  assert.equal(result.queries[0].variables.number, 99);
-  assert.equal(result.queries[0].variables.repo, 'sh-ast');
-});
-
-test('relay routing is independent of fork PR association arrays, artifacts, and head metadata', async () => {
-  const result = await runGate({
-    comments: [page('comments', [completion()])],
-    context: relayContext({
-      display_title: '98',
-      pull_requests: [{ number: 700, head: { sha: stale } }],
-      artifacts_url: 'https://untrusted.invalid/evidence.zip',
-      head_repository: { full_name: 'other/fork' },
-    }),
-  });
-  assertSuccess(result);
-  assert.equal(result.reads[0].pull_number, 98);
-  assert.equal(result.creates[0].head_sha, head);
-});
-
-test('relay success and claimed bot completion in payload never substitute for live evidence', async () => {
-  const context = relayContext({
-    conclusion: 'success',
-    head_sha: head,
-    review: review(),
-    comment: completion(),
-    author: { login: 'chatgpt-codex-connector' },
-  });
-  assertFailure(await runGate({ context }));
-});
-
-test('a failed relay conclusion does not veto valid current API evidence', async () => {
-  assertSuccess(
-    await runGate({
-      context: relayContext({ conclusion: 'failure' }),
-      reviews: [page('reviews', [review()])],
-    }),
-  );
-});
-
-test('unexpected relay identity or nondecimal PR routing fails before API access', async () => {
-  const bad = [
-    { name: 'Other workflow' },
-    { path: '.github/workflows/ci.yml' },
-    { event: 'pull_request' },
-    ...[
-      undefined,
-      null,
-      '',
-      'PR #99',
-      '99; echo unsafe',
-      '099',
-      '0',
-      '-1',
-      '1.5',
-      '9007199254740992',
-    ].map((display_title) => ({ display_title })),
-  ];
-  for (const overrides of bad) {
-    const result = await runGate({ context: relayContext(overrides) });
+for (const eventName of ['workflow_run', 'pull_request_review', 'pull_request', 'push']) {
+  test(`rejects removed or untrusted ${eventName} route before API access`, async () => {
+    const result = await runGate({
+      context: {
+        repo: { owner: 'mike-north', repo: 'sh-ast' },
+        eventName,
+        payload: { pull_request: { number: 99 } },
+      },
+    });
     assert.ok(result.failures.length > 0);
     assert.deepEqual(result.reads, []);
-    assert.deepEqual(result.queries, []);
     assert.deepEqual(result.creates, []);
-  }
-});
-
-test('the privileged evaluator refuses direct PR-merge review events', async () => {
-  const result = await runGate({
-    context: {
-      repo: { owner: 'mike-north', repo: 'sh-ast' },
-      eventName: 'pull_request_review',
-      payload: { pull_request: { number: 99 } },
-    },
   });
-  assert.ok(result.failures.length > 0);
-  assert.deepEqual(result.reads, []);
-  assert.deepEqual(result.creates, []);
-});
+}
 
-test('a head change before success completes the old-head check as failure', async () => {
-  const result = await runGate({ reviews: [page('reviews', [review()])], finalHead: stale });
+test('head change after receipt invalidates old-head evidence and fails evaluator', async () => {
+  const result = await runGate({ comments: [page('comments', [receipt()])], finalHead: stale });
   assertFailure(result);
   assert.equal(result.trace.at(-2), 'pulls.get');
   assert.equal(result.trace.at(-1), 'checks.update');
 });
 
-test('head lookup and check-write errors never produce successful conclusions', async () => {
+test('receipt at an old head is absent evidence after the head changes', async () => {
+  assertMissing(await runGate({ comments: [page('comments', [receipt(stale.slice(0, 10))])] }));
+});
+
+test('head lookup and check-write failures never publish success', async () => {
   for (const options of [
     { initialHead: new Error('head lookup failed') },
     { finalHead: new Error('head lookup failed') },
     { createError: new Error('check create failed') },
     { updateError: new Error('check update failed') },
   ]) {
-    const result = await runGate({ ...options, reviews: [page('reviews', [review()])] });
+    const result = await runGate({ ...options, comments: [page('comments', [receipt()])] });
     assert.ok(result.failures.length > 0);
     assert.equal(
       result.published.some((update) => update.conclusion === 'success'),
@@ -584,7 +537,7 @@ test('head lookup and check-write errors never produce successful conclusions', 
   }
 });
 
-test('invalid API head identity cannot create a check on a fallback SHA', async () => {
+test('invalid API head cannot fall back to event head identity', async () => {
   for (const initialHead of [null, 'main', '1234567', '']) {
     const result = await runGate({ initialHead });
     assert.ok(result.failures.length > 0);
@@ -592,7 +545,7 @@ test('invalid API head identity cannot create a check on a fallback SHA', async 
   }
 });
 
-test('missing or invalid event PR identity fails before any API or check write', async () => {
+test('invalid event PR identity fails before API or check writes', async () => {
   for (const number of [undefined, null, 0, -1, '91', 1.5]) {
     const result = await runGate({
       context: {
@@ -605,5 +558,23 @@ test('missing or invalid event PR identity fails before any API or check write',
     assert.deepEqual(result.creates, []);
     assert.deepEqual(result.queries, []);
     assert.deepEqual(result.reads, []);
+  }
+});
+
+test('malformed comment records cannot hide behind a valid receipt on any page', async () => {
+  for (const invalid of [
+    null,
+    7,
+    {},
+    { ...completion(), body: null },
+    { ...completion(), author: {} },
+    { ...completion(), author: { login: null } },
+  ]) {
+    assertFailure(await runGate({ comments: [page('comments', [receipt(), invalid])] }));
+    assertFailure(
+      await runGate({
+        comments: [page('comments', [receipt()], true, 'next'), page('comments', [invalid])],
+      }),
+    );
   }
 });
