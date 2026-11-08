@@ -20,9 +20,14 @@ its presence does not authorize adding interpretation to this binding.
 - Reference issues with `Refs #N`, never `Closes #N`. Implementers **stop at PR-open**;
   the orchestrator runs review and merge. Reply to every review thread; only the
   orchestrator resolves threads.
-- Copilot review requests can drop silently (binary-heavy PRs especially), and Copilot
-  removes itself from requested_reviewers WHILE reviewing — "no request + no review" may
-  mean in-progress. Use a grace period; verify a review actually landed.
+- The required review-presence check is `codex-review-present`, implemented by
+  `.github/workflows/codex-review-gate.yml`. It accepts a normal Codex review in
+  COMMENTED, APPROVED, or CHANGES_REQUESTED state from `chatgpt-codex-connector`.
+  Pending, dismissed, missing, and other authors' reviews do not satisfy it.
+  Verify completed evidence actually landed; a review request alone is insufficient.
+  Presence is not approval, resolution of findings, or an assertion that the current
+  head was reviewed. The lead reviewer remains responsible for substantive review
+  and merge readiness. Copilot reviews remain optional.
 - Main moves under you — branch late, expect rebases; "no checks reported" on a PR usually
   means a merge conflict suppressed CI: check mergeability first.
 
@@ -34,10 +39,10 @@ its presence does not authorize adding interpretation to this binding.
   every push; prettier before every push. Never `rm` build outputs — `pnpm run clean` /
   `pnpm --filter <pkg> run clean`.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
-  commit both — no CI gate covers committed docs. If the docs regeneration alone would push
-  the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
-  churn in its own commit and note it in the PR so the reviewer can review the source diff;
-  a documented manual substantive review substitutes when Copilot declines the PR size.
+  commit both — no CI gate covers committed docs. Keep large generated-doc changes in
+  their own commit and identify them in the PR so reviewers can inspect the source
+  diff separately. Manual substantive review does not substitute for the required
+  Codex presence check.
 - Nx cache is unreliable for doc-comment-only edits (no API shape change): a cached
   `check:api-report`/docs regen can show "no diff" when the real output changed. After any
   doc-comment edit, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`) and

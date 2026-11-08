@@ -1,0 +1,75 @@
+# Materialize completed Codex review presence as a required check. This is not
+# approval, finding resolution, or evidence that the current head was reviewed;
+# substantive review and merge readiness remain the lead reviewer's responsibility.
+name: Codex review gate
+on:
+  # Every base, including stacked candidates, receives its own presence check.
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+concurrency:
+  group: codex-review-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  pull-requests: read
+jobs:
+  codex-review-present:
+    name: codex-review-present
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout, package install, local script import, or PR-code execution.
+      # Only the inline workflow script and the read-only GitHub client run here.
+      - name: Check for a completed Codex review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Both subscribed event families identify the PR here. The base
+            // repository comes from Actions context, never a fork or review text.
+            const number = context.payload.pull_request?.number;
+            if (!Number.isSafeInteger(number) || number <= 0) {
+              throw new Error('Missing valid pull request identity in event');
+            }
+
+            // Match the review author's GraphQL login directly; REST bot-login
+            // suffix conventions do not define this API's identity representation.
+            const reviewer = 'chatgpt-codex-connector';
+            const completed = new Set(['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED']);
+            const query = `query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $number) {
+                  reviews(first: 100, after: $after) {
+                    nodes { author { login } state }
+                    pageInfo { hasNextPage endCursor }
+                  }
+                }
+              }
+            }`;
+
+            // Read the whole connection: neither evidence beyond page one nor
+            // an API failure after an early match may be silently ignored.
+            let after = null;
+            let found = false;
+            const cursors = new Set();
+            for (;;) {
+              const result = await github.graphql(query, { ...context.repo, number, after });
+              const reviews = result?.repository?.pullRequest?.reviews;
+              if (!Array.isArray(reviews?.nodes) ||
+                  typeof reviews?.pageInfo?.hasNextPage !== 'boolean') {
+                throw new Error('Incomplete review response from GitHub');
+              }
+              found ||= reviews.nodes.some(review =>
+                review?.author?.login === reviewer && completed.has(review.state));
+              if (!reviews.pageInfo.hasNextPage) break;
+              after = reviews.pageInfo.endCursor;
+              if (typeof after !== 'string' || !after || cursors.has(after)) {
+                throw new Error('Review pagination did not advance');
+              }
+              cursors.add(after);
+            }
+
+            if (!found) {
+              core.setFailed('No completed Codex review present; request one and wait for completion.');
+            } else {
+              core.info('Completed Codex review present. Lead review must assess findings and readiness.');
+            }

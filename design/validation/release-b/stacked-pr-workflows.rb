@@ -4,7 +4,7 @@ require 'yaml'
 
 # The fixtures are repository requirements, independent of the current filters.
 required_bases = ['main', 'codex/faithful-syntax-release-plan']
-workflow_names = ['ci', 'wasm-reproducibility', 'gen-visitor-keys', 'copilot-review-gate']
+workflow_names = ['ci', 'wasm-reproducibility', 'gen-visitor-keys', 'codex-review-gate']
 failures = []
 workflow_names.each do |name|
   config = YAML.load_file(".github/workflows/#{name}.yml")
