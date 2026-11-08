@@ -56,8 +56,8 @@ its presence does not authorize adding interpretation to this binding.
   `check:api-report`/docs regen can show "no diff" when the real output changed. After any
   doc-comment edit, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`) and
   verify by inspecting the output files, not the cache's word.
-- Changesets required for published-package behavior/type changes; never `major` without an
-  issue authorizing it.
+- Changesets required for published-package behavior/type changes; the project stays in the 0.x
+  series until the owner declares the shape stable. There is no override flag.
 - Commit author: `Mike North <michael.l.north@gmail.com>` (`--author` on every commit).
   No AI-attribution trailers.
 - **The committed `shim/sh-ast.wasm` is canonical for linux/amd64 CI.** Go wasm output is
