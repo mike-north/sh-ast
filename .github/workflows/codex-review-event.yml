@@ -1,0 +1,14 @@
+# Review events load this workflow from the PR merge commit. Keep the relay
+# permissionless and inert; it supplies routing data, never review evidence.
+name: Codex review event
+run-name: ${{ github.event.pull_request.number }}
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+permissions: {}
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record review-event delivery
+        run: ':'

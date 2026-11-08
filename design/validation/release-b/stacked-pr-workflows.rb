@@ -4,17 +4,20 @@ require 'yaml'
 
 # The fixtures are repository requirements, independent of the current filters.
 required_bases = ['main', 'codex/faithful-syntax-release-plan']
-workflow_names = ['ci', 'wasm-reproducibility', 'gen-visitor-keys', 'copilot-review-gate']
+workflow_names = ['ci', 'wasm-reproducibility', 'gen-visitor-keys', 'codex-review-gate']
 failures = []
 workflow_names.each do |name|
   config = YAML.load_file(".github/workflows/#{name}.yml")
   # Ruby's YAML 1.1 parser treats the unquoted GitHub event key as boolean true.
   events = config.fetch('on', config[true])
-  unless events.key?('pull_request')
-    failures << "#{name}: pull_request event is missing"
+  # Metadata-only review checks use the trusted base event to write a PR-head
+  # check without checking out PR code; build validators keep pull_request.
+  event = name == 'codex-review-gate' ? 'pull_request_target' : 'pull_request'
+  unless events.key?(event)
+    failures << "#{name}: #{event} event is missing"
     next
   end
-  filters = events['pull_request'] || {}
+  filters = events[event] || {}
   required_bases.each do |base|
     included = !filters.key?('branches') || filters['branches'].any? { |pattern| File.fnmatch(pattern, base) }
     excluded = (filters['branches-ignore'] || []).any? { |pattern| File.fnmatch(pattern, base) }
