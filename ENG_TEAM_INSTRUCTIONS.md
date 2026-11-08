@@ -21,13 +21,22 @@ its presence does not authorize adding interpretation to this binding.
   the orchestrator runs review and merge. Reply to every review thread; only the
   orchestrator resolves threads.
 - The required review-presence check is `codex-review-present`, implemented by
-  `.github/workflows/codex-review-gate.yml`. It accepts a normal Codex review in
-  COMMENTED, APPROVED, or CHANGES_REQUESTED state from `chatgpt-codex-connector`.
-  Pending, dismissed, missing, and other authors' reviews do not satisfy it.
-  Verify completed evidence actually landed; a review request alone is insufficient.
-  Presence is not approval, resolution of findings, or an assertion that the current
-  head was reviewed. The lead reviewer remains responsible for substantive review
-  and merge readiness. Copilot reviews remain optional.
+  `.github/workflows/codex-review-gate.yml`. It accepts either a submitted review
+  in COMMENTED, APPROVED, or CHANGES_REQUESTED state at the current PR head, or a
+  completion comment whose `codex-review-state:v1` metadata identifies a completed
+  code review at that full head SHA. The API author login must be
+  `chatgpt-codex-connector` or `chatgpt-codex-connector[bot]` for either path.
+  Pending/dismissed reviews, stale or abbreviated SHAs, missing evidence, and other
+  authors do not satisfy it. Body text claiming bot identity is never authority.
+  The gate writes this check explicitly on the API-reported PR head, including for
+  comment events whose native workflow checks run on the default branch. Review
+  events use a permissionless relay; the default-branch evaluator reads fresh API
+  evidence rather than trusting relay results or artifacts. It does
+  not check out or execute PR code. Request review with a PR conversation comment
+  `@codex review`, once on each new head, then verify completed evidence actually
+  landed; a request alone is insufficient. Presence is not approval or finding resolution.
+  The lead reviewer remains responsible for substantive review and merge readiness.
+  Copilot reviews remain optional.
 - Main moves under you — branch late, expect rebases; "no checks reported" on a PR usually
   means a merge conflict suppressed CI: check mergeability first.
 

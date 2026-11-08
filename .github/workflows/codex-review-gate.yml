@@ -1,75 +1,165 @@
-# Materialize completed Codex review presence as a required check. This is not
-# approval, finding resolution, or evidence that the current head was reviewed;
-# substantive review and merge readiness remain the lead reviewer's responsibility.
+# Codex completion at the current PR head is presence evidence, not approval or
+# finding resolution. The lead reviewer remains responsible for merge readiness.
 name: Codex review gate
 on:
-  # Every base, including stacked candidates, receives its own presence check.
-  pull_request:
+  # Trusted base workflow handles lifecycle events on every base, including stacks.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
-  pull_request_review:
-    types: [submitted, dismissed]
+  # Clean reviews update a completion comment instead of submitting a review.
+  issue_comment:
+    types: [created, edited, deleted]
+  # Review-event code is unprivileged. This evaluator loads from the default
+  # branch and reads no artifacts or execution results from that relay.
+  workflow_run:
+    workflows: [Codex review event]
+    types: [completed]
 concurrency:
-  group: codex-review-gate-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: codex-review-gate-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.display_title }}
+  # Finish explicit check writes instead of orphaning an in-progress head check.
+  cancel-in-progress: false
 permissions:
   pull-requests: read
+  checks: write
 jobs:
-  codex-review-present:
-    name: codex-review-present
+  # The evaluator's native check may be on the default branch. Only the explicit
+  # Checks API run named codex-review-present is the required PR-head result.
+  evaluate-codex-review:
+    name: Evaluate Codex review evidence
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
-      # No checkout, package install, local script import, or PR-code execution.
-      # Only the inline workflow script and the read-only GitHub client run here.
-      - name: Check for a completed Codex review
+      # No checkout, package install, local import, or PR-code execution. Event
+      # and API text are data, never interpolated into the executable script.
+      - name: Materialize current-head Codex completion
         uses: actions/github-script@v7
         with:
           script: |
-            // Both subscribed event families identify the PR here. The base
-            // repository comes from Actions context, never a fork or review text.
-            const number = context.payload.pull_request?.number;
+            // Only default/base-branch events may enter this check-writing path.
+            // The permissionless relay's decimal title routes a PR number; even
+            // a forged title can only request a fresh API evaluation, never pass
+            // evidence. Fork PR association arrays may be empty, so no artifact
+            // or association-array fallback is needed or trusted.
+            if (!['pull_request_target', 'issue_comment', 'workflow_run'].includes(context.eventName)) {
+              throw new Error('Unexpected evaluator event');
+            }
+            if (context.eventName === 'issue_comment' && !context.payload.issue?.pull_request) return;
+            let number;
+            if (context.eventName === 'workflow_run') {
+              const relay = context.payload.workflow_run;
+              if (relay?.name !== 'Codex review event' ||
+                  relay.path !== '.github/workflows/codex-review-event.yml' ||
+                  relay.event !== 'pull_request_review' ||
+                  typeof relay.display_title !== 'string' || !/^[1-9][0-9]*$/.test(relay.display_title)) {
+                throw new Error('Unexpected review relay identity or PR routing');
+              }
+              number = Number(relay.display_title);
+            } else {
+              number = context.eventName === 'issue_comment'
+                ? context.payload.issue?.number : context.payload.pull_request?.number;
+            }
             if (!Number.isSafeInteger(number) || number <= 0) {
               throw new Error('Missing valid pull request identity in event');
             }
+            // Repository identity always comes from the base Actions context,
+            // never relay metadata, fork URLs, or text supplied by the PR.
+            const pr = { ...context.repo, pull_number: number };
+            const { data: current } = await github.rest.pulls.get(pr);
+            const head = current?.head?.sha;
+            if (typeof head !== 'string' || !/^[0-9a-f]{40}$/.test(head)) {
+              throw new Error('Missing current PR head SHA from GitHub');
+            }
 
-            // Match the review author's GraphQL login directly; REST bot-login
-            // suffix conventions do not define this API's identity representation.
-            const reviewer = 'chatgpt-codex-connector';
+            // Only API author.login authenticates Codex; body text cannot grant
+            // identity. Both authorized login spellings identify the same bot.
+            const authors = new Set(['chatgpt-codex-connector', 'chatgpt-codex-connector[bot]']);
             const completed = new Set(['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED']);
-            const query = `query($owner: String!, $repo: String!, $number: Int!, $after: String) {
-              repository(owner: $owner, name: $repo) {
-                pullRequest(number: $number) {
-                  reviews(first: 100, after: $after) {
-                    nodes { author { login } state }
-                    pageInfo { hasNextPage endCursor }
+
+            // A completion record must unambiguously say the code review finished
+            // on this full SHA. Prose, abbreviated receipts, and security-only
+            // activity do not establish that fact. Finding flags are not policy.
+            function isCompletion(comment) {
+              if (!authors.has(comment?.author?.login) || typeof comment.body !== 'string') return false;
+              const records = [...comment.body.matchAll(/^<!-- codex-review-state:v1 (.+) -->$/gm)];
+              if (records.length !== 1) return false;
+              try {
+                const code = JSON.parse(records[0][1])?.code_review;
+                return code?.status === 'completed' && code.commit_sha === head;
+              } catch {
+                return false;
+              }
+            }
+
+            // Only these two code-owned connections/selections are supplied. Read
+            // every page, validating its live head; later API errors must not be
+            // concealed by an earlier match or a match from the other path.
+            async function readConnection(field, selection) {
+              const query = `query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    headRefOid
+                    ${field}(first: 100, after: $after) {
+                      nodes { ${selection} }
+                      pageInfo { hasNextPage endCursor }
+                    }
                   }
                 }
+              }`;
+              const nodes = [];
+              const cursors = new Set();
+              let after = null;
+              for (;;) {
+                const result = await github.graphql(query, { ...context.repo, number, after });
+                const pull = result?.repository?.pullRequest;
+                const connection = pull?.[field];
+                if (pull?.headRefOid !== head || !Array.isArray(connection?.nodes) ||
+                    typeof connection?.pageInfo?.hasNextPage !== 'boolean') {
+                  throw new Error('Incomplete evidence response or changed PR head');
+                }
+                nodes.push(...connection.nodes);
+                if (!connection.pageInfo.hasNextPage) return nodes;
+                after = connection.pageInfo.endCursor;
+                if (typeof after !== 'string' || !after || cursors.has(after)) {
+                  throw new Error('Evidence pagination did not advance');
+                }
+                cursors.add(after);
               }
-            }`;
-
-            // Read the whole connection: neither evidence beyond page one nor
-            // an API failure after an early match may be silently ignored.
-            let after = null;
-            let found = false;
-            const cursors = new Set();
-            for (;;) {
-              const result = await github.graphql(query, { ...context.repo, number, after });
-              const reviews = result?.repository?.pullRequest?.reviews;
-              if (!Array.isArray(reviews?.nodes) ||
-                  typeof reviews?.pageInfo?.hasNextPage !== 'boolean') {
-                throw new Error('Incomplete review response from GitHub');
-              }
-              found ||= reviews.nodes.some(review =>
-                review?.author?.login === reviewer && completed.has(review.state));
-              if (!reviews.pageInfo.hasNextPage) break;
-              after = reviews.pageInfo.endCursor;
-              if (typeof after !== 'string' || !after || cursors.has(after)) {
-                throw new Error('Review pagination did not advance');
-              }
-              cursors.add(after);
             }
 
-            if (!found) {
-              core.setFailed('No completed Codex review present; request one and wait for completion.');
-            } else {
-              core.info('Completed Codex review present. Lead review must assess findings and readiness.');
+            // Event SHA can be a default-branch or merge SHA. Create the required
+            // check explicitly on the API's PR head before examining evidence;
+            // a failed/cancelled evaluation must not publish a successful check.
+            const { data: check } = await github.rest.checks.create({
+              ...context.repo, name: 'codex-review-present', head_sha: head, status: 'in_progress',
+            });
+            if (!Number.isSafeInteger(check?.id) || check.id <= 0) {
+              throw new Error('Missing created check identity from GitHub');
             }
+
+            // Complete the same head-bound check; its SHA cannot be redirected
+            // by later events, comment metadata, or API response text.
+            async function finish(conclusion, summary) {
+              await github.rest.checks.update({
+                ...context.repo, check_run_id: check.id, status: 'completed', conclusion,
+                output: { title: 'Codex review completion', summary },
+              });
+            }
+
+            let found;
+            try {
+              const reviews = await readConnection('reviews', 'author { login } state commit { oid }');
+              const comments = await readConnection('comments', 'author { login } body');
+              found = reviews.some(review => authors.has(review?.author?.login) &&
+                completed.has(review.state) && review.commit?.oid === head) || comments.some(isCompletion);
+              // A synchronize event may race pagination. Re-read immediately
+              // before publishing success; its own event will check the new head.
+              const { data: latest } = await github.rest.pulls.get(pr);
+              if (latest?.head?.sha !== head) throw new Error('PR head changed during evaluation');
+            } catch (error) {
+              await finish('failure', 'Could not verify current-head Codex completion; evaluation failed closed.');
+              throw error;
+            }
+            const summary = found
+              ? 'Codex completed a code review at this PR head. Lead review must assess findings and readiness.'
+              : 'No completed Codex code review at the current PR head; request one and wait for completion.';
+            await finish(found ? 'success' : 'failure', summary);
+            if (!found) core.setFailed(summary);
