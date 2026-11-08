@@ -64,6 +64,10 @@ printing guarantee follows from the accepted autofix purpose.
 
 ## Responsibilities
 
+The [owner-ratified ecosystem map in AGENTS.md](../AGENTS.md#ecosystem-map)
+sets the layer responsibilities and dependency boundaries. The binding-specific
+contracts below elaborate that map.
+
 **The Go syntax implementation** owns grammar, dialect behavior, AST structure
 and field meaning, position semantics, traversal order/control, valid/invalid
 input handling, and printer behavior. Use upstream or an immutable revision of
@@ -89,18 +93,6 @@ or model shell-interpreter invocation options. Faithful exposure of an operation
 already owned by the Go syntax package is distinct from inventing an analysis
 result or a competing syntax model.
 
-**The independent analysis layer** consumes faithful syntax and reports word
-resolution, command sites/context, wrapper resolution, and interpreter-invocation
-observations with explicit uncertainty and assumptions. It owns interpretation,
-not parser output, syntax validation, shell execution, or caller policy. Its
-selected home is the independent private repository `mike-north/sh-analysis`,
-with npm package name `sh-analysis`. The `sh-ast/analyze` subpath was removed
-in PR #94; extraction and publication status are tracked in the analysis
-repository, without implying that consumer migration is ready. `sh-ast` must not
-depend on it; an analysis requirement cannot change syntax records in the binding.
-
-**The consumer adapter** translates syntax into ESLint's locations, visitation,
-comments, diagnostics, and fixes. It owns ESLint-specific objects and policies.
 Raw byte positions remain available even if a reusable UTF-16 conversion helper
 is later provided by sh-ast. Such a helper would be derived data, not the syntax
 position contract.
@@ -223,10 +215,8 @@ release acceptance; evidence and remaining gates are in [IMPLEMENTATION.md](IMPL
 
 ## Responsibility boundaries
 
-The selected Go implementation is the source of truth for syntax values and
-behavior. The TypeScript binding exposes that model faithfully. Analysis is a
-consumer in an independent middle layer; ESLint owns source-coordinate projection,
-presentation-oriented traversal, and lint policy. Existing `sh-ast/analyze`
-exports and maintained Go patches are current implementation facts to realign,
-not exceptions to D9-D11. The earlier Release A/B candidate details above remain
-historical where they describe a delivered or superseded candidate.
+See the [owner-ratified ecosystem map in AGENTS.md](../AGENTS.md#ecosystem-map)
+for the current layer boundaries. Existing `sh-ast/analyze` exports and maintained
+Go patches are historical implementation facts to realign, not exceptions to
+D9-D11. The earlier Release A/B candidate details above remain historical where
+they describe a delivered or superseded candidate.
