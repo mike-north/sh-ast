@@ -21,9 +21,23 @@ interpret words or commands.
 - Reference issues with `Refs #N`, never `Closes #N`. Implementers **stop at PR-open**;
   the orchestrator runs review and merge. Reply to every review thread; only the
   orchestrator resolves threads.
-- Copilot review requests can drop silently (binary-heavy PRs especially), and Copilot
-  removes itself from requested_reviewers WHILE reviewing — "no request + no review" may
-  mean in-progress. Use a grace period; verify a review actually landed.
+- The required review-presence check is `codex-review-present`, implemented by
+  `.github/workflows/codex-review-gate.yml`. It accepts either a submitted review
+  in COMMENTED, APPROVED, or CHANGES_REQUESTED state at the current PR head, or a
+  completion comment whose `codex-review-state:v1` metadata identifies a completed
+  code review at that full head SHA. The API author login must be
+  `chatgpt-codex-connector` or `chatgpt-codex-connector[bot]` for either path.
+  Pending/dismissed reviews, stale or abbreviated SHAs, missing evidence, and other
+  authors do not satisfy it. Body text claiming bot identity is never authority.
+  The gate writes this check explicitly on the API-reported PR head, including for
+  comment events whose native workflow checks run on the default branch. Review
+  events use a permissionless relay; the default-branch evaluator reads fresh API
+  evidence rather than trusting relay results or artifacts. It does
+  not check out or execute PR code. Request review with a PR conversation comment
+  `@codex review`, once on each new head, then verify completed evidence actually
+  landed; a request alone is insufficient. Presence is not approval or finding resolution.
+  The lead reviewer remains responsible for substantive review and merge readiness.
+  Copilot reviews remain optional.
 - Main moves under you — branch late, expect rebases; "no checks reported" on a PR usually
   means a merge conflict suppressed CI: check mergeability first.
 
@@ -40,10 +54,10 @@ interpret words or commands.
   runtime fixtures need a local, explained `@ts-expect-error`; rejected API calls
   in type-contract fixtures retain their `expectError` assertions.
 - Public-surface changes: regenerate the API report (`fix:api-report`) and `pnpm build:docs`,
-  commit both — CI checks the API report and regenerated documentation. If the docs regeneration alone would push
-  the PR past Copilot's ~300-file review limit (e.g. a first-time docs tree), put the docs
-  churn in its own commit and note it in the PR so the reviewer can review the source diff;
-  a documented manual substantive review substitutes when Copilot declines the PR size.
+  commit both — CI checks the API report and regenerated documentation. Keep large
+  generated-doc changes in their own commit and identify them in the PR so reviewers
+  can inspect the source diff separately. Manual substantive review does not
+  substitute for the required Codex presence check.
 - Nx cache is unreliable for doc-comment-only edits (no API shape change): a cached
   `check:api-report`/docs regen can show "no diff" when the real output changed. After any
   doc-comment edit, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`) and
