@@ -36,7 +36,9 @@ interpret words or commands.
   explicit `codex-review-present` check on the API-reported PR head. Trusted
   `pull_request_target` lifecycle and `issue_comment` created/edited/deleted events
   request fresh evaluations; event payloads cannot supply completion evidence.
-  Missing/pending evidence fails only the explicit check. The distinct native
+  Missing/pending/stale evidence fails only the explicit check, including when a
+  well-formed new head is observed during pagination or the final lookup. That
+  check remains bound to its original head. The distinct native
   evaluator job reports infrastructure health: API/script failures fail it and
   the head check when that check can be written. The workflow does
   not check out or execute PR code. Request review with a PR conversation comment

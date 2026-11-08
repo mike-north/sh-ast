@@ -78,8 +78,9 @@ jobs:
             }
 
             // Conversation comments are the sole evidence source. Read every
-            // page, even after a match, and require its API-owned head to remain
-            // unchanged. Later API or pagination failures invalidate all evidence.
+            // page, even after a match or a valid head change. A changed head
+            // makes the snapshot stale (null), not broken; malformed responses or
+            // later API/pagination failures must still fail evaluator health.
             async function readComments() {
               const query = `query($owner: String!, $repo: String!, $number: Int!, $after: String) {
                 repository(owner: $owner, name: $repo) {
@@ -95,14 +96,16 @@ jobs:
               const nodes = [];
               const cursors = new Set();
               let after = null;
+              let changedHead = false;
               for (;;) {
                 const result = await github.graphql(query, { ...context.repo, number, after });
                 const pull = result?.repository?.pullRequest;
                 const connection = pull?.comments;
-                if (pull?.headRefOid !== head || !Array.isArray(connection?.nodes) ||
-                    typeof connection?.pageInfo?.hasNextPage !== 'boolean') {
-                  throw new Error('Incomplete evidence response or changed PR head');
+                if (typeof pull?.headRefOid !== 'string' || !/^[0-9a-f]{40}$/.test(pull.headRefOid) ||
+                    !Array.isArray(connection?.nodes) || typeof connection?.pageInfo?.hasNextPage !== 'boolean') {
+                  throw new Error('Incomplete evidence response');
                 }
+                changedHead ||= pull.headRefOid !== head;
                 // A partial/malformed API record is an infrastructure failure,
                 // even beside matching evidence. A null author is legitimate for
                 // a deleted account and simply cannot authenticate completion.
@@ -111,7 +114,7 @@ jobs:
                   throw new Error('Incomplete comment record from GitHub');
                 }
                 nodes.push(...connection.nodes);
-                if (!connection.pageInfo.hasNextPage) return nodes;
+                if (!connection.pageInfo.hasNextPage) return changedHead ? null : nodes;
                 after = connection.pageInfo.endCursor;
                 if (typeof after !== 'string' || !after || cursors.has(after)) {
                   throw new Error('Evidence pagination did not advance');
@@ -139,14 +142,20 @@ jobs:
               });
             }
 
-            let found;
+            let found = false;
             try {
               const comments = await readComments();
-              found = comments.some(isCompletion);
-              // A synchronize event may race pagination. Re-read immediately
-              // before publishing success; its own event will check the new head.
-              const { data: latest } = await github.rest.pulls.get(pr);
-              if (latest?.head?.sha !== head) throw new Error('PR head changed during evaluation');
+              if (comments !== null) {
+                // A valid synchronize race only invalidates this head's evidence;
+                // the lifecycle event evaluates the new head in its own check.
+                // Missing/invalid head data is a broken lookup, not a valid race.
+                const { data: latest } = await github.rest.pulls.get(pr);
+                const latestHead = latest?.head?.sha;
+                if (typeof latestHead !== 'string' || !/^[0-9a-f]{40}$/.test(latestHead)) {
+                  throw new Error('Missing current PR head SHA from GitHub');
+                }
+                found = latestHead === head && comments.some(isCompletion);
+              }
             } catch (error) {
               await finish('failure', 'Could not verify current-head Codex completion; evaluation failed closed.');
               throw error;
@@ -155,6 +164,6 @@ jobs:
               ? 'Codex completed a code review at this PR head. Lead review must assess findings and readiness.'
               : 'No completed Codex code review at the current PR head; request one and wait for completion.';
             await finish(found ? 'success' : 'failure', summary);
-            // Missing/pending evidence is an expected decision, so the native
+            // Missing/pending/stale evidence is an expected decision, so the native
             // evaluator succeeds. Exceptions and failed check writes still escape
             // and fail the job; no continue-on-error can hide broken evaluation.

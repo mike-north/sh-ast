@@ -203,11 +203,11 @@ function receipt(sha = head.slice(0, 10), login = 'chatgpt-codex-connector') {
 }
 
 /** Absence is a review decision, not a broken evaluator or duplicate job verdict. */
-function assertMissing(result) {
+function assertMissing(result, expectedHead = head) {
   assert.deepEqual(result.failures, []);
   assert.equal(result.creates.length, 1);
   assert.equal(result.creates[0].name, 'codex-review-present');
-  assert.equal(result.creates[0].head_sha, head);
+  assert.equal(result.creates[0].head_sha, expectedHead);
   assert.equal(result.updates.length, 1);
   assert.equal(result.updates[0].check_run_id, 7001);
   assert.equal(result.updates[0].conclusion, 'failure');
@@ -453,14 +453,15 @@ test('API and pagination failures cannot be hidden by an earlier matching commen
     assertFailure(await runGate({ comments: pages }));
 });
 
-test('incomplete connection shapes and changed page heads fail closed', async () => {
+test('incomplete connection shapes and missing or invalid page heads fail the evaluator', async () => {
   for (const response of [
     { repository: null },
     { repository: { pullRequest: null } },
     { repository: { pullRequest: { headRefOid: head } } },
     page('comments', null),
     page('comments', [], 'false'),
-    page('comments', [], false, null, stale),
+    page('comments', [], false, null, null),
+    page('comments', [], false, null, 'not-a-sha'),
   ])
     assertFailure(await runGate({ comments: [response] }));
 });
@@ -510,11 +511,108 @@ for (const eventName of ['workflow_run', 'pull_request_review', 'pull_request', 
   });
 }
 
-test('head change after receipt invalidates old-head evidence and fails evaluator', async () => {
-  const result = await runGate({ comments: [page('comments', [receipt()])], finalHead: stale });
-  assertFailure(result);
-  assert.equal(result.trace.at(-2), 'pulls.get');
-  assert.equal(result.trace.at(-1), 'checks.update');
+/** Exact independent-review inputs distinguish ordinary synchronization from API breakage. */
+const raceHead = 'c3c51d4af2e7cad9d784db0422e138be97d312a9';
+const changedHead = '4af89865ad34a4304b19b42263dfd40234f67400';
+const raceReceipt = {
+  author: { login: 'chatgpt-codex-connector' },
+  body: '<!-- codex-review-receipt:v1 -->\n\n**Reviewed commit:** `c3c51d4`\n',
+};
+
+test('ordinary final-read head change fails only the original head check', async () => {
+  const result = await runGate({
+    context: commentContext(),
+    initialHead: raceHead,
+    finalHead: changedHead,
+    comments: [page('comments', [raceReceipt], false, null, raceHead)],
+  });
+  assertMissing(result, raceHead);
+  assert.deepEqual(result.trace, [
+    'pulls.get',
+    'checks.create',
+    'graphql.comments',
+    'pulls.get',
+    'checks.update',
+  ]);
+  assert.equal(
+    result.published.some((update) => update.conclusion === 'success'),
+    false,
+  );
+});
+
+test('ordinary pagination head change fails only the original head check', async () => {
+  const result = await runGate({
+    context: commentContext(),
+    initialHead: raceHead,
+    comments: [
+      page('comments', [raceReceipt], true, 'page-2', raceHead),
+      page('comments', [raceReceipt], false, null, changedHead),
+    ],
+  });
+  assertMissing(result, raceHead);
+  assert.deepEqual(result.trace, [
+    'pulls.get',
+    'checks.create',
+    'graphql.comments',
+    'graphql.comments',
+    'checks.update',
+  ]);
+  assert.equal(result.queries[1].variables.after, 'page-2');
+  assert.equal(
+    result.published.some((update) => update.conclusion === 'success'),
+    false,
+  );
+});
+
+test('a changed page head cannot hide malformed records or nonadvancing pagination', async () => {
+  for (const response of [
+    page('comments', null, false, null, changedHead),
+    page('comments', [], 'false', null, changedHead),
+    page('comments', [{ ...raceReceipt, body: null }], false, null, changedHead),
+    page('comments', [], true, null, changedHead),
+    page('comments', [], true, 'page-2', changedHead),
+  ]) {
+    assertFailure(
+      await runGate({
+        comments: [page('comments', [receipt()], true, 'page-2'), response],
+      }),
+    );
+  }
+});
+
+test('pagination continues after a valid head change so later API failures stay red', async () => {
+  assertFailure(
+    await runGate({
+      comments: [
+        page('comments', [receipt()], true, 'page-2'),
+        page('comments', [], true, 'page-3', changedHead),
+        new Error('API unavailable after changed head'),
+      ],
+    }),
+  );
+});
+
+test('missing or invalid final head after a match is an infrastructure failure', async () => {
+  for (const finalHead of [undefined, null, '', 'not-a-sha', '1234567']) {
+    // An omitted option uses the normal fixture default; null models a missing API value.
+    assertFailure(
+      await runGate({ finalHead: finalHead ?? null, comments: [page('comments', [receipt()])] }),
+    );
+  }
+});
+
+test('failure to write a stale-head check remains an evaluator failure', async () => {
+  for (const options of [
+    { finalHead: changedHead, comments: [page('comments', [receipt()])] },
+    { comments: [page('comments', [receipt()], false, null, changedHead)] },
+  ]) {
+    const result = await runGate({
+      ...options,
+      updateError: new Error('stale check write failed'),
+    });
+    assertFailure(result);
+    assert.deepEqual(result.published, []);
+  }
 });
 
 test('receipt at an old head is absent evidence after the head changes', async () => {
