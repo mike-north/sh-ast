@@ -1,5 +1,24 @@
 # sh-ast
 
+## 0.11.0
+
+### Minor Changes
+
+- [#93](https://github.com/mike-north/sh-ast/pull/93) [`43db64d`](https://github.com/mike-north/sh-ast/commit/43db64d48e97eeab654aa40f72785cc1e51f922d) Thanks [@mike-north](https://github.com/mike-north)! - Consume the maintained Go syntax fork at immutable revision bbc7c4ace575d5de375726fdaa2a5c001c46564c (based on mvdan/sh v3.14.1), using the same source for schema generation and canonical Linux WASM. Native fixes and their upkeep now live in the Go fork; the binding no longer carries a semantic source patch stack. Builds verify resolved source identity and actual module-cache integrity.
+
+  Drop the constructed split-literal backslash and Zsh reverse-subscript compatibility holds. The selected Go printer doubles a trailing backslash, and reverse-subscript patterns remain opaque literal text: wildcard forms can parse, while nested substitutions are not exposed as syntax nodes. These are selected-Go observations, not a claim that opaque text contains no executable commands or that every printed program preserves shell behavior. Analysis extraction and its uncertainty contract are separate work.
+
+  Expose synchronous `splitBraces(word): boolean` as the faithful Go syntax transformation. It mutates the Word, returns the exact upstream boolean, and retains original WordPart objects that Go reuses. A true result can occur without a BraceExp. Remove the private analysis-specific brace-classification bridge operation; classification remains in the analysis layer.
+
+  Bound SplitBraces input and output transport to 256 nested Go struct records, including positions. Check input iteratively before recursive validation, encoding or native entry; check output after the upstream transformation and before recursive encoding. Deep valid data is refused as typed bridge failures without changing the caller's Word. Shared input aliases are checked along each path; cycles remain InputError. JavaScript input/output stack exhaustion retains its original RangeError as the cause of ShInternalError. This is a bridge resource constraint, separate from grammar and parser work limits.
+
+- [#94](https://github.com/mike-north/sh-ast/pull/94) [`240ec38`](https://github.com/mike-north/sh-ast/commit/240ec38eb8ce0f3cb3b81b3382b76f104acf1942) Thanks [@mike-north](https://github.com/mike-north)! - Keep `sh-ast` a faithful synchronous syntax binding: remove the `sh-ast/analyze`
+  entry point, analysis implementation, and root analysis error classes. Word,
+  command, wrapper, and interpreter analysis is owned by the independent
+  `mike-north/sh-analysis` repository and selected package `sh-analysis`. Syntax
+  records, constants, parsing, traversal, printing, and binding errors remain at
+  the root. There are no forwarding aliases or compatibility layer.
+
 ## 0.10.0
 
 ### Minor Changes
