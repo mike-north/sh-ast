@@ -2,7 +2,7 @@ name: Schema reproducibility
 on:
   push:
     branches: [main]
-  # Stacked candidates need the same checks as PRs targeting main.
+  # Run the same checks for pull requests against any base branch.
   pull_request:
 env:
   # An external workspace or mutable graph must not redirect canonical builds.
