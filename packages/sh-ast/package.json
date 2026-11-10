@@ -1,6 +1,20 @@
 {
   "name": "sh-ast",
-  "description": "Synchronous, faithfully typed mvdan/sh syntax records and parsing via WebAssembly.",
+  "description": "Synchronous, fully typed parser, printer and AST walker for Bash, POSIX sh, mksh, Bats and Zsh in Node.js, powered by mvdan/sh compiled to WebAssembly.",
+  "keywords": [
+    "shell",
+    "bash",
+    "zsh",
+    "posix",
+    "sh",
+    "ast",
+    "parser",
+    "printer",
+    "wasm",
+    "webassembly",
+    "mvdan-sh",
+    "typescript"
+  ],
   "version": "0.11.0",
   "author": "Mike North <michael.l.north@gmail.com>",
   "repository": {
@@ -18,12 +32,17 @@
       "default": "./dist/index.js"
     }
   },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "files": [
     "dist",
     "generated/*.js",
     "generated/*.d.ts",
     "shim/sh-ast.wasm",
-    "shim/wasm_exec.js"
+    "shim/wasm_exec.js",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "license": "MIT",
   "main": "./dist/index.js",
