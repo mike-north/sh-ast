@@ -1,5 +1,13 @@
 # sh-ast
 
+## 0.11.1
+
+### Patch Changes
+
+- [#103](https://github.com/mike-north/sh-ast/pull/103) [`d3ee879`](https://github.com/mike-north/sh-ast/commit/d3ee87968f63d967b16ec24a9a2777eebe4a02a5) Thanks [@mike-north](https://github.com/mike-north)! - Ship the MIT license and third-party notices in the package.
+
+- [#104](https://github.com/mike-north/sh-ast/pull/104) [`4aac611`](https://github.com/mike-north/sh-ast/commit/4aac611bbc9396c9dd1c20bd05677d00defe6c44) Thanks [@mike-north](https://github.com/mike-north)! - Rewrite the package README for new users: what sh-ast is for, install and Node.js requirements, a quickstart with its output, and short sections on parsing, walking, editing, printing, dialects, errors and limits.
+
 ## 0.11.0
 
 ### Minor Changes
