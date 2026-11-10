@@ -274,8 +274,8 @@ output is host-specific, so a build on macOS or arm64 will not match byte for by
 that is expected. Never commit a locally built WASM. When the shim or its Go source
 changes, the `wasm-reproducibility` workflow rebuilds on Linux and verifies the committed
 binary, and uploads the Linux output as an artifact that a maintainer can commit. The
-exact rebuild command, including the pinned `wasm-opt` step, is in "The WASM shim" in
-[packages/sh-ast/README.md](packages/sh-ast/README.md).
+exact rebuild command, including the pinned `wasm-opt` step, is in
+[Rebuilding the WASM shim](CONTRIBUTING.md#rebuilding-the-wasm-shim).
 
 ### Public API report and generated documentation
 

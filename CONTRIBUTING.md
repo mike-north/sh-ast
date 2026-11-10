@@ -35,9 +35,50 @@ Run all four before pushing. `pnpm run fix:format` repairs formatting, and
 
 `packages/sh-ast/shim/sh-ast.wasm` is the linux/amd64 build produced by CI. A WASM built on
 macOS or arm64 will not match it byte for byte, which is expected. Do not commit a locally
-built binary. If you change the shim, push the change and let the `wasm-reproducibility`
-workflow rebuild on Linux; a maintainer commits its artifact. Rebuild instructions are in
-"The WASM shim" in [packages/sh-ast/README.md](packages/sh-ast/README.md).
+built binary. Local builds are fine for experiments.
+
+## Rebuilding the WASM shim
+
+The canonical binary is built by Linux/amd64 CI with the Go toolchain pinned in
+`packages/sh-ast/shim/go.mod` and the checksum-pinned Binaryen version in
+`.github/workflows/wasm-reproducibility.yml`. Pinning matters: a different `wasm-opt`
+version can produce a different, still-correct optimization, which would break the
+byte-for-byte comparison.
+
+From `packages/sh-ast/shim`:
+
+```sh
+GOOS=js GOARCH=wasm go build -buildvcs=false -trimpath -ldflags="-s -w -buildid=" -o /tmp/sh-ast.rebuilt.wasm .
+wasm-opt -Oz --enable-bulk-memory-opt --enable-nontrapping-float-to-int /tmp/sh-ast.rebuilt.wasm -o sh-ast.wasm
+```
+
+To update the committed binary after a shim or Go-source change:
+
+1. Push the change. The `wasm-reproducibility` workflow rebuilds on Linux and uploads the
+   result as the `sh-ast-linux-amd64-wasm` artifact, even when the committed binary is
+   stale (the comparison step then fails, which is expected).
+2. A maintainer downloads that artifact, commits it as `packages/sh-ast/shim/sh-ast.wasm`,
+   and pushes. The workflow reruns and must find a fresh rebuild byte-identical to the
+   committed file.
+
+Before either build, `node tools/verify-go-source.mjs` verifies both effective Go module
+graphs (the shim and the schema generator) against the recorded fork revision and
+checksum pins; a local `replace` or external Go workspace cannot substitute a different
+implementation. Changing a pin requires a separately downloaded and reviewed source.
+
+## Regenerating the syntax schema
+
+Faithful declarations, constants, and field metadata live in
+`packages/sh-ast/generated/syntax-*` and are produced from the pinned Go struct
+definitions. After changing the matching pins in `packages/sh-ast/shim/go.mod` and
+`tools/gen-visitor-keys/go.mod`, run:
+
+```sh
+pnpm run generate:sh-ast-schema
+```
+
+Regeneration alone only detects drift. Fidelity is checked by independent Go reflection
+tests, hand-derived type assertions, and runtime fixtures.
 
 ## Public API and generated docs
 

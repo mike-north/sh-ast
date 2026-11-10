@@ -2,14 +2,14 @@ name: WASM reproducibility
 on:
   push:
     branches: [main]
-  # Stacked candidates need the same checks as PRs targeting main.
+  # Run the same checks for pull requests against any base branch.
   pull_request:
 env:
   # An external workspace or mutable graph must not redirect canonical builds.
   GOWORK: 'off'
   GOFLAGS: -mod=readonly
-  # Pinned binaryen release providing wasm-opt — see packages/sh-ast/shim's
-  # README.md "The WASM shim" for why wasm-opt is part of the build and why
+  # Pinned binaryen release providing wasm-opt — see
+  # CONTRIBUTING.md "Rebuilding the WASM shim" for why wasm-opt is part of the build and why
   # its version must be pinned (a different wasm-opt version can produce a
   # different, still-correct optimization, which would break byte-for-byte
   # reproducibility here).
@@ -57,6 +57,6 @@ jobs:
       - name: Verify rebuild matches the committed artifact
         run: |
           if ! cmp -s sh-ast.wasm /tmp/sh-ast.committed.wasm; then
-            echo "::error::packages/sh-ast/shim/sh-ast.wasm does not match a fresh rebuild. See packages/sh-ast/README.md's \"The WASM shim\" for the exact rebuild command and commit the result." >&2
+            echo "::error::packages/sh-ast/shim/sh-ast.wasm does not match a fresh rebuild. See CONTRIBUTING.md's \"Rebuilding the WASM shim\" for the exact rebuild command and commit the result." >&2
             exit 1
           fi
