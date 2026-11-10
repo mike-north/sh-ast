@@ -1,6 +1,6 @@
 {
   "consumerRef": "52f1b79b222fb4ef85994bd9c00f924542d378ac",
-  "parserTarball": "/Users/mnorth/.codex/worktrees/consumer-candidate-gate/eslint-sh/scratch/release-a-candidate/sh-ast-0.3.1.tgz",
+  "parserTarball": "<consumer>/work/release-a-candidate/sh-ast-0.3.1.tgz",
   "parserTarballSha256": "740110701a41a54608a948d7649d4c8ebffeb571df70e6d996facdfb9c40c16c",
   "wasmSha256": "dc3ab066216b87d4131672d54b1cb1f801948a8dbac6f167f485172de0eb3466",
   "consumerRuntimeFiles": {

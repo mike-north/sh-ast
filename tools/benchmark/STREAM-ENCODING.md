@@ -48,9 +48,9 @@ NODENV_VERSION=22.22.1 node --version
 NODENV_VERSION=22.22.1 node tools/benchmark/stream-encoding-prepare.mjs \
   --baseline /absolute/baseline/artifacts.json \
   --candidate /absolute/candidate/artifacts.json \
-  --consumer-root /Users/mnorth/Development/eslint-sh \
+  --consumer-root <consumer> \
   --consumer-ref 6747c0cb6aaea416c35296ded2694cfb4fad913e \
-  --dependency-root /Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf \
+  --dependency-root <consumer>/dependency-checkout \
   --output /absolute/new-experiment
 ```
 

@@ -1,8 +1,14 @@
-# Project responsibility rules
+# Contributor and coding-agent instructions
 
-Read [the accepted architecture](design/ARCHITECTURE.md#responsibilities) and
-[the engineering agreement](ENG_TEAM_INSTRUCTIONS.md) before implementing or
-reviewing a change. These rules apply to humans, coding agents, and reviewers.
+These rules apply to everyone who changes or reviews this repository: maintainers,
+outside contributors, and coding agents. For setup and the contribution workflow see
+[CONTRIBUTING.md](CONTRIBUTING.md); for vulnerability reports see [SECURITY.md](SECURITY.md).
+
+`sh-ast` is a faithful, synchronous TypeScript binding, through WebAssembly, of the
+shell syntax package in a maintained Go fork of [mvdan/sh](https://github.com/mvdan/sh).
+Its responsibilities and boundaries are defined in the ecosystem map below and in
+[the accepted architecture](design/ARCHITECTURE.md#responsibilities). Read both before
+implementing or reviewing a change.
 
 <!-- ecosystem-map:begin -->
 # Ecosystem map
@@ -216,33 +222,103 @@ with a tool in toolfab's sense.
 - judge: the human. No layer decides; layers inform. allw is the optional primitive that puts the question in front of the judge with richer answers than yes or no.
 <!-- ecosystem-map:end -->
 
-## Fix Go behavior in a Go fork
+## Responsibilities in practice
 
-Any changes to the underlying Go library belong in a maintained fork. Commit
-fixes there, pin an immutable revision containing them, and build the WASM bundle
-and generated schema from that same source. Do not wait for upstream acceptance
-before depending on our fixes. Do not maintain the underlying library's semantic
-patch stack inside the TypeScript binding repository. Binding-specific shim code
-remains here; this rule concerns changes to the underlying library.
+- This package owns shell syntax: the AST and its types, positions, traversal, and
+  printing. It does not interpret words, resolve commands, track working directories, or
+  express any policy. Those belong to other layers (see the map above).
+- Where a token, word, quoted string, or heredoc body begins and ends is the parser's
+  answer. Read it from AST nodes and positions; never recompute it by scanning source
+  text in TypeScript. A position that is imprecise is a defect to fix in the Go fork.
+- A pull request names the layer that owns the change. Changes that redefine syntax for
+  the convenience of an analysis or lint consumer are rejected, even if downstream tests
+  pass.
+- First use stays synchronous. Do not add mandatory asynchronous initialization to
+  satisfy another layer's preference.
+- The package is pre-1.0 and has few consumers. Make hard breaks when the model requires
+  them instead of adding compatibility aliases, shims, or migration layers.
 
-Maintaining the fork includes observing upstream changes, incorporating applicable
-changes, and checking which fixes upstream has absorbed. Return to an upstream
-dependency when it contains the required behavior. No recurring automation or
-update cadence is implied by this instruction.
+## Fixing Go behavior belongs in the Go fork
 
-## Review against intent
+Changes to the underlying Go library are made in the maintained fork, not as a patch
+stack in this repository. Commit the fix to the fork, pin an immutable revision that
+contains it, and build the WASM bundle and generated schema from that same source
+(`tools/go-source.json`, verified by `tools/verify-go-source.mjs`). Do not wait for an
+upstream pull request to be accepted before depending on a fix; return to upstream when
+it contains the required behavior. Binding-specific shim code stays here.
 
-- There are no users of this TypeScript library. Make hard breaks when the model
-  requires them; do not add compatibility aliases, shims, or migration layers to
-  preserve earlier APIs or output. Update consumers to the intended contract.
-- Require the PR to identify its owning layer. Reject changes that redefine
-  syntax for analysis or lint convenience, even if downstream tests pass.
-- A demonstrated Go bug can justify a fork fix. An old TypeScript test expectation
-  alone cannot. Separate independent correctness evidence from compatibility.
-- Write specification/outcome-derived tests before software changes. Verify the
-  binding against the exact selected Go revision; verify intentional fork deltas
-  with independent syntax or real-shell evidence.
-- Document durable semantic intent, responsibilities, boundaries, and invariants
-  in code comments. Keep progress and completion notes in work records.
-- Preserve genuinely synchronous first use. Do not add mandatory asynchronous
-  initialization to satisfy another layer's implementation preference.
+A demonstrated Go bug can justify a fork fix. An old TypeScript test expectation alone
+cannot: separate independent correctness evidence from compatibility.
+
+## Building and testing
+
+- Toolchain: Node 22 (see `.nvmrc`), pnpm 11 (`packageManager` in `package.json`,
+  `engine-strict`), and the Go version pinned in `packages/sh-ast/shim/go.mod` for the
+  WASM shim.
+- Run `pnpm install`, `pnpm build`, `pnpm check`, and `pnpm test`; all must pass, and
+  `pnpm run check:format` must be clean (`pnpm run fix:format` repairs it). Remove build
+  outputs with `pnpm run clean`.
+- `check:typecheck` type-checks source, runtime tests, and generated declarations with
+  the compiler, and type-contract fixtures with `tsd` across `.ts`, `.tsx`, `.mts`, and
+  `.cts`. Typed ESLint does not report compiler diagnostics. An intentionally malformed
+  runtime fixture needs a local, explained `@ts-expect-error`; rejected calls in
+  type-contract fixtures keep their `expectError` assertions.
+- Tests that are known to be heavy (WASM warm-up, large fixtures) set explicit timeouts.
+- Multibyte fixtures (emoji, CJK, combining marks) are required for anything that touches
+  ranges, positions, or offsets.
+
+### The committed WASM is canonical
+
+`packages/sh-ast/shim/sh-ast.wasm` is the linux/amd64 build produced by CI. Go's WASM
+output is host-specific, so a build on macOS or arm64 will not match byte for byte, and
+that is expected. Never commit a locally built WASM. When the shim or its Go source
+changes, the `wasm-reproducibility` workflow rebuilds on Linux and verifies the committed
+binary, and uploads the Linux output as an artifact that a maintainer can commit. The
+exact rebuild command, including the pinned `wasm-opt` step, is in "The WASM shim" in
+[packages/sh-ast/README.md](packages/sh-ast/README.md).
+
+### Public API report and generated documentation
+
+A change to the public surface (exports, signatures, documented types) must regenerate
+the API report with `pnpm --filter sh-ast run fix:api-report` and the documentation with
+`pnpm build:docs`, and commit both. CI checks that they are current. After editing only a
+doc comment, regenerate with `--skip-nx-cache` (or `NX_SKIP_NX_CACHE=true`): the Nx cache
+can report "no diff" when the real output changed, so check the output files themselves.
+Put large generated-doc changes in their own commit and call them out in the pull
+request so reviewers can read the source diff separately.
+
+## Tests and evidence
+
+- Write the specification- or outcome-derived test before the code change. Expected
+  values come from an independent source: the exact pinned Go revision, real-shell
+  behavior, the cited specification, or a hand-derived value. Never derive an expectation
+  from the code under test, and do not use snapshot or captured-output tests as a
+  correctness mechanism.
+- Verify the binding against the exact selected Go revision; verify intentional fork
+  deltas with independent syntax or real-shell evidence.
+- A bug fix includes a regression test that fails before the fix and passes after it. When
+  reviewing a fix, trace the corrected code by hand against the exact input that was
+  reported: a green build and a plausible-looking diff do not show that the reported
+  defect is gone.
+- Document durable semantic intent in code comments: responsibilities, boundaries, and
+  invariants. Keep progress notes and task status out of comments.
+
+## Releases and changesets
+
+- A change to published-package behavior or types needs a changeset (`pnpm changeset`).
+- The project stays in the 0.x series until the maintainer declares the shape stable.
+  Observable syntax or binding changes use a 0.x minor release, and the changelog names
+  the exact Go dependency, including the fork revision when one is used.
+- Releases come only from the release workflow. Do not edit the generated "Version
+  Packages" pull request or publish by hand.
+
+## Pull requests
+
+- Open an issue first for anything non-trivial. Link it with `Refs #N`.
+- State the acceptance criteria and map each one to a named test in the pull request.
+  If a criterion is wrong or unachievable, say so on the issue before building around it.
+- Keep commits focused; do not add generated attribution trailers to commits.
+- Every pull request needs an approving code review before it is merged. Reply to every
+  review thread; the reviewer resolves it.
+- The base branch moves. Rebase late, and when CI reports "no checks" on a pull request,
+  check for a merge conflict first.

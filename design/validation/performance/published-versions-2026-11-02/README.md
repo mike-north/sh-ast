@@ -19,9 +19,9 @@ From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm benchmark --prepare-only --output scratch/benchmark-prepared
-pnpm benchmark --prepared scratch/benchmark-prepared/artifacts.json \
-  --output scratch/benchmark-baseline --dialects bash,posix \
+pnpm benchmark --prepare-only --output work/benchmark-prepared
+pnpm benchmark --prepared work/benchmark-prepared/artifacts.json \
+  --output work/benchmark-baseline --dialects bash,posix \
   --rounds 4 --iterations 5 --warmup 2
 ```
 

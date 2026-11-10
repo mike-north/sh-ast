@@ -1,6 +1,6 @@
 {
   "consumerRef": "2a0f260ddfc632949d9f186678ada35ceca0d1cc",
-  "parserTarball": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/snapshot-release-a-candidate/sh-ast-0.3.1.tgz",
+  "parserTarball": "<repo>/work/snapshot-release-a-candidate/sh-ast-0.3.1.tgz",
   "parserTarballSha256": "2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009",
   "wasmSha256": "a9603b3c9d939e2bca2b093cd7bdbd7ee77fa55a5e882c56db275a7ecb943e4c",
   "consumerRuntimeFiles": {

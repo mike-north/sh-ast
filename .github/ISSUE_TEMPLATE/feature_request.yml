@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose new behavior or API for sh-ast.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        sh-ast is a faithful syntax binding. Interpreting words or commands, or enforcing policy, belongs in other packages; see AGENTS.md for the boundaries.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what does sh-ast not let you do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: The API or behavior you would like, with a short example of use.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

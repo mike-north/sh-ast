@@ -1,20 +1,21 @@
 # Fidelity assessment
 
-Assessment date: 2026-11-01, America/Los_Angeles. Findings below are observations,
+Assessment date: 2026-11-01, America/Los_Angeles. This is a point-in-time
+assessment that preceded the releases it motivated. Findings below are observations,
 not newly accepted API requirements. The target is in
 [Architecture](ARCHITECTURE.md#accepted-direction).
 
 ## Declared baseline and provenance
 
-| Source                                                         | Verified state                                                                                                                    | Standing                                                                                          |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Original `/Users/mnorth/Development/sh-ast`                    | Branch `main`, HEAD `96d2a326cba9a3e826f76f1c76b6bf5cdcd070c5`, package `0.1.0`                                                   | Intended implementation baseline requested by the supervisor                                      |
-| Original uncommitted state                                     | Only `tools/gen-visitor-keys/go.sum`: 13 additional dependency `/go.mod` checksum lines; no changed requirements in go.mod        | Inspected, not overwritten or copied into the planning change                                     |
-| Planning worktree `/Users/mnorth/.codex/worktrees/e1eb/sh-ast` | Initially extraction `7472d5b` (`0.0.0`); safely switched, before writing documents, to `96d2a32`                                 | All relative source references below use the corrected baseline                                   |
-| Local remote-tracking ref `origin/main`                        | `7a70a12`, package `0.3.0`                                                                                                        | Newer code comparison only; not the planning baseline                                             |
-| Live remote `refs/heads/main` and peeled `sh-ast@0.3.1` tag    | `7bdc6b14899898518e1dbecc01830b2f5f05a893`; GitHub manifest read reports `0.3.1`                                                  | Read with `git ls-remote` and the GitHub connector; no registry publication claim                 |
-| Consumer `/Users/mnorth/Development/eslint-sh`                 | HEAD `7412616a48428137e16bfe8c61c64be50a7c01fb`; plugin and umbrella `0.3.0`; sh-ast dependency/lock/installed resolution `0.3.0` | Read-only consumer assessment; pre-existing untracked `.agentmonitors/` and `.codex/` left intact |
-| Upstream parser and generator                                  | Both Go manifests pin `mvdan.cc/sh/v3 v3.13.1`, Go `1.26.10`                                                                      | Syntax source inspected from the local Go module cache                                            |
+| Source                                                      | Verified state                                                                                                                    | Standing                                                                                          |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Original `<repo>`                                           | Branch `main`, HEAD `96d2a326cba9a3e826f76f1c76b6bf5cdcd070c5`, package `0.1.0`                                                   | Intended implementation baseline requested by the supervisor                                      |
+| Original uncommitted state                                  | Only `tools/gen-visitor-keys/go.sum`: 13 additional dependency `/go.mod` checksum lines; no changed requirements in go.mod        | Inspected, not overwritten or copied into the planning change                                     |
+| Planning worktree `<repo>`                                  | Initially extraction `7472d5b` (`0.0.0`); safely switched, before writing documents, to `96d2a32`                                 | All relative source references below use the corrected baseline                                   |
+| Local remote-tracking ref `origin/main`                     | `7a70a12`, package `0.3.0`                                                                                                        | Newer code comparison only; not the planning baseline                                             |
+| Live remote `refs/heads/main` and peeled `sh-ast@0.3.1` tag | `7bdc6b14899898518e1dbecc01830b2f5f05a893`; GitHub manifest read reports `0.3.1`                                                  | Read with `git ls-remote` and the GitHub connector; no registry publication claim                 |
+| Consumer `<consumer>`                                       | HEAD `7412616a48428137e16bfe8c61c64be50a7c01fb`; plugin and umbrella `0.3.0`; sh-ast dependency/lock/installed resolution `0.3.0` | Read-only consumer assessment; pre-existing untracked `.agentmonitors/` and `.codex/` left intact |
+| Upstream parser and generator                               | Both Go manifests pin `mvdan.cc/sh/v3 v3.13.1`, Go `1.26.10`                                                                      | Syntax source inspected from the local Go module cache                                            |
 
 Local tags also include `sh-ast@0.1.0`, `0.2.0`, and `0.3.0`; live remote refs
 confirmed those tags and `0.3.1`. Tags and manifests do not prove npm publication.
@@ -40,7 +41,7 @@ as the future core contract.
 
 Upstream links below use the pinned
 [v3.13.1 syntax source](https://github.com/mvdan/sh/tree/v3.13.1/syntax).
-Local inspection used `/Users/mnorth/go/pkg/mod/mvdan.cc/sh/v3@v3.13.1/syntax`.
+Local inspection used `<gomodcache>/mvdan.cc/sh/v3@v3.13.1/syntax`.
 
 | Area                        | Evidence at baseline `96d2a32`                                                                                                                                          | Consequence                                                                                                                                                        |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -74,10 +75,10 @@ These are partial fixes to reuse, not proof of the proposed complete contract.
 Later main also adds a conservative depth-150 guard (`ef343d7`;
 `src/parse-depth-guard.ts:58`, `src/parse.ts:125` at `7a70a12`) to avoid WASM stack
 exhaustion. It is absent at the declared baseline. Reconcile this explicit adapter
-limit before claiming identical upstream input acceptance. This planning pass did
+limit before claiming identical upstream input acceptance. This assessment did
 not audit every newer-main change.
 
-## Validation performed in this planning pass
+## Validation performed in this assessment
 
 - Read implementation, schema generation, checked-in declarations, tests, API
   reports, manifests, workflows, upstream source, and consumer integration code.
@@ -91,7 +92,7 @@ not audit every newer-main change.
 - The consumer was inspected only. Its tests, build, dependency links, and packaged
   candidate gate were not executed. No release, publication, or full suite result
   is claimed.
-- Two focused read-only Codex assessments reviewed upstream fidelity and consumer
+- Two focused read-only independent assessments reviewed upstream fidelity and consumer
   compatibility, then reviewed these documents. Their corrections cover baseline
   drift, invalid-UTF-8 behavior, derived bounds after edits, and candidate receipt.
   Markdown formatting, relative file links, and diff whitespace were checked.

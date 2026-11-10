@@ -1,7 +1,9 @@
 # Acceptance scenarios and consumer gate
 
-These are proposed tests to write before software changes. They elaborate
-[D1-D8](ARCHITECTURE.md#accepted-direction); they are not claimed passing tests.
+Status: these scenarios were written to be implemented before the software
+changes they cover, and the shipped releases implement them; the test suite and
+[IMPLEMENTATION.md](IMPLEMENTATION.md) record the results. They elaborate
+[D1-D8](ARCHITECTURE.md#accepted-direction).
 Use the exact pinned upstream Go package as an independent behavioral oracle and
 hand-derived assertions for important examples. Do not generate expectations from
 the production codec or its schema generator.
@@ -95,9 +97,10 @@ creating an ESLint harness in sh-ast. At consumer commit `7412616a`:
 
 ## Exact candidate workflow
 
-This runbook is proposed work, not commands executed during planning. Perform
+This runbook describes the candidate gate as designed; the implementation
+records hold the executed results. Perform
 consumer migration/linking only in a disposable consumer validation worktree
-based on its recorded commit. Leave `/Users/mnorth/Development/eslint-sh` intact.
+based on its recorded commit. Leave `<consumer>` intact.
 Use the app's worktree tool or an explicitly created validation checkout; record
 its actual absolute path as `consumer_dir`. Set `candidate_dir` to the actual
 sh-ast implementation checkout and `artifact_dir` to a retained evidence folder.
@@ -184,7 +187,7 @@ sh-ast implementation checkout and `artifact_dir` to a retained evidence folder.
 
 6. Save commands, exits, logs, receipt assertions and test coverage with the
    candidate/consumer identities. Restore or discard only the dedicated validation
-   checkout when finished; do not overwrite the user's original checkout state.
+   checkout when finished; do not overwrite the maintainer's original checkout state.
 
 Release acceptance requires both linked development-consumer evidence and packed
 installation evidence for the same candidate content. Refresh receipt hashes after

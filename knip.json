@@ -6,7 +6,7 @@
     "packages/sh-ast/src/syntax-walk-license.ts",
     "design/validation/brace-classification/benchmark.mjs"
   ],
-  "ignoreBinaries": ["go", "ruby"],
+  "ignoreBinaries": ["go"],
   "workspaces": {
     "packages/*": {},
     ".": {

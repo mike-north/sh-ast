@@ -2,7 +2,7 @@
   "contract": "latency target only: published 0.3.1 public parse (normalized tree) versus candidate public parse-with-positions (faithful tree plus snapshot); same Bash M2 source, comments and benchmark.sh",
   "environment": {
     "node": "v22.22.1",
-    "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+    "execPath": "<node>",
     "platform": "darwin",
     "arch": "arm64",
     "osRelease": "27.2.0",
@@ -474,9 +474,9 @@
     {
       "label": "candidate",
       "version": "0.6.0",
-      "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/package/dist/index.js",
-      "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/package",
-      "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/compact-packages/candidate-prepared/sh-ast-0.6.0.tgz",
+      "entry": "<repo>/work/compact-packages/candidate-prepared/package/dist/index.js",
+      "packageRoot": "<repo>/work/compact-packages/candidate-prepared/package",
+      "tarball": "<repo>/work/compact-packages/candidate-prepared/sh-ast-0.6.0.tgz",
       "tarballSha256": "8822c430c58cdca1b497a1d9b4d46a4a9d214ffa56ee9fa3073cdbb2ba5746b6",
       "integrity": "sha512-fiQCk7M7RoCd2fBVU0zVqFf4UnJQKdJt8e+B+hiItikyUOZkroxLxk40xd3zPB4/mJX9AAhSK2eXUvDXXhBxcA==",
       "assets": {
@@ -626,7 +626,7 @@
       "caseClauses": 100
     },
     "dialect": "bash",
-    "path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/design/validation/performance/in-place-wire-decode/consumer-m2.json",
+    "path": "<repo>/design/validation/performance/in-place-wire-decode/consumer-m2.json",
     "sourceSha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562",
     "sourceBytes": 11270
   },

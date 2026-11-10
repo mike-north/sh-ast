@@ -142,21 +142,21 @@ package asset. The campaign refuses to overwrite existing raw observations.
 
 ```sh
 git worktree add --detach /tmp/sh-ast-pr57-repro 1431a4f36a82bc4be255baa25ce77d801e9c0d39
-mkdir -p /tmp/sh-ast-pr57-repro/scratch/issue57-campaign
-cp design/validation/parse-transport-integration/reproduction/prepare.mjs.txt /tmp/sh-ast-pr57-repro/scratch/issue57-campaign/prepare.mjs
-cp design/validation/parse-transport-integration/reproduction/campaign.mjs.txt /tmp/sh-ast-pr57-repro/scratch/issue57-campaign/campaign.mjs
-cp design/validation/parse-transport-integration/reproduction/plan.test.mjs.txt /tmp/sh-ast-pr57-repro/scratch/issue57-campaign/plan.test.mjs
+mkdir -p /tmp/sh-ast-pr57-repro/work/issue57-campaign
+cp design/validation/parse-transport-integration/reproduction/prepare.mjs.txt /tmp/sh-ast-pr57-repro/work/issue57-campaign/prepare.mjs
+cp design/validation/parse-transport-integration/reproduction/campaign.mjs.txt /tmp/sh-ast-pr57-repro/work/issue57-campaign/campaign.mjs
+cp design/validation/parse-transport-integration/reproduction/plan.test.mjs.txt /tmp/sh-ast-pr57-repro/work/issue57-campaign/plan.test.mjs
 cd /tmp/sh-ast-pr57-repro
 export NODENV_VERSION=22.22.1
 pnpm install --frozen-lockfile
-node scratch/issue57-campaign/prepare.mjs
-node --test scratch/issue57-campaign/plan.test.mjs
-node scratch/issue57-campaign/campaign.mjs --verify
-node scratch/issue57-campaign/campaign.mjs --freeze
+node work/issue57-campaign/prepare.mjs
+node --test work/issue57-campaign/plan.test.mjs
+node work/issue57-campaign/campaign.mjs --verify
+node work/issue57-campaign/campaign.mjs --freeze
 # Begin once the machine is otherwise quiet.
-node scratch/issue57-campaign/campaign.mjs --run
+node work/issue57-campaign/campaign.mjs --run
 # Separate diagnostics; never use these as acceptance observations.
-node tools/benchmark/run.mjs --prepared scratch/issue57-campaign/artifacts.json --output scratch/issue57-stages --rounds 8 --warmup 5 --iterations 30 --fixtures consumer-m2 --dialects bash --phases parse-stages,parse-with-positions-stages
+node tools/benchmark/run.mjs --prepared work/issue57-campaign/artifacts.json --output work/issue57-stages --rounds 8 --warmup 5 --iterations 30 --fixtures consumer-m2 --dialects bash --phases parse-stages,parse-with-positions-stages
 ```
 
 Source, canonical artifact, and package hashes should match this record. Absolute

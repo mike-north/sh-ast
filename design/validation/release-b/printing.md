@@ -94,7 +94,7 @@ giant output allocation is not part of routine tests.
 The Go tests were run before operation implementation and failed with
 `unknown syntax operation "print"`; the TypeScript tests were then run before
 module implementation and failed to import `syntax-print`. Their local red logs
-are retained in `scratch/printer-before.log` and `scratch/print-ts-red.log`.
+are retained in `work/printer-before.log` and `work/print-ts-red.log`.
 
 The implementation slice passes:
 

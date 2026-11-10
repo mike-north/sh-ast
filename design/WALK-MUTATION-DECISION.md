@@ -1,6 +1,6 @@
 # Walk mutation representation decision
 
-Status: accepted. The user explicitly chose **"Keep ordinary arrays with explicit
+Status: accepted. The maintainer explicitly chose **"Keep ordinary arrays with explicit
 traversal-mutation limits (Recommended)."** This resolves the Release B
 representation question; it does not authorize merging or publishing either
 release. The choice preserves Release A's ordinary mutable TypeScript arrays

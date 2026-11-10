@@ -173,8 +173,8 @@ no local build. Preparation and downloads are outside measured work.
 
 ```sh
 export NODENV_VERSION=22.22.1
-mkdir scratch/published-090-repro
-npm pack sh-ast@0.9.0 --ignore-scripts --json --pack-destination scratch/published-090-repro
+mkdir work/published-090-repro
+npm pack sh-ast@0.9.0 --ignore-scripts --json --pack-destination work/published-090-repro
 node --input-type=module <<'JS'
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -188,7 +188,7 @@ for (const [path, digest] of Object.entries(provenance.harnessFileSha256))
   assert.equal(hash(readFileSync(path)), digest);
 assert.equal(hash(readFileSync('tools/benchmark/fixtures/consumer-m2.json')),
   provenance.fixture.jsonFileSha256);
-const cache = resolve('scratch/published-090-repro');
+const cache = resolve('work/published-090-repro');
 const retained = JSON.parse(readFileSync(join(evidence, 'package-artifacts.json')));
 const artifact = retained.artifacts[0];
 artifact.tarball = join(cache, 'sh-ast-0.9.0.tgz');
@@ -210,14 +210,14 @@ any failure. Preserve partial observations; a later attempt is a separate record
 
 ```sh
 set -e
-mkdir scratch/published-090-repro-public
+mkdir work/published-090-repro-public
 env -u NO_COLOR NX_PARALLEL=2 NODENV_VERSION=22.22.1 nice -n 10 node tools/benchmark/run.mjs \
-  --prepared scratch/published-090-repro/artifacts.json --output scratch/published-090-repro-public \
+  --prepared work/published-090-repro/artifacts.json --output work/published-090-repro-public \
   --rounds 8 --warmup 5 --iterations 30 --fixtures consumer-m2 --dialects bash \
   --phases parse,parse-with-positions
-mkdir scratch/published-090-repro-stages
+mkdir work/published-090-repro-stages
 env -u NO_COLOR NX_PARALLEL=2 NODENV_VERSION=22.22.1 nice -n 10 node tools/benchmark/run.mjs \
-  --prepared scratch/published-090-repro/artifacts.json --output scratch/published-090-repro-stages \
+  --prepared work/published-090-repro/artifacts.json --output work/published-090-repro-stages \
   --rounds 8 --warmup 5 --iterations 30 --fixtures consumer-m2 --dialects bash \
   --phases parse-stages,parse-with-positions-stages
 ```

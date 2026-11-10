@@ -4,7 +4,7 @@ Run from the repository root with the repository's Node/pnpm toolchain:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm benchmark --output scratch/benchmark
+pnpm benchmark --output work/benchmark
 ```
 
 The command builds the local candidate and generates its API declaration rollups,
@@ -26,9 +26,9 @@ The cache directory is retained for repeat runs and can be removed when finished
 To separate package preparation from a quiet measurement window:
 
 ```sh
-pnpm benchmark --prepare-only --output scratch/benchmark-prepared
-pnpm benchmark --prepared scratch/benchmark-prepared/artifacts.json \
-  --output scratch/benchmark-baseline --rounds 5 --iterations 10 --warmup 3
+pnpm benchmark --prepare-only --output work/benchmark-prepared
+pnpm benchmark --prepared work/benchmark-prepared/artifacts.json \
+  --output work/benchmark-baseline --rounds 5 --iterations 10 --warmup 3
 ```
 
 Prepared assets are checked again before and after measurements. Preparation and
@@ -37,7 +37,7 @@ build time are excluded. Avoid concurrent builds, tests and other benchmarks.
 
 ```sh
 pnpm benchmark --fixtures heredoc --dialects bash,posix \
-  --rounds 1 --iterations 1 --warmup 0 --output scratch/benchmark-smoke
+  --rounds 1 --iterations 1 --warmup 0 --output work/benchmark-smoke
 ```
 
 Defaults are three fresh process rounds, two excluded warmups, five measured
@@ -45,7 +45,7 @@ iterations, Bash, and `representative-1`, `representative-50`, `nested-8`,
 `nested-64`, `heredoc`, `consumer-m2`. `consumer-m2` is the eslint-sh M2 source
 (701 lines, 11,270 bytes, 100 functions, 5,801 Nodes) used by issue #51, copied
 byte-for-byte from `design/validation/performance/in-place-wire-decode/`. All ten original Release A fixture sources are retained
-byte-for-byte from the historical `scratch/performance-review/fixtures` harness;
+byte-for-byte from the historical `work/performance-review/fixtures` harness;
 only JSON formatting may differ. Their source hashes are emitted in each report.
 The new heredoc fixture includes Unicode, combining marks and retained comments.
 Use `--fixtures name,...` and `--dialects bash,posix,mksh,bats` to select work.
@@ -159,7 +159,7 @@ result: member order, byte strings, frozenness, every snapshot observation and
 thrown error class, message and fields. Use the published release as ground truth:
 
 ```sh
-node tools/benchmark/identity.mjs --prepared scratch/benchmark/artifacts.json
+node tools/benchmark/identity.mjs --prepared work/benchmark/artifacts.json
 # or, for any two built packages:
 node tools/benchmark/identity.mjs --baseline <old>/dist/index.js --candidate packages/sh-ast/dist/index.js
 ```

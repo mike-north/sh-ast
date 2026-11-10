@@ -25,7 +25,7 @@ and whose Index interface holds `(*syntax.Word)(nil)`. The interface is non-nil,
 and upstream End panics; replacing it with an ordinary nil interface makes End
 return position 1:4. Silently encoding both as null therefore changes behavior.
 
-The first containment candidate rejected typed-nil interfaces. Supervisor review
+The first containment candidate rejected typed-nil interfaces. Maintainer review
 then established that this also removes meaningful upstream operations: the exact
 fixture's Pos succeeds (returning an invalid zero position), and a version with a
 valid Dollar returns that position even though End panics. Long ParamExp,

@@ -1,12 +1,12 @@
 # Realign implementation with the accepted layers
 
-The user accepted the ownership, hard-break, and maintained-fork rules on
+The maintainer accepted the ownership, hard-break, and maintained-fork rules on
 2026-11-05. [Architecture D9-D11](ARCHITECTURE.md#accepted-direction) owns those
 decisions; [AGENTS.md](../AGENTS.md) supplies implementation/review rules.
-The work sequence below is proposed, not a claim that extraction or fork setup
-has happened. The selected destination is the independent private repository
-`mike-north/sh-analysis`, with npm package name `sh-analysis`; this identity
-decision does not claim extraction or publication is complete.
+The work sequence below is the original plan; the analysis subpath has since been
+removed from this package. The selected destination is the independent repository
+`mike-north/sh-analysis`, with npm package name `sh-analysis`; its
+publication status is tracked in that repository.
 
 ## Observed implementation
 

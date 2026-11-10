@@ -5,19 +5,19 @@ the pinned `mvdan.cc/sh/v3/syntax` package through WebAssembly. Its purpose is t
 make upstream syntax available to JavaScript tools without losing distinctions
 that parsing, traversal, editing, or printing require.
 
-This is a planning collection, not a description of a delivered replacement API.
-The accepted direction below comes from the user's voice decisions, carried into
-the planning assignment on 2026-11-01. API proposals remain proposals. Current
-implementation facts and revisions are recorded separately.
+This collection records the design of the faithful syntax interface and the
+maintainer's accepted decisions (first recorded on 2026-11-01). Sections marked
+as proposals describe intended direction; current implementation facts and
+revisions are recorded separately in the implementation records.
 
-The responsibility clarification accepted from the user on 2026-11-05 governs
+The responsibility clarification accepted by the maintainer on 2026-11-05 governs
 new work and review: syntax fixes belong in a maintained Go fork, `sh-ast` is the
 faithful synchronous binding, and interpretation belongs in an independent
 analysis layer. This supersedes the earlier decision to retain analysis as a
 `sh-ast` subpath. PR #94 removed that subpath; the parser binding remains in
 `sh-ast`. Analysis extraction and publication status are tracked in the independent
-analysis repository. See [the bounded implementation handoff](LAYER-REALIGNMENT.md)
-for the historical plan and [agent/reviewer instructions](../AGENTS.md) for the
+analysis repository. See [the bounded implementation plan](LAYER-REALIGNMENT.md)
+for the historical plan and [contributor and reviewer instructions](../AGENTS.md) for the
 current ownership rules.
 
 ## Reading map
@@ -25,7 +25,7 @@ current ownership rules.
 - [Fidelity assessment](FIDELITY-ASSESSMENT.md): declared implementation baseline,
   source evidence, existing behavior, and gaps.
 - [Release plan](RELEASE-PLAN.md): the two release boundaries, dependencies, and
-  implementation handoff.
+  implementation plan.
 - [Acceptance scenarios](ACCEPTANCE.md): tests to write first, ownership of checks,
   and the built-candidate consumer workflow.
 
@@ -181,7 +181,7 @@ is not a replacement for these protocols.
 
 ## Implemented candidate decisions
 
-The implementation assignment delegated routine API choices to preserve the
+The implementation scope delegated routine API choices to preserve the
 accepted direction. These are concrete candidate contracts, not claims of final
 release acceptance; evidence and remaining gates are in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
