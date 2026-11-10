@@ -70,7 +70,7 @@ the local nodenv pnpm shim can override a PATH-only Node selection.
 
 ```sh
 cp design/validation/performance/in-place-wire-decode/consumer-m2.json tools/benchmark/fixtures/
-pnpm benchmark --prepare-only --output scratch/decode-prepared
+pnpm benchmark --prepare-only --output work/decode-prepared
 ```
 
 Keep only artifacts labeled `0.5.0` and `local-candidate` in a copy of the prepared
@@ -82,9 +82,9 @@ node --input-type=module <<'JS'
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { records } from './tools/benchmark/adapter.mjs';
-const prepared = JSON.parse(readFileSync('scratch/decode-prepared/artifacts.json'));
+const prepared = JSON.parse(readFileSync('work/decode-prepared/artifacts.json'));
 prepared.artifacts = prepared.artifacts.filter(a => ['0.5.0', 'local-candidate'].includes(a.label));
-writeFileSync('scratch/decode-prepared/pair.json', JSON.stringify(prepared, null, 2));
+writeFileSync('work/decode-prepared/pair.json', JSON.stringify(prepared, null, 2));
 const fixture = JSON.parse(readFileSync('tools/benchmark/fixtures/consumer-m2.json'));
 const apis = await Promise.all(prepared.artifacts.map(a => import(a.entry)));
 const results = apis.map(api => api.parseWithPositionsSync(fixture.source, {
@@ -107,10 +107,10 @@ JS
 Then run the timed comparison:
 
 ```sh
-pnpm benchmark --prepared scratch/decode-prepared/pair.json \
+pnpm benchmark --prepared work/decode-prepared/pair.json \
   --fixtures consumer-m2,representative-50,nested-64,heredoc \
   --phases parse,parse-with-positions --rounds 5 --iterations 10 --warmup 3 \
-  --output scratch/decode-results
+  --output work/decode-results
 ```
 
 For the final targeted retest, use `--fixtures consumer-m2` and a fresh prepared

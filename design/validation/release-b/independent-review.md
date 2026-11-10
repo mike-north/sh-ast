@@ -7,12 +7,12 @@ integration and representation statements are historical, not current blockers.
 Current integration, consumer evidence and final contract review belong to
 [IMPLEMENTATION-B.md](../../IMPLEMENTATION-B.md).
 
-Active assignment from supervisor: review Release B only. Release A producer
-290f158 and consumer 84a85e6 remain intact. No publication, tag, merge, Claude,
-or modifications to author implementation worktrees are authorized here.
+Scope: review Release B only. Release A producer 290f158 and consumer 84a85e6
+remain intact. No publication, tag, merge, or modification of the authors'
+implementation worktrees is part of this review.
 
-Review integration: /Users/mnorth/.codex/worktrees/faithful-syntax-release-b/sh-ast.
-Printer author: /Users/mnorth/.codex/worktrees/faithful-print-b/sh-ast.
+Review integration: <repo>.
+Printer author: <repo>.
 At checkpoint start, integration HEAD is 1d52a4c; printer is uncommitted on A.
 Frozen printer revision and integrated revision are still awaited.
 
@@ -26,7 +26,7 @@ semantics were then a consequential unresolved human decision; see
 
 Current evidence: read Print API implementation and errors; no finding yet.
 Need read Go bridge, native/TS tests and independent bounded probes, then frozen
-integration review. Root exports/docs/API are supervisor-owned and omissions in
+integration review. Root exports/docs/API are maintainer-owned and omissions in
 printer author worktree are not preintegration findings.
 
 ## Current printer slice review
@@ -41,7 +41,7 @@ changed by this slice. Documentation states output amplification and tree-size
 cost without inventing an Indent bound or promising arbitrary writer behavior.
 
 The acceptance addendum lacked a combined current-tree bounds/printing test for
-edited Comment and replaced Word final part. Supervisor requested independent
+edited Comment and replaced Word final part. Maintainer requested independent
 native/TS acceptance tests, added in this review checkout. Direct native Go cases
 pass: edited comment ends at byte 9; replacing the last Word part with a quote
 whose Right is byte 60 makes Word.End byte 61, preserving Word.Pos byte 5 and
@@ -59,22 +59,22 @@ reproducibility evidence. All 52 printer TS cases, native `go test ./...`, and
 `go vet ./...` pass in this review checkout. Frozen integration source was supplied
 as e4cfd11 (unchanged cherry-pick of df8c055); exports/API integration is pending.
 
-## Handoff after acceptance-test integration
+## Status after acceptance-test integration
 
-Tests/report commit 4ea41e9 was supplied to supervisor and integrated as 0c3f4be.
+Tests/report commit 4ea41e9 was supplied to maintainer and integrated as 0c3f4be.
 The printer implementation files compare byte-for-byte between author df8c055
-and supervisor e4cfd11. New test lint and isolated inherited-config typecheck pass.
+and maintainer e4cfd11. New test lint and isolated inherited-config typecheck pass.
 A direct broad `tsc -p test/tsconfig.json` failed because that existing config's
 rootDir is test while tests import src, and this checkout had no rolled-up public
 artifacts. This is not a new acceptance-test type failure or claimed green gate.
 
-Await supervisor's frozen exports/canonical-WASM revision to rerun the targeted
+Await maintainer's frozen exports/canonical-WASM revision to rerun the targeted
 acceptance tests against its exact asset. Walk implementation/C5 consumer are
 separate pending reviews at this point; the representation decision was unresolved.
 
 ## Frozen print surface and cold-first operation
 
-Supervisor froze public print exports at 0e986dd520b736055c00bbd13a4e19fe2ee02415.
+Maintainer froze public print exports at 0e986dd520b736055c00bbd13a4e19fe2ee02415.
 Review checkout adds its unchanged public-export commit as f529014. The new
 `print-cold-start-review.test.ts` invokes built output in a fresh subprocess,
 constructs an empty File without any parse/newPos prewarm, instruments actual
@@ -122,8 +122,8 @@ real ESLint printed replacements, syntax meaning/stability checks, and retained
 original-view checks. Its use of public walk requires later integrated-package
 validation; no C5 pass is inferred from the print-only package.
 
-Current handoff: 4ea41e9 tests/report already integrated; ad4b6c4 cold-print test
-and updated report supplied to supervisor. Await frozen Walk and C5 same-byte
+Current status: 4ea41e9 tests/report already integrated; ad4b6c4 cold-print test
+and updated report supplied to maintainer. Await frozen Walk and C5 same-byte
 linked/installed package evidence before final combined Release B review.
 
 ## Confirmed and corrected callback-result boundary
@@ -136,7 +136,7 @@ the upstream bool domain. Public TS negative tests did not cover this boundary.
 
 Added `syntax-walk-callback-boundary.test.ts` before implementation changes.
 The initial run had 17 failing negative cases and two passing preservation
-controls; the local full red log is `scratch/walk-callback-boundary-red.log`.
+controls; the local full red log is `work/walk-callback-boundary-red.log`.
 Entry cases expect InputError before child dispatch. Exit cases cover both the
 normal and typed-nil leaf paths. Boolean false exits remain ignored. Callback
 exception identity and deferred comment visits during unwind remain intact.
@@ -149,16 +149,16 @@ value. The public method comment states the synchronous boolean requirement.
 After the correction, all 19 boundary cases and all 65 native-oracle/protocol
 Walk cases pass (84 total). Focused lint, isolated inherited-config typecheck,
 and package build pass. The green log is
-`scratch/walk-callback-boundary-green.log`. No storage/array-policy choice is
+`work/walk-callback-boundary-green.log`. No storage/array-policy choice is
 made by this fix; the consequential fidelity decision was still unresolved then.
 
-The supervisor owns integrated public API/doc regeneration and the full package
+The maintainer owns integrated public API/doc regeneration and the full package
 acceptance run after cherry-picking this narrow correction.
 
 ## Final accepted ordinary-array contract review
 
-After the user accepted ordinary arrays with explicit limits, an independent
-Codex reviewer inspected author `236bd498` (integrated as `31c1c20`) and producer
+After the maintainer accepted ordinary arrays with explicit limits, an independent
+reviewer inspected author `236bd498` (integrated as `31c1c20`) and producer
 `4c69b7d`, including the regenerated public API/docs. No actionable finding remained.
 
 The review confirmed that traversal executable code was unchanged and matched the

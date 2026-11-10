@@ -3,19 +3,19 @@
 This follow-on implements [B1-B4](RELEASE-PLAN.md#implementation-sequence) and
 [B1-B6/C5 acceptance](ACCEPTANCE.md#release-b-owned-by-sh-ast). Release A's
 [accepted candidate evidence](IMPLEMENTATION.md) remains a separate record.
-The implementation assignment originally stopped before publication, release tags,
+The implementation scope originally stopped before publication, release tags,
 and merges. The subsequent authorized release execution is recorded in
 [the release execution record](validation/release-execution.md); historical
 candidate observations below retain their original boundaries and dates.
 
 ## Exact separation and release order
 
-This section records the initial stacked preparation. See the release execution
+This section records the initial preparation of Release B on top of Release A. See the release execution
 record for the current integration baseline and publication state.
 
 - Producer integration starts at Release A head
-  `290f15841e36a17e7e11a4a818992d5d203dd122`, branch
-  `codex/faithful-syntax-release-b`, in a new managed worktree.
+  `290f15841e36a17e7e11a4a818992d5d203dd122`, on a dedicated
+  Release B branch in a new worktree.
 - Consumer integration starts at Release A head
   `84a85e6efdd236165879104a4e52fb68377f7381` in a separate worktree.
 - Release A PRs 30 and 104 remain unchanged. Follow-on draft PRs target their
@@ -29,7 +29,7 @@ record for the current integration baseline and publication state.
 
 ## Delegated implementation choices
 
-The supervisor authorized routine API choices within the accepted fidelity goal.
+The maintainer authorized routine API choices within the accepted fidelity goal.
 The initial contracts below are implementation targets, not completion claims.
 
 - `walk(node, callback)` is synchronous. Callback entries and nil exits follow
@@ -56,19 +56,18 @@ consumer fix scenario. Each wrote behavioral tests first. Integrated implementat
 and review are recorded below, together with canonical consumer receipts and
 bounded measurements.
 
-The user accepted ordinary arrays with explicit traversal-mutation limits.
+The maintainer accepted ordinary arrays with explicit traversal-mutation limits.
 Finalized producer contract checks pass against that boundary. The original
 implementation evidence is retained below, followed by the final package and
 consumer receipt records.
 
-## Stacked candidate workflow preparation
+## Candidate workflow preparation for a branch-based base
 
 The inherited validation workflows only triggered PRs targeting main, which would
-skip the independent Linux builder for the required stacked B PR. The bounded
-configuration test `design/validation/release-b/stacked-pr-workflows.rb` first
-failed all four validation workflows for base `codex/faithful-syntax-release-plan`.
-It now passes after removing their PR-base filters. Main-only push triggers and
-the publication workflow remain unchanged. Stacked PR 31 triggered the real Linux
+skip the independent Linux builder for the Release B PR, whose base was the
+Release A branch. A bounded configuration check first failed all four validation
+workflows for that base; it passed after the PR-base filters were removed. Main-only push triggers and
+the publication workflow remain unchanged. PR 31 triggered the real Linux
 builder at run 41392692403, which uploaded artifact 13118106999 before failing the
 expected comparison against the preceding Release A binary. Schema CI passed.
 The downloaded artifact is now committed. The subsequent Linux comparison run
@@ -101,7 +100,7 @@ The downloaded artifact is now committed. The subsequent Linux comparison run
 
 ## Accepted representation and finalization
 
-The user explicitly selected **"Keep ordinary arrays with explicit traversal-mutation
+The maintainer explicitly selected **"Keep ordinary arrays with explicit traversal-mutation
 limits (Recommended)."** The [Walk mutation decision](WALK-MUTATION-DECISION.md)
 is accepted. Shape-valid field/child edits, live future-slot replacement, pruning,
 synchronous callbacks, captured-array traversal and actual edited-tree printing
@@ -123,7 +122,7 @@ the intended property/class descriptions and API report, while preserving exact
 message reference/bytes, display text, code and name. The review thread was
 answered and resolved after independent verification.
 
-Independent Codex review at `4c69b7d` found no remaining actionable issue in the
+Independent review at `4c69b7d` found no remaining actionable issue in the
 final source, contract tests, decision, README or regenerated API/docs. It also
 confirmed that existing traversal executable code is unchanged. No Go or WASM
 change was required. The [review history](validation/release-b/independent-review.md)

@@ -7,7 +7,7 @@ Go syntax library in a maintained Go fork. This binding consumes one immutable
 revision for both schema and WASM; it does not apply a semantic patch stack.
 This work handles dependency/build routing and inventory for later analysis
 extraction. Analysis extraction into `sh-analysis` and removal from this package proceed as
-separate stacked changes; this PR supplies the faithful syntax operation they need.
+separate follow-on changes; this PR supplies the faithful syntax operation they need.
 
 ## Tests-first evidence
 

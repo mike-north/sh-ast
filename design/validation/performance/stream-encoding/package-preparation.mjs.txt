@@ -5,7 +5,7 @@ import { extractPackage, hash, verifyPrepared } from '../../tools/benchmark/arti
 import { files } from '../../tools/benchmark/stream-encoding-prepare.mjs';
 const root=resolve('.');
 for (const [label,sha] of [['baseline','80bdcd9f99e2ad5e48dc8d15af13c8470f12794e'],['candidate','e6b57a42a9ead1a37ba87af725b3156da88908c7']]) {
- const dir=join(root,'scratch/stream-packages',label+'-prepared');mkdirSync(dir);
+ const dir=join(root,'work/stream-packages',label+'-prepared');mkdirSync(dir);
  const source=join(dir,'source');mkdirSync(source);
  const archive=execFileSync('git',['archive',sha],{cwd:root,maxBuffer:64*1024*1024});
  execFileSync('tar',['-xf','-','-C',source],{input:archive});

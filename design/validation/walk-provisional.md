@@ -1,7 +1,7 @@
 # Live Walk validation and representation boundary
 
 The integrated Release B surface is `walk(Node, (Node | null) => boolean): void`,
-with `WalkPanicError` for upstream-equivalent traversal panics. The user accepted
+with `WalkPanicError` for upstream-equivalent traversal panics. The maintainer accepted
 ordinary arrays with the [explicit mutation limits](../WALK-MUTATION-DECISION.md).
 This record retains the original slice's validation results and explains the
 accepted divergence from Go storage. Current integration and finalized-contract

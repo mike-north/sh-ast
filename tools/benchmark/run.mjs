@@ -14,7 +14,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '../..');
 const { values } = parseArgs({
   options: {
-    output: { type: 'string', default: 'scratch/benchmark' },
+    output: { type: 'string', default: 'work/benchmark' },
     prepared: { type: 'string' },
     'prepare-only': { type: 'boolean' },
     rounds: { type: 'string', default: '3' },

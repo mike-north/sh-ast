@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { extractPackage, hash, verifyPrepared } from '../../tools/benchmark/artifacts.mjs';
 import { files } from '../../tools/benchmark/stream-encoding-prepare.mjs';
 const root=resolve('.');
-const output=resolve('scratch/issue57-campaign');
+const output=resolve('work/issue57-campaign');
 const artifacts=[];
 for (const [label,sha] of [['accepted-main','87da64fb2f293c2a247bb365399f0150c43ba2ea'],['canonical-candidate',execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()]]) {
  const dir=join(output,label);mkdirSync(dir);

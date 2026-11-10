@@ -12,9 +12,9 @@
       {
         "label": "baseline",
         "version": "0.5.0",
-        "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/baseline-prepared/package/dist/index.js",
-        "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/baseline-prepared/package",
-        "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/baseline-prepared/sh-ast-0.5.0.tgz",
+        "entry": "<repo>/work/stream-packages/baseline-prepared/package/dist/index.js",
+        "packageRoot": "<repo>/work/stream-packages/baseline-prepared/package",
+        "tarball": "<repo>/work/stream-packages/baseline-prepared/sh-ast-0.5.0.tgz",
         "tarballSha256": "161b194f2d31d99e5d4ef03a8293c74925cf8a89414acf968327187a7aed0f0a",
         "integrity": "sha512-vr1cwAQ8/A02jazpB6a7fg5haZi5qoBcsMQziX11HbNrF7vbiHti5OtuwOQPdhwSznWLi6V2k0a6T8SPd3hvKg==",
         "assets": {
@@ -156,9 +156,9 @@
       {
         "label": "candidate",
         "version": "0.5.0",
-        "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/candidate-prepared/package/dist/index.js",
-        "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/candidate-prepared/package",
-        "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-packages/candidate-prepared/sh-ast-0.5.0.tgz",
+        "entry": "<repo>/work/stream-packages/candidate-prepared/package/dist/index.js",
+        "packageRoot": "<repo>/work/stream-packages/candidate-prepared/package",
+        "tarball": "<repo>/work/stream-packages/candidate-prepared/sh-ast-0.5.0.tgz",
         "tarballSha256": "1bd233648f0ebe8dc3a1ea4a77bc102dea7d4b0d8402b3df5e4fde0a7c7beb24",
         "integrity": "sha512-JK5Yhl2eTANIII+Me6WagtUi9OlhkGmRhK/bNzgQMNxQVVMySy+C7farjlhIkwek9FYgpCxh0H5sYyJGYAQhzw==",
         "assets": {
@@ -300,8 +300,8 @@
     ],
     "arms": {
       "baseline": {
-        "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/baseline/consumer",
-        "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/baseline/consumer/dist/index.js",
+        "root": "<repo>/work/stream-consumer-v3/baseline/consumer",
+        "entry": "<repo>/work/stream-consumer-v3/baseline/consumer/dist/index.js",
         "assets": {
           "dist/index.d.ts": "46cf5f80bf79c20a7487389b48c2a945484b8f0dc284963f2fb0cc31ff1d84f4",
           "dist/index.d.ts.map": "787dd67e17ee8e471e91e48da6751c6ba1babafb939ac29c935b07ab5e05735d",
@@ -343,8 +343,8 @@
         }
       },
       "candidate": {
-        "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/candidate/consumer",
-        "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/candidate/consumer/dist/index.js",
+        "root": "<repo>/work/stream-consumer-v3/candidate/consumer",
+        "entry": "<repo>/work/stream-consumer-v3/candidate/consumer/dist/index.js",
         "assets": {
           "dist/index.d.ts": "46cf5f80bf79c20a7487389b48c2a945484b8f0dc284963f2fb0cc31ff1d84f4",
           "dist/index.d.ts.map": "787dd67e17ee8e471e91e48da6751c6ba1babafb939ac29c935b07ab5e05735d",
@@ -388,14 +388,14 @@
     },
     "dependencies": {
       "roots": {
-        "eslint": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/0/package",
-        "@eslint/core": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/12/package",
-        "@eslint/plugin-kit": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/14/package"
+        "eslint": "<repo>/work/stream-consumer-v3/dependencies/0/package",
+        "@eslint/core": "<repo>/work/stream-consumer-v3/dependencies/12/package",
+        "@eslint/plugin-kit": "<repo>/work/stream-consumer-v3/dependencies/14/package"
       },
       "packages": [
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/eslint@10.7.0_jiti@2.7.0_supports-color@7.2.0/node_modules/eslint",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/0/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/eslint@10.7.0_jiti@2.7.0_supports-color@7.2.0/node_modules/eslint",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/0/package",
           "name": "eslint",
           "version": "10.7.0",
           "assets": {
@@ -821,42 +821,42 @@
             "package.json": "3e8eae5f8aa1fb21967ef942c0888335fbb4c96b813662bd69af45bbdc1c03ba"
           },
           "dependencies": {
-            "@eslint-community/eslint-utils": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/1/package",
-            "@eslint-community/regexpp": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/3/package",
-            "@eslint/config-array": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/4/package",
-            "@eslint/config-helpers": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/11/package",
-            "@eslint/core": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/12/package",
-            "@eslint/plugin-kit": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/14/package",
-            "@humanfs/node": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/18/package",
-            "@humanwhocodes/module-importer": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/22/package",
-            "@humanwhocodes/retry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/21/package",
-            "@types/estree": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/23/package",
-            "ajv": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/24/package",
-            "cross-spawn": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/30/package",
-            "debug": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/6/package",
-            "escape-string-regexp": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/36/package",
-            "eslint-scope": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/37/package",
-            "eslint-visitor-keys": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/41/package",
-            "espree": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/42/package",
-            "esquery": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/45/package",
-            "esutils": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/46/package",
-            "fast-deep-equal": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/25/package",
-            "file-entry-cache": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/47/package",
-            "find-up": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/52/package",
-            "glob-parent": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/58/package",
-            "ignore": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/61/package",
-            "imurmurhash": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/62/package",
-            "is-glob": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/59/package",
-            "jiti": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/63/package",
-            "json-stable-stringify-without-jsonify": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/64/package",
-            "minimatch": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/8/package",
-            "natural-compare": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/65/package",
-            "optionator": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/66/package"
+            "@eslint-community/eslint-utils": "<repo>/work/stream-consumer-v3/dependencies/1/package",
+            "@eslint-community/regexpp": "<repo>/work/stream-consumer-v3/dependencies/3/package",
+            "@eslint/config-array": "<repo>/work/stream-consumer-v3/dependencies/4/package",
+            "@eslint/config-helpers": "<repo>/work/stream-consumer-v3/dependencies/11/package",
+            "@eslint/core": "<repo>/work/stream-consumer-v3/dependencies/12/package",
+            "@eslint/plugin-kit": "<repo>/work/stream-consumer-v3/dependencies/14/package",
+            "@humanfs/node": "<repo>/work/stream-consumer-v3/dependencies/18/package",
+            "@humanwhocodes/module-importer": "<repo>/work/stream-consumer-v3/dependencies/22/package",
+            "@humanwhocodes/retry": "<repo>/work/stream-consumer-v3/dependencies/21/package",
+            "@types/estree": "<repo>/work/stream-consumer-v3/dependencies/23/package",
+            "ajv": "<repo>/work/stream-consumer-v3/dependencies/24/package",
+            "cross-spawn": "<repo>/work/stream-consumer-v3/dependencies/30/package",
+            "debug": "<repo>/work/stream-consumer-v3/dependencies/6/package",
+            "escape-string-regexp": "<repo>/work/stream-consumer-v3/dependencies/36/package",
+            "eslint-scope": "<repo>/work/stream-consumer-v3/dependencies/37/package",
+            "eslint-visitor-keys": "<repo>/work/stream-consumer-v3/dependencies/41/package",
+            "espree": "<repo>/work/stream-consumer-v3/dependencies/42/package",
+            "esquery": "<repo>/work/stream-consumer-v3/dependencies/45/package",
+            "esutils": "<repo>/work/stream-consumer-v3/dependencies/46/package",
+            "fast-deep-equal": "<repo>/work/stream-consumer-v3/dependencies/25/package",
+            "file-entry-cache": "<repo>/work/stream-consumer-v3/dependencies/47/package",
+            "find-up": "<repo>/work/stream-consumer-v3/dependencies/52/package",
+            "glob-parent": "<repo>/work/stream-consumer-v3/dependencies/58/package",
+            "ignore": "<repo>/work/stream-consumer-v3/dependencies/61/package",
+            "imurmurhash": "<repo>/work/stream-consumer-v3/dependencies/62/package",
+            "is-glob": "<repo>/work/stream-consumer-v3/dependencies/59/package",
+            "jiti": "<repo>/work/stream-consumer-v3/dependencies/63/package",
+            "json-stable-stringify-without-jsonify": "<repo>/work/stream-consumer-v3/dependencies/64/package",
+            "minimatch": "<repo>/work/stream-consumer-v3/dependencies/8/package",
+            "natural-compare": "<repo>/work/stream-consumer-v3/dependencies/65/package",
+            "optionator": "<repo>/work/stream-consumer-v3/dependencies/66/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint-community+eslint-utils@4.9.1_eslint@10.7.0_jiti@2.7.0_supports-color@7.2.0_/node_modules/@eslint-community/eslint-utils",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/1/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint-community+eslint-utils@4.9.1_eslint@10.7.0_jiti@2.7.0_supports-color@7.2.0_/node_modules/@eslint-community/eslint-utils",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/1/package",
           "name": "@eslint-community/eslint-utils",
           "version": "4.9.1",
           "assets": {
@@ -871,13 +871,13 @@
             "package.json": "8bd084d739f6ad91bd4cbe7ff4ec39179da919037d6bc3d9a23897e584632bd9"
           },
           "dependencies": {
-            "eslint": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/0/package",
-            "eslint-visitor-keys": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/2/package"
+            "eslint": "<repo>/work/stream-consumer-v3/dependencies/0/package",
+            "eslint-visitor-keys": "<repo>/work/stream-consumer-v3/dependencies/2/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/eslint-visitor-keys@3.4.3/node_modules/eslint-visitor-keys",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/2/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/eslint-visitor-keys@3.4.3/node_modules/eslint-visitor-keys",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/2/package",
           "name": "eslint-visitor-keys",
           "version": "3.4.3",
           "assets": {
@@ -894,8 +894,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint-community+regexpp@4.12.2/node_modules/@eslint-community/regexpp",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/3/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint-community+regexpp@4.12.2/node_modules/@eslint-community/regexpp",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/3/package",
           "name": "@eslint-community/regexpp",
           "version": "4.12.2",
           "assets": {
@@ -911,8 +911,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint+config-array@0.23.5_supports-color@7.2.0/node_modules/@eslint/config-array",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/4/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint+config-array@0.23.5_supports-color@7.2.0/node_modules/@eslint/config-array",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/4/package",
           "name": "@eslint/config-array",
           "version": "0.23.5",
           "assets": {
@@ -932,14 +932,14 @@
             "package.json": "865f769edb92c7eaf452c9cf0194a7f3c925636a5ab4be826510a518165a6473"
           },
           "dependencies": {
-            "@eslint/object-schema": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/5/package",
-            "debug": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/6/package",
-            "minimatch": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/8/package"
+            "@eslint/object-schema": "<repo>/work/stream-consumer-v3/dependencies/5/package",
+            "debug": "<repo>/work/stream-consumer-v3/dependencies/6/package",
+            "minimatch": "<repo>/work/stream-consumer-v3/dependencies/8/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint+object-schema@3.0.5/node_modules/@eslint/object-schema",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/5/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint+object-schema@3.0.5/node_modules/@eslint/object-schema",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/5/package",
           "name": "@eslint/object-schema",
           "version": "3.0.5",
           "assets": {
@@ -957,8 +957,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/6/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/6/package",
           "name": "debug",
           "version": "4.4.3",
           "assets": {
@@ -971,12 +971,12 @@
             "src/node.js": "d7b26d7c92f8ea7794b77ce11f3c11cd18c9084df7c357e3c7025344fa28aac6"
           },
           "dependencies": {
-            "ms": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/7/package"
+            "ms": "<repo>/work/stream-consumer-v3/dependencies/7/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/ms@2.1.3/node_modules/ms",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/7/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/ms@2.1.3/node_modules/ms",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/7/package",
           "name": "ms",
           "version": "2.1.3",
           "assets": {
@@ -988,8 +988,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/minimatch@10.2.5/node_modules/minimatch",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/8/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/minimatch@10.2.5/node_modules/minimatch",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/8/package",
           "name": "minimatch",
           "version": "10.2.5",
           "assets": {
@@ -1048,12 +1048,12 @@
             "package.json": "4b3a08a7ad20dead8bbe4b4fe97a2746bded7c51d218ef3034eb4e330ad31f08"
           },
           "dependencies": {
-            "brace-expansion": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/9/package"
+            "brace-expansion": "<repo>/work/stream-consumer-v3/dependencies/9/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/brace-expansion@5.0.7/node_modules/brace-expansion",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/9/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/brace-expansion@5.0.7/node_modules/brace-expansion",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/9/package",
           "name": "brace-expansion",
           "version": "5.0.7",
           "assets": {
@@ -1072,12 +1072,12 @@
             "package.json": "f792e76015d954c06e8ac42cfa5664820126b2ecce01c987fe59de65bea57ab4"
           },
           "dependencies": {
-            "balanced-match": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/10/package"
+            "balanced-match": "<repo>/work/stream-consumer-v3/dependencies/10/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/balanced-match@4.0.4/node_modules/balanced-match",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/10/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/balanced-match@4.0.4/node_modules/balanced-match",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/10/package",
           "name": "balanced-match",
           "version": "4.0.4",
           "assets": {
@@ -1098,8 +1098,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint+config-helpers@0.6.0/node_modules/@eslint/config-helpers",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/11/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint+config-helpers@0.6.0/node_modules/@eslint/config-helpers",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/11/package",
           "name": "@eslint/config-helpers",
           "version": "0.6.0",
           "assets": {
@@ -1115,12 +1115,12 @@
             "package.json": "a2e917181c695307336a33713ca639f0a311a29ed83d2cce6efb85449199ebaa"
           },
           "dependencies": {
-            "@eslint/core": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/12/package"
+            "@eslint/core": "<repo>/work/stream-consumer-v3/dependencies/12/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint+core@1.2.1/node_modules/@eslint/core",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/12/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint+core@1.2.1/node_modules/@eslint/core",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/12/package",
           "name": "@eslint/core",
           "version": "1.2.1",
           "assets": {
@@ -1131,12 +1131,12 @@
             "package.json": "2ff49ec6b715f0682b361ad1a1f6b7a2e3c6de3b998e6eee1e20a2b545239da8"
           },
           "dependencies": {
-            "@types/json-schema": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/13/package"
+            "@types/json-schema": "<repo>/work/stream-consumer-v3/dependencies/13/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@types+json-schema@7.0.15/node_modules/@types/json-schema",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/13/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@types+json-schema@7.0.15/node_modules/@types/json-schema",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/13/package",
           "name": "@types/json-schema",
           "version": "7.0.15",
           "assets": {
@@ -1148,8 +1148,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@eslint+plugin-kit@0.7.2/node_modules/@eslint/plugin-kit",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/14/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@eslint+plugin-kit@0.7.2/node_modules/@eslint/plugin-kit",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/14/package",
           "name": "@eslint/plugin-kit",
           "version": "0.7.2",
           "assets": {
@@ -1166,13 +1166,13 @@
             "package.json": "7908f9d2f29ded86dd0e7141ee0423bdfc13a1cd280051705efaa3e05c54ce3b"
           },
           "dependencies": {
-            "@eslint/core": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/12/package",
-            "levn": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/15/package"
+            "@eslint/core": "<repo>/work/stream-consumer-v3/dependencies/12/package",
+            "levn": "<repo>/work/stream-consumer-v3/dependencies/15/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/levn@0.4.1/node_modules/levn",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/15/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/levn@0.4.1/node_modules/levn",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/15/package",
           "name": "levn",
           "version": "0.4.1",
           "assets": {
@@ -1184,13 +1184,13 @@
             "package.json": "0a25421ab66ec56def7407234858f52c1d593b2454155c06df1d7feaa324c8fe"
           },
           "dependencies": {
-            "prelude-ls": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/16/package",
-            "type-check": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/17/package"
+            "prelude-ls": "<repo>/work/stream-consumer-v3/dependencies/16/package",
+            "type-check": "<repo>/work/stream-consumer-v3/dependencies/17/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/prelude-ls@1.2.1/node_modules/prelude-ls",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/16/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/prelude-ls@1.2.1/node_modules/prelude-ls",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/16/package",
           "name": "prelude-ls",
           "version": "1.2.1",
           "assets": {
@@ -1208,8 +1208,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/type-check@0.4.0/node_modules/type-check",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/17/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/type-check@0.4.0/node_modules/type-check",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/17/package",
           "name": "type-check",
           "version": "0.4.0",
           "assets": {
@@ -1221,12 +1221,12 @@
             "package.json": "f52058410cf8e57ed28dd462eece693ba490c619c70c17caef8af60b84dc4ed0"
           },
           "dependencies": {
-            "prelude-ls": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/16/package"
+            "prelude-ls": "<repo>/work/stream-consumer-v3/dependencies/16/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@humanfs+node@0.16.8/node_modules/@humanfs/node",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/18/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@humanfs+node@0.16.8/node_modules/@humanfs/node",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/18/package",
           "name": "@humanfs/node",
           "version": "0.16.8",
           "assets": {
@@ -1240,14 +1240,14 @@
             "src/node-hfs.js": "3ba135eed09f79c1ca551c5bf4250ded8e2d7e42dc870069ebac2b8edac7cfce"
           },
           "dependencies": {
-            "@humanfs/core": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/19/package",
-            "@humanfs/types": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/20/package",
-            "@humanwhocodes/retry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/21/package"
+            "@humanfs/core": "<repo>/work/stream-consumer-v3/dependencies/19/package",
+            "@humanfs/types": "<repo>/work/stream-consumer-v3/dependencies/20/package",
+            "@humanwhocodes/retry": "<repo>/work/stream-consumer-v3/dependencies/21/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@humanfs+core@0.19.2/node_modules/@humanfs/core",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/19/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@humanfs+core@0.19.2/node_modules/@humanfs/core",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/19/package",
           "name": "@humanfs/core",
           "version": "0.19.2",
           "assets": {
@@ -1265,12 +1265,12 @@
             "src/path.js": "ccca02374a692f8dc1bacb0d60ecf0a26a93c36983a98f3930916cbf24768ce1"
           },
           "dependencies": {
-            "@humanfs/types": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/20/package"
+            "@humanfs/types": "<repo>/work/stream-consumer-v3/dependencies/20/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@humanfs+types@0.15.0/node_modules/@humanfs/types",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/20/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@humanfs+types@0.15.0/node_modules/@humanfs/types",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/20/package",
           "name": "@humanfs/types",
           "version": "0.15.0",
           "assets": {
@@ -1283,8 +1283,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@humanwhocodes+retry@0.4.3/node_modules/@humanwhocodes/retry",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/21/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@humanwhocodes+retry@0.4.3/node_modules/@humanwhocodes/retry",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/21/package",
           "name": "@humanwhocodes/retry",
           "version": "0.4.3",
           "assets": {
@@ -1301,8 +1301,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@humanwhocodes+module-importer@1.0.1/node_modules/@humanwhocodes/module-importer",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/22/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@humanwhocodes+module-importer@1.0.1/node_modules/@humanwhocodes/module-importer",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/22/package",
           "name": "@humanwhocodes/module-importer",
           "version": "1.0.1",
           "assets": {
@@ -1320,8 +1320,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@types+estree@1.0.9/node_modules/@types/estree",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/23/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@types+estree@1.0.9/node_modules/@types/estree",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/23/package",
           "name": "@types/estree",
           "version": "1.0.9",
           "assets": {
@@ -1334,8 +1334,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/ajv@6.15.0/node_modules/ajv",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/24/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/ajv@6.15.0/node_modules/ajv",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/24/package",
           "name": "ajv",
           "version": "6.15.0",
           "assets": {
@@ -1433,15 +1433,15 @@
             "scripts/travis-gh-pages": "a237607f9992de6e13a77c10a05557cd071425b7bdb6341578b0b83da3d07264"
           },
           "dependencies": {
-            "fast-deep-equal": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/25/package",
-            "fast-json-stable-stringify": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/26/package",
-            "json-schema-traverse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/27/package",
-            "uri-js": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/28/package"
+            "fast-deep-equal": "<repo>/work/stream-consumer-v3/dependencies/25/package",
+            "fast-json-stable-stringify": "<repo>/work/stream-consumer-v3/dependencies/26/package",
+            "json-schema-traverse": "<repo>/work/stream-consumer-v3/dependencies/27/package",
+            "uri-js": "<repo>/work/stream-consumer-v3/dependencies/28/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/25/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/25/package",
           "name": "fast-deep-equal",
           "version": "3.1.3",
           "assets": {
@@ -1460,8 +1460,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/fast-json-stable-stringify@2.1.0/node_modules/fast-json-stable-stringify",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/26/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/fast-json-stable-stringify@2.1.0/node_modules/fast-json-stable-stringify",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/26/package",
           "name": "fast-json-stable-stringify",
           "version": "2.1.0",
           "assets": {
@@ -1487,8 +1487,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/json-schema-traverse@0.4.1/node_modules/json-schema-traverse",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/27/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/json-schema-traverse@0.4.1/node_modules/json-schema-traverse",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/27/package",
           "name": "json-schema-traverse",
           "version": "0.4.1",
           "assets": {
@@ -1505,8 +1505,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/uri-js@4.4.1/node_modules/uri-js",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/28/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/uri-js@4.4.1/node_modules/uri-js",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/28/package",
           "name": "uri-js",
           "version": "4.4.1",
           "assets": {
@@ -1558,12 +1558,12 @@
             "yarn.lock": "c7b3c9d1c73e40ef875e106af3554bc8c650ea8e7bb2f1a32a3ab2c5867bc5ce"
           },
           "dependencies": {
-            "punycode": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/29/package"
+            "punycode": "<repo>/work/stream-consumer-v3/dependencies/29/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/punycode@2.3.1/node_modules/punycode",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/29/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/punycode@2.3.1/node_modules/punycode",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/29/package",
           "name": "punycode",
           "version": "2.3.1",
           "assets": {
@@ -1576,8 +1576,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/cross-spawn@7.0.6/node_modules/cross-spawn",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/30/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/cross-spawn@7.0.6/node_modules/cross-spawn",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/30/package",
           "name": "cross-spawn",
           "version": "7.0.6",
           "assets": {
@@ -1592,14 +1592,14 @@
             "package.json": "2e106cd9b4ae4e34ead35218371a0d4e172da72515a4f8f97d69a2e1fe3dee82"
           },
           "dependencies": {
-            "path-key": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/31/package",
-            "shebang-command": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/32/package",
-            "which": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/34/package"
+            "path-key": "<repo>/work/stream-consumer-v3/dependencies/31/package",
+            "shebang-command": "<repo>/work/stream-consumer-v3/dependencies/32/package",
+            "which": "<repo>/work/stream-consumer-v3/dependencies/34/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/path-key@3.1.1/node_modules/path-key",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/31/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/path-key@3.1.1/node_modules/path-key",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/31/package",
           "name": "path-key",
           "version": "3.1.1",
           "assets": {
@@ -1612,8 +1612,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/shebang-command@2.0.0/node_modules/shebang-command",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/32/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/shebang-command@2.0.0/node_modules/shebang-command",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/32/package",
           "name": "shebang-command",
           "version": "2.0.0",
           "assets": {
@@ -1623,12 +1623,12 @@
             "readme.md": "7918385f0c22cac3aeae9bcebdc589649f3cd4b62ce087afd60ee35ce6f5b6f8"
           },
           "dependencies": {
-            "shebang-regex": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/33/package"
+            "shebang-regex": "<repo>/work/stream-consumer-v3/dependencies/33/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/shebang-regex@3.0.0/node_modules/shebang-regex",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/33/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/shebang-regex@3.0.0/node_modules/shebang-regex",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/33/package",
           "name": "shebang-regex",
           "version": "3.0.0",
           "assets": {
@@ -1641,8 +1641,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/which@2.0.2/node_modules/which",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/34/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/which@2.0.2/node_modules/which",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/34/package",
           "name": "which",
           "version": "2.0.2",
           "assets": {
@@ -1654,12 +1654,12 @@
             "which.js": "76845e1fe7851267fb7ee72b18f2d916996d330150e31e48f4657a79e9b46b5b"
           },
           "dependencies": {
-            "isexe": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/35/package"
+            "isexe": "<repo>/work/stream-consumer-v3/dependencies/35/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/isexe@2.0.0/node_modules/isexe",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/35/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/isexe@2.0.0/node_modules/isexe",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/35/package",
           "name": "isexe",
           "version": "2.0.0",
           "assets": {
@@ -1675,8 +1675,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/escape-string-regexp@4.0.0/node_modules/escape-string-regexp",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/36/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/escape-string-regexp@4.0.0/node_modules/escape-string-regexp",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/36/package",
           "name": "escape-string-regexp",
           "version": "4.0.0",
           "assets": {
@@ -1689,8 +1689,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/eslint-scope@9.1.2/node_modules/eslint-scope",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/37/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/eslint-scope@9.1.2/node_modules/eslint-scope",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/37/package",
           "name": "eslint-scope",
           "version": "9.1.2",
           "assets": {
@@ -1711,15 +1711,15 @@
             "package.json": "00b69c8c78e79c01f844987acdf8cdd43c8647dd84c752cdc39dc9319bac241a"
           },
           "dependencies": {
-            "@types/esrecurse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/38/package",
-            "@types/estree": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/23/package",
-            "esrecurse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/39/package",
-            "estraverse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/40/package"
+            "@types/esrecurse": "<repo>/work/stream-consumer-v3/dependencies/38/package",
+            "@types/estree": "<repo>/work/stream-consumer-v3/dependencies/23/package",
+            "esrecurse": "<repo>/work/stream-consumer-v3/dependencies/39/package",
+            "estraverse": "<repo>/work/stream-consumer-v3/dependencies/40/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/@types+esrecurse@4.3.1/node_modules/@types/esrecurse",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/38/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/@types+esrecurse@4.3.1/node_modules/@types/esrecurse",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/38/package",
           "name": "@types/esrecurse",
           "version": "4.3.1",
           "assets": {
@@ -1731,8 +1731,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/esrecurse@4.3.0/node_modules/esrecurse",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/39/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/esrecurse@4.3.0/node_modules/esrecurse",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/39/package",
           "name": "esrecurse",
           "version": "4.3.0",
           "assets": {
@@ -1743,12 +1743,12 @@
             "package.json": "3bc67cb54672ec6957b53947613c23599371bf9222dbbe97275d20516a561a20"
           },
           "dependencies": {
-            "estraverse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/40/package"
+            "estraverse": "<repo>/work/stream-consumer-v3/dependencies/40/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/estraverse@5.3.0/node_modules/estraverse",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/40/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/estraverse@5.3.0/node_modules/estraverse",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/40/package",
           "name": "estraverse",
           "version": "5.3.0",
           "assets": {
@@ -1762,8 +1762,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/eslint-visitor-keys@5.0.1/node_modules/eslint-visitor-keys",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/41/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/eslint-visitor-keys@5.0.1/node_modules/eslint-visitor-keys",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/41/package",
           "name": "eslint-visitor-keys",
           "version": "5.0.1",
           "assets": {
@@ -1780,8 +1780,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/espree@11.2.0/node_modules/espree",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/42/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/espree@11.2.0/node_modules/espree",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/42/package",
           "name": "espree",
           "version": "11.2.0",
           "assets": {
@@ -1800,14 +1800,14 @@
             "package.json": "23ed9eb09d6076011884a14deb09ad608968eaa01f69344b91207c810a1bebd2"
           },
           "dependencies": {
-            "acorn": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/43/package",
-            "acorn-jsx": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/44/package",
-            "eslint-visitor-keys": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/41/package"
+            "acorn": "<repo>/work/stream-consumer-v3/dependencies/43/package",
+            "acorn-jsx": "<repo>/work/stream-consumer-v3/dependencies/44/package",
+            "eslint-visitor-keys": "<repo>/work/stream-consumer-v3/dependencies/41/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/acorn@8.17.0/node_modules/acorn",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/43/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/acorn@8.17.0/node_modules/acorn",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/43/package",
           "name": "acorn",
           "version": "8.17.0",
           "assets": {
@@ -1825,8 +1825,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/acorn-jsx@5.3.2_acorn@8.17.0/node_modules/acorn-jsx",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/44/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/acorn-jsx@5.3.2_acorn@8.17.0/node_modules/acorn-jsx",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/44/package",
           "name": "acorn-jsx",
           "version": "5.3.2",
           "assets": {
@@ -1838,12 +1838,12 @@
             "xhtml.js": "caf07cbe00acbbb762e60ee83dc6e1927fb2709c960bd6cca85d8a5cf77c2886"
           },
           "dependencies": {
-            "acorn": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/43/package"
+            "acorn": "<repo>/work/stream-consumer-v3/dependencies/43/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/esquery@1.7.0/node_modules/esquery",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/45/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/esquery@1.7.0/node_modules/esquery",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/45/package",
           "name": "esquery",
           "version": "1.7.0",
           "assets": {
@@ -1862,12 +1862,12 @@
             "parser.js": "04c484180f6c46468a6b92ee2ed629f6d71206fb8ff9e706fd63d9b091b5d429"
           },
           "dependencies": {
-            "estraverse": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/40/package"
+            "estraverse": "<repo>/work/stream-consumer-v3/dependencies/40/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/esutils@2.0.3/node_modules/esutils",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/46/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/esutils@2.0.3/node_modules/esutils",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/46/package",
           "name": "esutils",
           "version": "2.0.3",
           "assets": {
@@ -1882,8 +1882,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/file-entry-cache@8.0.0/node_modules/file-entry-cache",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/47/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/file-entry-cache@8.0.0/node_modules/file-entry-cache",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/47/package",
           "name": "file-entry-cache",
           "version": "8.0.0",
           "assets": {
@@ -1893,12 +1893,12 @@
             "package.json": "1d88b9fe323d9766712599c0ee134c56e02a472e1fa633f304bc7be8cdc4dcec"
           },
           "dependencies": {
-            "flat-cache": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/48/package"
+            "flat-cache": "<repo>/work/stream-consumer-v3/dependencies/48/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/flat-cache@4.0.1/node_modules/flat-cache",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/48/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/flat-cache@4.0.1/node_modules/flat-cache",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/48/package",
           "name": "flat-cache",
           "version": "4.0.1",
           "assets": {
@@ -1911,13 +1911,13 @@
             "src/utils.js": "284b9f5bec47b2d8178bc772fd5970ad065cc7f14d2ad8b741af78cad37e7519"
           },
           "dependencies": {
-            "flatted": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/49/package",
-            "keyv": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/50/package"
+            "flatted": "<repo>/work/stream-consumer-v3/dependencies/49/package",
+            "keyv": "<repo>/work/stream-consumer-v3/dependencies/50/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/flatted@3.4.2/node_modules/flatted",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/49/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/flatted@3.4.2/node_modules/flatted",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/49/package",
           "name": "flatted",
           "version": "3.4.2",
           "assets": {
@@ -1940,8 +1940,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/keyv@4.5.4/node_modules/keyv",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/50/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/keyv@4.5.4/node_modules/keyv",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/50/package",
           "name": "keyv",
           "version": "4.5.4",
           "assets": {
@@ -1951,12 +1951,12 @@
             "src/index.js": "4987708b4b13159c654c09d239bd0c439533b0b792a6fd4e8769d8a509ad4da6"
           },
           "dependencies": {
-            "json-buffer": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/51/package"
+            "json-buffer": "<repo>/work/stream-consumer-v3/dependencies/51/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/json-buffer@3.0.1/node_modules/json-buffer",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/51/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/json-buffer@3.0.1/node_modules/json-buffer",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/51/package",
           "name": "json-buffer",
           "version": "3.0.1",
           "assets": {
@@ -1970,8 +1970,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/find-up@5.0.0/node_modules/find-up",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/52/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/find-up@5.0.0/node_modules/find-up",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/52/package",
           "name": "find-up",
           "version": "5.0.0",
           "assets": {
@@ -1982,13 +1982,13 @@
             "readme.md": "53cbd429b86c64ae5c3ecfd2a38475c817be53bcb8acee35d551fba486e3677c"
           },
           "dependencies": {
-            "locate-path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/53/package",
-            "path-exists": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/57/package"
+            "locate-path": "<repo>/work/stream-consumer-v3/dependencies/53/package",
+            "path-exists": "<repo>/work/stream-consumer-v3/dependencies/57/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/locate-path@6.0.0/node_modules/locate-path",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/53/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/locate-path@6.0.0/node_modules/locate-path",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/53/package",
           "name": "locate-path",
           "version": "6.0.0",
           "assets": {
@@ -1999,12 +1999,12 @@
             "readme.md": "5ee97e5f14e152670c65de0cf55d2af180bf7b77687d67dd9da81df782fc3743"
           },
           "dependencies": {
-            "p-locate": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/54/package"
+            "p-locate": "<repo>/work/stream-consumer-v3/dependencies/54/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/p-locate@5.0.0/node_modules/p-locate",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/54/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/p-locate@5.0.0/node_modules/p-locate",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/54/package",
           "name": "p-locate",
           "version": "5.0.0",
           "assets": {
@@ -2015,12 +2015,12 @@
             "readme.md": "3553dd9f250c4ecc119b21e709db34d3c6ff3dd4f2cdec4d2327a824d759690b"
           },
           "dependencies": {
-            "p-limit": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/55/package"
+            "p-limit": "<repo>/work/stream-consumer-v3/dependencies/55/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/p-limit@3.1.0/node_modules/p-limit",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/55/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/p-limit@3.1.0/node_modules/p-limit",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/55/package",
           "name": "p-limit",
           "version": "3.1.0",
           "assets": {
@@ -2031,12 +2031,12 @@
             "readme.md": "20c5386b5a6d769b0d0a54652870dea0f004b2588239bd731fca53721d674291"
           },
           "dependencies": {
-            "yocto-queue": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/56/package"
+            "yocto-queue": "<repo>/work/stream-consumer-v3/dependencies/56/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/yocto-queue@0.1.0/node_modules/yocto-queue",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/56/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/yocto-queue@0.1.0/node_modules/yocto-queue",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/56/package",
           "name": "yocto-queue",
           "version": "0.1.0",
           "assets": {
@@ -2049,8 +2049,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/path-exists@4.0.0/node_modules/path-exists",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/57/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/path-exists@4.0.0/node_modules/path-exists",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/57/package",
           "name": "path-exists",
           "version": "4.0.0",
           "assets": {
@@ -2063,8 +2063,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/glob-parent@6.0.2/node_modules/glob-parent",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/58/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/glob-parent@6.0.2/node_modules/glob-parent",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/58/package",
           "name": "glob-parent",
           "version": "6.0.2",
           "assets": {
@@ -2074,12 +2074,12 @@
             "package.json": "1a0b9ff627b3ded5a3e8c7e7ab99eface3c79e92d7691a11e3eff8d78e0f8e24"
           },
           "dependencies": {
-            "is-glob": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/59/package"
+            "is-glob": "<repo>/work/stream-consumer-v3/dependencies/59/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/is-glob@4.0.3/node_modules/is-glob",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/59/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/is-glob@4.0.3/node_modules/is-glob",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/59/package",
           "name": "is-glob",
           "version": "4.0.3",
           "assets": {
@@ -2089,12 +2089,12 @@
             "package.json": "1cce62b80db12fc033d85250b5881b1a288476229abda8e1abd983724befd56f"
           },
           "dependencies": {
-            "is-extglob": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/60/package"
+            "is-extglob": "<repo>/work/stream-consumer-v3/dependencies/60/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/is-extglob@2.1.1/node_modules/is-extglob",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/60/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/is-extglob@2.1.1/node_modules/is-extglob",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/60/package",
           "name": "is-extglob",
           "version": "2.1.1",
           "assets": {
@@ -2106,8 +2106,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/ignore@5.3.2/node_modules/ignore",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/61/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/ignore@5.3.2/node_modules/ignore",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/61/package",
           "name": "ignore",
           "version": "5.3.2",
           "assets": {
@@ -2121,8 +2121,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/imurmurhash@0.1.4/node_modules/imurmurhash",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/62/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/imurmurhash@0.1.4/node_modules/imurmurhash",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/62/package",
           "name": "imurmurhash",
           "version": "0.1.4",
           "assets": {
@@ -2134,8 +2134,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/63/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/63/package",
           "name": "jiti",
           "version": "2.7.0",
           "assets": {
@@ -2159,8 +2159,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/json-stable-stringify-without-jsonify@1.0.1/node_modules/json-stable-stringify-without-jsonify",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/64/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/json-stable-stringify-without-jsonify@1.0.1/node_modules/json-stable-stringify-without-jsonify",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/64/package",
           "name": "json-stable-stringify-without-jsonify",
           "version": "1.0.1",
           "assets": {
@@ -2184,8 +2184,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/natural-compare@1.4.0/node_modules/natural-compare",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/65/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/natural-compare@1.4.0/node_modules/natural-compare",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/65/package",
           "name": "natural-compare",
           "version": "1.4.0",
           "assets": {
@@ -2196,8 +2196,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/optionator@0.9.4/node_modules/optionator",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/66/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/optionator@0.9.4/node_modules/optionator",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/66/package",
           "name": "optionator",
           "version": "0.9.4",
           "assets": {
@@ -2210,17 +2210,17 @@
             "package.json": "8011d3db01182479d3881e788bacb5a9f603ca74bd564c4d26f713d5f5f571d1"
           },
           "dependencies": {
-            "deep-is": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/67/package",
-            "fast-levenshtein": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/68/package",
-            "levn": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/15/package",
-            "prelude-ls": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/16/package",
-            "type-check": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/17/package",
-            "word-wrap": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/69/package"
+            "deep-is": "<repo>/work/stream-consumer-v3/dependencies/67/package",
+            "fast-levenshtein": "<repo>/work/stream-consumer-v3/dependencies/68/package",
+            "levn": "<repo>/work/stream-consumer-v3/dependencies/15/package",
+            "prelude-ls": "<repo>/work/stream-consumer-v3/dependencies/16/package",
+            "type-check": "<repo>/work/stream-consumer-v3/dependencies/17/package",
+            "word-wrap": "<repo>/work/stream-consumer-v3/dependencies/69/package"
           }
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/deep-is@0.1.4/node_modules/deep-is",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/67/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/deep-is@0.1.4/node_modules/deep-is",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/67/package",
           "name": "deep-is",
           "version": "0.1.4",
           "assets": {
@@ -2237,8 +2237,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/fast-levenshtein@2.0.6/node_modules/fast-levenshtein",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/68/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/fast-levenshtein@2.0.6/node_modules/fast-levenshtein",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/68/package",
           "name": "fast-levenshtein",
           "version": "2.0.6",
           "assets": {
@@ -2250,8 +2250,8 @@
           "dependencies": {}
         },
         {
-          "source": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf/node_modules/.pnpm/word-wrap@1.2.5/node_modules/word-wrap",
-          "root": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/stream-consumer-v3/dependencies/69/package",
+          "source": "<consumer>/dependency-checkout/node_modules/.pnpm/word-wrap@1.2.5/node_modules/word-wrap",
+          "root": "<repo>/work/stream-consumer-v3/dependencies/69/package",
           "name": "word-wrap",
           "version": "1.2.5",
           "assets": {
@@ -2267,15 +2267,15 @@
     },
     "consumer": {
       "gitHead": "6747c0cb6aaea416c35296ded2694cfb4fad913e",
-      "sourceRoot": "/Users/mnorth/Development/eslint-sh",
+      "sourceRoot": "<consumer>",
       "sourceArchiveSha256": "51acae656b8fef37c05ec313e71a8448c9364c4a98baa54035fabec4cd712cf6",
       "lockSha256": "99cd20f47b9ee5fa9374cf37f9c08ad483041cea9c6997e6f0698bdb3d4bc9f5",
       "version": "0.5.0"
     },
     "build": {
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
-      "installationRoot": "/Users/mnorth/Development/eslint-sh/.claude/worktrees/sh-ast-05-perf",
+      "execPath": "<node>",
+      "installationRoot": "<consumer>/dependency-checkout",
       "installedLockSha256": "99cd20f47b9ee5fa9374cf37f9c08ad483041cea9c6997e6f0698bdb3d4bc9f5",
       "compilerVersion": "6.0.3",
       "compilerSha256": "569177652966bd528c319171c7dd22860dbf72bde116cbc4f644f1d02bb12e39"
@@ -2283,7 +2283,7 @@
   },
   "environment": {
     "node": "v22.22.1",
-    "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+    "execPath": "<node>",
     "platform": "darwin",
     "arch": "arm64",
     "osRelease": "27.2.0",
@@ -2334,7 +2334,7 @@
         "caseClauses": 100
       },
       "dialect": "bash",
-      "path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/design/validation/performance/in-place-wire-decode/consumer-m2.json",
+      "path": "<repo>/design/validation/performance/in-place-wire-decode/consumer-m2.json",
       "sourceSha256": "569025b5300d91d0f1297ff3531613e89d4fd5fb067d314e2ac111debe7d1562",
       "sourceBytes": 11270
     },
@@ -2350,7 +2350,7 @@
         "pipelineLinks": 50
       },
       "dialect": "bash",
-      "path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/fixtures/representative-50.json",
+      "path": "<repo>/tools/benchmark/fixtures/representative-50.json",
       "sourceSha256": "aa9ca7f88d48cf05713e4af747434fe1cec1c334bd3f5e88193d84615fc06dcc",
       "sourceBytes": 13120
     },
@@ -2365,7 +2365,7 @@
         "pipelineLinks": 1
       },
       "dialect": "bash",
-      "path": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/tools/benchmark/fixtures/nested-64.json",
+      "path": "<repo>/tools/benchmark/fixtures/nested-64.json",
       "sourceSha256": "da0c9edf2d627c51e5b0c626cf9ac229981d0870787e48b622ee8974f07e1899",
       "sourceBytes": 2146
     }
@@ -2377,7 +2377,7 @@
       "phase": "raw-parse",
       "pid": 22660,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2404,7 +2404,7 @@
       "phase": "raw-parse",
       "pid": 22668,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2431,7 +2431,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 22675,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2458,7 +2458,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 22699,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2485,7 +2485,7 @@
       "phase": "parse",
       "pid": 22727,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2510,7 +2510,7 @@
       "phase": "parse",
       "pid": 22730,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2535,7 +2535,7 @@
       "phase": "parse-with-positions",
       "pid": 22748,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2560,7 +2560,7 @@
       "phase": "parse-with-positions",
       "pid": 22750,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2585,7 +2585,7 @@
       "phase": "lint-no-rules",
       "pid": 22752,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2611,7 +2611,7 @@
       "phase": "lint-no-rules",
       "pid": 22909,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2637,7 +2637,7 @@
       "phase": "lint-probe-rule",
       "pid": 22910,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2663,7 +2663,7 @@
       "phase": "lint-probe-rule",
       "pid": 22951,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2689,7 +2689,7 @@
       "phase": "raw-parse",
       "pid": 22997,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2716,7 +2716,7 @@
       "phase": "raw-parse",
       "pid": 23004,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2743,7 +2743,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 23059,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2770,7 +2770,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 23220,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2797,7 +2797,7 @@
       "phase": "parse",
       "pid": 23306,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2822,7 +2822,7 @@
       "phase": "parse",
       "pid": 23325,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2847,7 +2847,7 @@
       "phase": "parse-with-positions",
       "pid": 23417,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2872,7 +2872,7 @@
       "phase": "parse-with-positions",
       "pid": 23557,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -2897,7 +2897,7 @@
       "phase": "lint-no-rules",
       "pid": 23558,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2923,7 +2923,7 @@
       "phase": "lint-no-rules",
       "pid": 23601,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2949,7 +2949,7 @@
       "phase": "lint-probe-rule",
       "pid": 23602,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -2975,7 +2975,7 @@
       "phase": "lint-probe-rule",
       "pid": 23603,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -3001,7 +3001,7 @@
       "phase": "raw-parse",
       "pid": 23604,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3028,7 +3028,7 @@
       "phase": "raw-parse",
       "pid": 23605,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3055,7 +3055,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 23606,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3082,7 +3082,7 @@
       "phase": "raw-parse-with-positions",
       "pid": 23607,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3109,7 +3109,7 @@
       "phase": "parse",
       "pid": 23608,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3134,7 +3134,7 @@
       "phase": "parse",
       "pid": 23609,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3159,7 +3159,7 @@
       "phase": "parse-with-positions",
       "pid": 23610,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3184,7 +3184,7 @@
       "phase": "parse-with-positions",
       "pid": 23611,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "status": "ok",
       "transport": {
@@ -3209,7 +3209,7 @@
       "phase": "lint-no-rules",
       "pid": 23613,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -3235,7 +3235,7 @@
       "phase": "lint-no-rules",
       "pid": 23614,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -3261,7 +3261,7 @@
       "phase": "lint-probe-rule",
       "pid": 23615,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -3287,7 +3287,7 @@
       "phase": "lint-probe-rule",
       "pid": 23617,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "verify",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -3316,7 +3316,7 @@
       "arm": "baseline",
       "pid": 23618,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3342,7 +3342,7 @@
       "arm": "candidate",
       "pid": 23906,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3369,7 +3369,7 @@
       "arm": "candidate",
       "pid": 24014,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3396,7 +3396,7 @@
       "arm": "baseline",
       "pid": 24015,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3422,7 +3422,7 @@
       "arm": "baseline",
       "pid": 24234,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3448,7 +3448,7 @@
       "arm": "candidate",
       "pid": 24251,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3474,7 +3474,7 @@
       "arm": "candidate",
       "pid": 24314,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3500,7 +3500,7 @@
       "arm": "baseline",
       "pid": 24358,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3526,7 +3526,7 @@
       "arm": "baseline",
       "pid": 24488,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3553,7 +3553,7 @@
       "arm": "candidate",
       "pid": 24723,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3580,7 +3580,7 @@
       "arm": "candidate",
       "pid": 24856,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3607,7 +3607,7 @@
       "arm": "baseline",
       "pid": 24870,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3634,7 +3634,7 @@
       "arm": "baseline",
       "pid": 24959,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3661,7 +3661,7 @@
       "arm": "candidate",
       "pid": 25231,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3687,7 +3687,7 @@
       "arm": "candidate",
       "pid": 25234,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3714,7 +3714,7 @@
       "arm": "baseline",
       "pid": 25236,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3740,7 +3740,7 @@
       "arm": "baseline",
       "pid": 25366,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3766,7 +3766,7 @@
       "arm": "candidate",
       "pid": 25857,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3793,7 +3793,7 @@
       "arm": "candidate",
       "pid": 25858,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3820,7 +3820,7 @@
       "arm": "baseline",
       "pid": 25927,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3846,7 +3846,7 @@
       "arm": "baseline",
       "pid": 26018,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3872,7 +3872,7 @@
       "arm": "candidate",
       "pid": 26022,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3899,7 +3899,7 @@
       "arm": "candidate",
       "pid": 26124,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3925,7 +3925,7 @@
       "arm": "baseline",
       "pid": 26165,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3951,7 +3951,7 @@
       "arm": "baseline",
       "pid": 26441,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -3977,7 +3977,7 @@
       "arm": "candidate",
       "pid": 26898,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4004,7 +4004,7 @@
       "arm": "candidate",
       "pid": 26901,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4031,7 +4031,7 @@
       "arm": "baseline",
       "pid": 26902,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4058,7 +4058,7 @@
       "arm": "baseline",
       "pid": 26996,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4084,7 +4084,7 @@
       "arm": "candidate",
       "pid": 27075,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4111,7 +4111,7 @@
       "arm": "candidate",
       "pid": 27076,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4137,7 +4137,7 @@
       "arm": "baseline",
       "pid": 27079,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4164,7 +4164,7 @@
       "arm": "baseline",
       "pid": 27406,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4190,7 +4190,7 @@
       "arm": "candidate",
       "pid": 27519,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4217,7 +4217,7 @@
       "arm": "candidate",
       "pid": 27764,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4244,7 +4244,7 @@
       "arm": "baseline",
       "pid": 27809,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4271,7 +4271,7 @@
       "arm": "baseline",
       "pid": 27907,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4297,7 +4297,7 @@
       "arm": "candidate",
       "pid": 28233,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4324,7 +4324,7 @@
       "arm": "candidate",
       "pid": 28439,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4351,7 +4351,7 @@
       "arm": "baseline",
       "pid": 28652,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4378,7 +4378,7 @@
       "arm": "baseline",
       "pid": 28999,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4405,7 +4405,7 @@
       "arm": "candidate",
       "pid": 29395,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4431,7 +4431,7 @@
       "arm": "candidate",
       "pid": 29531,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4457,7 +4457,7 @@
       "arm": "baseline",
       "pid": 29569,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4483,7 +4483,7 @@
       "arm": "baseline",
       "pid": 29854,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4510,7 +4510,7 @@
       "arm": "candidate",
       "pid": 29976,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4537,7 +4537,7 @@
       "arm": "candidate",
       "pid": 30069,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4564,7 +4564,7 @@
       "arm": "baseline",
       "pid": 30195,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -4591,7 +4591,7 @@
       "arm": "baseline",
       "pid": 30550,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4619,7 +4619,7 @@
       "arm": "candidate",
       "pid": 30695,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4647,7 +4647,7 @@
       "arm": "candidate",
       "pid": 30747,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4675,7 +4675,7 @@
       "arm": "baseline",
       "pid": 30837,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4703,7 +4703,7 @@
       "arm": "baseline",
       "pid": 31011,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4731,7 +4731,7 @@
       "arm": "candidate",
       "pid": 31115,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4759,7 +4759,7 @@
       "arm": "candidate",
       "pid": 31117,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4786,7 +4786,7 @@
       "arm": "baseline",
       "pid": 31213,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4814,7 +4814,7 @@
       "arm": "baseline",
       "pid": 31302,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4842,7 +4842,7 @@
       "arm": "candidate",
       "pid": 31481,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4870,7 +4870,7 @@
       "arm": "candidate",
       "pid": 31535,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4898,7 +4898,7 @@
       "arm": "baseline",
       "pid": 31573,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4925,7 +4925,7 @@
       "arm": "baseline",
       "pid": 31621,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4953,7 +4953,7 @@
       "arm": "candidate",
       "pid": 31808,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -4981,7 +4981,7 @@
       "arm": "candidate",
       "pid": 31901,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5009,7 +5009,7 @@
       "arm": "baseline",
       "pid": 32004,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5036,7 +5036,7 @@
       "arm": "baseline",
       "pid": 32010,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5064,7 +5064,7 @@
       "arm": "candidate",
       "pid": 32072,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5092,7 +5092,7 @@
       "arm": "candidate",
       "pid": 32120,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5120,7 +5120,7 @@
       "arm": "baseline",
       "pid": 32363,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5148,7 +5148,7 @@
       "arm": "baseline",
       "pid": 32419,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5175,7 +5175,7 @@
       "arm": "candidate",
       "pid": 32463,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5203,7 +5203,7 @@
       "arm": "candidate",
       "pid": 32510,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5231,7 +5231,7 @@
       "arm": "baseline",
       "pid": 32593,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -5258,7 +5258,7 @@
       "arm": "baseline",
       "pid": 32766,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5285,7 +5285,7 @@
       "arm": "candidate",
       "pid": 32808,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5311,7 +5311,7 @@
       "arm": "candidate",
       "pid": 32850,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5338,7 +5338,7 @@
       "arm": "baseline",
       "pid": 32851,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5365,7 +5365,7 @@
       "arm": "baseline",
       "pid": 32853,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5392,7 +5392,7 @@
       "arm": "candidate",
       "pid": 32854,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5419,7 +5419,7 @@
       "arm": "candidate",
       "pid": 32857,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5446,7 +5446,7 @@
       "arm": "baseline",
       "pid": 32858,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5473,7 +5473,7 @@
       "arm": "baseline",
       "pid": 32859,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5499,7 +5499,7 @@
       "arm": "candidate",
       "pid": 32862,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5526,7 +5526,7 @@
       "arm": "candidate",
       "pid": 32920,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5553,7 +5553,7 @@
       "arm": "baseline",
       "pid": 32939,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5579,7 +5579,7 @@
       "arm": "baseline",
       "pid": 32941,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5606,7 +5606,7 @@
       "arm": "candidate",
       "pid": 32985,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5632,7 +5632,7 @@
       "arm": "candidate",
       "pid": 32987,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5659,7 +5659,7 @@
       "arm": "baseline",
       "pid": 33046,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5686,7 +5686,7 @@
       "arm": "baseline",
       "pid": 33253,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5712,7 +5712,7 @@
       "arm": "candidate",
       "pid": 33255,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5739,7 +5739,7 @@
       "arm": "candidate",
       "pid": 33278,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5766,7 +5766,7 @@
       "arm": "baseline",
       "pid": 33324,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5792,7 +5792,7 @@
       "arm": "baseline",
       "pid": 33368,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5818,7 +5818,7 @@
       "arm": "candidate",
       "pid": 33387,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5845,7 +5845,7 @@
       "arm": "candidate",
       "pid": 33390,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5872,7 +5872,7 @@
       "arm": "baseline",
       "pid": 33453,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5899,7 +5899,7 @@
       "arm": "baseline",
       "pid": 33574,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5926,7 +5926,7 @@
       "arm": "candidate",
       "pid": 33578,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5953,7 +5953,7 @@
       "arm": "candidate",
       "pid": 33581,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -5980,7 +5980,7 @@
       "arm": "baseline",
       "pid": 33625,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6006,7 +6006,7 @@
       "arm": "baseline",
       "pid": 33712,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6032,7 +6032,7 @@
       "arm": "candidate",
       "pid": 33713,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6058,7 +6058,7 @@
       "arm": "candidate",
       "pid": 33753,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6084,7 +6084,7 @@
       "arm": "baseline",
       "pid": 33794,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6111,7 +6111,7 @@
       "arm": "baseline",
       "pid": 33798,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6137,7 +6137,7 @@
       "arm": "candidate",
       "pid": 33802,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6164,7 +6164,7 @@
       "arm": "candidate",
       "pid": 33803,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6191,7 +6191,7 @@
       "arm": "baseline",
       "pid": 33805,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6218,7 +6218,7 @@
       "arm": "baseline",
       "pid": 33806,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6244,7 +6244,7 @@
       "arm": "candidate",
       "pid": 33839,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6271,7 +6271,7 @@
       "arm": "candidate",
       "pid": 33841,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6298,7 +6298,7 @@
       "arm": "baseline",
       "pid": 33884,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6324,7 +6324,7 @@
       "arm": "baseline",
       "pid": 33965,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6350,7 +6350,7 @@
       "arm": "candidate",
       "pid": 34095,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6376,7 +6376,7 @@
       "arm": "candidate",
       "pid": 34096,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6403,7 +6403,7 @@
       "arm": "baseline",
       "pid": 34099,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6429,7 +6429,7 @@
       "arm": "baseline",
       "pid": 34286,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6456,7 +6456,7 @@
       "arm": "candidate",
       "pid": 34321,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6482,7 +6482,7 @@
       "arm": "candidate",
       "pid": 34322,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6509,7 +6509,7 @@
       "arm": "baseline",
       "pid": 34369,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -6535,7 +6535,7 @@
       "arm": "baseline",
       "pid": 34566,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6563,7 +6563,7 @@
       "arm": "candidate",
       "pid": 34872,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6591,7 +6591,7 @@
       "arm": "candidate",
       "pid": 34876,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6619,7 +6619,7 @@
       "arm": "baseline",
       "pid": 34958,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6646,7 +6646,7 @@
       "arm": "baseline",
       "pid": 34962,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6673,7 +6673,7 @@
       "arm": "candidate",
       "pid": 34966,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6700,7 +6700,7 @@
       "arm": "candidate",
       "pid": 34970,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6728,7 +6728,7 @@
       "arm": "baseline",
       "pid": 34973,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6755,7 +6755,7 @@
       "arm": "baseline",
       "pid": 35148,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6783,7 +6783,7 @@
       "arm": "candidate",
       "pid": 35320,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6811,7 +6811,7 @@
       "arm": "candidate",
       "pid": 35321,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6839,7 +6839,7 @@
       "arm": "baseline",
       "pid": 35330,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6867,7 +6867,7 @@
       "arm": "baseline",
       "pid": 35534,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6894,7 +6894,7 @@
       "arm": "candidate",
       "pid": 35594,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6921,7 +6921,7 @@
       "arm": "candidate",
       "pid": 35640,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6949,7 +6949,7 @@
       "arm": "baseline",
       "pid": 35834,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -6976,7 +6976,7 @@
       "arm": "baseline",
       "pid": 35931,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7004,7 +7004,7 @@
       "arm": "candidate",
       "pid": 36086,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7031,7 +7031,7 @@
       "arm": "candidate",
       "pid": 36182,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7059,7 +7059,7 @@
       "arm": "baseline",
       "pid": 36185,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7086,7 +7086,7 @@
       "arm": "baseline",
       "pid": 36191,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7113,7 +7113,7 @@
       "arm": "candidate",
       "pid": 36193,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7141,7 +7141,7 @@
       "arm": "candidate",
       "pid": 36197,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7169,7 +7169,7 @@
       "arm": "baseline",
       "pid": 36250,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -7196,7 +7196,7 @@
       "arm": "baseline",
       "pid": 36459,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7222,7 +7222,7 @@
       "arm": "candidate",
       "pid": 36460,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7248,7 +7248,7 @@
       "arm": "candidate",
       "pid": 36461,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7275,7 +7275,7 @@
       "arm": "baseline",
       "pid": 36462,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7302,7 +7302,7 @@
       "arm": "baseline",
       "pid": 36465,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7329,7 +7329,7 @@
       "arm": "candidate",
       "pid": 36466,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7356,7 +7356,7 @@
       "arm": "candidate",
       "pid": 36467,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7383,7 +7383,7 @@
       "arm": "baseline",
       "pid": 36468,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7410,7 +7410,7 @@
       "arm": "baseline",
       "pid": 36470,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7437,7 +7437,7 @@
       "arm": "candidate",
       "pid": 36471,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7464,7 +7464,7 @@
       "arm": "candidate",
       "pid": 36473,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7491,7 +7491,7 @@
       "arm": "baseline",
       "pid": 36474,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7518,7 +7518,7 @@
       "arm": "baseline",
       "pid": 36475,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7545,7 +7545,7 @@
       "arm": "candidate",
       "pid": 36476,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7572,7 +7572,7 @@
       "arm": "candidate",
       "pid": 36477,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7599,7 +7599,7 @@
       "arm": "baseline",
       "pid": 36480,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7625,7 +7625,7 @@
       "arm": "baseline",
       "pid": 36527,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7652,7 +7652,7 @@
       "arm": "candidate",
       "pid": 36569,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7679,7 +7679,7 @@
       "arm": "candidate",
       "pid": 36571,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7706,7 +7706,7 @@
       "arm": "baseline",
       "pid": 36574,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7733,7 +7733,7 @@
       "arm": "baseline",
       "pid": 36575,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7760,7 +7760,7 @@
       "arm": "candidate",
       "pid": 36577,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7786,7 +7786,7 @@
       "arm": "candidate",
       "pid": 36578,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7812,7 +7812,7 @@
       "arm": "baseline",
       "pid": 36579,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7839,7 +7839,7 @@
       "arm": "baseline",
       "pid": 36580,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7866,7 +7866,7 @@
       "arm": "candidate",
       "pid": 36581,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7892,7 +7892,7 @@
       "arm": "candidate",
       "pid": 36583,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7919,7 +7919,7 @@
       "arm": "baseline",
       "pid": 36584,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7945,7 +7945,7 @@
       "arm": "baseline",
       "pid": 36585,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7972,7 +7972,7 @@
       "arm": "candidate",
       "pid": 36613,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -7999,7 +7999,7 @@
       "arm": "candidate",
       "pid": 36632,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8026,7 +8026,7 @@
       "arm": "baseline",
       "pid": 36633,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8053,7 +8053,7 @@
       "arm": "baseline",
       "pid": 36635,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8080,7 +8080,7 @@
       "arm": "candidate",
       "pid": 36637,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8107,7 +8107,7 @@
       "arm": "candidate",
       "pid": 36638,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8134,7 +8134,7 @@
       "arm": "baseline",
       "pid": 36681,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8160,7 +8160,7 @@
       "arm": "baseline",
       "pid": 36682,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8187,7 +8187,7 @@
       "arm": "candidate",
       "pid": 36723,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8213,7 +8213,7 @@
       "arm": "candidate",
       "pid": 36763,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8239,7 +8239,7 @@
       "arm": "baseline",
       "pid": 36764,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8266,7 +8266,7 @@
       "arm": "baseline",
       "pid": 36766,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8293,7 +8293,7 @@
       "arm": "candidate",
       "pid": 36812,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8320,7 +8320,7 @@
       "arm": "candidate",
       "pid": 36896,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8347,7 +8347,7 @@
       "arm": "baseline",
       "pid": 36899,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8374,7 +8374,7 @@
       "arm": "baseline",
       "pid": 36900,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8401,7 +8401,7 @@
       "arm": "candidate",
       "pid": 37054,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8428,7 +8428,7 @@
       "arm": "candidate",
       "pid": 37056,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8454,7 +8454,7 @@
       "arm": "baseline",
       "pid": 37058,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "status": "ok",
       "samples": [
@@ -8481,7 +8481,7 @@
       "arm": "baseline",
       "pid": 37059,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8509,7 +8509,7 @@
       "arm": "candidate",
       "pid": 37064,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8537,7 +8537,7 @@
       "arm": "candidate",
       "pid": 37065,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8564,7 +8564,7 @@
       "arm": "baseline",
       "pid": 37066,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8591,7 +8591,7 @@
       "arm": "baseline",
       "pid": 37068,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8619,7 +8619,7 @@
       "arm": "candidate",
       "pid": 37070,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8646,7 +8646,7 @@
       "arm": "candidate",
       "pid": 37071,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8673,7 +8673,7 @@
       "arm": "baseline",
       "pid": 37072,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8701,7 +8701,7 @@
       "arm": "baseline",
       "pid": 37075,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8729,7 +8729,7 @@
       "arm": "candidate",
       "pid": 37115,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8757,7 +8757,7 @@
       "arm": "candidate",
       "pid": 37116,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8785,7 +8785,7 @@
       "arm": "baseline",
       "pid": 37117,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8812,7 +8812,7 @@
       "arm": "baseline",
       "pid": 37214,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8840,7 +8840,7 @@
       "arm": "candidate",
       "pid": 37360,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8868,7 +8868,7 @@
       "arm": "candidate",
       "pid": 37364,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8895,7 +8895,7 @@
       "arm": "baseline",
       "pid": 37365,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8922,7 +8922,7 @@
       "arm": "baseline",
       "pid": 37368,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8950,7 +8950,7 @@
       "arm": "candidate",
       "pid": 37371,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -8978,7 +8978,7 @@
       "arm": "candidate",
       "pid": 37419,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -9006,7 +9006,7 @@
       "arm": "baseline",
       "pid": 37420,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -9034,7 +9034,7 @@
       "arm": "baseline",
       "pid": 37462,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -9061,7 +9061,7 @@
       "arm": "candidate",
       "pid": 37465,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -9088,7 +9088,7 @@
       "arm": "candidate",
       "pid": 37466,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",
@@ -9115,7 +9115,7 @@
       "arm": "baseline",
       "pid": 37467,
       "node": "v22.22.1",
-      "execPath": "/Users/mnorth/.nodenv/versions/22.22.1/bin/node",
+      "execPath": "<node>",
       "mode": "timing",
       "eslintVersion": "10.7.0",
       "status": "ok",

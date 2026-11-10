@@ -24,7 +24,7 @@ and bounded scope. No further optimization or #36 protocol/fusion work was added
   resolved runtime packages were frozen, including peer dependencies. Source and
   installed dependency lock hashes agree. No consumer checkout was modified.
 - Runtime: Node **22.22.1**, actual executable
-  `/Users/mnorth/.nodenv/versions/22.22.1/bin/node`, Darwin arm64, OS 27.2.0,
+  `<node>`, Darwin arm64, OS 27.2.0,
   Apple M5 Max. TypeScript 6.0.3 built both producer packages and the consumer.
 - Harness: `e24067bff7c72414323e4a7a46a6a7997b2562b6`. All final harness file
   hashes are retained in the report. The earlier preparation smoke preceded a
@@ -113,14 +113,14 @@ Follow [the bounded experiment instructions](../../../../tools/benchmark/STREAM-
 for preparation, verification-only and quiet timing. The exact local package
 preparation script is retained as [package-preparation.mjs.txt](package-preparation.mjs.txt).
 From a checkout containing both producer revisions and installed build tools,
-copy it to `scratch/stream-packages/prepare.mjs` and execute from the repository
+copy it to `work/stream-packages/prepare.mjs` and execute from the repository
 root with `NODENV_VERSION=22.22.1 node`. Use fresh staging directories: the script
 archives exact revisions, compiles/API-generates without Nx cache, npm-packs with
 scripts disabled and verifies extracted packages. It never builds WASM.
 
 The consumer preparation command takes the resulting two manifests and the exact
 consumer SHA above. This run used the existing accepted consumer dependency
-installation at `.claude/worktrees/sh-ast-05-perf`; the lock hash is recorded.
+installation at `<dependency-checkout>`; the lock hash is recorded.
 Then run verification-only, followed by `--rounds 6 --warmup 5 --iterations 30`
 in an agreed quiet window. Do not reuse a prepared package after changing source,
 WASM or dependencies. Six tests-first harness outcome tests and independent source,

@@ -9,7 +9,7 @@ CI workflow.
 
 - [Implementation PR #30](https://github.com/mike-north/sh-ast/pull/30) merged at
   `b3e6218dcd2c950e9658fdf7d8bf09be29d4e827` after its checks and review. A merge
-  commit preserves the stacked B ancestry.
+  commit preserves the Release B ancestry.
 - [Generated release PR #32](https://github.com/mike-north/sh-ast/pull/32) contained
   exactly the A changeset removal, sh-ast 0.4.0 version, and changelog entry.
   Independent scope inspection and Copilot review found no issues. All four
@@ -53,7 +53,7 @@ its 0.4.0 version/changelog. The reviewed B minor note is now active separately 
 published. Consumer B remains gated on actual producer 0.5.0 publication and its
 ordinary registry-dependent frozen-install checks.
 
-The restacked producer passed uncached build/check/test (666 runtime tests plus
+The rebased producer passed uncached build/check/test (666 runtime tests plus
 type tests); uncached API/docs regeneration produced no changes. These checks
 validate the candidate against the released baseline, not a future 0.5.0 registry
 artifact.

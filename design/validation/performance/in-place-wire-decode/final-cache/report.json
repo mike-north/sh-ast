@@ -17,10 +17,10 @@
     "phases": ["parse", "parse-with-positions"],
     "dialects": ["bash"],
     "invocation": [
-      "/Users/mnorth/.nodenv/versions/24.14.0/bin/node",
-      "/Users/mnorth/.codex/worktrees/optimization-delivery/sh-ast/tools/benchmark/run.mjs",
+      "<node>",
+      "<repo>/tools/benchmark/run.mjs",
       "--prepared",
-      "scratch/decode-final-prepared/pair.json",
+      "work/decode-final-prepared/pair.json",
       "--fixtures",
       "consumer-m2",
       "--phases",
@@ -32,7 +32,7 @@
       "--warmup",
       "3",
       "--output",
-      "scratch/decode-final-results"
+      "work/decode-final-results"
     ]
   },
   "artifacts": [

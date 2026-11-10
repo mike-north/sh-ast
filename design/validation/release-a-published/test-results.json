@@ -44,7 +44,7 @@
       "endTime": 1793608813831.6418,
       "status": "passed",
       "message": "",
-      "name": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/release-a-registry-audit/tests/cold-start.test.ts"
+      "name": "<repo>/work/release-a-registry-audit/tests/cold-start.test.ts"
     },
     {
       "assertionResults": [
@@ -93,7 +93,7 @@
       "endTime": 1793608813848.639,
       "status": "passed",
       "message": "",
-      "name": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/release-a-registry-audit/tests/faithful-parse.test.ts"
+      "name": "<repo>/work/release-a-registry-audit/tests/faithful-parse.test.ts"
     },
     {
       "assertionResults": [
@@ -182,7 +182,7 @@
       "endTime": 1793608813863.6418,
       "status": "passed",
       "message": "",
-      "name": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/release-a-registry-audit/tests/snapshot.test.ts"
+      "name": "<repo>/work/release-a-registry-audit/tests/snapshot.test.ts"
     },
     {
       "assertionResults": [
@@ -321,7 +321,7 @@
       "endTime": 1793608813861.2415,
       "status": "passed",
       "message": "",
-      "name": "/Users/mnorth/.codex/worktrees/e1eb/sh-ast/scratch/release-a-registry-audit/tests/syntax.test.ts"
+      "name": "<repo>/work/release-a-registry-audit/tests/syntax.test.ts"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 This is a work record, not a declaration of release acceptance. Implementation is
 authorized; publication, release tags, merging to main, and public Release B
-traversal/printing are outside this assignment.
+traversal/printing are outside this scope.
 
 ## Baseline reconciliation
 
@@ -61,7 +61,7 @@ consistency validator and passed afterward.
 ## Consumer and build status
 
 Consumer work is isolated at
-`/Users/mnorth/.codex/worktrees/consumer-candidate-gate/eslint-sh`. Its gate scaffold
+`<consumer>`. Its gate scaffold
 commit `3d1a3aa` reproduced a packaged-install registry bypass via a hash mismatch,
 then passed linked and installed checks after injecting an exact baseline tarball.
 The baseline gate ran 157 plugin and 3 umbrella tests. This is scaffold evidence
@@ -135,7 +135,7 @@ At the frozen commit, GitHub CI run `41384741277`, WASM reproducibility run
 `41384741261`, and schema reproducibility run `41384741504` passed. The source-only
 bootstrap's stale-binary failures were expected and superseded by the canonical
 artifact commit; no bootstrap failure is represented as acceptance. Fresh CI is
-also required for the final test/work-record follow-up before handoff.
+also required for the final test/work-record follow-up before completion.
 
 Independent review covered the codec, public boundary, generated unions, analysis,
 and consumer adaptation. Exact regressions established nil argv-slot preservation,

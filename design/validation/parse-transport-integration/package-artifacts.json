@@ -5,9 +5,9 @@
     {
       "label": "accepted-main",
       "version": "0.7.0",
-      "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/accepted-main/package/dist/index.js",
-      "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/accepted-main/package",
-      "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/accepted-main/sh-ast-0.7.0.tgz",
+      "entry": "<repo>/work/issue57-campaign/accepted-main/package/dist/index.js",
+      "packageRoot": "<repo>/work/issue57-campaign/accepted-main/package",
+      "tarball": "<repo>/work/issue57-campaign/accepted-main/sh-ast-0.7.0.tgz",
       "tarballSha256": "71cd2a3f30a361783e15fc010148f2bfc7efb3cc7a8ebb9d05de8a71123ff0fd",
       "integrity": "sha512-N8QK4qNlnFpfIr/vyEnML1sh1BSrbe5+uvCF1FLoulmLiZV+2cBDg46YdZwNFXs9P1uNFc+Ar6iGYBA+1ioWjQ==",
       "assets": {
@@ -149,9 +149,9 @@
     {
       "label": "canonical-candidate",
       "version": "0.7.0",
-      "entry": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/canonical-candidate/package/dist/index.js",
-      "packageRoot": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/canonical-candidate/package",
-      "tarball": "/Users/mnorth/.codex/worktrees/brace-correctness/sh-ast/scratch/issue57-campaign/canonical-candidate/sh-ast-0.7.0.tgz",
+      "entry": "<repo>/work/issue57-campaign/canonical-candidate/package/dist/index.js",
+      "packageRoot": "<repo>/work/issue57-campaign/canonical-candidate/package",
+      "tarball": "<repo>/work/issue57-campaign/canonical-candidate/sh-ast-0.7.0.tgz",
       "tarballSha256": "9be29e9e178485be22b1e02748382bb2e03fb7b4968d16513932f5e613814bcf",
       "integrity": "sha512-d7RpAOl2WUG2kp7WtcBxyYztASVXXH/beEy4j2Hbs+TIFgPrb9pQnLRIxAhb81LfsvsbkVkmRU9rGhL8tlvocg==",
       "assets": {

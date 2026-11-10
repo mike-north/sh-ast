@@ -25,7 +25,7 @@ consumer revision against the exact supplied parser tarball.
 ## Exact assets
 
 - Producer clean source: `6e29227f20aa4d6fa26205bd95a134fd198b4948`.
-- Tarball: `scratch/snapshot-release-a-candidate/sh-ast-0.3.1.tgz`.
+- Tarball: `work/snapshot-release-a-candidate/sh-ast-0.3.1.tgz`.
 - Tarball SHA-256:
   `2b5d30fcf4ea5790fd759eb879f923bf02007cf864e42246a4290614ff920009`.
 - WASM SHA-256:
@@ -78,6 +78,6 @@ computation still contribute to the measured latency.
 
 Raw data committed alongside this report: `final-timings.jsonl`,
 `final-transport.jsonl`, `final-summary.json`. Reproduction harness and frozen
-packages remain in the executor worktree under `scratch/performance-review/`:
+packages remain in the executor worktree under `work/performance-review/`:
 `rerun-final.py`, unchanged `benchmark.mjs`, and `fixtures/`.
 No production source was modified by this independent retest.

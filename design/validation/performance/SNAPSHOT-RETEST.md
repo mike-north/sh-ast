@@ -28,7 +28,7 @@ requires its canonical WASM and exact linked/packed consumer receipt checks.
 ## Identity and unchanged methodology
 
 - Corrected consumer: `2a0f260ddfc632949d9f186678ada35ceca0d1cc`.
-- Preliminary parser tarball: `scratch/snapshot-preliminary/sh-ast-0.3.1.tgz`,
+- Preliminary parser tarball: `work/snapshot-preliminary/sh-ast-0.3.1.tgz`,
   SHA-256 `76c907faa9439ed30cbd478d727bbe699ac6052758f88ac94ec34db54e879f9d`.
 - Preliminary Linux WASM SHA-256:
   `a9603b3c9d939e2bca2b093cd7bdbd7ee77fa55a5e882c56db275a7ecb943e4c`.

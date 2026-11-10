@@ -1,0 +1,45 @@
+name: Bug report
+description: sh-ast parses, traverses, or prints a script incorrectly, or throws unexpectedly.
+labels: [bug]
+body:
+  - type: textarea
+    id: script
+    attributes:
+      label: Minimal script and call
+      description: The smallest shell source and the sh-ast call (including options) that reproduces the problem.
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+      description: What you expected, what happened instead, and the full error message or output if any.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: sh-ast version
+      placeholder: '0.x.y'
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: '22.x'
+    validations:
+      required: true
+  - type: dropdown
+    id: dialect
+    attributes:
+      label: Shell dialect
+      options: [bash, posix, mksh, bats, zsh, not applicable]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Operating system, bundler, or how the same input behaves in the Go mvdan/sh parser.

@@ -141,11 +141,11 @@ provenance and need not remain available for later reproduction.
 ## Reproduction
 
 Follow [the harness instructions](../../../../tools/benchmark/STREAM-ENCODING.md).
-Copy the exact preparation script to `scratch/compact-packages/prepare.mjs` and
+Copy the exact preparation script to `work/compact-packages/prepare.mjs` and
 run from the repository root using Node 22.22.1 and installed build tools. Use new
 output directories. Archive the exact consumer commit above and build once; freeze
 an explicitly recorded compatible runtime dependency closure. This run used the
-existing `/Users/mnorth/Development/eslint-sh` installation read-only, with the
+existing `<consumer>` installation read-only, with the
 lock mismatch documented above. An earlier attempted dependency path had been
 removed; that failed staging directory was retained and was not measured.
 
