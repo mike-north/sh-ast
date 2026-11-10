@@ -30,10 +30,18 @@
     "node": ">=22.13.0"
   },
   "keywords": [
-    "bash",
     "shell",
+    "bash",
+    "zsh",
+    "posix",
+    "sh",
     "ast",
-    "parser"
+    "parser",
+    "printer",
+    "wasm",
+    "webassembly",
+    "mvdan-sh",
+    "typescript"
   ],
   "license": "MIT",
   "packageManager": "pnpm@11.12.0",
