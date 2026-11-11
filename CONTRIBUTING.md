@@ -104,7 +104,10 @@ pnpm changeset
 
 Pick `patch` for fixes and `minor` for observable syntax or binding changes. The project
 stays on 0.x until the maintainer declares the shape stable. Releases are cut by the
-release workflow; do not edit the generated "Version Packages" pull request.
+release workflow; do not edit the generated "Version Packages" pull request. On every push to
+`main` the workflow either opens or updates that pull request (pending changesets) or publishes
+the unpublished versions, pushing a git tag and creating a GitHub Release for each package it
+publishes.
 
 ## Pull requests
 

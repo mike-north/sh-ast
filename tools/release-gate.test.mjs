@@ -65,6 +65,9 @@ function fixture(
       join(root, 'package.json'),
       JSON.stringify({ private: true, workspaces: ['packages/*'] }),
     );
+    // Changesets 3 discovers the workspace through its package manager (pnpm here, as in the
+    // real repository), not through the package.json workspaces field alone.
+    writeFileSync(join(root, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n");
     writeFileSync(
       join(root, 'packages', packageName, 'package.json'),
       JSON.stringify({ name: packageName, version, private: privatePackage }),
@@ -123,8 +126,19 @@ function plannedVersions(root) {
       '--input-type=module',
       '-e',
       `import { createRequire } from 'node:module';
+     import { pathToFileURL } from 'node:url';
      const require = createRequire(${JSON.stringify(cliManifest)});
-     console.log(JSON.stringify(await require('@changesets/get-release-plan').default(process.cwd())));`,
+     const load = (name) => import(pathToFileURL(require.resolve(name)).href);
+     const { getPackages } = await load('@manypkg/get-packages');
+     const { readConfig } = await load('@changesets/config');
+     const { readChangesets } = await load('@changesets/read');
+     const { readPreState } = await load('@changesets/pre');
+     const { assembleReleasePlan } = await load('@changesets/assemble-release-plan');
+     const root = process.cwd();
+     const packages = await getPackages(root);
+     const { config } = await readConfig(root, packages);
+     console.log(JSON.stringify(assembleReleasePlan(
+       await readChangesets(root), packages, config, await readPreState(root))));`,
     ],
     { cwd: root, encoding: 'utf8' },
   );
@@ -182,27 +196,24 @@ function recordInferredEvidence(root, label, oracle, intent, versions) {
 }
 
 /**
- * A minor provider release can require a major peer-dependent release even in
- * the 0.x series. Group constraints may then raise both planned versions. The
- * oracle's order is left intact: diagnostics must still identify dependent b.
+ * Changesets 3 no longer escalates a peer dependent to a major release (assemble-release-plan
+ * 7.x: every dependency kind except devDependencies yields a patch), so a minor provider never
+ * infers a stable dependent. Group constraints still align bump types: a fixed group releases
+ * every member with the highest bump and highest current version of the group, a linked group
+ * does the same for released members. The gate must accept these 0.x plans and still evaluate the complete plan.
  */
+const peerPlans = {
+  plain: { a: ['minor', '0.9.0'], b: ['patch', '0.3.1'] },
+  // Group members also share the highest current version (a is 0.8.0, b is 0.3.0), so b
+  // is released from 0.8.0 (assemble-release-plan 7.x: applyLinks, matchFixedConstraint).
+  fixed: { a: ['minor', '0.9.0'], b: ['minor', '0.9.0'] },
+  linked: { a: ['minor', '0.9.0'], b: ['minor', '0.9.0'] },
+};
 for (const relationship of ['plain', 'fixed', 'linked']) {
-  test(`G2 names the inferred stable dependent in an actual CLI ${relationship} plan`, () =>
+  test(`G2 accepts the actual CLI peer-dependent ${relationship} plan`, () =>
     fixture(
       (root) => {
-        mkdirSync(join(root, 'packages/b'));
-        writeFileSync(
-          join(root, 'packages/b/package.json'),
-          JSON.stringify({
-            name: 'b',
-            version: '0.3.0',
-            peerDependencies: { a: '^0.8.0' },
-          }),
-        );
-        const configPath = join(root, '.changeset/config.json');
-        const config = JSON.parse(readFileSync(configPath));
-        if (relationship !== 'plain') config[relationship] = [['a', 'b']];
-        writeFileSync(configPath, JSON.stringify(config));
+        addDependentB(root, relationship);
         commit(root, 'Two-package baseline');
         succeeded(git(root, 'checkout', '-b', 'feature'));
         writeFileSync(join(root, 'packages/a/index.js'), 'export const value = 2;\n');
@@ -212,27 +223,50 @@ for (const relationship of ['plain', 'fixed', 'linked']) {
         succeeded(oracle);
         const plan = JSON.parse(readFileSync(join(root, '.release-gate-oracle.json')));
         const releases = Object.fromEntries(
-          plan.releases.map(({ name, type, newVersion }) => [name, { type, newVersion }]),
+          plan.releases.map(({ name, type, newVersion }) => [name, [type, newVersion]]),
         );
-        const intent = gate(root, 'changesets');
+        assert.deepEqual(releases, peerPlans[relationship]);
+        succeeded(gate(root, 'changesets'));
+        succeeded(gate(root, 'versions'));
+      },
+      { version: '0.8.0', bump: null, packageName: 'a' },
+    ));
+}
+
+/**
+ * A group can still make a dependent stable: a major bump of one fixed or linked member is
+ * applied to the whole group. The changeset itself is refused by the intent gate, and the
+ * version gate independently names every member of the plan, including the inferred b.
+ */
+for (const relationship of ['fixed', 'linked']) {
+  test(`G2 names the inferred stable group member in an actual CLI ${relationship} plan`, () =>
+    fixture(
+      (root) => {
+        addDependentB(root, relationship);
+        commit(root, 'Two-package baseline');
+        writeFileSync(join(root, '.changeset/change.md'), '---\n"a": major\n---\n\nChange.\n');
         const versions = gate(root, 'versions');
-        recordInferredEvidence(root, relationship, oracle, intent, versions);
-        assert.deepEqual(releases, {
-          a:
-            relationship === 'plain'
-              ? { type: 'minor', newVersion: '0.9.0' }
-              : { type: 'major', newVersion: '1.0.0' },
-          b: { type: 'major', newVersion: '1.0.0' },
-        });
-        succeeded(intent);
+        assert.equal(gate(root, 'changesets').status, 1);
         assert.equal(versions.status, 1);
+        assert.match(versions.stderr, /Changesets next version for a:.*1\.0\.0/);
         assert.match(versions.stderr, /Changesets next version for b:.*1\.0\.0/);
-        if (relationship !== 'plain')
-          assert.match(versions.stderr, /Changesets next version for a:.*1\.0\.0/);
         assert.match(versions.stderr, policy);
       },
       { version: '0.8.0', bump: null, packageName: 'a' },
     ));
+}
+
+/** Add package b, which peer-depends on a, in the given group relationship. */
+function addDependentB(root, relationship) {
+  mkdirSync(join(root, 'packages/b'));
+  writeFileSync(
+    join(root, 'packages/b/package.json'),
+    JSON.stringify({ name: 'b', version: '0.3.0', peerDependencies: { a: '^0.8.0' } }),
+  );
+  const configPath = join(root, '.changeset/config.json');
+  const config = JSON.parse(readFileSync(configPath));
+  if (relationship !== 'plain') config[relationship] = [['a', 'b']];
+  writeFileSync(configPath, JSON.stringify(config));
 }
 
 /** Ordinary dependencies use a patch for an out-of-range update under the default config. */
@@ -287,7 +321,8 @@ test('G2 accepts an actual Version Packages commit after its changeset is consum
       assert.equal(existsSync(join(root, '.changeset/minor.md')), false);
       const eligibility = changeset(root, 'status');
       assert.equal(eligibility.status, 1);
-      assert.match(eligibility.stderr, /changed but no changesets were found/);
+      // Changesets 3 reports through its prompt logger on stdout.
+      assert.match(eligibility.stdout + eligibility.stderr, /changed but no changesets were found/);
       assert.deepEqual(plannedVersions(root), {});
       succeeded(gate(root, 'changesets'));
       succeeded(gate(root, 'versions'));
@@ -325,7 +360,7 @@ for (const disconnected of [false, true]) {
           assert.equal(git(root, 'show-ref', '--verify', '--quiet', 'refs/heads/main').status, 1);
         const eligibility = changeset(root, 'status');
         assert.equal(eligibility.status, 1);
-        assert.match(eligibility.stderr, /Failed to find where HEAD diverged/);
+        assert.match(eligibility.stdout + eligibility.stderr, /Failed to find where HEAD diverged/);
         assert.deepEqual(plannedVersions(root), { example: '0.11.0' });
         succeeded(gate(root, 'changesets'));
         succeeded(gate(root, 'versions'));
@@ -441,7 +476,9 @@ for (const failure of ['configuration', 'planning']) {
       if (failure === 'configuration') {
         const configPath = join(root, '.changeset/config.json');
         const config = JSON.parse(readFileSync(configPath));
-        config.fixed = [['missing-package']];
+        // Changesets 3 reports an unmatched fixed package only as a warning; the same package in
+        // two fixed groups is an error (@changesets/config 4.0.1, index.mjs: 'defined in multiple groups').
+        config.fixed = [['example'], ['example']];
         writeFileSync(configPath, JSON.stringify(config));
       } else
         writeFileSync(
@@ -450,7 +487,10 @@ for (const failure of ['configuration', 'planning']) {
         );
       const result = gate(root, 'versions');
       assert.equal(result.status, 1);
-      assert.match(result.stderr, /missing-package/);
+      assert.match(
+        result.stderr,
+        failure === 'configuration' ? /multiple groups/ : /missing-package/,
+      );
       assert.match(result.stderr, policy);
     }));
 }
@@ -560,10 +600,119 @@ test('CI and release enforce both gates before publication', () => {
   assert.match(ci, /push:\s+branches: \[main\]/);
   assert.match(ci, /pull_request:/);
   assert.match(ci, /pnpm run check:release && pnpm run test:release-gate/);
-  const release = readFileSync('.github/workflows/release.yml', 'utf8');
-  assert.ok(
-    release.indexOf('run: pnpm run check:release') < release.indexOf('uses: changesets/action'),
+});
+
+/**
+ * Split the release workflow into its top-level jobs. The workflow is plain block YAML with
+ * two-space indentation, so each job is the text from its `  name:` line to the next one.
+ */
+function releaseJobs() {
+  const text = readFileSync('.github/workflows/release.yml', 'utf8');
+  const jobsStart = text.indexOf('\njobs:\n') + '\njobs:\n'.length;
+  const jobs = {};
+  const header = /^  ([\w-]+):\n/gm;
+  const matches = [...text.slice(jobsStart).matchAll(header)];
+  matches.forEach((match, index) => {
+    const end = index + 1 < matches.length ? matches[index + 1].index : undefined;
+    jobs[match[1]] = text.slice(jobsStart + match.index, end && jobsStart + end);
+  });
+  return { text, jobs };
+}
+
+/**
+ * changesets/action v2 reports publications through the CHANGESETS_OUTPUT file written by the
+ * Changesets 3 CLI, not by scraping its output, and only supports Changesets 3. Selection,
+ * versioning and publishing are separate sub-actions so that only publishing receives OIDC.
+ *
+ * @see https://github.com/changesets/action/tree/ae32849d5ba541f9ae29e40e22a623bc13562f51
+ */
+test('release workflow uses the pinned v2 sub-actions with least-privilege jobs', () => {
+  const sha = 'ae32849d5ba541f9ae29e40e22a623bc13562f51';
+  const { text, jobs } = releaseJobs();
+  assert.deepEqual(Object.keys(jobs), ['select-mode', 'version', 'publish']);
+  // The v1 action cannot see publications made by the Changesets 3 CLI.
+  assert.doesNotMatch(text, /changesets\/action@/);
+  assert.match(text, /^permissions: \{\}$/m);
+  for (const [job, sub] of [
+    ['select-mode', 'select-mode'],
+    ['version', 'version'],
+    ['publish', 'publish'],
+  ])
+    assert.match(
+      jobs[job],
+      new RegExp(`uses: changesets/action/${sub}@${sha} # v2\\.1\\.2\\n`),
+      `${job} pins ${sub} by full commit SHA`,
+    );
+  assert.equal([...text.matchAll(/uses: changesets\/action/g)].length, 3);
+
+  // Selection reads files only; versioning writes a commit and a PR; only publishing gets OIDC.
+  assert.match(jobs['select-mode'], /permissions:\n      contents: read\n/);
+  assert.match(jobs.version, /contents: write\n      pull-requests: write\n/);
+  assert.match(jobs.publish, /contents: write\n/);
+  assert.doesNotMatch(jobs.publish, /pull-requests/);
+  assert.equal([...text.matchAll(/id-token: write/g)].length, 1);
+  assert.match(jobs.publish, /id-token: write/);
+  assert.doesNotMatch(text, /NPM_TOKEN|NODE_AUTH_TOKEN/);
+
+  // npm's trusted publisher is keyed to the workflow file name and this environment on publish only.
+  assert.match(jobs.publish, /\n    environment: npm-publish\n/);
+  assert.equal([...text.matchAll(/environment:/g)].length, 1);
+
+  // Each job picks its mode from the selector and runs only for it.
+  assert.match(
+    jobs.version,
+    /needs: select-mode\n    if: needs\.select-mode\.outputs\.mode == 'version'/,
   );
-  assert.match(release, /version: pnpm version-packages/);
-  assert.match(release, /publish: pnpm release/);
+  assert.match(
+    jobs.publish,
+    /needs: select-mode\n    if: needs\.select-mode\.outputs\.mode == 'publish'/,
+  );
+  assert.match(jobs.version, /script: pnpm version-packages/);
+});
+
+test('release workflow creates tags and GitHub Releases for what `pnpm release` publishes', () => {
+  const { jobs } = releaseJobs();
+  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
+  // The action exports CHANGESETS_OUTPUT to its script; it only reaches `changeset publish`
+  // when the script passes the environment through, as a plain pnpm script does.
+  assert.match(jobs.publish, /script: pnpm release\n/);
+  assert.match(scripts.release, /changeset publish$/);
+  assert.doesNotMatch(scripts.release, /CHANGESETS_OUTPUT=/);
+  assert.match(jobs.publish, /create-github-releases: true\n/);
+  assert.match(jobs.publish, /push-git-tags: true\n/);
+  // Tags and releases are pushed through the API with the workflow token.
+  assert.match(jobs.publish, /github-token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/);
+  const config = JSON.parse(readFileSync('.changeset/config.json', 'utf8'));
+  // Private packages are neither versioned nor tagged; the only one here is the workspace root,
+  // which is not a Changesets package, so this has no effect on releases.
+  assert.deepEqual(config.privatePackages, { version: false, tag: false });
+});
+
+test('release workflow enforces the 0.x gate and build before any version or publication', () => {
+  const { jobs } = releaseJobs();
+  const gate = 'run: pnpm run check:release';
+  for (const job of ['select-mode', 'version', 'publish'])
+    assert.ok(
+      jobs[job].indexOf(gate) !== -1 &&
+        jobs[job].indexOf(gate) < jobs[job].indexOf('uses: changesets/action/'),
+      `${job} runs the 0.x gate before its Changesets action`,
+    );
+  assert.ok(
+    jobs.publish.indexOf('run: pnpm build') < jobs.publish.indexOf('uses: changesets/action/'),
+  );
+  assert.match(jobs.publish, /node-version: '24\.14\.0'/);
+});
+
+/**
+ * The CLI declares @changesets/read but not @changesets/parse, so the gate must reach the parser
+ * through the reader's dependency tree; resolving it from the CLI works only by accident of hoisting.
+ */
+test('gate resolves the changeset parser through the CLI reader, not the CLI itself', () => {
+  const cliRequire = createRequire(cliManifest);
+  const cliDeps = cliRequire('./package.json').dependencies;
+  assert.ok(cliDeps['@changesets/read'], 'CLI depends on the reader');
+  assert.equal(cliDeps['@changesets/parse'], undefined, 'CLI does not depend on the parser');
+  const source = readFileSync(script, 'utf8');
+  assert.match(source, /createRequire\(cliRequire\.resolve\('@changesets\/read'\)\)/);
+  assert.doesNotMatch(source, /fromCli\('@changesets\/parse'\)/);
 });
