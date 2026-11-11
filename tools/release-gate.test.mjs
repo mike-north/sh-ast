@@ -683,8 +683,9 @@ test('release workflow creates tags and GitHub Releases for what `pnpm release` 
   // Tags and releases are pushed through the API with the workflow token.
   assert.match(jobs.publish, /github-token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/);
   const config = JSON.parse(readFileSync('.changeset/config.json', 'utf8'));
-  // Today's behaviour under Changesets 3: private packages are versioned but never tagged.
-  assert.deepEqual(config.privatePackages, { version: true, tag: false });
+  // Private packages are neither versioned nor tagged; the only one here is the workspace root,
+  // which is not a Changesets package, so this has no effect on releases.
+  assert.deepEqual(config.privatePackages, { version: false, tag: false });
 });
 
 test('release workflow enforces the 0.x gate and build before any version or publication', () => {
