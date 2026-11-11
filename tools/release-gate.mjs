@@ -6,13 +6,15 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { basename, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const cliManifest = require.resolve('@changesets/cli/package.json');
-// Use the parser bundled with our installed CLI rather than define a second YAML grammar.
+// Use the libraries bundled with our installed CLI rather than define a second YAML grammar
+// or a parallel planner; they are ES modules, resolved from the CLI's own dependency tree.
 const cliRequire = createRequire(cliManifest);
-const readRequire = createRequire(cliRequire.resolve('@changesets/read'));
-const parseChangeset = readRequire('@changesets/parse').default;
+const fromCli = (name) => import(pathToFileURL(cliRequire.resolve(name)).href);
+const { parseChangesetFile: parseChangeset } = await fromCli('@changesets/parse');
 const policy =
   'This project stays in the 0.x series until the owner declares the shape stable. There is no override flag.';
 
@@ -63,9 +65,21 @@ function checkVersion(version, source) {
  * use its planner without a history ref. Planning/configuration errors still
  * propagate to the gate's failure handler; no substitute plan is accepted.
  */
-function releasePlan(root) {
-  const getReleasePlan = cliRequire('@changesets/get-release-plan').default;
-  return getReleasePlan(root);
+async function releasePlan(root) {
+  const { getPackages } = await fromCli('@manypkg/get-packages');
+  const { readConfig } = await fromCli('@changesets/config');
+  const { readChangesets } = await fromCli('@changesets/read');
+  const { readPreState } = await fromCli('@changesets/pre');
+  const { assembleReleasePlan } = await fromCli('@changesets/assemble-release-plan');
+  const packages = await getPackages(root);
+  const { config, errors } = await readConfig(root, packages);
+  if (errors != null) throw new Error(`Invalid Changesets config: ${errors.join('\n')}`);
+  return assembleReleasePlan(
+    await readChangesets(root),
+    packages,
+    config,
+    await readPreState(root),
+  );
 }
 
 try {

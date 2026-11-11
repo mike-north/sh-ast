@@ -5,8 +5,8 @@
   "author": "Mike North <michael.l.north@gmail.com>",
   "devDependencies": {
     "@api-extractor-tools/eslint-plugin": "^0.1.1",
-    "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.0",
+    "@changesets/changelog-github": "^1.0.0",
+    "@changesets/cli": "^3.0.3",
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@microsoft/api-documenter": "^7.30.7",
     "@microsoft/api-extractor": "^7.58.9",
