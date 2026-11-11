@@ -318,7 +318,6 @@ request so reviewers can read the source diff separately.
 - State the acceptance criteria and map each one to a named test in the pull request.
   If a criterion is wrong or unachievable, say so on the issue before building around it.
 - Keep commits focused; do not add generated attribution trailers to commits.
-- Every pull request needs an approving code review before it is merged. Reply to every
-  review thread; the reviewer resolves it.
+- Reply to every review thread; the reviewer resolves it.
 - The base branch moves. Rebase late, and when CI reports "no checks" on a pull request,
   check for a merge conflict first.

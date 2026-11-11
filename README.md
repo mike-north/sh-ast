@@ -14,7 +14,7 @@ parser and printer behind `shfmt`, compiled to WebAssembly: synchronous, with no
 npm install sh-ast
 ```
 
-Requires Node.js 22.13 or newer. ES module, TypeScript types included.
+Requires Node.js 22.14 or newer on the 22 line, or Node.js 24 or newer. ES module, TypeScript types included.
 
 ## Quickstart
 

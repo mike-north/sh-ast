@@ -18,7 +18,7 @@ fork and reaches this repository through a pinned revision; see
 
 ## Set up
 
-You need Node 22 (see `.nvmrc`), pnpm 11 (`corepack enable` picks the pinned version), and
+You need Node 22.14 or later, or Node 24 or later (`.nvmrc` pins the development version), pnpm 11 (`corepack enable` picks the pinned version), and
 the Go version pinned in `packages/sh-ast/shim/go.mod`.
 
 ```sh

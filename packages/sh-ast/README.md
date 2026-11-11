@@ -19,7 +19,7 @@ tree-sitter-bash, it covers more than Bash and prints edited trees back to shell
 npm install sh-ast
 ```
 
-Requires Node.js 22.13 or newer. The package is an ES module with TypeScript types included;
+Requires Node.js 22.14 or newer on the 22 line, or Node.js 24 or newer. The package is an ES module with TypeScript types included;
 CommonJS code can load it with `require('sh-ast')`.
 
 ## Quickstart
