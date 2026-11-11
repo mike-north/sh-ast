@@ -132,7 +132,7 @@ the faithful Node contract. No unsupported API was substituted.
 - [package-preparation.mjs.txt](package-preparation.mjs.txt): exact executed local
   archive/build/pack script; it never builds WASM.
 
-Lead independently audited the source/harness and recomputed all 19 summaries,
+The source and harness were audited, recomputing all 19 summaries,
 228 process identities and 6,840 raw samples, then reverified final package,
 dependency and harness hashes. These are observations of this bounded campaign;
 no publication or merge claim is implied. Absolute staging paths record historical

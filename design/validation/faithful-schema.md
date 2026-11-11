@@ -65,4 +65,4 @@ Two later focused red-to-green checks refined the shared contract:
 
 The schema reproducibility CI workflow now runs the independent Go tests before
 regeneration. This slice establishes a model and generation foundation; it is not
-evidence of a complete Release A candidate or consumer acceptance.
+evidence of a complete parsing-release candidate or consumer acceptance.

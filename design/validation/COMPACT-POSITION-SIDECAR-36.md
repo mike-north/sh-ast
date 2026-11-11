@@ -1,7 +1,7 @@
 # Compact position sidecar contract
 
 Baseline: 1e96b49434e05b03c9f9fd8a001151186af1668d (Version Packages47 after merged48).
-Root accepted this design, including deferred bounds and the flat occurrence queue.
+The design defers bound observation and uses a flat occurrence queue.
 Scope is internal snapshot transport only.
 
 ## Safe fused collection
@@ -13,7 +13,7 @@ order described below; do NOT invoke Pos/End while encoding. Only after complete
 successful syntax encoding consume this flat queue and append compact observations.
 This is one encoding/tree traversal plus a linear reference queue, not a second
 reflection or tree walk. It removes path construction and discovery work while
-preserving #35's no-bound-calls-before-success guarantee. Root accepted this precise refinement of “produced during File encode pass.”
+preserving #35's no-bound-calls-before-success guarantee. This refines “produced during File encode pass” precisely.
 
 A queue costs one interface reference per Node occurrence (~16 bytes/occurrence on
 64-bit, about93KB for5801Nodes), not an intermediate syntax/position map tree.

@@ -72,7 +72,7 @@ brace-only guard still missed quoted content exposed by a split escape. The
 accepted boundary rejects every unquoted escape crossing a part boundary as
 unsupported. It does not depend on seeing braces first, and it preserves ordinary
 parsed escapes that remain within a Lit. Regression tests retain the exact
-reviewer cases and a matrix of Lit, single-quoted, double-quoted, empty-quoted,
+failing cases and a matrix of Lit, single-quoted, double-quoted, empty-quoted,
 and expansion boundaries. No recursive grammar reconstruction is added.
 
 ## Reason precedence for supplied BraceExp records

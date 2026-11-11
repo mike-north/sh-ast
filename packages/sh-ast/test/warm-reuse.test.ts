@@ -5,7 +5,7 @@
  * Ports the spike's ~700-line warm-parse exercise (`spike/perf-test.mjs`,
  * `spike/lint-test.mjs` #3): the WASM instance must remain usable across many `parseSync` calls.
  * Exact initialization counts are covered by the separate cold-start test. No latency gate is
- * asserted here (see design/MILESTONES.md M2 for the performance work).
+ * asserted here; latency is measured by the benchmark facility in `tools/benchmark`.
  */
 import { describe, expect, it } from 'vitest';
 import { parseSync } from '../src/index.js';

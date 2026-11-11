@@ -136,8 +136,7 @@ compared exact accepted main `87da64f` with canonical candidate `1431a4f` in two
 locally packaged, commit-identified arms. Both packages retained version 0.7.0;
 they were not published 0.9.0. Its accepted aggregate parse/positions gains were
 14.289447250 / 15.449937750 ms, with paired positions-gain misses in rounds **2
-and 6**. Its [independent audit](../../parse-transport-integration/independent-campaign-audit.md)
-and bounded output/API evidence remain historical records.
+and 6**. Its bounded output/API evidence remains a historical record.
 
 This published receipt uses one actual registry artifact, later source changes
 and a different WASM hash. It retains the host/runtime/fixture and per-process

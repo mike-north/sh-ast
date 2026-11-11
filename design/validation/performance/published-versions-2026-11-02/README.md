@@ -132,7 +132,7 @@ excludes edit/parse setup and is not a complete ESLint fix-cycle measurement.
 
 ## Relation to the consumer slowdown report
 
-The historical [final Release A consumer retest](../FINAL-CANONICAL-RETEST.md)
+The historical [final parsing-release consumer retest](../FINAL-CANONICAL-RETEST.md)
 recorded roughly 81 ms warm for 500 lines and 33 ms for 64 nested loops. Those
 were built-candidate end-to-end lints, with different consumer/runtime context,
 not these freshly downloaded producer measurements. The old 790/763 ms report
@@ -142,7 +142,7 @@ The current producer snapshot API alone costs about 73/31 ms on the correspondin
 Bash fixtures. This makes snapshot-producing parse a relevant next investigation,
 but differences between those historical consumer numbers and these producer
 numbers cannot quantify ESLint overhead. Consumer projection, traversal and real
-fix-cycle benchmarking belong in `eslint-sh`; its retained Release B fix probe
+fix-cycle benchmarking belong in `eslint-sh`; its retained traversal-and-printing fix probe
 also includes observations and reparses beyond a minimal production rule.
 
 ## Bounded next investigations

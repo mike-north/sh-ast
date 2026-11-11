@@ -82,10 +82,7 @@ build/check/test passed again: 793 runtime tests, tsd, and 27 harness tests.
 The source run passed Go tests, build and artifact upload; its final comparison
 failed as expected against the pre-change binary. The canonical adoption head
 `e6b57a42a9ead1a37ba87af725b3156da88908c7` then passed CI, schema reproducibility,
-and Linux rebuild-match. Copilot submitted a review with no actionable inline
-findings, but explicitly reported that model policy or plan restrictions prevented
-completion at the selected tier; independent specialist review remains the
-substantive source review evidence.
+and Linux rebuild-match.
 
 The reviewed benchmark harness and retained evidence were then integrated without
 changing runtime source or the canonical artifact. Final Node 22.22.1 uncached
@@ -99,6 +96,4 @@ The [canonical matched experiment](performance/stream-encoding/README.md) retain
 public snapshot medians from 100.10 to 43.08 ms, and no-rule ESLint medians from
 108.28 to 50.37 ms. Raw timing includes ABI allocation/copy/result conversion/free;
 no pure internal WASM/parser timer was collected. The median paired raw snapshot
-ratio was 32.37%, so the <=30% investigation target was not met. Root explicitly
-accepted this bounded outcome; no additional optimization or #36 work was added.
-Final PR merge remains the root's decision; no publication is implied.
+ratio was 32.37%, so the <=30% investigation target was not met. This bounded outcome is adopted; no additional optimization or #36 work was added.

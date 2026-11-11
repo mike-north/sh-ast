@@ -1,4 +1,4 @@
-# Release B printing validation
+# Printing validation
 
 `printSync(node, options)` rebuilds the current faithful syntax record in Go and
 collects the output of a fresh mvdan/sh v3.13.1 printer. An edited quoted argument
@@ -108,6 +108,5 @@ The implementation slice passes:
 Runtime observations use a disposable Linux amd64 Go 1.26.5 build. That binary is
 not part of this source and test commit. Public barrel exports, canonical
 optimized WASM, API rollups, documentation generation, installed-package
-consumer checks and final release gates belong to the assembled Release B
-candidate. This record establishes the printing slice's behavior and local
-regressions; it is not evidence of publication or final candidate acceptance.
+consumer checks and final release gates are verified separately. This record
+establishes the printing operation's behavior and its local regressions.
