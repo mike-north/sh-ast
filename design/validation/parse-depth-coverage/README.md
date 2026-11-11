@@ -27,8 +27,7 @@ The real synchronous ESLint caller frames remain. This demonstrates the recorded
 ordinary caller shape, not end-to-end linting, arbitrary pre-existing JavaScript
 recursion, universal host-stack safety, other AST operations, or performance.
 The separate earlier 8,424-call prototype campaign is not this final-artifact run.
-Root's separately reported independent 66-test check is not included in these
-implementer-recorded observations.
+A separate 66-test check is not included in these observations.
 
 ## Offline verification
 

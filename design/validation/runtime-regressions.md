@@ -43,7 +43,7 @@ dialect matrices are retained. A focused TypeScript check includes every migrate
 runtime file with the package root as rootDir; focused ESLint and Prettier checks
 also pass. The scalar type suite passes against the generated public API rollup.
 
-These observations use the maintainer's Linux-built six-field WASM artifact.
+These observations use a Linux-built six-field WASM artifact.
 They are local integration evidence, not a publication or CI claim. The artifact
 is not part of the test-migration commit. The unchanged broad test tsconfig cannot
 be used directly as a scoped type gate: its rootDir excludes imported src files,

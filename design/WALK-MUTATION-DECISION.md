@@ -1,10 +1,9 @@
 # Walk mutation representation decision
 
-Status: accepted. The maintainer explicitly chose **"Keep ordinary arrays with explicit
-traversal-mutation limits (Recommended)."** This resolves the Release B
-representation question; it does not authorize merging or publishing either
-release. The choice preserves Release A's ordinary mutable TypeScript arrays
-and accepts the storage distinctions demonstrated below.
+Status: accepted. The decision is to **keep ordinary arrays with explicit
+traversal-mutation limits**. This resolves the traversal representation
+question. The choice preserves the syntax tree's ordinary mutable TypeScript
+arrays and accepts the storage distinctions demonstrated below.
 
 ## Accepted contract
 
@@ -101,7 +100,7 @@ The JavaScript operation `args[1] = replacement; args.length = 1` destroys those
 slots; retaining only the initial values loses the intervening replacement.
 Recovering these effects requires observing writes or representing backing storage.
 
-The independent reviewer also confirmed a value-slot identity distinction without
+A value-slot identity distinction also exists without
 changing length or capacity. File.Last is a Go `[]Comment`; Walk passes a pointer
 to its element. Inside that callback, replacing `file.Last[0]` with a new Comment
 value immediately changes the text observed through the retained callback pointer,

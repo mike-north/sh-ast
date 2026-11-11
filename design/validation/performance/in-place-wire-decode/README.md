@@ -12,9 +12,8 @@ the source hashes, not its base Git SHA or unchanged version, identify the code.
 
 ## Final candidate retest
 
-Copilot's review identified a second `Object.keys` allocation per ordinary record.
-The final candidate reuses the first key list. The independent reviewer rechecked
-this exact delta and found no semantic change. All focused and full Node22 gates
+An earlier candidate made a second `Object.keys` allocation per ordinary record.
+The final candidate reuses the first key list, with no semantic change. All focused and full Node22 gates
 passed again. A fresh targeted M2 run is retained under `final-cache/`, with the
 final source/asset hashes and repeated full-tree/all-5,801-snapshot equivalence.
 

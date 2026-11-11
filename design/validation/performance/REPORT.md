@@ -1,4 +1,4 @@
-# Independent Release A performance review
+# Performance review of the first faithful-parse candidate
 
 **Historical pre-correction evidence.** The repeated-subtree defect measured here
 was corrected in a preliminary snapshot candidate. Original measurements and
@@ -19,7 +19,7 @@ an invented latency threshold. Address this path before accepting the candidate.
 
 - Producer repository examined: `3715abd9d8d66cd913743ff0de431c73853d47a0`.
 - Candidate parser tarball source: `d1531f1a59c5f6a9bb6dbcab995c9ae7c72367d0`;
-  only tests/work records changed between that commit and `3715abd`. Package
+  only tests and documentation changed between that commit and `3715abd`. Package
   manifest remains 0.3.1 pending the minor changeset; this is the new candidate API.
 - Candidate parser tarball SHA-256:
   `740110701a41a54608a948d7649d4c8ebffeb571df70e6d996facdfb9c40c16c`.

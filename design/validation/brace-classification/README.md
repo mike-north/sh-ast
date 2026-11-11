@@ -87,9 +87,9 @@ API documentation was regenerated without Nx cache. Those initial runtime tests
 used the local candidate WASM. The final candidate below adopts the exact Linux
 CI artifact and repeats validation. No locally built WASM is committed.
 
-## Review regression
+## Regression: backslash parity across Lit parts
 
-Independent review found that the first classifier reset backslash parity at
+The first classifier reset backslash parity at
 each Lit. The exact constructed Word with Parts values `"\\"` and
 `"\\{a,b}"` printed two backslashes before the brace expansion but returned a
 false static value. The named `declines escape uncertainty when backslash parity
