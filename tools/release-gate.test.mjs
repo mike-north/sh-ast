@@ -701,3 +701,17 @@ test('release workflow enforces the 0.x gate and build before any version or pub
   );
   assert.match(jobs.publish, /node-version: '24\.14\.0'/);
 });
+
+/**
+ * The CLI declares @changesets/read but not @changesets/parse, so the gate must reach the parser
+ * through the reader's dependency tree; resolving it from the CLI works only by accident of hoisting.
+ */
+test('gate resolves the changeset parser through the CLI reader, not the CLI itself', () => {
+  const cliRequire = createRequire(cliManifest);
+  const cliDeps = cliRequire('./package.json').dependencies;
+  assert.ok(cliDeps['@changesets/read'], 'CLI depends on the reader');
+  assert.equal(cliDeps['@changesets/parse'], undefined, 'CLI does not depend on the parser');
+  const source = readFileSync(script, 'utf8');
+  assert.match(source, /createRequire\(cliRequire\.resolve\('@changesets\/read'\)\)/);
+  assert.doesNotMatch(source, /fromCli\('@changesets\/parse'\)/);
+});

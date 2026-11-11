@@ -14,7 +14,12 @@ const cliManifest = require.resolve('@changesets/cli/package.json');
 // or a parallel planner; they are ES modules, resolved from the CLI's own dependency tree.
 const cliRequire = createRequire(cliManifest);
 const fromCli = (name) => import(pathToFileURL(cliRequire.resolve(name)).href);
-const { parseChangesetFile: parseChangeset } = await fromCli('@changesets/parse');
+// The CLI does not depend on the changeset parser itself; its reader does. Resolve the parser
+// from the reader so it is the instance the CLI parses with, without relying on hoisting.
+const fromRead = createRequire(cliRequire.resolve('@changesets/read'));
+const { parseChangesetFile: parseChangeset } = await import(
+  pathToFileURL(fromRead.resolve('@changesets/parse')).href
+);
 const policy =
   'This project stays in the 0.x series until the owner declares the shape stable. There is no override flag.';
 
