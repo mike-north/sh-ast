@@ -1,5 +1,11 @@
 # sh-ast
 
+## 0.11.2
+
+### Patch Changes
+
+- [#108](https://github.com/mike-north/sh-ast/pull/108) [`5ce4829`](https://github.com/mike-north/sh-ast/commit/5ce482908dd99af880d09459096a8d5585754d10) Thanks [@mike-north](https://github.com/mike-north)! - Require Node.js 22.14 or later on the 22 line, or Node.js 24 or later.
+
 ## 0.11.1
 
 ### Patch Changes
