@@ -8,7 +8,7 @@ process medians, with 30 measured calls after five excluded warmups per process.
 The median paired M2 raw-bridge ratio is **32.37% of baseline**, so the <=30%
 investigation target was **not achieved by this measured metric**. Individual
 paired ratios span 29.68–33.28%; selecting the fastest pair would misrepresent
-the result. Root accepted this outcome based on approximately 68% raw-bridge,
+the result. The outcome is adopted on the basis of approximately 68% raw-bridge,
 57% public snapshot and 53% no-rule consumer reductions, preserved correctness,
 and bounded scope. No further optimization or #36 protocol/fusion work was added.
 
@@ -17,8 +17,7 @@ and bounded scope. No further optimization or #36 protocol/fusion work was added
 - Baseline: accepted main `80bdcd9f99e2ad5e48dc8d15af13c8470f12794e`, including
   wrapper assignments, in-place decoder and brace classification.
 - Candidate: `e6b57a42a9ead1a37ba87af725b3156da88908c7`, canonical streaming WASM.
-  Every packaged JavaScript file is identical between arms; independent review
-  confirmed the sole package-byte difference is `shim/sh-ast.wasm`.
+  Every packaged JavaScript file is identical between arms; the sole package-byte difference is `shim/sh-ast.wasm`.
 - Consumer: accepted eslint-sh `6747c0cb6aaea416c35296ded2694cfb4fad913e`, plugin
   0.5.0, built once and copied identically to both arms. ESLint 10.7.0 and all 70
   resolved runtime packages were frozen, including peer dependencies. Source and

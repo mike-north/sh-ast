@@ -44,7 +44,7 @@ Defaults are three fresh process rounds, two excluded warmups, five measured
 iterations, Bash, and `representative-1`, `representative-50`, `nested-8`,
 `nested-64`, `heredoc`, `consumer-m2`. `consumer-m2` is the eslint-sh M2 source
 (701 lines, 11,270 bytes, 100 functions, 5,801 Nodes) used by issue #51, copied
-byte-for-byte from `design/validation/performance/in-place-wire-decode/`. All ten original Release A fixture sources are retained
+byte-for-byte from `design/validation/performance/in-place-wire-decode/`. All ten original parsing-release fixture sources are retained
 byte-for-byte from the historical `work/performance-review/fixtures` harness;
 only JSON formatting may differ. Their source hashes are emitted in each report.
 The new heredoc fixture includes Unicode, combining marks and retained comments.
@@ -141,12 +141,12 @@ observations, not statistical significance claims or hard regression thresholds.
 The retained [published-version baseline](../../design/validation/performance/published-versions-2026-11-02/README.md)
 contains a complete Bash/POSIX run, raw evidence and bounded follow-up investigations.
 
-Historical [Release A end-to-end evidence](../../design/validation/performance/FINAL-CANONICAL-RETEST.md)
+Historical [parsing-release end-to-end evidence](../../design/validation/performance/FINAL-CANONICAL-RETEST.md)
 measured specific built producer/consumer candidates, not fresh published-package
-producer phases. The consumer repository's `work-records/release-b/performance`
-measures ESLint traversal, printing and fixes (including consumer observations and
-reparses). Those reports explain workload selection but cannot be used as numeric
-baselines for these isolated producer phases. This facility makes no runtime changes.
+producer phases. Consumer-side measurements of ESLint traversal, printing and fixes
+include consumer observations and reparses, so they cannot be used as numeric
+baselines for these isolated producer phases. To reproduce a producer measurement,
+run the benchmark CLI described above against the packed artifacts. This facility makes no runtime changes.
 
 ## Public-output identity
 

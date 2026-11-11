@@ -1,6 +1,6 @@
 # Realign implementation with the accepted layers
 
-The maintainer accepted the ownership, hard-break, and maintained-fork rules on
+The ownership, hard-break, and maintained-fork rules were adopted on
 2026-11-05. [Architecture D9-D11](ARCHITECTURE.md#accepted-direction) owns those
 decisions; [AGENTS.md](../AGENTS.md) supplies implementation/review rules.
 The work sequence below is the original plan; the analysis subpath has since been

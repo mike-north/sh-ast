@@ -65,8 +65,7 @@ all extracted assets, source archives, and source files are pinned in
 fixture, and executable hashes are in [public-frozen.json](public-frozen.json).
 Recorded absolute paths describe the observed run; they are not portable inputs.
 Both packages retain version 0.7.0 in package metadata; their identities are the
-repository commits above. [An independent campaign audit](independent-campaign-audit.md)
-recomputed every raw statistic and checked the full package and source provenance.
+repository commits above. Every raw statistic is recomputable from the retained samples, and the full package and source provenance is pinned in the files above.
 
 ## Separate stage diagnostics
 

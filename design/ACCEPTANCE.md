@@ -1,14 +1,14 @@
 # Acceptance scenarios and consumer gate
 
 Status: these scenarios were written to be implemented before the software
-changes they cover, and the shipped releases implement them; the test suite and
-[IMPLEMENTATION.md](IMPLEMENTATION.md) record the results. They elaborate
+changes they cover, and the shipped releases implement them; the test suite and the
+[validation records](validation/) record the results. They elaborate
 [D1-D8](ARCHITECTURE.md#accepted-direction).
 Use the exact pinned upstream Go package as an independent behavioral oracle and
 hand-derived assertions for important examples. Do not generate expectations from
 the production codec or its schema generator.
 
-## Release A: owned by sh-ast
+## Parsing and syntax model (A1-A9): owned by sh-ast
 
 | ID  | Scenario                                                                                                                                       | Observable acceptance                                                                                                                                                                                                                                                                                                                                                                           |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +20,7 @@ the production codec or its schema generator.
 | A6  | Valid/invalid parser options and dialect matrix                                                                                                | Compare KeepComments true/false/default, Variant values, `sh` alias if a string setter is exposed, unsupported LangAuto, unknown values, StopAt length/whitespace/prefix/quoted behavior, and recovery limits. Four-byte StopAt examples: `éé` fits; `ééé` does not. Preserve POSIX `[[ a == b ]]` as an ordinary CallExpr where upstream does. No shell-version compatibility policy is added. |
 | A7  | `echo ok; (` and mksh `[[ a =~ b ]]`, plus errors after Unicode                                                                                | Preserve partial File and distinguish ParseError from LangError. Compare every original field and message, including Incomplete/Text versus Feature/Langs/LangUsed. Upstream raw positions survive any diagnostic view. Invalid caller options are distinguishable from source syntax and bridge failures.                                                                                      |
 | A8  | Repeated parses with alternating source/filename/options, success-error-success; malformed bridge response; allocation failure/exception paths | No stale source, options, filename or tree state; an ordinary syntax error does not poison the WASM instance. Memory ownership is released on failure paths. Corrupt envelopes and runtime failures do not masquerade as ParseError. Measure cold and warm behavior separately; no unaccepted performance threshold.                                                                            |
-| A9  | Parse/encode/decode observation round trip, including quotes, substitutions, arithmetic/test operators, comments and heredocs                  | Every upstream-observable field needed for Print survives. A test-only upstream Print of the reconstructed unchanged tree agrees with Print of the original Go tree under the same options. Recovery and nil/empty cases need explicit reconstruction proof. This is private codec acceptance, not a public Release A printer.                                                                  |
+| A9  | Parse/encode/decode observation round trip, including quotes, substitutions, arithmetic/test operators, comments and heredocs                  | Every upstream-observable field needed for Print survives. A test-only upstream Print of the reconstructed unchanged tree agrees with Print of the original Go tree under the same options. Recovery and nil/empty cases need explicit reconstruction proof. This is private codec acceptance, not a public printer.                                                                            |
 
 For A3/A5, test `NewPos` observable behavior even when a line or column becomes
 zero; validity is not simply “all coordinates positive.” For A4, coverage must
@@ -36,7 +36,7 @@ lone-surrogate encoding explicitly and test it. If a narrower source domain is
 accepted, assert a precise rejection or documented conversion rather than silently
 replacing bytes.
 
-## Release B: owned by sh-ast
+## Traversal and printing (B1-B6): owned by sh-ast
 
 | ID  | Scenario                                                                                                                  | Observable acceptance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | --- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -187,7 +187,7 @@ sh-ast implementation checkout and `artifact_dir` to a retained evidence folder.
 
 6. Save commands, exits, logs, receipt assertions and test coverage with the
    candidate/consumer identities. Restore or discard only the dedicated validation
-   checkout when finished; do not overwrite the maintainer's original checkout state.
+   checkout when finished; do not overwrite the original checkout's state.
 
 Release acceptance requires both linked development-consumer evidence and packed
 installation evidence for the same candidate content. Refresh receipt hashes after

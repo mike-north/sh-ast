@@ -1,13 +1,13 @@
-# Fork-source migration work record
+# Fork-source migration
 
-## Scope and authority
+## Scope
 
 The accepted 2026-11-05 four-layer direction puts all changes to the underlying
 Go syntax library in a maintained Go fork. This binding consumes one immutable
 revision for both schema and WASM; it does not apply a semantic patch stack.
 This work handles dependency/build routing and inventory for later analysis
 extraction. Analysis extraction into `sh-analysis` and removal from this package proceed as
-separate follow-on changes; this PR supplies the faithful syntax operation they need.
+separate follow-on changes; this change supplies the faithful syntax operation they need.
 
 ## Tests-first evidence
 
@@ -134,7 +134,7 @@ preserve the old expectations.
 
 ## SplitBraces stack-boundary correction
 
-Root's isolated public probe found that a shallow raw Word containing 1,000 nested
+An isolated public probe found that a shallow raw Word containing 1,000 nested
 brace spellings parsed successfully, while recursive JavaScript validation of the
 valid Go result threw an untyped RangeError. Tests were written first for that
 exact source, 2,000 levels, byte-bearing results, and a constructed deep input.
@@ -199,9 +199,9 @@ no reset or reinitialization is used to simulate recovery.
 Final local uncached build/check/test and regenerated API documentation pass on
 Node 22.22.1 with pnpm 11.12.0, Nx parallelism 2 and Vitest maximum workers 2:
 69 runtime files / 1,567 tests, public type tests, 39 benchmark unit cases and four
-real-worker integrations. The independent reviewer also reran the exact 96-case
+real-worker integrations. The exact 96-case
 warm-up sequence followed by eight 1,600-level input refusals and 42 deep output
-refusals on both Node 22.22.1 and 24.14.0. Hosted final-head reproducibility and
+refusals was also rerun on both Node 22.22.1 and 24.14.0. Hosted final-head reproducibility and
 code review remain separate gates; these local results do not establish them.
 
 ## Substantive review follow-up
