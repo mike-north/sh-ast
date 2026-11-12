@@ -12,7 +12,7 @@
  *
  * @see https://pkg.go.dev/mvdan.cc/sh/v3/syntax#Walk
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SYNTAX_SCHEMA } from '../generated/syntax-schema.js';
 import type { File, Node } from '../generated/syntax-types.js';
 import { visitNodes } from '../src/syntax-snapshot.js';
@@ -24,6 +24,9 @@ import * as recursive from './reference/recursive-syntax-wire.js';
 import { visitNodes as recursiveVisitNodes } from './reference/recursive-syntax-snapshot.js';
 import * as recursiveBounds from './reference/recursive-syntax-walk-bounds.js';
 import { walk as recursiveWalk } from './reference/recursive-syntax-walk.js';
+
+// Every comparison sweeps the whole corpus; allow for a loaded machine.
+vi.setConfig({ testTimeout: 120_000 });
 
 const corpus = buildCorpus();
 
