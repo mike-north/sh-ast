@@ -7,7 +7,9 @@
  * budget, and every binding stage that touches the resulting tree (parse
  * response, validation, walk, print) must handle it without exhausting the host
  * stack. Genuine nesting keeps its resource refusal, including nesting placed
- * around or inside a long chain.
+ * around or inside a long chain. Sequences that the grammar does nest (`elif`
+ * ladders, `[[ ]]` binary tests, right-associative arithmetic) keep their
+ * per-link cost.
  *
  * Every case runs in its own child process (see isolated-tree.ts).
  *
@@ -15,6 +17,7 @@
  * @see https://www.gnu.org/software/bash/manual/html_node/Lists.html
  * @see https://www.gnu.org/software/bash/manual/html_node/Pipelines.html
  * @see https://www.gnu.org/software/bash/manual/html_node/Shell-Arithmetic.html
+ * @see https://www.gnu.org/software/bash/manual/html_node/Conditional-Constructs.html
  */
 import { describe, expect, it } from 'vitest';
 import { Add, AndStmt, OrStmt, Pipe } from '../src/index.js';
@@ -25,6 +28,7 @@ import {
   inArithmeticParens,
   inSubshells,
   inspectIsolated,
+  nestingBoundary,
   repeated,
 } from './isolated-tree.js';
 
@@ -171,6 +175,37 @@ describe('nesting around and inside a long chain keeps its refusal', () => {
   it('a sum leaves the same nesting budget to the parentheses around it', () => {
     expectSameNestingBoundary(inArithmeticParens, sum(2), sum(10_000));
   }, 600_000);
+});
+
+/**
+ * Sequences the grammar itself nests, as `n` links after a first element: each
+ * `elif` opens inside the previous clause, `[[ ]]` binary tests associate to the
+ * right, and arithmetic `=`, `?:` and `**` are right-associative. They are not
+ * flat chains, so they keep costing one nesting level per link.
+ */
+const NESTED_SEQUENCES: Readonly<Record<string, (links: number) => string>> = {
+  'an elif ladder': (n) => 'if a; then b;' + ' elif a; then b;'.repeat(n) + ' fi\n',
+  'a [[ && ]] test': (n) => '[[ a' + ' && a'.repeat(n) + ' ]]\n',
+  'a [[ || ]] test': (n) => '[[ a' + ' || a'.repeat(n) + ' ]]\n',
+  'an arithmetic assignment chain': (n) => 'echo $(( ' + 'a='.repeat(n) + '1 ))\n',
+  'an arithmetic conditional chain': (n) => 'echo $(( ' + 'a?1:'.repeat(n) + '1 ))\n',
+  'an arithmetic power chain': (n) => 'echo $(( ' + '2**'.repeat(n) + '2 ))\n',
+};
+
+describe('sequences the grammar nests still count one level per link', () => {
+  for (const [shape, links] of Object.entries(NESTED_SEQUENCES)) {
+    it(`${shape} is refused after about 125 links, never with a RangeError`, () => {
+      expect(inspectIsolated(links(120)).outcome).toBe('parsed');
+      expect(inspectIsolated(links(130))).toEqual(BUDGET_REFUSAL);
+      expect(inspectIsolated(links(10_000))).toEqual(BUDGET_REFUSAL);
+    }, 120_000);
+
+    it(`ten more links in ${shape} leave ten fewer subshells around it`, () => {
+      expect(nestingBoundary(inSubshells, links(1)) - nestingBoundary(inSubshells, links(11))).toBe(
+        10,
+      );
+    }, 600_000);
+  }
 });
 
 describe('copying a long-chain tree with structuredClone', () => {

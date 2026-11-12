@@ -160,13 +160,16 @@ describe('native grammar resource budget', () => {
     '%s parses, walks and prints the 20,000-operator serialization regression (issue #71)',
     (operation) => {
       const source = 'echo $(( ' + '1+'.repeat(20_000) + '1 ))';
-      expectFlatTree(
-        inspectIsolated(source, {
-          operation,
-          options: { KeepComments: true, RecoverErrors: 100000 },
-        }),
-        { commands: 1, arithOperators: repeated(Add, 20_000) },
-      );
+      const outcome = inspectIsolated(source, {
+        operation,
+        options: { KeepComments: true, RecoverErrors: 100000 },
+        reuse: true,
+      });
+      expectFlatTree(outcome, { commands: 1, arithOperators: repeated(Add, 20_000) });
+      // The runtime that parsed the chain parses it again to the same tree, and
+      // then parses another file.
+      if (outcome.outcome !== 'parsed') return;
+      expect(outcome.reuse).toEqual({ facts: outcome.facts, next: 'File' });
     },
     120_000,
   );

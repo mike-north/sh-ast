@@ -220,7 +220,9 @@ nested arithmetic parentheses.
 
 Length is not depth. A list of commands joined by `&&`, `||` or `|`, or an arithmetic expression
 such as `1 + 1 + … + 1`, parses, walks and prints however long it is, because nothing in it is
-nested; only what its elements contain counts towards the limit.
+nested; only what its elements contain counts towards the limit. Some sequences are nested by the
+grammar itself and still count one level per link, so they are refused after about 125 links:
+`elif` ladders, `&&` and `||` inside `[[ ]]`, and right-associative arithmetic (`=`, `?:`, `**`).
 
 ```ts
 import { ShParseMaxDepthError, parseSync } from 'sh-ast';

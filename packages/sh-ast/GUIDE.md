@@ -262,7 +262,10 @@ unit. In practice that means about 127 nested subshells, 63 nested `$( )` substi
 nested arithmetic parentheses. A list of commands joined by `&&`, `||` or `|`, and a chain of
 left-associative arithmetic operators such as `1 + 1 + … + 1`, cost nothing for their length:
 mvdan/sh builds them as left-nested trees, but every element is parsed at the depth of the list
-itself. The limit protects the host from stack exhaustion; it is not a limit on file size, and
+itself. Sequences that the grammar nests are different: each `elif` opens inside the clause before
+it, `&&` and `||` inside `[[ ]]` group to the right, and so do the arithmetic operators `=`, `?:`
+and `**`. These still cost one unit per link, so they are refused after about 125 links. The
+limit protects the host from stack exhaustion; it is not a limit on file size, and
 long flat scripts, long lists and long comment runs are fine. The refused call returns no
 partial tree, and later calls work normally. The error's `estimatedDepth` field holds the count at
 which the parser stopped.

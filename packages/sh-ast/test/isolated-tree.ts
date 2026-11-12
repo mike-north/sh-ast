@@ -34,6 +34,8 @@ export type IsolatedOutcome =
       readonly afterClone?: string;
       /** [Pos, End] byte offsets of each BinaryArithm by operator offset, from the positions snapshot. */
       readonly arithBounds?: readonly (readonly [number, number])[];
+      /** Facts of a second parse of the same source in the same runtime, and the Type of a parse after it. */
+      readonly reuse?: { readonly facts: TreeFacts; readonly next: string };
     }
   | {
       readonly outcome: 'refused';
@@ -59,6 +61,8 @@ export interface IsolatedRequest {
   readonly clone?: boolean;
   /** Report positions-snapshot bounds of every BinaryArithm (parseWithPositionsSync only). */
   readonly arithBounds?: boolean;
+  /** Parse the source again in the same runtime, then parse another file. */
+  readonly reuse?: boolean;
 }
 
 /** Parses, walks, prints and reparses `source` in a fresh process with a hard deadline. @internal */
@@ -136,30 +140,47 @@ export function expectSameNestingBoundary(
   short: string,
   long: string,
 ): void {
-  const accepts = (depth: number, inner: string): boolean => {
-    const outcome = inspectIsolated(nest(depth, inner));
-    expect(outcome.outcome, `depth ${String(depth)}`).not.toBe('RangeError');
-    if (outcome.outcome === 'refused') {
-      expect(outcome).toEqual(BUDGET_REFUSAL);
-      return false;
-    }
-    expect(outcome.outcome, JSON.stringify(outcome).slice(0, 500)).toBe('parsed');
-    return true;
-  };
-  // Every unit is at least one level of the nesting being added, so the
-  // boundary is at most 128 levels deep; 64 levels are always accepted.
-  let accepted = 64;
+  const accepted = nestingBoundary(nest, short);
+  expect(accepted).toBeGreaterThanOrEqual(100);
+  expect(acceptsIsolated(nest(accepted, long)), 'long form at the short boundary').toBe(true);
+  expect(acceptsIsolated(nest(accepted + 1, long)), 'long form one level past it').toBe(false);
+}
+
+/**
+ * Whether `source` parses in an isolated process. A refusal must be the exact
+ * budget refusal; any other outcome, a `RangeError` above all, fails the test.
+ */
+function acceptsIsolated(source: string): boolean {
+  const outcome = inspectIsolated(source);
+  expect(outcome.outcome, source.slice(0, 80)).not.toBe('RangeError');
+  if (outcome.outcome === 'refused') {
+    expect(outcome).toEqual(BUDGET_REFUSAL);
+    return false;
+  }
+  expect(outcome.outcome, JSON.stringify(outcome).slice(0, 500)).toBe('parsed');
+  return true;
+}
+
+/**
+ * The deepest `nest` around `inner` that still parses. Each level of `nest`
+ * costs at least one budget unit, so the answer lies below 129; it is searched
+ * from 0, so `inner` may itself use most of the budget.
+ * @internal
+ */
+export function nestingBoundary(
+  nest: (depth: number, inner: string) => string,
+  inner: string,
+): number {
+  let accepted = 0;
   let refused = 129;
-  expect(accepts(accepted, short)).toBe(true);
-  expect(accepts(refused, short)).toBe(false);
+  expect(acceptsIsolated(nest(accepted, inner)), 'inner form without nesting').toBe(true);
+  expect(acceptsIsolated(nest(refused, inner))).toBe(false);
   while (refused - accepted > 1) {
     const depth = Math.floor((accepted + refused) / 2);
-    if (accepts(depth, short)) accepted = depth;
+    if (acceptsIsolated(nest(depth, inner))) accepted = depth;
     else refused = depth;
   }
-  expect(accepted).toBeGreaterThanOrEqual(100);
-  expect(accepts(accepted, long), 'long form at the short boundary').toBe(true);
-  expect(accepts(refused, long), 'long form one level past it').toBe(false);
+  return accepted;
 }
 
 /**

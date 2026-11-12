@@ -5,7 +5,7 @@
  * this child, never the test runner or a WASM instance another test uses. A
  * RangeError is reported as its own outcome so tests can reject it explicitly.
  *
- * Input (stdin, JSON): { source, operation, options, clone, arithBounds }.
+ * Input (stdin, JSON): { source, operation, options, clone, arithBounds, reuse }.
  * Output (last stdout line, JSON): one outcome record; see test/isolated-tree.ts.
  *
  * Tree facts are gathered with the public walk, so a reported count also shows
@@ -23,6 +23,7 @@ const {
   options = {},
   clone = false,
   arithBounds = false,
+  reuse = false,
 } = JSON.parse(readFileSync(0, 'utf8'));
 
 /** Node counts by type and operator codes in source order, from the public walk. */
@@ -65,6 +66,11 @@ try {
       const bounds = result.Positions.get(node);
       return [bounds.Pos.Offset, bounds.End.Offset];
     });
+  }
+  if (reuse) {
+    // The same runtime parses the source a second time, then another file.
+    const again = lib[operation](source, options);
+    report.reuse = { facts: facts(again.File ?? again), next: lib.parseSync('echo next').Type };
   }
   if (clone) {
     try {
