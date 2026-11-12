@@ -12,9 +12,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -152,11 +154,19 @@ func readTypedNil(obj map[string]any) (reflect.Value, error) {
 }
 
 // ReadJSON preserves integer precision and requires exactly one JSON value.
+// Documents nested deeper than encoding/json allows (its decoder refuses more
+// than 10,000 open arrays and objects) are read by readJSONIterative instead, so
+// the limit on depth is the tree a caller can build rather than that parser's
+// constant. Every other outcome, including every malformed-input message, is
+// encoding/json's own.
 func ReadJSON(data []byte) (any, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	var value any
 	if err := decoder.Decode(&value); err != nil {
+		if exceededNestingLimit(err) {
+			return readJSONIterative(data)
+		}
 		return nil, err
 	}
 	var extra any
@@ -164,6 +174,84 @@ func ReadJSON(data []byte) (any, error) {
 		return nil, fmt.Errorf("expected exactly one JSON value")
 	}
 	return value, nil
+}
+
+// exceededNestingLimit recognizes encoding/json's refusal of deep documents. The
+// package exposes it only as the text of a SyntaxError, so tests pin the wording
+// against the toolchain that builds the shim.
+func exceededNestingLimit(err error) bool {
+	var syntaxError *json.SyntaxError
+	return errors.As(err, &syntaxError) && strings.HasSuffix(syntaxError.Error(), "exceeded max depth")
+}
+
+// jsonFrame is one array or object whose members readJSONIterative is collecting.
+type jsonFrame struct {
+	object  map[string]any
+	array   []any
+	key     string
+	hasKey  bool
+	isArray bool
+}
+
+// readJSONIterative builds the same values as ReadJSON (maps, slices, json.Number,
+// strings, booleans and nil) from the decoder's token stream, keeping open
+// containers on an explicit stack instead of recursing once per level. The token
+// reader has no nesting limit of its own, so only memory bounds the depth.
+func readJSONIterative(data []byte) (any, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var stack []jsonFrame
+	var root any
+	place := func(value any) {
+		if len(stack) == 0 {
+			root = value
+			return
+		}
+		top := &stack[len(stack)-1]
+		if top.isArray {
+			top.array = append(top.array, value)
+			return
+		}
+		top.object[top.key] = value
+		top.hasKey = false
+	}
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			if err == io.EOF {
+				err = io.ErrUnexpectedEOF
+			}
+			return nil, err
+		}
+		if delim, ok := token.(json.Delim); ok {
+			switch delim {
+			case '{':
+				stack = append(stack, jsonFrame{object: map[string]any{}})
+			case '[':
+				stack = append(stack, jsonFrame{array: []any{}, isArray: true})
+			default:
+				top := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				if top.isArray {
+					place(top.array)
+				} else {
+					place(top.object)
+				}
+			}
+		} else if top := len(stack) - 1; top >= 0 && !stack[top].isArray && !stack[top].hasKey {
+			stack[top].key = token.(string)
+			stack[top].hasKey = true
+		} else {
+			place(token)
+		}
+		if len(stack) == 0 {
+			break
+		}
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		return nil, fmt.Errorf("expected exactly one JSON value")
+	}
+	return root, nil
 }
 
 // Decode reconstructs a concrete node or auxiliary struct, preserving all stored
@@ -209,118 +297,213 @@ func DecodeNode(data []byte) (syntax.Node, error) {
 	return node, nil
 }
 
+// decodeFrame is one struct, slice or interface whose children decodeValue is
+// filling in. A struct or slice frame names the child being decoded by next-1, so
+// that a failure can be wrapped with the same field or index prefix that a
+// recursive descent would add as it unwinds.
+type decodeFrame struct {
+	kind    decodeFrameKind
+	target  reflect.Value
+	object  map[string]any
+	entries []any
+	node    reflect.Value
+	next    int
+}
+
+type decodeFrameKind uint8
+
+const (
+	// decodeStruct decodes each exported field from an object.
+	decodeStruct decodeFrameKind = iota
+	// decodeSlice decodes each element of an array.
+	decodeSlice
+	// decodeInterface decodes one concrete node, then stores it in the interface.
+	decodeInterface
+)
+
 // decodeValue checks the actual destination Go type, including interface
 // membership, rather than trusting a caller-supplied discriminator.
-func decodeValue(target reflect.Value, value any) error {
+//
+// It descends on an explicit stack of decodeFrames, not by recursion, so the
+// depth of a decoded tree is bounded by memory rather than by the call stack.
+// Fields and elements are decoded in declaration and index order, and a failure
+// is wrapped by each enclosing struct field and slice index exactly as a
+// recursive descent would wrap it while unwinding.
+func decodeValue(rootTarget reflect.Value, rootValue any) error {
+	var stack []decodeFrame
+	target, value := rootTarget, rootValue
+	for {
+		descend, err := beginDecode(&stack, &target, &value)
+		if err != nil {
+			return unwindDecode(stack, err)
+		}
+		if descend {
+			continue
+		}
+		// The value just finished (a scalar, or a frame was pushed without a child
+		// to visit first). Resume the innermost frame that still has work.
+		for {
+			if len(stack) == 0 {
+				return nil
+			}
+			top := &stack[len(stack)-1]
+			switch top.kind {
+			case decodeInterface:
+				// The node under this interface is complete; only now is it stored.
+				top.target.Set(top.node)
+				stack = stack[:len(stack)-1]
+				continue
+			case decodeStruct:
+				typ := top.target.Type()
+				if top.next == typ.NumField() {
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				field := typ.Field(top.next)
+				entry, present := top.object[field.Name]
+				if !present {
+					stack = stack[:len(stack)-1]
+					return unwindDecode(stack, fmt.Errorf("missing %s.%s", typ.Name(), field.Name))
+				}
+				target, value = top.target.Field(top.next), entry
+				top.next++
+			case decodeSlice:
+				if top.next == len(top.entries) {
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				target, value = top.target.Index(top.next), top.entries[top.next]
+				top.next++
+			}
+			break
+		}
+	}
+}
+
+// unwindDecode prefixes err with every enclosing frame's field or index,
+// outermost first, reproducing the message of a recursive descent. Interface
+// frames add nothing. The prefix is assembled once, so a failure at depth n costs
+// time proportional to n.
+func unwindDecode(stack []decodeFrame, err error) error {
+	var prefix strings.Builder
+	for _, frame := range stack {
+		switch frame.kind {
+		case decodeStruct:
+			typ := frame.target.Type()
+			prefix.WriteString(typ.Name())
+			prefix.WriteByte('.')
+			prefix.WriteString(typ.Field(frame.next - 1).Name)
+			prefix.WriteString(": ")
+		case decodeSlice:
+			prefix.WriteString("index ")
+			prefix.WriteString(strconv.Itoa(frame.next - 1))
+			prefix.WriteString(": ")
+		}
+	}
+	return prefixed(prefix, err)
+}
+
+// beginDecode decodes one value. A scalar (or null) is stored immediately. A
+// struct, slice or interface pushes a frame. When the value is the pointer or
+// interface wrapper of a node that is decoded in place, *target and *value are
+// replaced by that inner destination and descend is true, so the caller loops
+// without growing the stack.
+func beginDecode(stack *[]decodeFrame, target *reflect.Value, value *any) (descend bool, err error) {
 	if target.Type() == positionType {
-		position, err := readPosition(value)
+		position, err := readPosition(*value)
 		if err == nil {
 			target.Set(reflect.ValueOf(position))
 		}
-		return err
+		return false, err
 	}
-	if value == nil {
+	if *value == nil {
 		switch target.Kind() {
 		case reflect.Pointer, reflect.Interface, reflect.Slice:
 			target.SetZero()
-			return nil
+			return false, nil
 		}
-		return fmt.Errorf("null cannot represent %s", target.Type())
+		return false, fmt.Errorf("null cannot represent %s", target.Type())
 	}
 	switch target.Kind() {
 	case reflect.Pointer:
 		target.Set(reflect.New(target.Type().Elem()))
-		return decodeValue(target.Elem(), value)
+		*target = target.Elem()
+		return true, nil
 	case reflect.Interface:
-		obj, ok := value.(map[string]any)
+		obj, ok := (*value).(map[string]any)
 		if !ok {
-			return fmt.Errorf("expected syntax object")
+			return false, fmt.Errorf("expected syntax object")
 		}
 		if obj["Type"] == "TypedNil" {
 			pointer, err := readTypedNil(obj)
 			if err != nil {
-				return err
+				return false, err
 			}
 			if !pointer.Type().Implements(target.Type()) {
-				return fmt.Errorf("typed-nil %s does not implement %s", pointer.Type(), target.Type())
+				return false, fmt.Errorf("typed-nil %s does not implement %s", pointer.Type(), target.Type())
 			}
 			target.Set(pointer)
-			return nil
+			return false, nil
 		}
 		name, _ := obj["Type"].(string)
 		typ := nodeTypes[name]
 		if typ == nil || !reflect.PointerTo(typ).Implements(target.Type()) {
-			return fmt.Errorf("%q does not implement %s", name, target.Type())
+			return false, fmt.Errorf("%q does not implement %s", name, target.Type())
 		}
 		node := reflect.New(typ)
-		if err := decodeValue(node.Elem(), value); err != nil {
-			return err
-		}
-		target.Set(node)
-		return nil
+		*stack = append(*stack, decodeFrame{kind: decodeInterface, target: *target, node: node})
+		*target = node.Elem()
+		return true, nil
 	case reflect.Struct:
-		obj, ok := value.(map[string]any)
+		obj, ok := (*value).(map[string]any)
 		if !ok {
-			return fmt.Errorf("expected %s object", target.Type())
+			return false, fmt.Errorf("expected %s object", target.Type())
 		}
 		typ := target.Type()
 		if obj["Type"] != typ.Name() {
-			return fmt.Errorf("expected Type %s", typ.Name())
+			return false, fmt.Errorf("expected Type %s", typ.Name())
 		}
 		if len(obj) != typ.NumField()+1 {
-			return fmt.Errorf("%s requires exactly its exported fields", typ.Name())
+			return false, fmt.Errorf("%s requires exactly its exported fields", typ.Name())
 		}
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			entry, present := obj[field.Name]
-			if !present {
-				return fmt.Errorf("missing %s.%s", typ.Name(), field.Name)
-			}
-			if err := decodeValue(target.Field(i), entry); err != nil {
-				return fmt.Errorf("%s.%s: %w", typ.Name(), field.Name, err)
-			}
-		}
-		return nil
+		*stack = append(*stack, decodeFrame{kind: decodeStruct, target: *target, object: obj})
+		return false, nil
 	case reflect.Slice:
-		entries, ok := value.([]any)
+		entries, ok := (*value).([]any)
 		if !ok {
-			return fmt.Errorf("expected array for %s", target.Type())
+			return false, fmt.Errorf("expected array for %s", target.Type())
 		}
 		target.Set(reflect.MakeSlice(target.Type(), len(entries), len(entries)))
-		for i, entry := range entries {
-			if err := decodeValue(target.Index(i), entry); err != nil {
-				return fmt.Errorf("index %d: %w", i, err)
-			}
-		}
-		return nil
+		*stack = append(*stack, decodeFrame{kind: decodeSlice, target: *target, entries: entries})
+		return false, nil
 	case reflect.String:
-		str, err := ReadString(value)
+		str, err := ReadString(*value)
 		if err != nil {
-			return err
+			return false, err
 		}
 		target.SetString(str)
-		return nil
+		return false, nil
 	case reflect.Bool:
-		boolean, ok := value.(bool)
+		boolean, ok := (*value).(bool)
 		if !ok {
-			return fmt.Errorf("expected boolean")
+			return false, fmt.Errorf("expected boolean")
 		}
 		target.SetBool(boolean)
-		return nil
+		return false, nil
 	case reflect.Uint8, reflect.Uint32:
-		number, err := readUint32(value)
+		number, err := readUint32(*value)
 		if err != nil {
-			return err
+			return false, err
 		}
 		// Named uint8 option states and uint32 operators retain their full
 		// storage domain; reject overflow before reflection can truncate it.
 		if target.OverflowUint(number) {
-			return fmt.Errorf("integer overflows %s", target.Type())
+			return false, fmt.Errorf("integer overflows %s", target.Type())
 		}
 		target.SetUint(number)
-		return nil
+		return false, nil
 	default:
-		return fmt.Errorf("unsupported destination %s", target.Type())
+		return false, fmt.Errorf("unsupported destination %s", target.Type())
 	}
 }
 

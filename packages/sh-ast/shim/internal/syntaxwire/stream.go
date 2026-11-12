@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 	"unicode/utf8"
 
@@ -347,186 +348,358 @@ func positionValue(v reflect.Value) syntax.Pos {
 	return v.Interface().(syntax.Pos)
 }
 
+// appendFrameKind says what an appendFrame is in the middle of writing.
+type appendFrameKind uint8
+
+const (
+	// appendStruct writes the plan's members of a registered struct.
+	appendStruct appendFrameKind = iota
+	// appendSlice writes the elements of a non-empty slice.
+	appendSlice
+	// appendPointer holds an active ancestor while a non-struct pointee is written.
+	// A pointer to a struct (every syntax node) shares its struct's frame instead.
+	appendPointer
+)
+
+// appendFrame is one container whose contents appendValue is writing. A struct
+// frame names the member in progress by index-1, so a failure can be wrapped with
+// the same Type.Field prefix a recursive descent would add while unwinding.
+type appendFrame struct {
+	kind   appendFrameKind
+	value  reflect.Value
+	plan   []fieldPlan
+	key    reference
+	index  int
+	length int
+	// leaves is set on a struct frame whose key is the active ancestor entered for
+	// the pointer that led to it, to be released when the struct completes.
+	leaves bool
+}
+
+// unwindAppend prefixes err with the Type.Field of every enclosing struct member,
+// outermost first, which is the text a recursive descent builds as it unwinds.
+// Slice and pointer frames add nothing. The prefix is assembled once, so a failure
+// at depth n costs time proportional to n rather than to the square of the message.
+func unwindAppend(stack []appendFrame, err error) error {
+	var prefix strings.Builder
+	for _, frame := range stack {
+		if frame.kind == appendStruct {
+			prefix.WriteString(frame.value.Type().Name())
+			prefix.WriteByte('.')
+			prefix.WriteString(frame.plan[frame.index-1].name)
+			prefix.WriteString(": ")
+		}
+	}
+	return prefixed(prefix, err)
+}
+
+// prefixed returns err with prefix before its text, or err itself when prefix is empty.
+func prefixed(prefix strings.Builder, err error) error {
+	if prefix.Len() == 0 {
+		return err
+	}
+	return fmt.Errorf("%s%w", prefix.String(), err)
+}
+
+// initialAppendFrames is the container depth that fits without growing the stack;
+// ordinary syntax trees nest far less, and deeper ones simply grow it.
+const initialAppendFrames = 128
+
 // appendValue emits data only: interface identity controls typed nils, while
 // concrete nil pointers remain null. Struct registration precedes field access.
+//
+// It writes on an explicit stack of appendFrames, not by recursion, so a deep
+// left-nested tree is bounded by memory rather than by the call stack. Members
+// are emitted in plan order, ancestors are entered and left in the same order a
+// recursive descent would, and occurrences are collected at the same points.
 func (w *writer) appendValue(dst []byte, v reflect.Value, interfaceSlot bool, observedPointer bool) ([]byte, error) {
-	if !v.IsValid() {
-		return append(dst, "null"...), nil
-	}
-	// Checking the kind first avoids an interface comparison for every
-	// non-struct value; only structs can be positions.
-	if v.Kind() == reflect.Struct && v.Type() == positionType {
-		position := ObservePosition(positionValue(v))
-		if w.compactPositions {
-			dst = append(dst, '[')
-			return append(AppendPositionTuple(dst, position), ']'), nil
-		}
-		return AppendPosition(dst, position), nil
-	}
-	if v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return append(dst, "null"...), nil
-		}
-		return w.appendValue(dst, v.Elem(), true, false)
-	}
-	if v.Kind() == reflect.Pointer && v.IsNil() {
-		if !interfaceSlot {
-			return append(dst, "null"...), nil
-		}
-		typ := v.Type().Elem()
-		if _, registered := planFor(typ); !registered {
-			return nil, fmt.Errorf("unsupported typed-nil syntax pointer %s", v.Type())
-		}
-		if w.nodes != nil {
-			collectNode(v, w.nodes)
-		}
-		dst = append(dst, `{"Kind":`...)
-		dst = AppendString(dst, typ.Name())
-		return append(dst, `,"Type":"TypedNil"}`...), nil
-	}
-	switch v.Kind() {
-	case reflect.Pointer:
-		key, err := w.active.enter(v)
-		if err != nil {
-			return nil, err
-		}
-		observed := false
-		if w.nodes != nil {
-			observed = collectNode(v, w.nodes)
-		}
-		// An error abandons the whole pass, so only successful descent must leave.
-		dst, err = w.appendValue(dst, v.Elem(), false, observed)
-		if err != nil {
-			return nil, err
-		}
-		w.active.leave(key)
-		return dst, nil
-	case reflect.Struct:
-		typ := v.Type()
-		plan, registered := planFor(typ)
-		if !registered {
-			return nil, fmt.Errorf("unsupported syntax struct %s", typ)
-		}
-		if w.nodes != nil && !observedPointer && v.CanAddr() {
-			collectNode(v.Addr(), w.nodes)
-		}
-		dst = append(dst, '{')
-		for i, field := range plan {
-			if i > 0 {
-				dst = append(dst, ',')
+	stack := make([]appendFrame, 0, initialAppendFrames)
+	// pending carries the ancestor entered for a pointer to a struct until the
+	// struct's frame is pushed.
+	var pendingKey reference
+	pending := false
+	for {
+		// Write v. Interfaces and pointers hand over to their pointee without
+		// returning; a container pushes a frame; anything else completes here.
+	value:
+		for {
+			if !v.IsValid() {
+				dst = append(dst, "null"...)
+				break value
 			}
-			dst = append(dst, field.key...)
-			if field.index < 0 {
+			// Checking the kind first avoids an interface comparison for every
+			// non-struct value; only structs can be positions.
+			if v.Kind() == reflect.Struct && v.Type() == positionType {
+				position := ObservePosition(positionValue(v))
+				if w.compactPositions {
+					dst = append(dst, '[')
+					dst = append(AppendPositionTuple(dst, position), ']')
+				} else {
+					dst = AppendPosition(dst, position)
+				}
+				break value
+			}
+			if v.Kind() == reflect.Interface {
+				if v.IsNil() {
+					dst = append(dst, "null"...)
+					break value
+				}
+				v, interfaceSlot, observedPointer = v.Elem(), true, false
 				continue
 			}
-			if !field.exported {
-				return nil, fmt.Errorf("unsupported private field %s.%s", typ, field.name)
+			if v.Kind() == reflect.Pointer && v.IsNil() {
+				if !interfaceSlot {
+					dst = append(dst, "null"...)
+					break value
+				}
+				typ := v.Type().Elem()
+				if _, registered := planFor(typ); !registered {
+					return nil, unwindAppend(stack, fmt.Errorf("unsupported typed-nil syntax pointer %s", v.Type()))
+				}
+				if w.nodes != nil {
+					collectNode(v, w.nodes)
+				}
+				dst = append(dst, `{"Kind":`...)
+				dst = AppendString(dst, typ.Name())
+				dst = append(dst, `,"Type":"TypedNil"}`...)
+				break value
 			}
-			var err error
-			dst, err = w.appendValue(dst, v.Field(field.index), false, false)
-			if err != nil {
-				return nil, fmt.Errorf("%s.%s: %w", typ.Name(), field.name, err)
+			switch v.Kind() {
+			case reflect.Pointer:
+				key, err := w.active.enter(v)
+				if err != nil {
+					return nil, unwindAppend(stack, err)
+				}
+				observed := false
+				if w.nodes != nil {
+					observed = collectNode(v, w.nodes)
+				}
+				// An error abandons the whole pass, so only successful descent must leave.
+				if elem := v.Elem(); elem.Kind() == reflect.Struct && elem.Type() != positionType {
+					// The pointee's frame releases the ancestor when it completes.
+					pending, pendingKey = true, key
+				} else {
+					stack = append(stack, appendFrame{kind: appendPointer, key: key})
+				}
+				v, interfaceSlot, observedPointer = v.Elem(), false, observed
+				continue
+			case reflect.Struct:
+				typ := v.Type()
+				plan, registered := planFor(typ)
+				if !registered {
+					return nil, unwindAppend(stack, fmt.Errorf("unsupported syntax struct %s", typ))
+				}
+				if w.nodes != nil && !observedPointer && v.CanAddr() {
+					collectNode(v.Addr(), w.nodes)
+				}
+				dst = append(dst, '{')
+				stack = append(stack, appendFrame{kind: appendStruct, value: v, plan: plan, key: pendingKey, leaves: pending})
+				pending = false
+			case reflect.Slice:
+				if v.IsNil() {
+					dst = append(dst, "null"...)
+					break value
+				}
+				length := v.Len()
+				if length == 0 {
+					dst = append(dst, "[]"...)
+					break value
+				}
+				key, err := w.active.enter(v)
+				if err != nil {
+					return nil, unwindAppend(stack, err)
+				}
+				dst = append(dst, '[')
+				stack = append(stack, appendFrame{kind: appendSlice, value: v, key: key, length: length})
+			case reflect.String:
+				dst = AppendString(dst, v.String())
+			case reflect.Bool:
+				dst = strconv.AppendBool(dst, v.Bool())
+			case reflect.Uint8, reflect.Uint32:
+				dst = strconv.AppendUint(dst, v.Uint(), 10)
+			default:
+				return nil, unwindAppend(stack, fmt.Errorf("unsupported syntax value %s", v.Type()))
+			}
+			break value
+		}
+		// Resume the innermost container that still has something to write.
+	resume:
+		for {
+			if len(stack) == 0 {
+				return dst, nil
+			}
+			top := &stack[len(stack)-1]
+			switch top.kind {
+			case appendPointer:
+				w.active.leave(top.key)
+				stack = stack[:len(stack)-1]
+			case appendSlice:
+				if top.index == top.length {
+					w.active.leave(top.key)
+					dst = append(dst, ']')
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				if top.index > 0 {
+					dst = append(dst, ',')
+				}
+				v, interfaceSlot, observedPointer = top.value.Index(top.index), false, false
+				top.index++
+				break resume
+			case appendStruct:
+				if top.index == len(top.plan) {
+					dst = append(dst, '}')
+					if top.leaves {
+						w.active.leave(top.key)
+					}
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				field := top.plan[top.index]
+				if top.index > 0 {
+					dst = append(dst, ',')
+				}
+				dst = append(dst, field.key...)
+				top.index++
+				if field.index < 0 {
+					continue
+				}
+				if !field.exported {
+					typ := top.value.Type()
+					stack = stack[:len(stack)-1]
+					return nil, unwindAppend(stack, fmt.Errorf("unsupported private field %s.%s", typ, field.name))
+				}
+				v, interfaceSlot, observedPointer = top.value.Field(field.index), false, false
+				break resume
 			}
 		}
-		return append(dst, '}'), nil
-	case reflect.Slice:
-		if v.IsNil() {
-			return append(dst, "null"...), nil
-		}
-		length := v.Len()
-		if length == 0 {
-			return append(dst, "[]"...), nil
-		}
-		key, err := w.active.enter(v)
-		if err != nil {
-			return nil, err
-		}
-		dst = append(dst, '[')
-		for i := 0; i < length; i++ {
-			if i > 0 {
-				dst = append(dst, ',')
-			}
-			dst, err = w.appendValue(dst, v.Index(i), false, false)
-			if err != nil {
-				return nil, err
-			}
-		}
-		w.active.leave(key)
-		return append(dst, ']'), nil
-	case reflect.String:
-		return AppendString(dst, v.String()), nil
-	case reflect.Bool:
-		return strconv.AppendBool(dst, v.Bool()), nil
-	case reflect.Uint8, reflect.Uint32:
-		return strconv.AppendUint(dst, v.Uint(), 10), nil
-	default:
-		return nil, fmt.Errorf("unsupported syntax value %s", v.Type())
 	}
+}
+
+// validateFrame is one struct, slice or pointer whose contents validateValue is
+// checking; a struct frame names the member in progress by index-1.
+type validateFrame struct {
+	kind   appendFrameKind
+	value  reflect.Value
+	key    reference
+	index  int
+	length int
+}
+
+// unwindValidate prefixes err with each enclosing struct member's Type.Field,
+// outermost first, as unwindAppend does for the writer.
+func unwindValidate(stack []validateFrame, err error) error {
+	var prefix strings.Builder
+	for _, frame := range stack {
+		if frame.kind == appendStruct {
+			typ := frame.value.Type()
+			prefix.WriteString(typ.Name())
+			prefix.WriteByte('.')
+			prefix.WriteString(typ.Field(frame.index - 1).Name)
+			prefix.WriteString(": ")
+		}
+	}
+	return prefixed(prefix, err)
 }
 
 // validateValue reproduces the old declaration-order error walk without building
 // JSON values or calling methods (including position getters). Known positions
 // and scalar leaves cannot fail structural encoding. This pass runs only after
 // an ordinary writer error and uses separate, path-local reference state.
+//
+// Like appendValue it keeps its containers on an explicit stack, so the walk that
+// decides which error is reported cannot itself be the thing that overflows.
 func validateValue(v reflect.Value, interfaceSlot bool, active *ancestry) error {
-	if !v.IsValid() || v.Type() == positionType {
-		return nil
-	}
-	if v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return nil
+	stack := make([]validateFrame, 0, initialAppendFrames)
+	for {
+	value:
+		for {
+			if !v.IsValid() || v.Type() == positionType {
+				break value
+			}
+			if v.Kind() == reflect.Interface {
+				if v.IsNil() {
+					break value
+				}
+				v, interfaceSlot = v.Elem(), true
+				continue
+			}
+			if v.Kind() == reflect.Pointer && v.IsNil() {
+				if interfaceSlot {
+					typ := v.Type().Elem()
+					if nodeTypes[typ.Name()] != typ {
+						return unwindValidate(stack, fmt.Errorf("unsupported typed-nil syntax pointer %s", v.Type()))
+					}
+				}
+				break value
+			}
+			switch v.Kind() {
+			case reflect.Pointer:
+				key, err := active.enter(v)
+				if err != nil {
+					return unwindValidate(stack, err)
+				}
+				stack = append(stack, validateFrame{kind: appendPointer, key: key})
+				v, interfaceSlot = v.Elem(), false
+				continue
+			case reflect.Struct:
+				typ := v.Type()
+				if nodeTypes[typ.Name()] != typ {
+					return unwindValidate(stack, fmt.Errorf("unsupported syntax struct %s", typ))
+				}
+				stack = append(stack, validateFrame{kind: appendStruct, value: v, length: typ.NumField()})
+			case reflect.Slice:
+				frame := validateFrame{kind: appendSlice, value: v, length: v.Len()}
+				if frame.length > 0 {
+					key, err := active.enter(v)
+					if err != nil {
+						return unwindValidate(stack, err)
+					}
+					frame.key = key
+				}
+				stack = append(stack, frame)
+			case reflect.String, reflect.Bool, reflect.Uint8, reflect.Uint32:
+			default:
+				return unwindValidate(stack, fmt.Errorf("unsupported syntax value %s", v.Type()))
+			}
+			break value
 		}
-		return validateValue(v.Elem(), true, active)
-	}
-	if v.Kind() == reflect.Pointer && v.IsNil() {
-		if interfaceSlot {
-			typ := v.Type().Elem()
-			if nodeTypes[typ.Name()] != typ {
-				return fmt.Errorf("unsupported typed-nil syntax pointer %s", v.Type())
+	resume:
+		for {
+			if len(stack) == 0 {
+				return nil
+			}
+			top := &stack[len(stack)-1]
+			switch top.kind {
+			case appendPointer:
+				active.leave(top.key)
+				stack = stack[:len(stack)-1]
+			case appendSlice:
+				if top.index == top.length {
+					if top.length > 0 {
+						active.leave(top.key)
+					}
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				v, interfaceSlot = top.value.Index(top.index), false
+				top.index++
+				break resume
+			case appendStruct:
+				if top.index == top.length {
+					stack = stack[:len(stack)-1]
+					continue
+				}
+				typ := top.value.Type()
+				field := typ.Field(top.index)
+				if !field.IsExported() {
+					stack = stack[:len(stack)-1]
+					return unwindValidate(stack, fmt.Errorf("unsupported private field %s.%s", typ, field.Name))
+				}
+				v, interfaceSlot = top.value.Field(top.index), false
+				top.index++
+				break resume
 			}
 		}
-		return nil
-	}
-	switch v.Kind() {
-	case reflect.Pointer:
-		key, err := active.enter(v)
-		if err != nil {
-			return err
-		}
-		defer active.leave(key)
-		return validateValue(v.Elem(), false, active)
-	case reflect.Struct:
-		typ := v.Type()
-		if nodeTypes[typ.Name()] != typ {
-			return fmt.Errorf("unsupported syntax struct %s", typ)
-		}
-		for i := 0; i < typ.NumField(); i++ {
-			field := typ.Field(i)
-			if !field.IsExported() {
-				return fmt.Errorf("unsupported private field %s.%s", typ, field.Name)
-			}
-			if err := validateValue(v.Field(i), false, active); err != nil {
-				return fmt.Errorf("%s.%s: %w", typ.Name(), field.Name, err)
-			}
-		}
-		return nil
-	case reflect.Slice:
-		if v.Len() > 0 {
-			key, err := active.enter(v)
-			if err != nil {
-				return err
-			}
-			defer active.leave(key)
-		}
-		for i := 0; i < v.Len(); i++ {
-			if err := validateValue(v.Index(i), false, active); err != nil {
-				return err
-			}
-		}
-		return nil
-	case reflect.String, reflect.Bool, reflect.Uint8, reflect.Uint32:
-		return nil
-	default:
-		return fmt.Errorf("unsupported syntax value %s", v.Type())
 	}
 }
