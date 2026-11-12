@@ -75,19 +75,28 @@ function isNodeIdentity(value: Record<string, unknown>): value is Record<string,
  * Visits child-bearing fields in the writer's lexical preorder, including children
  * of auxiliary records. The complete File boundary has already been validated.
  * Ordering is internal transport correlation, not the public Walk protocol.
+ *
+ * Pending values wait on an explicit stack (pushed last-first so they pop in
+ * field order), so a deep left-nested tree needs no native frame per level.
+ * @internal
  */
-function visitNodes(file: File, observe: (node: Node) => void): void {
-  const visit = (value: unknown): void => {
-    if (!isRecord(value) || typeof value.Type !== 'string') return;
+export function visitNodes(file: File, observe: (node: Node) => void): void {
+  const pending: unknown[] = [file];
+  while (pending.length > 0) {
+    const value = pending.pop();
+    if (!isRecord(value) || typeof value.Type !== 'string') continue;
     if (isNodeIdentity(value)) observe(value);
-    if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return;
-    for (const name of childFields(value.Type)) {
-      const child = value[name];
-      if (Array.isArray(child)) child.forEach(visit);
-      else visit(child);
+    if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) continue;
+    const names = childFields(value.Type);
+    for (let field = names.length - 1; field >= 0; field--) {
+      const child = value[names[field]];
+      if (Array.isArray(child)) {
+        for (let index = child.length - 1; index >= 0; index--) {
+          if (index in child) pending.push(child[index]);
+        }
+      } else pending.push(child);
     }
-  };
-  visit(file);
+  }
 }
 
 /**

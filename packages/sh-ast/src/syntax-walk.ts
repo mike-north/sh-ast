@@ -52,7 +52,7 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * @public
  */
 export function walk(node: Node, callback: (node: Node | null) => boolean): void {
-  visit(node, callback);
+  run(node, callback);
 }
 
 /**
@@ -68,53 +68,31 @@ function invokeCallback(node: Node | null, callback: ICallback): boolean {
   return result;
 }
 
+/**
+ * A list of children reached by a node, read live by the driver. The array and its
+ * extent are captured when the list is reached; later existing slots are read when
+ * their turn comes, so callback edits within the captured extent are observed.
+ * A non-null kind makes a nil slot visible as that concrete nil pointer.
+ */
+interface IListFrame {
+  readonly nodes: readonly (Node | null)[];
+  readonly length: number;
+  readonly kind: IConcreteKind | null;
+  index: number;
+}
+/** A node's remaining work, suspended between children. */
+type INodeFrame = Generator<Node | IListFrame | null, void, undefined>;
+/** A list with nothing to visit; shared because the driver never advances an exhausted list. */
+const EMPTY_LIST: IListFrame = { nodes: [], length: 0, kind: null, index: 0 };
+/** Starts a list of children, capturing its array and extent as upstream's range does. */
+function list(nodes: readonly (Node | null)[] | null, kind: IConcreteKind | null): IListFrame {
+  return nodes === null || nodes.length === 0
+    ? EMPTY_LIST
+    : { nodes, length: nodes.length, kind, index: 0 };
+}
 /** An unconditional concrete-pointer child is observable even when the pointer is nil. */
-function pointer(node: Node | null, kind: IConcreteKind, callback: ICallback): void {
-  visit(node ?? { Type: 'TypedNil', Kind: kind }, callback);
-}
-/** Optional fields skip null; a typed-nil interface is nevertheless a non-null interface. */
-function optional(node: Node | null, callback: ICallback): void {
-  if (node !== null) {
-    visit(node, callback);
-  }
-}
-/**
- * Captures one ordinary array and its initial extent when this list is reached.
- * Later existing slots are read live; appends and owner-field replacements cannot
- * extend or redirect the active list. Removing indices within its captured
- * extent is unsupported.
- */
-function list(
-  nodes: readonly (Node | null)[] | null,
-  kind: IConcreteKind | null,
-  callback: ICallback,
-): void {
-  if (nodes === null) {
-    return;
-  }
-  const length = nodes.length;
-  for (let index = 0; index < length; index++) {
-    const node = nodes[index] ?? null;
-    if (kind === null) {
-      visit(node, callback);
-    } else {
-      pointer(node, kind, callback);
-    }
-  }
-}
-/**
- * Visits stored JavaScript Comment objects, unlike the copies used by item loops.
- * Later slot replacement is read live, but retained objects do not become Go
- * pointers to replacement values. The active array and extent remain captured.
- */
-function comments(nodes: readonly Comment[] | null, callback: ICallback): void {
-  if (nodes === null) {
-    return;
-  }
-  const length = nodes.length;
-  for (let index = 0; index < length; index++) {
-    pointer(nodes[index] ?? null, 'Comment', callback);
-  }
+function pointer(node: Node | null, kind: IConcreteKind): Node {
+  return node ?? { Type: 'TypedNil', Kind: kind };
 }
 /** Auxiliary pointers are reread after callbacks may replace or clear their owner field. */
 function dereference<T>(value: T | null): T {
@@ -132,10 +110,74 @@ function copyComment(node: Comment): Comment {
   };
 }
 /**
- * A single defer belongs to this occurrence. The try/finally surrounds all child
- * work and the null exit, preserving Go's unwind order and replacement exception.
+ * Runs one walk on an explicit stack of suspended occurrences, so tree depth is
+ * bounded by memory rather than by the native call stack. The stack holds, per
+ * entered occurrence that has children, either its suspended generator or a live
+ * child list. The driver delivers a child's failure to its parent exactly where a
+ * recursive call would have unwound, so each occurrence's defer and replacement
+ * exception behave as in the recursive formulation.
  */
-function visit(node: Node | null, callback: ICallback): void {
+function run(root: Node, callback: ICallback): void {
+  const stack: (INodeFrame | IListFrame)[] = [];
+  enter(root, callback, stack);
+  let failure: { readonly error: unknown } | undefined;
+  while (stack.length > 0) {
+    const top = stack[stack.length - 1];
+    if (!isNodeFrame(top)) {
+      // A list has no unwind work of its own: a failure just leaves it.
+      if (failure !== undefined || top.index >= top.length) {
+        stack.pop();
+        continue;
+      }
+      const slot = top.nodes[top.index++] ?? null;
+      try {
+        enter(top.kind === null ? slot : pointer(slot, top.kind), callback, stack);
+      } catch (error) {
+        failure = { error };
+      }
+      continue;
+    }
+    let step: IteratorResult<Node | IListFrame | null, void>;
+    try {
+      step = failure === undefined ? top.next() : top.throw(failure.error);
+      failure = undefined;
+    } catch (error) {
+      // The occurrence itself ended with an exception (its own, or the original
+      // one if its defer completed normally); the parent receives it next.
+      stack.pop();
+      failure = { error };
+      continue;
+    }
+    if (step.done === true) {
+      stack.pop();
+      continue;
+    }
+    const child = step.value;
+    if (child !== null && 'nodes' in child) {
+      stack.push(child);
+      continue;
+    }
+    try {
+      enter(child, callback, stack);
+    } catch (error) {
+      failure = { error };
+    }
+  }
+  if (failure !== undefined) {
+    throw failure.error;
+  }
+}
+
+/** Distinguishes a suspended node from a child list on the shared stack. */
+function isNodeFrame(frame: INodeFrame | IListFrame): frame is INodeFrame {
+  return !('nodes' in frame);
+}
+
+/**
+ * Handles one occurrence's entry callback and, for a node with children, opens its
+ * frame on the stack. Childless nodes complete here with their null exit.
+ */
+function enter(node: Node | null, callback: ICallback, stack: (INodeFrame | IListFrame)[]): void {
   if (!invokeCallback(node, callback)) {
     return;
   }
@@ -152,16 +194,29 @@ function visit(node: Node | null, callback: ICallback): void {
     invokeCallback(null, callback);
     return;
   }
+  if (node.Type === 'Comment' || node.Type === 'Lit' || node.Type === 'SglQuoted') {
+    invokeCallback(null, callback);
+    return;
+  }
+  stack.push(children(node, callback));
+}
+
+/**
+ * The child work of one entered node. A single defer belongs to this occurrence;
+ * the try/finally surrounds all child work and the null exit, preserving Go's
+ * unwind order and replacement exception. Each yield hands the driver one child
+ * (or child list) to visit before this body continues.
+ */
+function* children(
+  node: Exclude<Node, { Type: 'TypedNil' | 'Comment' | 'Lit' | 'SglQuoted' }>,
+  callback: ICallback,
+): INodeFrame {
   let deferred: Comment | undefined;
   try {
     switch (node.Type) {
       case 'File':
-        list(node.Stmts, 'Stmt', callback);
-        comments(node.Last, callback);
-        break;
-      case 'Comment':
-      case 'Lit':
-      case 'SglQuoted':
+        yield list(node.Stmts, 'Stmt');
+        yield list(node.Last, 'Comment');
         break;
       case 'Stmt': {
         const values = node.Comments;
@@ -172,90 +227,92 @@ function visit(node: Node | null, callback: ICallback): void {
             deferred = value;
             break;
           }
-          visit(value, callback);
+          yield value;
         }
-        optional(node.Cmd, callback);
-        list(node.Redirs, 'Redirect', callback);
+        if (node.Cmd !== null) yield node.Cmd;
+        yield list(node.Redirs, 'Redirect');
         break;
       }
       case 'Assign':
-        optional(node.Name, callback);
-        optional(node.Value, callback);
-        optional(node.Index, callback);
-        optional(node.Array, callback);
+        if (node.Name !== null) yield node.Name;
+        if (node.Value !== null) yield node.Value;
+        if (node.Index !== null) yield node.Index;
+        if (node.Array !== null) yield node.Array;
         break;
       case 'Redirect':
-        optional(node.N, callback);
-        pointer(node.Word, 'Word', callback);
-        optional(node.Hdoc, callback);
+        if (node.N !== null) yield node.N;
+        yield pointer(node.Word, 'Word');
+        if (node.Hdoc !== null) yield node.Hdoc;
         break;
       case 'CallExpr':
-        list(node.Assigns, 'Assign', callback);
-        list(node.Args, 'Word', callback);
+        yield list(node.Assigns, 'Assign');
+        yield list(node.Args, 'Word');
         break;
       case 'Subshell':
       case 'Block':
       case 'CmdSubst':
       case 'ProcSubst':
-        list(node.Stmts, 'Stmt', callback);
-        comments(node.Last, callback);
+        yield list(node.Stmts, 'Stmt');
+        yield list(node.Last, 'Comment');
         break;
       case 'IfClause':
-        list(node.Cond, 'Stmt', callback);
-        comments(node.CondLast, callback);
-        list(node.Then, 'Stmt', callback);
-        comments(node.ThenLast, callback);
-        comments(node.Last, callback);
-        optional(node.Else, callback);
+        yield list(node.Cond, 'Stmt');
+        yield list(node.CondLast, 'Comment');
+        yield list(node.Then, 'Stmt');
+        yield list(node.ThenLast, 'Comment');
+        yield list(node.Last, 'Comment');
+        if (node.Else !== null) yield node.Else;
         break;
       case 'WhileClause':
-        list(node.Cond, 'Stmt', callback);
-        comments(node.CondLast, callback);
-        list(node.Do, 'Stmt', callback);
-        comments(node.DoLast, callback);
+        yield list(node.Cond, 'Stmt');
+        yield list(node.CondLast, 'Comment');
+        yield list(node.Do, 'Stmt');
+        yield list(node.DoLast, 'Comment');
         break;
       case 'ForClause':
-        visit(node.Loop, callback);
-        list(node.Do, 'Stmt', callback);
-        comments(node.DoLast, callback);
+        yield node.Loop;
+        yield list(node.Do, 'Stmt');
+        yield list(node.DoLast, 'Comment');
         break;
       case 'WordIter':
-        pointer(node.Name, 'Lit', callback);
-        list(node.Items, 'Word', callback);
+        yield pointer(node.Name, 'Lit');
+        yield list(node.Items, 'Word');
         break;
       case 'CStyleLoop':
-        optional(node.Init, callback);
-        optional(node.Cond, callback);
-        optional(node.Post, callback);
+        if (node.Init !== null) yield node.Init;
+        if (node.Cond !== null) yield node.Cond;
+        if (node.Post !== null) yield node.Post;
         break;
       case 'BinaryCmd':
-        pointer(node.X, 'Stmt', callback);
-        pointer(node.Y, 'Stmt', callback);
+        yield pointer(node.X, 'Stmt');
+        yield pointer(node.Y, 'Stmt');
         break;
       case 'FuncDecl':
-        optional(node.Name, callback);
-        list(node.Names, 'Lit', callback);
-        pointer(node.Body, 'Stmt', callback);
+        if (node.Name !== null) yield node.Name;
+        yield list(node.Names, 'Lit');
+        yield pointer(node.Body, 'Stmt');
         break;
       case 'Word':
       case 'DblQuoted':
-        list(node.Parts, null, callback);
+        yield list(node.Parts, null);
         break;
       case 'ParamExp':
-        optional(node.Flags, callback);
-        optional(node.Param, callback);
-        optional(node.NestedParam, callback);
-        optional(node.Index, callback);
+        if (node.Flags !== null) yield node.Flags;
+        if (node.Param !== null) yield node.Param;
+        if (node.NestedParam !== null) yield node.NestedParam;
+        if (node.Index !== null) yield node.Index;
         if (node.Slice !== null) {
-          optional(node.Slice.Offset, callback);
-          optional(dereference(node.Slice).Length, callback);
+          if (node.Slice.Offset !== null) yield node.Slice.Offset;
+          const length = dereference(node.Slice).Length;
+          if (length !== null) yield length;
         }
         if (node.Repl !== null) {
-          optional(node.Repl.Orig, callback);
-          optional(dereference(node.Repl).With, callback);
+          if (node.Repl.Orig !== null) yield node.Repl.Orig;
+          const replacement = dereference(node.Repl).With;
+          if (replacement !== null) yield replacement;
         }
         if (node.Exp !== null) {
-          optional(node.Exp.Word, callback);
+          if (node.Exp.Word !== null) yield node.Exp.Word;
         }
         break;
       case 'ArithmExp':
@@ -265,21 +322,21 @@ function visit(node: Node | null, callback: ICallback): void {
       case 'ParenArithm':
       case 'ParenTest':
       case 'TestClause':
-        visit(node.X, callback);
+        yield node.X;
         break;
       case 'BinaryArithm':
       case 'BinaryTest':
-        visit(node.X, callback);
-        visit(node.Y, callback);
+        yield node.X;
+        yield node.Y;
         break;
       case 'FlagsArithm':
-        pointer(node.Flags, 'Lit', callback);
-        optional(node.X, callback);
+        yield pointer(node.Flags, 'Lit');
+        if (node.X !== null) yield node.X;
         break;
       case 'CaseClause':
-        pointer(node.Word, 'Word', callback);
-        list(node.Items, 'CaseItem', callback);
-        comments(node.Last, callback);
+        yield pointer(node.Word, 'Word');
+        yield list(node.Items, 'CaseItem');
+        yield list(node.Last, 'Comment');
         break;
       case 'CaseItem':
       case 'ArrayElem': {
@@ -291,41 +348,41 @@ function visit(node: Node | null, callback: ICallback): void {
             deferred = value;
             break;
           }
-          visit(value, callback);
+          yield value;
         }
         if (node.Type === 'CaseItem') {
-          list(node.Patterns, 'Word', callback);
-          list(node.Stmts, 'Stmt', callback);
-          comments(node.Last, callback);
+          yield list(node.Patterns, 'Word');
+          yield list(node.Stmts, 'Stmt');
+          yield list(node.Last, 'Comment');
         } else {
-          optional(node.Index, callback);
-          optional(node.Value, callback);
+          if (node.Index !== null) yield node.Index;
+          if (node.Value !== null) yield node.Value;
         }
         break;
       }
       case 'DeclClause':
-        list(node.Args, 'Assign', callback);
+        yield list(node.Args, 'Assign');
         break;
       case 'ArrayExpr':
-        list(node.Elems, 'ArrayElem', callback);
-        comments(node.Last, callback);
+        yield list(node.Elems, 'ArrayElem');
+        yield list(node.Last, 'Comment');
         break;
       case 'ExtGlob':
-        pointer(node.Pattern, 'Lit', callback);
+        yield pointer(node.Pattern, 'Lit');
         break;
       case 'TimeClause':
-        optional(node.Stmt, callback);
+        if (node.Stmt !== null) yield node.Stmt;
         break;
       case 'CoprocClause':
-        optional(node.Name, callback);
-        pointer(node.Stmt, 'Stmt', callback);
+        if (node.Name !== null) yield node.Name;
+        yield pointer(node.Stmt, 'Stmt');
         break;
       case 'LetClause':
-        list(node.Exprs, null, callback);
+        yield list(node.Exprs, null);
         break;
       case 'TestDecl':
-        pointer(node.Description, 'Word', callback);
-        pointer(node.Body, 'Stmt', callback);
+        yield pointer(node.Description, 'Word');
+        yield pointer(node.Body, 'Stmt');
         break;
       case 'BraceExp':
         throw new WalkPanicError('syntax.Walk: unexpected node type *syntax.BraceExp');
@@ -337,7 +394,7 @@ function visit(node: Node | null, callback: ICallback): void {
     invokeCallback(null, callback);
   } finally {
     if (deferred !== undefined) {
-      visit(deferred, callback);
+      yield deferred;
     }
   }
 }
