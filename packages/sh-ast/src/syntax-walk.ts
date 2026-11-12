@@ -49,6 +49,12 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * JavaScript Comment object. Replacing its array slot leaves any previously
  * retained callback object unchanged: there is no Go value-slot pointer identity.
  * Reentrant walks maintain independent traversal state.
+ *
+ * The tree must be acyclic. Depth is bounded by memory rather than the call stack,
+ * but a walk that descends 524,288 nested nodes (a cycle reached through the
+ * fields it follows, or a tree no parser produces) throws InputError instead of
+ * growing without limit; the exception is delivered like any other thrown during
+ * the walk, so deferred comment callbacks still run.
  * @public
  */
 export function walk(node: Node, callback: (node: Node | null) => boolean): void {
@@ -216,10 +222,22 @@ function copyComment(node: Comment): Comment {
   };
 }
 
+/**
+ * Most nested nodes a walk follows before it refuses the tree. An acyclic tree the
+ * parser can produce stays far below this (a left-nested chain of a hundred thousand
+ * commands is two hundred thousand deep), while a cyclic tree built by a caller would
+ * otherwise grow the frame stack until the process runs out of memory.
+ */
+const MAX_WALK_DEPTH = 524_288;
+
 /** The suspended occurrences of one walk; frames above `depth` are spare. */
 interface IStack {
   readonly frames: IFrame[];
   depth: number;
+}
+/** A list slot that may be a hole (undefined) reads as a nil interface. */
+function orNull(slot: Node | null | undefined): Node | null {
+  return slot ?? null;
 }
 /** Signals that a frame has no further children. */
 const done = Symbol('walk-done');
@@ -322,6 +340,11 @@ function enter(stack: IStack, node: Node | null, callback: ICallback): void {
     throw new WalkPanicError(`syntax.Walk: unexpected node type ${String(unexpected)}`);
   }
   const { frames, depth } = stack;
+  if (depth === MAX_WALK_DEPTH) {
+    throw new InputError(
+      `Walk reached ${String(MAX_WALK_DEPTH)} nested nodes; the tree is cyclic or deeper than Walk supports`,
+    );
+  }
   if (depth === frames.length) {
     frames.push({
       node,
@@ -387,7 +410,8 @@ function nextChild(frame: IFrame): Node | null | typeof done {
           case RUN_POINTERS:
             return pointer(slot, frame.element);
           case RUN_INTERFACES:
-            return slot;
+            // A hole reaches the callback as null, as a nil interface does.
+            return orNull(slot);
           default: {
             const comment = copyComment(slot as Comment);
             const deferral =

@@ -163,8 +163,9 @@ const recursiveDecodeDepthLimit = 256
 // A document whose nesting could exceed recursiveDecodeDepthLimit is read by
 // readJSONIterative, which keeps open containers on an explicit stack, so the
 // limit on depth is the tree a caller can build rather than the host stack or
-// that parser's constant. Every other outcome, including every malformed-input
-// message, is encoding/json's own.
+// that parser's constant. Malformed input is reported with encoding/json's own
+// message up to its 10,000-level limit; only beyond it are the token reader's
+// messages used.
 func ReadJSON(data []byte) (any, error) {
 	if nestingExceeds(data, recursiveDecodeDepthLimit) {
 		return readJSONIterative(data)
@@ -240,6 +241,14 @@ type jsonFrame struct {
 // containers on an explicit stack instead of recursing once per level. The token
 // reader has no nesting limit of its own, so only memory bounds the depth.
 func readJSONIterative(data []byte) (any, error) {
+	// Decoding into a RawMessage only scans the document, without recursion, and
+	// reports encoding/json's own message for any malformation within its 10,000
+	// levels. The token reader's messages (which lack some context) are used only
+	// for what lies beyond that.
+	var scanned json.RawMessage
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&scanned); err != nil && !exceededNestingLimit(err) {
+		return nil, err
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	var stack []jsonFrame

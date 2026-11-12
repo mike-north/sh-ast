@@ -256,6 +256,7 @@ func TestReadJSONMatchesEncodingJSONAcrossTheRecursionBound(t *testing.T) {
 			"mismatched close": open + `1` + shut[:len(shut)-2] + `]]`,
 			"trailing value":   open + `1` + shut + ` 2`,
 			"bad literal":      open + `tru` + shut,
+			"unquoted key":     open + `{0:1}` + shut,
 			"missing colon":    strings.Repeat(`{"a"`, 3) + open + shut,
 		} {
 			want, wantErr := stdlib(text)
@@ -266,5 +267,21 @@ func TestReadJSONMatchesEncodingJSONAcrossTheRecursionBound(t *testing.T) {
 				t.Errorf("%d levels, %s: value differs from encoding/json", levels, name)
 			}
 		}
+	}
+}
+
+// Regression: a malformed document nested past the recursion bound was reported with
+// the token reader's wording ("invalid character '0'") instead of encoding/json's
+// ("... looking for beginning of object key string").
+func TestReadJSONKeepsEncodingJSONMessageForMalformedKeyBeyondTheBound(t *testing.T) {
+	levels := recursiveDecodeDepthLimit + 1
+	text := strings.Repeat("[", levels) + "{0:1}" + strings.Repeat("]", levels)
+	var probe any
+	want := json.NewDecoder(strings.NewReader(text)).Decode(&probe)
+	if want == nil {
+		t.Fatal("encoding/json accepted the malformed document")
+	}
+	if _, got := ReadJSON([]byte(text)); got == nil || got.Error() != want.Error() {
+		t.Fatalf("ReadJSON error %v, encoding/json %v", got, want)
 	}
 }

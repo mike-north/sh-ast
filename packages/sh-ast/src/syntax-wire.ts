@@ -35,20 +35,6 @@ export function assertUnicodeString(value: string): void {
 }
 
 /**
- * One open container while encodeWire serializes: the source array or record, the
- * output text accumulated for its members, and how far its members have been read.
- */
-interface EncodeFrame {
-  readonly source: object;
-  /** Present for records: the own enumerable entries captured when the record was entered. */
-  readonly entries: readonly (readonly [string, unknown])[] | null;
-  /** Array length captured on entry; entries.length for records. */
-  readonly length: number;
-  index: number;
-  text: string;
-}
-
-/**
  * Encodes bytes and exact integers without relying on JSON's number precision or
  * Uint8Array property enumeration. Circular input is a caller error, not a stack
  * overflow or a partially transferred request.
@@ -61,7 +47,17 @@ interface EncodeFrame {
  */
 export function encodeWire(value: unknown): string {
   const ancestors = new Set<object>();
-  const stack: EncodeFrame[] = [];
+  // One open container per level: the source array or record, the output text accumulated
+  // for its members so far, and how far its members have been read.
+  const stack: {
+    readonly source: object;
+    /** Present for records: the own enumerable entries captured when the record was entered. */
+    readonly entries: readonly (readonly [string, unknown])[] | null;
+    /** Array length captured on entry; entries.length for records. */
+    readonly length: number;
+    index: number;
+    text: string;
+  }[] = [];
   /** Returns the JSON text of a scalar, or undefined after opening a container frame. */
   const begin = (item: unknown): string | undefined => {
     if (typeof item === 'string') {
@@ -154,7 +150,13 @@ export function decodeWire(text: string): unknown {
   if (!mayContainBytesTag(text)) return parsed;
   // Containers are processed on an explicit stack so a very deep response is restored
   // without one native frame per level. Children are visited in document order.
-  const stack: RestoreFrame[] = [];
+  // One container per level whose members are being restored, and how far it has got.
+  const stack: {
+    readonly container: object;
+    /** Own keys captured on entry for records; null for arrays. */
+    readonly keys: readonly string[] | null;
+    index: number;
+  }[] = [];
   const begin = (item: unknown): unknown => {
     if (Array.isArray(item)) {
       stack.push({ container: item, keys: null, index: 0 });
@@ -206,14 +208,6 @@ export function decodeWire(text: string): unknown {
     }
   }
   return root;
-}
-
-/** One container whose members decodeWire is restoring, and how far it has got. */
-interface RestoreFrame {
-  readonly container: object;
-  /** Own keys captured on entry for records; null for arrays. */
-  readonly keys: readonly string[] | null;
-  index: number;
 }
 
 /**

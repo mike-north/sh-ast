@@ -13,8 +13,12 @@ const distUrl = new URL('../dist/', import.meta.url).href;
 const child = new URL('./fixtures/deep-spine-child.mjs', import.meta.url).pathname;
 
 /** What the probe printed, or a failure that includes the child's stderr. */
-function probe(mode: string, links: number): Record<string, unknown> {
-  const run = spawnSync(process.execPath, [child, distUrl, mode, String(links)], {
+function probe(
+  mode: string,
+  links: number,
+  execArgv: readonly string[] = [],
+): Record<string, unknown> {
+  const run = spawnSync(process.execPath, [...execArgv, child, distUrl, mode, String(links)], {
     encoding: 'utf8',
     timeout: 120_000,
     maxBuffer: 1024 * 1024,
@@ -139,3 +143,15 @@ describe.each([2_000, 3_000, 3_500, 4_000, 4_500, 5_000, 6_000])(
     }, 120_000);
   },
 );
+
+/**
+ * Regression: walking a cyclic caller-built tree used to grow the frame stack until
+ * V8 aborted the process (FATAL heap limit, exit 134), where the recursive version
+ * threw a catchable RangeError. A small heap makes the abort fast and certain.
+ */
+describe('walking a cyclic tree', () => {
+  it('walk-cycle: throws a catchable InputError instead of exhausting the heap', () => {
+    const result = probe('walk-cycle', 3, ['--max-old-space-size=128']);
+    expect(result.error).toMatch(/^InputError: Walk reached 524288 nested nodes/);
+  }, 120_000);
+});

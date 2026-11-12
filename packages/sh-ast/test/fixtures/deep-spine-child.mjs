@@ -115,6 +115,21 @@ switch (mode) {
     result.seen = seen;
     break;
   }
+  case 'walk-cycle': {
+    // The deepest left record points back at the root, so Walk never reaches a leaf.
+    const { walk } = await load('syntax-walk.js');
+    let deepest = spine;
+    while (deepest.Cmd?.X) deepest = deepest.Cmd.X;
+    deepest.Redirs = [{ ...record('Redirect'), Word: record('Word') }];
+    deepest.Cmd = record('BinaryCmd', { X: spine, Y: record('Stmt') });
+    try {
+      walk(spine, () => true);
+      result.error = null;
+    } catch (error) {
+      result.error = `${error.name}: ${String(error.message).slice(0, 80)}`;
+    }
+    break;
+  }
   case 'walk-throw': {
     const { walk } = await load('syntax-walk.js');
     const sentinel = new Error('stop');
