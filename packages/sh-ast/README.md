@@ -213,9 +213,16 @@ all.
 
 **Deep nesting.** To protect your process from stack exhaustion on hostile input, the parser
 refuses scripts nested more than 128 levels deep and throws `ShParseMaxDepthError`, with no
-partial tree. Later calls keep working. In practice the limit is about 128 nested subshells, 63
-nested `$( )` substitutions, or 127 commands chained with `&&`, `||` or `|` in one list, since
-each operator adds a level.
+partial tree. Later calls keep working. A level is something opened inside something else: a
+subshell, a `$( )` substitution, a parameter expansion, arithmetic parentheses, a function or loop
+body. In practice the limit is about 127 nested subshells, 63 nested `$( )` substitutions or 125
+nested arithmetic parentheses.
+
+Length is not depth. A list of commands joined by `&&`, `||` or `|`, or an arithmetic expression
+such as `1 + 1 + … + 1`, parses, walks and prints however long it is, because nothing in it is
+nested; only what its elements contain counts towards the limit. Some sequences are nested by the
+grammar itself and still count one level per link, so they are refused after about 125 links:
+`elif` ladders, `&&` and `||` inside `[[ ]]`, and right-associative arithmetic (`=`, `?:`, `**`).
 
 ```ts
 import { ShParseMaxDepthError, parseSync } from 'sh-ast';
@@ -227,6 +234,12 @@ try {
   // SH_AST_PARSE_MAX_DEPTH 128
 }
 ```
+
+**Copying long chains.** `structuredClone` copies a tree by recursing inside the JavaScript
+engine, so its limit is the host's stack, not sh-ast's. In a default Node.js 22 process it throws a
+`RangeError` for a tree holding a single list of about 1,000 commands, or an arithmetic expression
+of about 2,000 terms, and sooner when called from deep in your own code. `JSON.stringify` stops at
+about three times those lengths. Parsing, `walk` and `printSync` do not have this limit.
 
 **Invalid UTF-8.** Pass bytes as a `Uint8Array` and invalid UTF-8 becomes a `ParseError`
 (`1:6: invalid UTF-8 encoding`). A JavaScript string with an unpaired surrogate is rejected with

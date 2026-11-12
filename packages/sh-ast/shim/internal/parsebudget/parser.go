@@ -5,10 +5,17 @@ package parsebudget
 
 import "mvdan.cc/sh/v3/syntax"
 
-// MaxDepth limits upstream node-nesting work, including iteratively constructed
-// operator trees. It is an empirical ordinary-caller bound, not a count of Go or
-// JavaScript frames. Parser-created trees can reach recursive helpers while still
-// parsing, so a stack-only counter would not cover the same responsibility.
+// MaxDepth limits the parser's node-nesting units: one for each statement,
+// word part, expression, substitution or body that is open inside another while
+// parsing. Flat sequences cost nothing for their length: the elements of an
+// `&&`/`||` list or a pipeline, and the operands of left-associative arithmetic
+// operators, are each parsed at the depth of the sequence itself, so a long
+// chain costs no more than its deepest element. Their left-nested trees are
+// encoded, validated, walked and printed iteratively by this binding.
+//
+// It is an empirical ordinary-caller bound, not a count of Go or JavaScript
+// frames. Parser-created trees can reach recursive helpers while still parsing,
+// so a stack-only counter would not cover the same responsibility.
 const MaxDepth = 128
 
 // NewParser preserves caller grammar options while enforcing the binding budget.

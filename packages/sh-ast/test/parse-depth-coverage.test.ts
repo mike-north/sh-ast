@@ -6,6 +6,15 @@
  */
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
+import { Add, Eql, Pipe } from '../src/index.js';
+import {
+  expectFlatTree,
+  expectSameNestingBoundary,
+  inArithmeticParens,
+  inSubshells,
+  inspectIsolated,
+  repeated,
+} from './isolated-tree.js';
 
 /** The built public entry exercises the same parse boundary consumers use. */
 const entry = new URL('../dist/index.js', import.meta.url).href;
@@ -35,10 +44,6 @@ const depthCases = [
   ['8b: legacy bracket arithmetic', 'echo $[ ' + 'a='.repeat(2000) + '1 ]'],
   ['8c: let arithmetic', 'let ' + 'a='.repeat(2000) + '1'],
   ['8d: arithmetic continuing across newlines', 'echo $(( ' + 'a=\n'.repeat(2000) + '1 ))'],
-  [
-    '9: pipeline after parenthesized case pattern',
-    'case x in (a) ' + 'a|'.repeat(2000) + 'a;; esac',
-  ],
   ['unary: recursive arithmetic negation', 'echo $(( ' + '!'.repeat(20000) + '1 ))'],
   ['unary: separated arithmetic prefixes', 'echo $(( ' + '+ '.repeat(20000) + '1 ))'],
   [
@@ -354,12 +359,10 @@ describe('smaller grammar controls', () => {
 /** Valid historical controls whose native work exceeds the binding's 128-unit policy. */
 describe('valid grammar exceeding native nesting work', () => {
   it.each([
-    ['arithmetic keyword identifiers', 'echo $(( ' + 'if+'.repeat(200) + '1 ))'],
     [
       'length expansion and 100 command substitutions',
       'echo ${#x}' + '$('.repeat(100) + 'x' + ')'.repeat(100),
     ],
-    ['comparison operators are not assignment chains', 'echo $(( ' + 'a=='.repeat(500) + '1 ))'],
   ])(
     '%s is refused without invalidating the shared runtime',
     (_name, source) => {
@@ -370,5 +373,47 @@ describe('valid grammar exceeding native nesting work', () => {
       });
     },
     20_000,
+  );
+});
+
+/** Row 9's pipeline after a parenthesized case pattern, with `links` pipe operators. */
+function casePipeline(links: number): string {
+  return 'case x in (a) ' + 'a|'.repeat(links) + 'a;; esac';
+}
+
+// Flat sequences are not nesting (sh-ast#105). Row 9 and two arithmetic controls
+// are long left-associative chains with nothing opened inside anything else, so
+// they parse, walk and print; they are pushed far past the length that used to
+// overflow. A genuinely nested sibling of each is still refused at 128 units.
+describe('flat sequences among the recursive-input forms (issue #105)', () => {
+  it.each(['parseSync', 'parseWithPositionsSync'] as const)(
+    '9: a 10,000-link pipeline after a parenthesized case pattern parses through %s',
+    (operation) => {
+      expectFlatTree(inspectIsolated(casePipeline(10_000), { operation }), {
+        commands: 10_001,
+        cmdOperators: repeated(Pipe, 10_000),
+      });
+    },
+    120_000,
+  );
+
+  it('9: subshells around the case are refused at the same depth however long the pipeline is', () => {
+    expectSameNestingBoundary(inSubshells, casePipeline(1), casePipeline(10_000));
+  }, 600_000);
+
+  it.each([
+    ['arithmetic keyword identifiers', 'if+', 200, Add],
+    ['comparison operators, which are not assignment chains', 'a==', 500, Eql],
+  ] as const)(
+    '%s form a flat chain that parses, walks and prints',
+    (_name, link, links, operator) => {
+      const chain = link.repeat(links) + '1';
+      expectFlatTree(
+        inspectIsolated('echo $(( ' + chain + ' ))', { operation: 'parseWithPositionsSync' }),
+        { commands: 1, arithOperators: repeated(operator, links) },
+      );
+      expectSameNestingBoundary(inArithmeticParens, link + '1', chain);
+    },
+    600_000,
   );
 });

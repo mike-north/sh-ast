@@ -6,6 +6,14 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { Add } from '../src/index.js';
+import {
+  expectFlatTree,
+  expectSameNestingBoundary,
+  inArithmeticParens,
+  inspectIsolated,
+  repeated,
+} from './isolated-tree.js';
 
 /** Built public exports exercise consumer-visible parsing, not a test-only parser. */
 const entry = new URL('../dist/index.js', import.meta.url).href;
@@ -143,21 +151,32 @@ const refused = {
 };
 
 describe('native grammar resource budget', () => {
-  // Left-associative operators build a deep tree without recursive grammar.
-  // The exact issue #71 source must be refused before recursive serialization,
-  // with no partial File, while smaller trees and subsequent calls stay usable.
-  it.each(['parseSync', 'parseWithPositionsSync'])(
-    '%s refuses the 20,000-operator serialization regression (issue #71)',
+  // Left-associative operators build a deep tree without recursive grammar. The
+  // exact issue #71 source is a flat chain of 20,000 additions: it costs no
+  // nesting units (sh-ast#105), and serialization, validation, walk and print
+  // handle it without exhausting the stack. Parentheses around the same chain are
+  // genuine nesting and keep the 128-unit refusal.
+  it.each(['parseSync', 'parseWithPositionsSync'] as const)(
+    '%s parses, walks and prints the 20,000-operator serialization regression (issue #71)',
     (operation) => {
       const source = 'echo $(( ' + '1+'.repeat(20_000) + '1 ))';
-      expect(observe(source, operation, 2, 100000)).toEqual([refused, refused]);
-      expect(observe('echo $(( ' + '1+'.repeat(125) + '1 ))', operation)).toEqual([
-        { outcome: 'File' },
-        { outcome: 'File' },
-      ]);
+      const outcome = inspectIsolated(source, {
+        operation,
+        options: { KeepComments: true, RecoverErrors: 100000 },
+        reuse: true,
+      });
+      expectFlatTree(outcome, { commands: 1, arithOperators: repeated(Add, 20_000) });
+      // The runtime that parsed the chain parses it again to the same tree, and
+      // then parses another file.
+      if (outcome.outcome !== 'parsed') return;
+      expect(outcome.reuse).toEqual({ facts: outcome.facts, next: 'File' });
     },
-    40_000,
+    120_000,
   );
+
+  it('parentheses around the issue #71 chain are refused at the same depth however long it is', () => {
+    expectSameNestingBoundary(inArithmeticParens, '1+1', '1+'.repeat(20_000) + '1');
+  }, 600_000);
 
   it.each(reviewedForms)(
     '%s refuses deep input through both public operations',
@@ -209,8 +228,10 @@ describe('native grammar resource budget', () => {
       64,
     ],
     [
-      'iteratively constructed arithmetic tree',
-      (n: number): string => 'echo $(( ' + '1+'.repeat(n) + '1 ))',
+      // The statement, the `$((` word part and its expression take one unit each,
+      // and every parenthesis one more: 3 + n units.
+      'arithmetic parentheses',
+      (n: number): string => 'echo $(( ' + '( '.repeat(n) + '1+1' + ' )'.repeat(n) + ' ))',
       125,
       126,
     ],
