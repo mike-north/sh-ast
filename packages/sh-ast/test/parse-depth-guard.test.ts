@@ -5,7 +5,22 @@
  * These tests cover ordinary callers, not arbitrary pre-existing JS recursion.
  */
 import { describe, expect, it } from 'vitest';
-import { parseSync, ParseError, ShParseMaxDepthError } from '../src/index.js';
+import {
+  AndStmt,
+  OrStmt,
+  parseSync,
+  ParseError,
+  Pipe,
+  PipeAll,
+  ShParseMaxDepthError,
+} from '../src/index.js';
+import {
+  expectFlatTree,
+  expectSameNestingBoundary,
+  inSubshells,
+  inspectIsolated,
+  repeated,
+} from './isolated-tree.js';
 
 /** Dense adjacent parentheses select arithmetic grammar; retained as a nesting fixture. */
 function nestedSubshells(n: number): string {
@@ -100,12 +115,6 @@ describe('parseSync — resource refusal preserves the shared WASM instance', ()
     expect(file.Stmts).toHaveLength(1);
   });
 
-  it('a very long pipeline chain past the limit: throws, and a subsequent normal parse still succeeds', () => {
-    expect(() => parseSync(pipelineChain(2000))).toThrow(ShParseMaxDepthError);
-    const file = parseSync('echo hi');
-    expect(file.Stmts).toHaveLength(1);
-  });
-
   it('nested case/esac blocks past the limit: throws, and a subsequent normal parse still succeeds', () => {
     expect(() => parseSync(nestedCase(2000))).toThrow(ShParseMaxDepthError);
     const file = parseSync('echo hi');
@@ -154,14 +163,6 @@ describe('parseSync — historical 150-unit fixtures exceed the native budget', 
 
   it('151 nested command substitutions (above the native budget) throws ShParseMaxDepthError', () => {
     expect(() => parseSync(nestedCommandSubstitutions(151))).toThrow(ShParseMaxDepthError);
-  });
-
-  it('a 150-link pipeline chain exceeds the native budget', () => {
-    expect(() => parseSync(pipelineChain(150))).toThrow(ShParseMaxDepthError);
-  });
-
-  it('a 151-link pipeline chain (above the native budget) throws ShParseMaxDepthError', () => {
-    expect(() => parseSync(pipelineChain(151))).toThrow(ShParseMaxDepthError);
   });
 });
 
@@ -280,16 +281,6 @@ describe('parseSync — regression: `|` inside a case-arm pattern list is altern
     expect(file.Type).toBe('File');
   });
 
-  it("a REAL 151-stage pipeline inside a case arm's action list (body, not pattern) still trips the guard", () => {
-    const pipeline = pipelineChain(151);
-    expect(() => parseSync(`case x in a) ${pipeline} ;; esac`)).toThrow(ShParseMaxDepthError);
-  });
-
-  it('a 149-stage pipeline in a case arm body exceeds the native budget', () => {
-    const pipeline = pipelineChain(149);
-    expect(() => parseSync(`case x in a) ${pipeline} ;; esac`)).toThrow(ShParseMaxDepthError);
-  });
-
   it('alternation in each arm of a multi-arm case block is correctly treated as inert in every arm, not just the first', () => {
     const file = parseSync('case x in a|b) true ;; c|d) false ;; e|f) : ;; esac');
     expect(file.Type).toBe('File');
@@ -324,16 +315,6 @@ describe('parseSync — loop fixtures exceed the native budget', () => {
     expect(() => parseSync(nestedLoop(header, 150))).toThrow(ShParseMaxDepthError);
     expect(() => parseSync(nestedLoop(header, 151))).toThrow(ShParseMaxDepthError);
   });
-});
-
-describe('parseSync — test breadth: &&/||/|& chain operators are each tested, not just |', () => {
-  it.each(['&&', '||', '|&'] as const)(
-    'both 150-link and 151-link %s chains exceed the native budget',
-    (op) => {
-      expect(() => parseSync(chainOperatorChain(op, 150))).toThrow(ShParseMaxDepthError);
-      expect(() => parseSync(chainOperatorChain(op, 151))).toThrow(ShParseMaxDepthError);
-    },
-  );
 });
 
 describe('parseSync — test breadth: nested function definitions contribute to depth', () => {
@@ -397,4 +378,63 @@ describe('parseSync — queued heredocs retain source order', () => {
     const file = parseSync(lines.join('\n'));
     expect(file.Type).toBe('File');
   });
+});
+
+/** BinCmdOperator value for each list operator spelled by chainOperatorChain. */
+const CHAIN_OPERATOR_CODES = { '&&': AndStmt, '||': OrStmt, '|&': PipeAll } as const;
+
+// A list is a sequence, not nesting: its operators cost no nesting units
+// (sh-ast#105). Each historical chain fixture parses, walks and prints in an
+// isolated process, and a genuinely nested sibling shows that the 128-unit guard
+// still covers the same form.
+describe('parseSync — flat lists are not nesting (issue #105)', () => {
+  it.each([150, 151, 2_000])(
+    'a %i-link pipeline chain parses, walks and prints',
+    (links) => {
+      expectFlatTree(inspectIsolated(pipelineChain(links)), {
+        commands: links + 1,
+        cmdOperators: repeated(Pipe, links),
+      });
+    },
+    60_000,
+  );
+
+  it.each(['&&', '||', '|&'] as const)(
+    '150-link and 151-link %s chains parse, walk and print',
+    (op) => {
+      for (const links of [150, 151]) {
+        expectFlatTree(inspectIsolated(chainOperatorChain(op, links)), {
+          commands: links + 1,
+          cmdOperators: repeated(CHAIN_OPERATOR_CODES[op], links),
+        });
+      }
+    },
+    60_000,
+  );
+
+  it.each([149, 151])(
+    "a %i-stage pipeline inside a case arm's action list parses, walks and prints",
+    (links) => {
+      expectFlatTree(inspectIsolated(`case x in a) ${pipelineChain(links)} ;; esac`), {
+        commands: links + 1,
+        cmdOperators: repeated(Pipe, links),
+      });
+    },
+    60_000,
+  );
+
+  it.each(['|', '&&', '||', '|&'] as const)(
+    'subshells around a %s chain are refused at the same depth however long the chain is',
+    (op) => {
+      const chain = (links: number): string =>
+        op === '|' ? pipelineChain(links) : chainOperatorChain(op, links);
+      expectSameNestingBoundary(inSubshells, chain(1), chain(2_000));
+    },
+    600_000,
+  );
+
+  it('subshells around a case arm with a pipeline are refused at the same depth however long the pipeline is', () => {
+    const arm = (links: number): string => `case x in a) ${pipelineChain(links)} ;; esac`;
+    expectSameNestingBoundary(inSubshells, arm(1), arm(151));
+  }, 600_000);
 });

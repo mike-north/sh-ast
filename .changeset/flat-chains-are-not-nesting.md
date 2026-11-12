@@ -1,0 +1,5 @@
+---
+'sh-ast': patch
+---
+
+Parse long flat command chains and arithmetic expressions without a depth refusal. A list of commands joined by `&&`, `||` or `|`, or an arithmetic expression such as `1 + 1 + … + 1`, no longer counts one nesting level per operator, so scripts with thousands of chained commands (common in generated scripts and install steps) parse, walk and print instead of throwing `ShParseMaxDepthError` after about 127 commands. Genuine nesting is still refused at 128 levels: subshells, `$( )` substitutions, parameter expansions, arithmetic parentheses and command bodies, including when they sit inside a long chain. `parseWithPositionsSync` now records the start of a long arithmetic chain once instead of once per operator, so its cost grows linearly with the chain. `structuredClone` of a tree holding a very long chain is limited by the JavaScript engine's own stack; the README gives the figures. Uses the maintained Go syntax fork at revision 38f23b706eb32d08a3797af4ea90a9ea8e5992c1 (based on mvdan/sh v3.14.1).

@@ -138,7 +138,9 @@ The design record behind these rules is in
 
 Use the standard `structuredClone(node)` to get an independent, editable copy of a `File` or any
 node. Clone the syntax value itself, without a transfer list. Do not clone the result of
-`parseWithPositionsSync`; its `Positions.get` is a function and is not cloneable.
+`parseWithPositionsSync`; its `Positions.get` is a function and is not cloneable. Very long
+command lists and arithmetic chains can exceed the host's stack when cloned; see
+[Resource limits](#resource-limits).
 
 ```ts
 import { parseSync, printSync } from 'sh-ast';
@@ -255,11 +257,13 @@ A syntax error found before the depth limit is reported as a `ParseError`.
 ## Resource limits
 
 **Parsing.** The parser refuses input that nests more than 128 units deep and throws
-`ShParseMaxDepthError`. Open statements, words and expressions each count, and so does each
-operator in a long chain, because mvdan/sh builds those as nested trees. In practice that means
-about 128 nested subshells, 63 nested `$( )` substitutions, or 127 commands chained with `&&`,
-`||` or `|` in one list. The limit protects the host from stack exhaustion; it is not a limit on
-file size, and long flat scripts and long comment runs are fine. The refused call returns no
+`ShParseMaxDepthError`. A statement, word or expression that is open inside another counts one
+unit. In practice that means about 127 nested subshells, 63 nested `$( )` substitutions or 125
+nested arithmetic parentheses. A list of commands joined by `&&`, `||` or `|`, and a chain of
+left-associative arithmetic operators such as `1 + 1 + … + 1`, cost nothing for their length:
+mvdan/sh builds them as left-nested trees, but every element is parsed at the depth of the list
+itself. The limit protects the host from stack exhaustion; it is not a limit on file size, and
+long flat scripts, long lists and long comment runs are fine. The refused call returns no
 partial tree, and later calls work normally. The error's `estimatedDepth` field holds the count at
 which the parser stopped.
 
@@ -271,5 +275,13 @@ yourself.
 nested records deep, and throws `ShInternalError` without changing the word. A short brace
 literal can expand to a deep result, which is why the result is checked too.
 
-**Other recursion.** Walking, measuring and printing very deep trees that you construct yourself
-use the JavaScript stack and are not covered by the parse limit.
+**Copying.** `structuredClone` and `JSON.stringify` recurse inside the JavaScript engine, so the
+host's stack limits them, not sh-ast. In a default Node.js 22 process `structuredClone` throws a
+`RangeError` for a tree holding a single list of about 1,000 commands or an arithmetic expression
+of about 2,000 terms, and `JSON.stringify` at about three times those lengths. Both fail sooner
+when called from deep in your own code.
+
+**Other recursion.** Parsing, `walk` and the transfer of trees to and from the printer do not
+recurse per node. The printer itself follows long `&&`, `||`, `|` and arithmetic chains without
+recursing, but it recurses through other nesting, so printing a very deeply nested tree that you
+construct yourself uses the stack and is not covered by the parse limit.
