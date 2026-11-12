@@ -147,11 +147,22 @@ describe.each([2_000, 3_000, 3_500, 4_000, 4_500, 5_000, 6_000])(
 /**
  * Regression: walking a cyclic caller-built tree used to grow the frame stack until
  * V8 aborted the process (FATAL heap limit, exit 134), where the recursive version
- * threw a catchable RangeError. A small heap makes the abort fast and certain.
+ * threw a catchable RangeError. A small heap makes the abort fast and certain. The
+ * check is on the active path, so it must not refuse valid trees however deep.
  */
-describe('walking a cyclic tree', () => {
-  it('walk-cycle: throws a catchable InputError instead of exhausting the heap', () => {
-    const result = probe('walk-cycle', 3, ['--max-old-space-size=128']);
-    expect(result.error).toMatch(/^InputError: Walk reached 524288 nested nodes/);
+describe('walking cyclic and very deep trees', () => {
+  it('walk-cycle: a cycle throws InputError on a 64 MB heap instead of aborting', () => {
+    const result = probe('walk-cycle', 3, ['--max-old-space-size=64']);
+    expect(result.error).toMatch(/^InputError: Walk found a cycle/);
+  }, 120_000);
+
+  it('walk-command: a valid 300,000-link command spine walks to completion', () => {
+    const result = probe('walk-command', 300_000);
+    expect(result.entered).toStrictEqual(result.expected);
+    expect(result.exits).toBe(total(result.expected));
+  }, 120_000);
+
+  it('walk-shared: shared subtrees below a checkpoint depth are not cycles', () => {
+    expect(probe('walk-shared', 100_000).binary).toBe(99_999);
   }, 120_000);
 });

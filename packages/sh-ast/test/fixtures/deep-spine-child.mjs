@@ -130,6 +130,27 @@ switch (mode) {
     }
     break;
   }
+  case 'walk-shared': {
+    // Every link's right operand is the same record: a DAG, not a cycle, so the walk
+    // visits it once per path and must not report a repeat.
+    const { walk } = await load('syntax-walk.js');
+    const shared = record('Stmt', {
+      Cmd: record('CallExpr', {
+        Args: [record('Word', { Parts: [record('Lit', { Value: 'true' })] })],
+      }),
+    });
+    let left = shared;
+    for (let index = 1; index < links; index++) {
+      left = record('Stmt', { Cmd: record('BinaryCmd', { X: left, Y: shared }) });
+    }
+    let binary = 0;
+    walk(left, (node) => {
+      if (node !== null && node.Type === 'BinaryCmd') binary++;
+      return true;
+    });
+    result.binary = binary;
+    break;
+  }
   case 'walk-throw': {
     const { walk } = await load('syntax-walk.js');
     const sentinel = new Error('stop');

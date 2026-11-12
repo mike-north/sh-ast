@@ -50,11 +50,11 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * retained callback object unchanged: there is no Go value-slot pointer identity.
  * Reentrant walks maintain independent traversal state.
  *
- * The tree must be acyclic. Depth is bounded by memory rather than the call stack,
- * but a walk that descends 524,288 nested nodes (a cycle reached through the
- * fields it follows, or a tree no parser produces) throws InputError instead of
- * growing without limit; the exception is delivered like any other thrown during
- * the walk, so deferred comment callbacks still run.
+ * The tree must be acyclic. Depth is bounded by memory rather than the call stack.
+ * A cycle reached through the fields the walk follows throws InputError instead of
+ * descending without end; the exception is delivered like any other thrown during
+ * the walk, so deferred comment callbacks still run. Subtrees shared by more than
+ * one parent are not cycles and are visited once per path.
  * @public
  */
 export function walk(node: Node, callback: (node: Node | null) => boolean): void {
@@ -223,17 +223,20 @@ function copyComment(node: Comment): Comment {
 }
 
 /**
- * Most nested nodes a walk follows before it refuses the tree. An acyclic tree the
- * parser can produce stays far below this (a left-nested chain of a hundred thousand
- * commands is two hundred thousand deep), while a cyclic tree built by a caller would
- * otherwise grow the frame stack until the process runs out of memory.
+ * Depth at which a walk first checks its active path for a cycle, doubling after
+ * each check. No tree is refused for its depth: a cycle can only be detected as a
+ * node repeating on the path from the root, and checking at doubling depths costs
+ * nothing for ordinary trees while bounding the memory a cyclic one can use to a
+ * small multiple of this many frames.
  */
-const MAX_WALK_DEPTH = 524_288;
+const FIRST_CYCLE_CHECK_DEPTH = 65_536;
 
 /** The suspended occurrences of one walk; frames above `depth` are spare. */
 interface IStack {
   readonly frames: IFrame[];
   depth: number;
+  /** Depth at which the active path is next checked for a repeated node. */
+  nextCycleCheck: number;
 }
 /** A list slot that may be a hole (undefined) reads as a nil interface. */
 function orNull(slot: Node | null | undefined): Node | null {
@@ -255,7 +258,7 @@ type N<T extends Node['Type']> = Extract<Node, { Type: T }>;
  * exception taking over the pending one.
  */
 function run(root: Node, callback: ICallback): void {
-  const stack: IStack = { frames: [], depth: 0 };
+  const stack: IStack = { frames: [], depth: 0, nextCycleCheck: FIRST_CYCLE_CHECK_DEPTH };
   let failure: { readonly error: unknown } | undefined;
   enter(stack, root, callback);
   while (stack.depth > 0) {
@@ -307,6 +310,25 @@ function run(root: Node, callback: ICallback): void {
 }
 
 /**
+ * Throws if `node` is already one of the first `depth` nodes on the active path. A
+ * descent longer than the number of distinct nodes it passes through must repeat
+ * one, so a cycle is found at the first check once the path is long enough; an
+ * acyclic tree, shared subtrees included, never repeats a node on one path.
+ */
+function assertNoCycle(frames: readonly IFrame[], depth: number, node: Node): void {
+  const path = new Set<Node>([node]);
+  for (let level = 0; level < depth; level++) {
+    const ancestor = frames[level].node;
+    if (path.has(ancestor)) {
+      throw new InputError(
+        `Walk found a cycle: a ${ancestor.Type} node is its own ancestor, so the tree has no end`,
+      );
+    }
+    path.add(ancestor);
+  }
+}
+
+/**
  * Entry callback and, for a node with children, a pushed frame; childless nodes
  * finish here with their exit callback. Frames above the depth are recycled.
  */
@@ -340,10 +362,9 @@ function enter(stack: IStack, node: Node | null, callback: ICallback): void {
     throw new WalkPanicError(`syntax.Walk: unexpected node type ${String(unexpected)}`);
   }
   const { frames, depth } = stack;
-  if (depth === MAX_WALK_DEPTH) {
-    throw new InputError(
-      `Walk reached ${String(MAX_WALK_DEPTH)} nested nodes; the tree is cyclic or deeper than Walk supports`,
-    );
+  if (depth === stack.nextCycleCheck) {
+    assertNoCycle(frames, depth, node);
+    stack.nextCycleCheck = depth * 2;
   }
   if (depth === frames.length) {
     frames.push({

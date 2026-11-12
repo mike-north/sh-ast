@@ -285,3 +285,40 @@ func TestReadJSONKeepsEncodingJSONMessageForMalformedKeyBeyondTheBound(t *testin
 		t.Fatalf("ReadJSON error %v, encoding/json %v", got, want)
 	}
 }
+
+// The levels between a few thousand and encoding/json's 10,000 were the band that
+// overflowed the WebAssembly stack, and the comparison above cannot cover them there
+// because its encoding/json reference recurses too. ReadJSON alone must read them.
+// The test runs natively as well; it only needs no reference to be meaningful on wasm.
+func TestReadJSONReadsTheOriginalOverflowBandWithoutAReference(t *testing.T) {
+	for _, levels := range []int{3_000, 6_000, 9_000} {
+		open, shut := strings.Repeat(`{"a":[`, levels/2), strings.Repeat(`]}`, levels/2)
+		value, err := ReadJSON([]byte(open + `7` + shut))
+		if err != nil {
+			t.Fatalf("%d levels: %v", levels, err)
+		}
+		depth := 0
+		for {
+			if object, ok := value.(map[string]any); ok {
+				value = object["a"]
+			} else if array, ok := value.([]any); ok {
+				value = array[0]
+			} else {
+				break
+			}
+			depth++
+		}
+		if depth != levels || value != json.Number("7") {
+			t.Errorf("%d levels: depth %d, innermost %v", levels, depth, value)
+		}
+		for name, text := range map[string]string{
+			"truncated":        open + `7`,
+			"mismatched close": open + `7` + shut[:len(shut)-1] + `]`,
+			"trailing value":   open + `7` + shut + ` 8`,
+		} {
+			if _, err := ReadJSON([]byte(text)); err == nil {
+				t.Errorf("%d levels, %s: accepted", levels, name)
+			}
+		}
+	}
+}
