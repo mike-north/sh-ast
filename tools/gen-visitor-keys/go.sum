@@ -1,5 +1,5 @@
-github.com/mike-north/sh/v3 v3.14.2-0.20261106043227-bbc7c4ace575 h1:dm2hfQDs8359vB9QziwgnoY/Nsp02ut9jUY0HibSPBc=
-github.com/mike-north/sh/v3 v3.14.2-0.20261106043227-bbc7c4ace575/go.mod h1:syYCoFET8w9tvevxiXUtY8/ICrU+l26jHmhJDra3Vwo=
+github.com/mike-north/sh/v3 v3.14.2-0.20261112073653-38f23b706eb3 h1:vf/Z1/2Snh+dB4A0mpBZH/d/L5A1anPQCzmc4A5AG9Q=
+github.com/mike-north/sh/v3 v3.14.2-0.20261112073653-38f23b706eb3/go.mod h1:syYCoFET8w9tvevxiXUtY8/ICrU+l26jHmhJDra3Vwo=
 golang.org/x/mod v0.38.0 h1:MECBjubtXD7yj4HrhIUcywNaGeNVUdfVnxmPajOk4yk=
 golang.org/x/mod v0.38.0/go.mod h1:V6Xz0pq8TQ3dGqVQ1FVHuelZpAL0uNhSkk9ogYP3c40=
 golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
