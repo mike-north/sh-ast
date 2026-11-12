@@ -117,3 +117,25 @@ describe.each([10_000, 100_000])('a left-nested spine of %i links', (links) => {
     expect(probe('bounds-position', links).position).toStrictEqual({ offset: 0, lineCol: 0 });
   }, 120_000);
 });
+
+/**
+ * Regression: print requests of roughly 2,500-5,000 list links (5,000-10,000 JSON
+ * levels) overflowed the engine stack because the native request decoder fell back
+ * to its iterative reader only above encoding/json's 10,000-level cap, leaving that
+ * recursive decoder to read everything below it. Each depth runs in a fresh child so
+ * a stack overflow cannot leak between cases. The band stops where the pinned
+ * upstream printer, which recurses once per list link, stops being able to print;
+ * the request decoder is covered past it by the Go tests.
+ */
+describe.each([2_000, 3_000, 3_500, 4_000, 4_500, 5_000, 6_000])(
+  'printing a hand-built &&-list of %i links',
+  (links) => {
+    it('print-command: the request decodes and prints without RangeError', () => {
+      const result = probe('print-command', links);
+      expect(result.error).toBeNull();
+      // `true && true && ...`: "true" plus " && true" per further link, wrapped with
+      // line breaks by the printer, so only a floor on the length is stable.
+      expect(result.printedLength as number).toBeGreaterThan(links * 8);
+    }, 120_000);
+  },
+);

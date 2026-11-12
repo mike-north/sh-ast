@@ -177,6 +177,17 @@ switch (mode) {
     }
     break;
   }
+  case 'print-command': {
+    const { printSync } = await load('index.js');
+    try {
+      const printed = printSync(spine);
+      result.error = null;
+      result.printedLength = String(printed).length;
+    } catch (error) {
+      result.error = `${error.name}: ${String(error.message).slice(0, 200)}`;
+    }
+    break;
+  }
   case 'validate-reject': {
     const { isSyntaxNode } = await load('syntax-wire.js');
     let deepest = spine;

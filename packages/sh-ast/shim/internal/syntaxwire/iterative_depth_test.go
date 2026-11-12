@@ -8,6 +8,10 @@ package syntaxwire
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
+	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -196,6 +200,71 @@ func TestReadJSONRejectsMalformedDeepDocuments(t *testing.T) {
 	} {
 		if _, err := ReadJSON([]byte(text)); err == nil {
 			t.Errorf("%s: accepted", name)
+		}
+	}
+}
+
+// A document of a few thousand levels is within encoding/json's own cap yet deep
+// enough to exhaust the host stack on WebAssembly (a regression: print requests of
+// 2,500-5,000 list links, 5,000-10,000 levels, threw RangeError). ReadJSON must
+// choose the iterative reader for it without changing a single outcome.
+func TestNestingExceedsCountsOnlyStructuralBrackets(t *testing.T) {
+	for _, tc := range []struct {
+		text  string
+		limit int
+		want  bool
+	}{
+		{`[[[`, 2, true},
+		{`[[[`, 3, false},
+		{`[[],[],[]]`, 2, false},
+		{`["[[[[", "\"[[[[", "\\\\"]`, 1, false},
+		{`{"a":{"b":[1]}}`, 2, true},
+		{`{"a":{"b":[1]}}`, 3, false},
+		{``, 0, false},
+	} {
+		if got := nestingExceeds([]byte(tc.text), tc.limit); got != tc.want {
+			t.Errorf("nestingExceeds(%q, %d) = %v, want %v", tc.text, tc.limit, got, tc.want)
+		}
+	}
+}
+
+func TestReadJSONMatchesEncodingJSONAcrossTheRecursionBound(t *testing.T) {
+	stdlib := func(text string) (any, error) {
+		decoder := json.NewDecoder(strings.NewReader(text))
+		decoder.UseNumber()
+		var value any
+		if err := decoder.Decode(&value); err != nil {
+			return nil, err
+		}
+		var extra any
+		if err := decoder.Decode(&extra); err != io.EOF {
+			return nil, errors.New("expected exactly one JSON value")
+		}
+		return value, nil
+	}
+	for _, levels := range []int{2, 100, recursiveDecodeDepthLimit - 1, recursiveDecodeDepthLimit, recursiveDecodeDepthLimit + 1, 1_000, 2_500, 5_000, 9_000} {
+		if runtime.GOARCH == "wasm" && levels > 1_000 {
+			// The encoding/json reference itself recurses and cannot read these on the
+			// WebAssembly stack; native runs cover them.
+			continue
+		}
+		open, shut := strings.Repeat(`{"a":[`, levels/2), strings.Repeat(`]}`, levels/2)
+		for name, text := range map[string]string{
+			"valid":            open + `1.50` + shut,
+			"truncated":        open + `1`,
+			"truncated string": open + `"x`,
+			"mismatched close": open + `1` + shut[:len(shut)-2] + `]]`,
+			"trailing value":   open + `1` + shut + ` 2`,
+			"bad literal":      open + `tru` + shut,
+			"missing colon":    strings.Repeat(`{"a"`, 3) + open + shut,
+		} {
+			want, wantErr := stdlib(text)
+			got, gotErr := ReadJSON([]byte(text))
+			if (wantErr == nil) != (gotErr == nil) || (wantErr != nil && wantErr.Error() != gotErr.Error()) {
+				t.Errorf("%d levels, %s: error %v, encoding/json %v", levels, name, gotErr, wantErr)
+			} else if !reflect.DeepEqual(got, want) {
+				t.Errorf("%d levels, %s: value differs from encoding/json", levels, name)
+			}
 		}
 	}
 }

@@ -153,13 +153,22 @@ func readTypedNil(obj map[string]any) (reflect.Value, error) {
 	return reflect.Zero(reflect.PointerTo(typ)), nil
 }
 
+// recursiveDecodeDepthLimit is the deepest document encoding/json is allowed to
+// read. That decoder recurses once per level on the host stack, which on
+// WebAssembly is the engine's native stack and is exhausted well below the
+// decoder's own 10,000-level cap, so deeper documents never reach it.
+const recursiveDecodeDepthLimit = 256
+
 // ReadJSON preserves integer precision and requires exactly one JSON value.
-// Documents nested deeper than encoding/json allows (its decoder refuses more
-// than 10,000 open arrays and objects) are read by readJSONIterative instead, so
-// the limit on depth is the tree a caller can build rather than that parser's
-// constant. Every other outcome, including every malformed-input message, is
-// encoding/json's own.
+// A document whose nesting could exceed recursiveDecodeDepthLimit is read by
+// readJSONIterative, which keeps open containers on an explicit stack, so the
+// limit on depth is the tree a caller can build rather than the host stack or
+// that parser's constant. Every other outcome, including every malformed-input
+// message, is encoding/json's own.
 func ReadJSON(data []byte) (any, error) {
+	if nestingExceeds(data, recursiveDecodeDepthLimit) {
+		return readJSONIterative(data)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	var value any
@@ -174,6 +183,39 @@ func ReadJSON(data []byte) (any, error) {
 		return nil, fmt.Errorf("expected exactly one JSON value")
 	}
 	return value, nil
+}
+
+// nestingExceeds reports whether any prefix of data holds more than limit open
+// arrays and objects. It is a single non-recursive byte scan that skips string
+// contents, so it is safe on any input and only chooses a decoder: it neither
+// validates the document nor decides its errors.
+func nestingExceeds(data []byte, limit int) bool {
+	depth := 0
+	inString := false
+	for i := 0; i < len(data); i++ {
+		c := data[i]
+		if inString {
+			switch c {
+			case '\\':
+				i++
+			case '"':
+				inString = false
+			}
+			continue
+		}
+		switch c {
+		case '"':
+			inString = true
+		case '[', '{':
+			depth++
+			if depth > limit {
+				return true
+			}
+		case ']', '}':
+			depth--
+		}
+	}
+	return false
 }
 
 // exceededNestingLimit recognizes encoding/json's refusal of deep documents. The
