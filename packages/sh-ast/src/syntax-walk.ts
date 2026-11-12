@@ -226,8 +226,9 @@ function copyComment(node: Comment): Comment {
  * Depth at which a walk first checks its active path for a cycle, doubling after
  * each check. No tree is refused for its depth: a cycle can only be detected as a
  * node repeating on the path from the root, and checking at doubling depths costs
- * nothing for ordinary trees while bounding the memory a cyclic one can use to a
- * small multiple of this many frames.
+ * nothing for ordinary trees. Checkpoints do not reset when the walk backtracks, so
+ * the memory a cyclic tree can use is bounded by a small multiple of the larger of
+ * this many frames and the deepest path the walk has already followed.
  */
 const FIRST_CYCLE_CHECK_DEPTH = 65_536;
 
