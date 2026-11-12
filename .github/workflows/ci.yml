@@ -30,3 +30,15 @@ jobs:
       # Includes strict TypeScript lint, API report/docs drift, and syncpack lint.
       - run: pnpm check
       - run: pnpm test
+      # The shipped binary runs on the engine's own stack, which Go's native test
+      # runs do not model; node's default stack size is what a caller gets. The
+      # skipped tests start subprocesses, which the js/wasm target cannot do.
+      - name: Test the stream codec on the WebAssembly target with the default Node stack
+        working-directory: packages/sh-ast/shim
+        run: |
+          wrapper="$RUNNER_TEMP/go_wasm_default_stack"
+          printf '#!/usr/bin/env bash\nexec node "%s/lib/wasm/wasm_exec_node.js" "$@"\n' "$(go env GOROOT)" > "$wrapper"
+          chmod +x "$wrapper"
+          GOOS=js GOARCH=wasm go test -exec "$wrapper" \
+            -skip '^(TestEncodedFieldOrderMatchesShippedSchema|TestOccurrenceCollectionRejectsCycleWithoutBounds|TestStreamingSliceCyclesTerminate)$' \
+            ./internal/syntaxwire

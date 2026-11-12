@@ -12,6 +12,8 @@ Supported edits preserve each node's Type (and TypedNil.Kind), required field sh
 
 Comments on Stmt, CaseItem and ArrayElem are copied before their callbacks, including position and byte-string values; editing a copy does not edit the stored comment. Last/CondLast/ThenLast/DoLast callbacks receive the stored JavaScript Comment object. Replacing its array slot leaves any previously retained callback object unchanged: there is no Go value-slot pointer identity. Reentrant walks maintain independent traversal state.
 
+The tree must be acyclic. Depth is bounded by memory rather than the call stack. A cycle reached through the fields the walk follows throws InputError instead of descending without end; the exception is delivered like any other thrown during the walk, so deferred comment callbacks still run. Subtrees shared by more than one parent are not cycles and are visited once per path.
+
 **Signature:**
 
 ```typescript

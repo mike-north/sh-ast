@@ -38,24 +38,43 @@ export function assertUnicodeString(value: string): void {
  * Encodes bytes and exact integers without relying on JSON's number precision or
  * Uint8Array property enumeration. Circular input is a caller error, not a stack
  * overflow or a partially transferred request.
+ *
+ * The output is the JSON text of the converted value, written directly so that
+ * neither this walk nor JSON.stringify recurses once per tree level: containers
+ * are kept on an explicit stack, records emit their members in own-entry order,
+ * and array holes are written as null like JSON.stringify.
  * @internal
  */
 export function encodeWire(value: unknown): string {
   const ancestors = new Set<object>();
-  const visit = (item: unknown): unknown => {
+  // One open container per level: the source array or record, the output text accumulated
+  // for its members so far, and how far its members have been read.
+  const stack: {
+    readonly source: object;
+    /** Present for records: the own enumerable entries captured when the record was entered. */
+    readonly entries: readonly (readonly [string, unknown])[] | null;
+    /** Array length captured on entry; entries.length for records. */
+    readonly length: number;
+    index: number;
+    text: string;
+  }[] = [];
+  /** Returns the JSON text of a scalar, or undefined after opening a container frame. */
+  const begin = (item: unknown): string | undefined => {
     if (typeof item === 'string') {
       assertUnicodeString(item);
-      return item;
+      return JSON.stringify(item);
     }
-    if (typeof item === 'bigint') return { Int: item.toString() };
-    if (item instanceof Uint8Array) return { Bytes: Buffer.from(item).toString('base64') };
-    if (item === null || typeof item === 'boolean') return item;
+    if (typeof item === 'bigint') return `{"Int":${JSON.stringify(item.toString())}}`;
+    if (item instanceof Uint8Array)
+      return `{"Bytes":${JSON.stringify(Buffer.from(item).toString('base64'))}}`;
+    if (item === null) return 'null';
+    if (typeof item === 'boolean') return item ? 'true' : 'false';
     if (typeof item === 'number') {
       if (!Number.isSafeInteger(item))
         throw new InputError(
           'Numeric values must be safe integers; use bigint for 64-bit arguments',
         );
-      return item;
+      return JSON.stringify(item);
     }
     if (typeof item !== 'object')
       throw new InputError(
@@ -63,15 +82,55 @@ export function encodeWire(value: unknown): string {
       );
     if (ancestors.has(item)) throw new InputError('Syntax records cannot contain cycles');
     ancestors.add(item);
-    try {
-      if (Array.isArray(item)) return item.map(visit);
-      if (!isRecord(item)) throw new InputError('Expected a syntax data record');
-      return Object.fromEntries(Object.entries(item).map(([key, child]) => [key, visit(child)]));
-    } finally {
-      ancestors.delete(item);
+    if (Array.isArray(item)) {
+      stack.push({
+        source: item,
+        entries: null,
+        length: item.length,
+        index: 0,
+        text: '[',
+      });
+      return undefined;
     }
+    if (!isRecord(item)) throw new InputError('Expected a syntax data record');
+    const entries = Object.entries(item);
+    stack.push({
+      source: item,
+      entries,
+      length: entries.length,
+      index: 0,
+      text: '{',
+    });
+    return undefined;
   };
-  return JSON.stringify(visit(value));
+  const root = begin(value);
+  if (root !== undefined) return root;
+  let result = '';
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    if (frame.index === frame.length) {
+      stack.pop();
+      ancestors.delete(frame.source);
+      const text = frame.text + (frame.entries === null ? ']' : '}');
+      if (stack.length === 0) {
+        result = text;
+        break;
+      }
+      stack[stack.length - 1].text += text;
+      continue;
+    }
+    const slot = frame.index++;
+    const separator = slot === 0 ? '' : ',';
+    if (frame.entries === null) {
+      // Array.prototype.map skips holes; JSON.stringify then writes them as null.
+      const items = frame.source as unknown[];
+      frame.text += separator + (slot in items ? (begin(items[slot]) ?? '') : 'null');
+    } else {
+      const [key, child] = frame.entries[slot];
+      frame.text += separator + JSON.stringify(key) + ':' + (begin(child) ?? '');
+    }
+  }
+  return result;
 }
 
 /**
@@ -89,13 +148,18 @@ export function decodeWire(text: string): unknown {
     throw new ShInternalError(`Invalid syntax bridge JSON: ${String(cause)}`);
   }
   if (!mayContainBytesTag(text)) return parsed;
-  const visit = (item: unknown): unknown => {
+  // Containers are processed on an explicit stack so a very deep response is restored
+  // without one native frame per level. Children are visited in document order.
+  // One container per level whose members are being restored, and how far it has got.
+  const stack: {
+    readonly container: object;
+    /** Own keys captured on entry for records; null for arrays. */
+    readonly keys: readonly string[] | null;
+    index: number;
+  }[] = [];
+  const begin = (item: unknown): unknown => {
     if (Array.isArray(item)) {
-      for (let index = 0; index < item.length; index++) {
-        const child: unknown = item[index];
-        const restored = visit(child);
-        if (restored !== child) item[index] = restored;
-      }
+      stack.push({ container: item, keys: null, index: 0 });
       return item;
     }
     if (!isRecord(item)) return item;
@@ -106,13 +170,35 @@ export function decodeWire(text: string): unknown {
         throw new ShInternalError('Invalid base64 in syntax bridge response');
       return new Uint8Array(bytes);
     }
-    for (const key of keys) {
-      const child = item[key];
-      const restored = visit(child);
+    stack.push({ container: item, keys, index: 0 });
+    return item;
+  };
+  const root = begin(parsed);
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    if (frame.keys === null) {
+      const items = frame.container as unknown[];
+      if (frame.index >= items.length) {
+        stack.pop();
+        continue;
+      }
+      const index = frame.index++;
+      const child: unknown = items[index];
+      const restored = begin(child);
+      if (restored !== child) items[index] = restored;
+    } else {
+      if (frame.index >= frame.keys.length) {
+        stack.pop();
+        continue;
+      }
+      const record = frame.container as Record<string, unknown>;
+      const key = frame.keys[frame.index++];
+      const child = record[key];
+      const restored = begin(child);
       if (restored !== child) {
         // JSON keys, including __proto__, remain own data properties. Defining a
         // replacement cannot invoke a prototype setter or change the record shape.
-        Object.defineProperty(item, key, {
+        Object.defineProperty(record, key, {
           value: restored,
           enumerable: true,
           configurable: true,
@@ -120,9 +206,8 @@ export function decodeWire(text: string): unknown {
         });
       }
     }
-    return item;
-  };
-  return visit(parsed);
+  }
+  return root;
 }
 
 /**
@@ -208,33 +293,6 @@ function isTypedNil(value: unknown, implementers: readonly string[]): boolean {
 }
 
 /**
- * Validates complete records against the pinned schema, including nil-bearing
- * boundaries. This is a boundary check, not a semantic shell interpretation.
- */
-function matchesRecord(value: unknown, check: Validation): boolean {
-  if (!isRecord(value) || typeof value.Type !== 'string' || check.active?.has(value)) return false;
-  if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return false;
-  const fields = fieldEntries(value.Type);
-  if (Object.keys(value).length !== fields.length + 1) return false;
-  check.active?.add(value);
-  try {
-    for (const [name, field] of fields) {
-      if (!Object.hasOwn(value, name)) return false;
-      let child = value[name];
-      if (check.restore && field.kind === 'position' && Array.isArray(child)) {
-        const position = positionFromTuple(child);
-        if (position === undefined) return false;
-        value[name] = child = position;
-      }
-      if (!matchesField(child, field, check)) return false;
-    }
-    return true;
-  } finally {
-    check.active?.delete(value);
-  }
-}
-
-/**
  * Validation state for one boundary check. Caller-supplied records track active
  * ancestors to reject cycles. A parse response's File is a fresh JSON.parse tree,
  * which cannot contain cycles or shared records, so restoring validation tracks
@@ -262,21 +320,38 @@ function fieldEntries(type: string): readonly (readonly [string, SyntaxFieldSche
   return entries;
 }
 
-/** Checks one upstream field without conflating a nil slice with an empty one. */
-function matchesField(value: unknown, field: SyntaxFieldSchema, check: Validation): boolean {
-  if (value === null) return field.nullable;
-  if (field.slice) {
-    if (!Array.isArray(value)) return false;
-    for (const item of value as unknown[]) {
-      if (item === null ? !field.elementNullable : !matchesScalar(item, field, check)) return false;
-    }
-    return true;
-  }
-  return matchesScalar(value, field, check);
+/** One record being validated: which field is current and, inside a slice, which element. */
+interface ValidationFrame {
+  readonly value: Record<string, unknown>;
+  readonly fields: readonly (readonly [string, SyntaxFieldSchema])[];
+  /** Index of the current field. */
+  field: number;
+  /** The slice being read for the current field, or null between fields. */
+  items: readonly unknown[] | null;
+  /** Index of the next element of items. */
+  item: number;
 }
 
-/** Each scalar category retains its upstream domain rather than JS coercions. */
-function matchesScalar(value: unknown, field: SyntaxFieldSchema, check: Validation): boolean {
+/**
+ * Applies the entry checks for one record and, when it passes, opens a frame for its
+ * fields. Returns false when the record is not valid; nothing is opened then.
+ */
+function openRecord(value: unknown, check: Validation, stack: ValidationFrame[]): boolean {
+  if (!isRecord(value) || typeof value.Type !== 'string' || check.active?.has(value)) return false;
+  if (!Object.hasOwn(SYNTAX_SCHEMA, value.Type)) return false;
+  const fields = fieldEntries(value.Type);
+  if (Object.keys(value).length !== fields.length + 1) return false;
+  check.active?.add(value);
+  stack.push({ value, fields, field: 0, items: null, item: 0 });
+  return true;
+}
+
+/**
+ * Checks one non-null upstream value against its field descriptor. Returns false when
+ * it is invalid, true when it is valid and needs no further work, and the record to
+ * descend into when its validity depends on that record's own fields.
+ */
+function checkScalar(value: unknown, field: SyntaxFieldSchema): boolean | Record<string, unknown> {
   switch (field.kind) {
     case 'boolean':
       return typeof value === 'boolean';
@@ -292,17 +367,82 @@ function matchesScalar(value: unknown, field: SyntaxFieldSchema, check: Validati
         value <= operatorMaximum(field.type)
       );
     case 'struct':
-      return isRecord(value) && value.Type === field.type && matchesRecord(value, check);
+      return isRecord(value) && value.Type === field.type ? value : false;
     case 'interface':
-      return (
+      if (!(
         isRecord(value) &&
         typeof value.Type === 'string' &&
         field.type !== null &&
-        Object.hasOwn(SYNTAX_INTERFACES, field.type) &&
-        (isTypedNil(value, SYNTAX_INTERFACES[field.type]) ||
-          (SYNTAX_INTERFACES[field.type].includes(value.Type) && matchesRecord(value, check)))
-      );
+        Object.hasOwn(SYNTAX_INTERFACES, field.type)
+      ))
+        return false;
+      if (isTypedNil(value, SYNTAX_INTERFACES[field.type])) return true;
+      return SYNTAX_INTERFACES[field.type].includes(value.Type) ? value : false;
   }
+}
+
+/**
+ * Validates complete records against the pinned schema, including nil-bearing
+ * boundaries. This is a boundary check, not a semantic shell interpretation.
+ *
+ * Records are visited depth-first in field order on an explicit stack, so the
+ * check needs no native frame per tree level and a very deep left-nested chain
+ * cannot overflow it. Active ancestors (when tracked) are those records whose
+ * fields are still being read, as in a recursive descent.
+ */
+function matchesRecord(root: unknown, check: Validation): boolean {
+  const stack: ValidationFrame[] = [];
+  if (!openRecord(root, check, stack)) return false;
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    let descend: Record<string, unknown> | undefined;
+    if (frame.items !== null) {
+      const [, field] = frame.fields[frame.field];
+      if (frame.item >= frame.items.length) {
+        frame.items = null;
+        frame.field++;
+        continue;
+      }
+      const item = frame.items[frame.item++];
+      if (item === null) {
+        if (!field.elementNullable) return false;
+        continue;
+      }
+      const outcome = checkScalar(item, field);
+      if (outcome === false) return false;
+      if (outcome !== true) descend = outcome;
+    } else if (frame.field === frame.fields.length) {
+      stack.pop();
+      check.active?.delete(frame.value);
+      continue;
+    } else {
+      const [name, field] = frame.fields[frame.field];
+      if (!Object.hasOwn(frame.value, name)) return false;
+      let child = frame.value[name];
+      if (check.restore && field.kind === 'position' && Array.isArray(child)) {
+        const position = positionFromTuple(child);
+        if (position === undefined) return false;
+        frame.value[name] = child = position;
+      }
+      if (child === null) {
+        if (!field.nullable) return false;
+        frame.field++;
+        continue;
+      }
+      if (field.slice) {
+        if (!Array.isArray(child)) return false;
+        frame.items = child as unknown[];
+        frame.item = 0;
+        continue;
+      }
+      const outcome = checkScalar(child, field);
+      if (outcome === false) return false;
+      frame.field++;
+      if (outcome !== true) descend = outcome;
+    }
+    if (descend !== undefined && !openRecord(descend, check, stack)) return false;
+  }
+  return true;
 }
 
 /** Narrows complete syntax.Nodes or typed nil Node interfaces; auxiliaries are excluded. @internal */

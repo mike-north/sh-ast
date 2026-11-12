@@ -9,8 +9,11 @@
 import type { Node, SyntaxPos } from '../generated/syntax-types.js';
 import { nilDereference, WalkPanicError } from './syntax-walk-errors.js';
 
-/** Internal Pos value keeps uint32 arithmetic and raw-offset ordering intact. */
-interface IPosition {
+/**
+ * Internal Pos value keeps uint32 arithmetic and raw-offset ordering intact.
+ * @internal
+ */
+export interface IPosition {
   readonly offset: number;
   readonly lineCol: number;
 }
@@ -69,16 +72,50 @@ function concrete(node: Node | null): Exclude<Node, { Type: 'TypedNil' }> {
   }
   return node;
 }
-/** Only WordPart/ArithmExpr positions are reachable from comment placement. */
-function position(value: Node | null): IPosition {
+/**
+ * A bound evaluation suspended on the bounds it depends on. Each yield names a
+ * node whose bound is needed; the driver resumes the evaluation with that bound.
+ * This keeps spines such as a long BinaryArithm.X chain off the native stack.
+ */
+type IEvaluation = Generator<Node | null, IPosition, IPosition>;
+
+/**
+ * Evaluates one bound by running its dependencies on an explicit stack, in the
+ * same order as direct recursion, so a panic is raised by the same dependency.
+ */
+function evaluate(root: Node | null, bound: (node: Node | null) => IEvaluation): IPosition {
+  const stack = [bound(root)];
+  let result = ZERO;
+  for (;;) {
+    const step = stack[stack.length - 1].next(result);
+    if (step.done === true) {
+      stack.pop();
+      result = step.value;
+      if (stack.length === 0) {
+        return result;
+      }
+    } else {
+      stack.push(bound(step.value));
+    }
+  }
+}
+/**
+ * Only WordPart/ArithmExpr positions are reachable from comment placement.
+ * @internal
+ */
+export function position(value: Node | null): IPosition {
+  return evaluate(value, positionOf);
+}
+/** The evaluation behind position: one level, with dependencies yielded. */
+function* positionOf(value: Node | null): IEvaluation {
   const node = concrete(value);
   switch (node.Type) {
     case 'CaseItem':
-      return position(at(node.Patterns, 0));
+      return yield at(node.Patterns, 0);
     case 'ArrayElem':
-      return position(node.Index ?? node.Value);
+      return yield node.Index ?? node.Value;
     case 'Word':
-      return position(at(node.Parts, 0));
+      return yield at(node.Parts, 0);
     case 'Lit':
       return unpack(node.ValuePos);
     case 'SglQuoted':
@@ -87,59 +124,66 @@ function position(value: Node | null): IPosition {
     case 'ArithmExp':
       return unpack(node.Left);
     case 'ParamExp':
-      return node.Dollar.IsValid ? unpack(node.Dollar) : position(node.Param);
+      return node.Dollar.IsValid ? unpack(node.Dollar) : yield node.Param;
     case 'ProcSubst':
     case 'ExtGlob':
       return unpack(node.OpPos);
     case 'BraceExp':
-      return add(position(at(node.Elems, 0)), -1);
+      return add(yield at(node.Elems, 0), -1);
     case 'BinaryArithm':
-      return position(node.X);
+      return yield node.X;
     case 'UnaryArithm':
-      return node.Post ? position(node.X) : unpack(node.OpPos);
+      return node.Post ? yield node.X : unpack(node.OpPos);
     case 'ParenArithm':
       return unpack(node.Lparen);
     case 'FlagsArithm':
-      return add(position(node.Flags), -1);
+      return add(yield node.Flags, -1);
     default:
       throw new WalkPanicError(`syntax.Walk: unexpected position dependency *syntax.${node.Type}`);
   }
 }
-/** End follows the current fields, and is evaluated only when a Stmt has comments. */
-function end(value: Node | null): IPosition {
+/**
+ * End follows the current fields, and is evaluated only when a Stmt has comments.
+ * @internal
+ */
+export function end(value: Node | null): IPosition {
+  return evaluate(value, endOf);
+}
+/** The evaluation behind end: one level, with dependencies yielded. */
+function* endOf(value: Node | null): IEvaluation {
   const node = concrete(value);
   switch (node.Type) {
     case 'Stmt': {
       if (node.Semicolon.IsValid) {
-        const end = add(unpack(node.Semicolon), 1);
-        return node.Coprocess || node.Disown ? add(end, 1) : end;
+        const semicolonEnd = add(unpack(node.Semicolon), 1);
+        return node.Coprocess || node.Disown ? add(semicolonEnd, 1) : semicolonEnd;
       }
       let result = node.Negated ? add(unpack(node.Position), 1) : unpack(node.Position);
       if (node.Cmd !== null) {
-        result = end(node.Cmd);
+        result = yield node.Cmd;
       }
       if (node.Redirs?.length) {
-        result = maximum(result, end(at(node.Redirs, node.Redirs.length - 1)));
+        result = maximum(result, yield at(node.Redirs, node.Redirs.length - 1));
       }
       return result;
     }
     case 'CallExpr':
       return node.Args?.length
-        ? end(at(node.Args, node.Args.length - 1))
-        : end(at(node.Assigns, (node.Assigns?.length ?? 0) - 1));
+        ? yield at(node.Args, node.Args.length - 1)
+        : yield at(node.Assigns, (node.Assigns?.length ?? 0) - 1);
     case 'Assign':
       if (node.Value !== null) {
-        return end(node.Value);
+        return yield node.Value;
       }
       if (node.Array !== null) {
-        return end(node.Array);
+        return yield node.Array;
       }
       if (node.Index !== null) {
-        return add(end(node.Index), node.Naked ? 1 : 2);
+        return add(yield node.Index, node.Naked ? 1 : 2);
       }
-      return node.Naked ? end(node.Name) : add(end(node.Name), 1);
+      return node.Naked ? yield node.Name : add(yield node.Name, 1);
     case 'Redirect':
-      return end(node.Hdoc ?? node.Word);
+      return yield node.Hdoc ?? node.Word;
     case 'Subshell':
     case 'ArrayExpr':
     case 'ProcSubst':
@@ -157,12 +201,12 @@ function end(value: Node | null): IPosition {
     case 'BinaryCmd':
     case 'BinaryArithm':
     case 'BinaryTest':
-      return end(node.Y);
+      return yield node.Y;
     case 'FuncDecl':
     case 'TestDecl':
-      return end(node.Body);
+      return yield node.Body;
     case 'Word':
-      return end(at(node.Parts, (node.Parts?.length ?? 0) - 1));
+      return yield at(node.Parts, (node.Parts?.length ?? 0) - 1);
     case 'Lit':
       return unpack(node.ValueEnd);
     case 'SglQuoted':
@@ -173,33 +217,33 @@ function end(value: Node | null): IPosition {
       return !node.Short
         ? add(unpack(node.Rbrace), 1)
         : node.Index !== null
-          ? add(end(node.Index), 1)
-          : end(node.Param);
+          ? add(yield node.Index, 1)
+          : yield node.Param;
     case 'ArithmExp':
       return add(unpack(node.Right), node.Bracket ? 1 : 2);
     case 'ArithmCmd':
     case 'TestClause':
       return add(unpack(node.Right), 2);
     case 'UnaryArithm':
-      return node.Post ? add(unpack(node.OpPos), 2) : end(node.X);
+      return node.Post ? add(unpack(node.OpPos), 2) : yield node.X;
     case 'UnaryTest':
-      return end(node.X);
+      return yield node.X;
     case 'FlagsArithm':
-      return node.X !== null ? end(node.X) : add(end(node.Flags), 1);
+      return node.X !== null ? yield node.X : add(yield node.Flags, 1);
     case 'CaseClause':
       return add(unpack(node.Esac), node.Braces ? 1 : 4);
     case 'DeclClause':
-      return node.Args?.length ? end(at(node.Args, node.Args.length - 1)) : end(node.Variant);
+      return node.Args?.length ? yield at(node.Args, node.Args.length - 1) : yield node.Variant;
     case 'ExtGlob':
-      return add(end(node.Pattern), 1);
+      return add(yield node.Pattern, 1);
     case 'TimeClause':
-      return node.Stmt === null ? add(unpack(node.Time), 4) : end(node.Stmt);
+      return node.Stmt === null ? add(unpack(node.Time), 4) : yield node.Stmt;
     case 'CoprocClause':
-      return end(node.Stmt);
+      return yield node.Stmt;
     case 'LetClause':
-      return end(at(node.Exprs, (node.Exprs?.length ?? 0) - 1));
+      return yield at(node.Exprs, (node.Exprs?.length ?? 0) - 1);
     case 'BraceExp':
-      return add(node.Elems?.length ? end(at(node.Elems, node.Elems.length - 1)) : ZERO, 1);
+      return add(node.Elems?.length ? yield at(node.Elems, node.Elems.length - 1) : ZERO, 1);
     default:
       throw new WalkPanicError(`syntax.Walk: unexpected end dependency *syntax.${node.Type}`);
   }
