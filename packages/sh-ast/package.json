@@ -15,7 +15,7 @@
     "mvdan-sh",
     "typescript"
   ],
-  "version": "0.11.2",
+  "version": "0.12.0",
   "author": "Mike North <michael.l.north@gmail.com>",
   "repository": {
     "type": "git",
