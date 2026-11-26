@@ -215,10 +215,15 @@ function dereference<T>(value: T | null): T {
 }
 /** Go copies a Comment's position and immutable string value before its callback. */
 function copyComment(node: Comment): Comment {
+  let text = node.Text;
+  if (typeof text !== 'string') {
+    // A view made out of bounds by resizing exposes zero bytes and throws when copied directly.
+    text = text.length === 0 ? new Uint8Array(0) : new Uint8Array(text);
+  }
   return {
     Type: 'Comment',
     Hash: { ...node.Hash },
-    Text: typeof node.Text === 'string' ? node.Text : new Uint8Array(node.Text),
+    Text: text,
   };
 }
 

@@ -2,6 +2,7 @@
  * Hand-specified ordinary-array outcomes define the supported mutation boundary.
  * These cases intentionally do not claim Go capacity or value-slot address parity.
  */
+/// <reference lib="es2024.arraybuffer" />
 import { describe, expect, it } from 'vitest';
 import type { Comment, GoString, Node, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { printSync } from '../src/syntax-print.js';
@@ -183,10 +184,42 @@ describe('ordinary-array traversal mutation contract', () => {
     expect(text[0]).toBe(0x78);
   });
 
-  it.each(['Stmt', 'CaseItem', 'ArrayElem'] as const)(
-    'isolates %s comment copies while reading later comment slots live',
-    (kind) => {
-      const original = comment(new Uint8Array([0xfe]));
+  it('visits a comment with empty text when its Buffer view goes out of bounds after a shrink', () => {
+    const file = parseSync('echo hi #x\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    const backing = new ArrayBuffer(1, { maxByteLength: 2 });
+    const text = Buffer.from(backing, 0, 1);
+    text[0] = 0x78;
+    attached.Text = text;
+    backing.resize(0);
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array(0)]);
+    expect(printSync(file)).toBe('echo hi #\n');
+    backing.resize(1);
+    expect(text.length).toBe(1);
+    expect(seen).toStrictEqual([new Uint8Array(0)]);
+  });
+
+  it.each(
+    (['Stmt', 'CaseItem', 'ArrayElem'] as const).flatMap((kind) =>
+      (['Uint8Array', 'Buffer'] as const).map((storage) => ({ kind, storage })),
+    ),
+  )(
+    'isolates immediate $kind comment copies backed by $storage while reading later slots live',
+    ({ kind, storage }) => {
+      const expectedText = new Uint8Array([0xe7, 0x95, 0x8c]);
+      const text =
+        storage === 'Buffer'
+          ? Buffer.from([0, 0xe7, 0x95, 0x8c, 0]).subarray(1, 4)
+          : new Uint8Array(expectedText);
+      const original = comment(text);
       const later = comment('old later', 2);
       const replacement = comment('new later', 2);
       const comments = [original, later];
@@ -203,7 +236,7 @@ describe('ordinary-array traversal mutation contract', () => {
       const seen: GoString[] = [];
       walk(item, (node) => {
         if (node?.Type === 'Comment') {
-          seen.push(typeof node.Text === 'string' ? node.Text : node.Text.slice());
+          seen.push(typeof node.Text === 'string' ? node.Text : new Uint8Array(node.Text));
           expect(comments).not.toContain(node);
           if (typeof node.Text !== 'string') {
             node.Text[0] = 0xff;
@@ -213,8 +246,8 @@ describe('ordinary-array traversal mutation contract', () => {
         }
         return true;
       });
-      expect(seen).toEqual([new Uint8Array([0xfe]), 'new later']);
-      expect(original.Text).toEqual(new Uint8Array([0xfe]));
+      expect(seen).toEqual([expectedText, 'new later']);
+      expect([...text]).toEqual([...expectedText]);
       expect(original.Hash.Offset).toBe(0);
       expect(replacement.Text).toBe('new later');
     },
