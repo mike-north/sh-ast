@@ -221,6 +221,28 @@ describe('ordinary-array traversal mutation contract', () => {
     expect(printSync(file)).toBe('#y\n');
   });
 
+  it('copies readable bytes from a Uint8Array with a shadowed length', () => {
+    const file = parseSync('echo hi #界\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    const expected = [0xe7, 0x95, 0x8c];
+    const text = new Uint8Array(expected);
+    Object.defineProperty(text, 'length', { value: 0 });
+    attached.Text = text;
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array(expected)]);
+    const [copy] = seen;
+    if (!(copy instanceof Uint8Array)) throw new Error('Missing copied bytes');
+    copy[0] = 0x78;
+    expect([...text]).toEqual(expected);
+  });
+
   it('visits a comment with empty text when its Buffer view goes out of bounds after a shrink', () => {
     const file = parseSync('echo hi #x\n', { KeepComments: true });
     const attached = file.Stmts?.[0]?.Comments?.[0];

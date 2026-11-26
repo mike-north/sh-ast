@@ -215,12 +215,19 @@ function dereference<T>(value: T | null): T {
   }
   return value;
 }
+
+/** The shared prototype owns the intrinsic length accessor for typed-array views. */
+const typedArrayPrototype = Object.getPrototypeOf(Uint8Array.prototype) as object;
+
 /** Go copies a Comment's position and immutable string value before its callback. */
 function copyComment(node: Comment): Comment {
   let text = node.Text;
   if (typeof text !== 'string') {
-    // A view made out of bounds by resizing exposes zero bytes and throws when copied directly.
-    text = text.length === 0 ? new Uint8Array(0) : new Uint8Array(text);
+    // An out-of-bounds view has zero intrinsic length and throws when copied directly.
+    text =
+      Reflect.get(typedArrayPrototype, 'length', text) === 0
+        ? new Uint8Array(0)
+        : new Uint8Array(text);
   }
   return {
     Type: 'Comment',
