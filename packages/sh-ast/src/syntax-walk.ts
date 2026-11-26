@@ -218,7 +218,7 @@ function copyComment(node: Comment): Comment {
   return {
     Type: 'Comment',
     Hash: { ...node.Hash },
-    Text: typeof node.Text === 'string' ? node.Text : node.Text.slice(),
+    Text: typeof node.Text === 'string' ? node.Text : new Uint8Array(node.Text),
   };
 }
 

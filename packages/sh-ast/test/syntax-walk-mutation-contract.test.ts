@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { Comment, GoString, Node, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { printSync } from '../src/syntax-print.js';
 import { walk, WalkPanicError } from '../src/syntax-walk.js';
+import { parseSync } from '../src/syntax.js';
 import { syntheticNode } from './syntax-fixtures.js';
 
 /** Small valid coordinates make comment placement independent of parser output. */
@@ -158,6 +159,28 @@ describe('ordinary-array traversal mutation contract', () => {
     expect(file.Last).toEqual([replacement, later]);
     expect(original.Text).toBe('retained object edit');
     expect(replacement.Text).toBe('replacement');
+  });
+
+  it.each([
+    { kind: 'Buffer', text: Buffer.from([0x78]) },
+    { kind: 'Uint8Array', text: new Uint8Array([0x78]) },
+  ])('keeps edits to $kind-backed comment copies out of the stored AST', ({ text }) => {
+    expect.assertions(3);
+    const file = parseSync('echo hi #x\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    attached.Text = text;
+
+    walk(file, (node) => {
+      if (node?.Type === 'Comment' && typeof node.Text !== 'string') {
+        expect(node.Text[0]).toBe(0x78);
+        node.Text[0] = 0x79;
+      }
+      return true;
+    });
+
+    expect(printSync(file)).toBe('echo hi #x\n');
+    expect(text[0]).toBe(0x78);
   });
 
   it.each(['Stmt', 'CaseItem', 'ArrayElem'] as const)(
