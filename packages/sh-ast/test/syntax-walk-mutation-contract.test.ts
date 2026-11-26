@@ -184,6 +184,43 @@ describe('ordinary-array traversal mutation contract', () => {
     expect(text[0]).toBe(0x78);
   });
 
+  it('copies nonempty Buffer comment text into a plain Uint8Array', () => {
+    const file = parseSync('echo hi #界\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    attached.Text = Buffer.from('界');
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array([0xe7, 0x95, 0x8c])]);
+  });
+
+  it('lets callbacks edit the stored Buffer text of a File.Last comment', () => {
+    const file = parseSync('#x\n', { KeepComments: true });
+    const last = file.Last?.[0];
+    if (!last) throw new Error('Missing final comment');
+    const text = Buffer.from('x');
+    last.Text = text;
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') {
+        seen.push(node.Text);
+        if (typeof node.Text !== 'string') node.Text[0] = 0x79;
+      }
+      return true;
+    });
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBe(text);
+    expect(text[0]).toBe(0x79);
+    expect(printSync(file)).toBe('#y\n');
+  });
+
   it('visits a comment with empty text when its Buffer view goes out of bounds after a shrink', () => {
     const file = parseSync('echo hi #x\n', { KeepComments: true });
     const attached = file.Stmts?.[0]?.Comments?.[0];

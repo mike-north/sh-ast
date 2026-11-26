@@ -44,9 +44,11 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * capacity-dependent allocation over shared backing storage.
  *
  * Comments on Stmt, CaseItem and ArrayElem are copied before their callbacks,
- * including position and byte-string values; editing a copy does not edit the
- * stored comment. Last/CondLast/ThenLast/DoLast callbacks receive the stored
- * JavaScript Comment object. Replacing its array slot leaves any previously
+ * including their positions. Byte-backed text, including a Node.js `Buffer`,
+ * is copied into an independent plain `Uint8Array`. A view made out of bounds
+ * by resizing yields an empty `Uint8Array`.
+ * Last/CondLast/ThenLast/DoLast callbacks receive the stored JavaScript Comment
+ * object and its text. Replacing its array slot leaves any previously
  * retained callback object unchanged: there is no Go value-slot pointer identity.
  * Reentrant walks maintain independent traversal state.
  *
