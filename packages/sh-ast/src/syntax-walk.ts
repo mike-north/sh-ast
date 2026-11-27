@@ -44,9 +44,11 @@ type IConcreteKind = Exclude<Node['Type'], 'TypedNil'>;
  * capacity-dependent allocation over shared backing storage.
  *
  * Comments on Stmt, CaseItem and ArrayElem are copied before their callbacks,
- * including position and byte-string values; editing a copy does not edit the
- * stored comment. Last/CondLast/ThenLast/DoLast callbacks receive the stored
- * JavaScript Comment object. Replacing its array slot leaves any previously
+ * including their positions. Byte-backed text, including a Node.js `Buffer`,
+ * is copied into an independent plain `Uint8Array`. A view made out of bounds
+ * by resizing yields an empty `Uint8Array`.
+ * Last/CondLast/ThenLast/DoLast callbacks receive the stored JavaScript Comment
+ * object and its text. Replacing its array slot leaves any previously
  * retained callback object unchanged: there is no Go value-slot pointer identity.
  * Reentrant walks maintain independent traversal state.
  *
@@ -213,12 +215,24 @@ function dereference<T>(value: T | null): T {
   }
   return value;
 }
+
+/** The shared prototype owns the intrinsic length accessor for typed-array views. */
+const typedArrayPrototype = Object.getPrototypeOf(Uint8Array.prototype) as object;
+
 /** Go copies a Comment's position and immutable string value before its callback. */
 function copyComment(node: Comment): Comment {
+  let text = node.Text;
+  if (typeof text !== 'string') {
+    // An out-of-bounds view has zero intrinsic length and throws when copied directly.
+    text =
+      Reflect.get(typedArrayPrototype, 'length', text) === 0
+        ? new Uint8Array(0)
+        : new Uint8Array(text);
+  }
   return {
     Type: 'Comment',
     Hash: { ...node.Hash },
-    Text: typeof node.Text === 'string' ? node.Text : node.Text.slice(),
+    Text: text,
   };
 }
 

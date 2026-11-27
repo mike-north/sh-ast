@@ -2,10 +2,12 @@
  * Hand-specified ordinary-array outcomes define the supported mutation boundary.
  * These cases intentionally do not claim Go capacity or value-slot address parity.
  */
+/// <reference lib="es2024.arraybuffer" />
 import { describe, expect, it } from 'vitest';
 import type { Comment, GoString, Node, SyntaxPos, Word } from '../generated/syntax-types.js';
 import { printSync } from '../src/syntax-print.js';
 import { walk, WalkPanicError } from '../src/syntax-walk.js';
+import { parseSync } from '../src/syntax.js';
 import { syntheticNode } from './syntax-fixtures.js';
 
 /** Small valid coordinates make comment placement independent of parser output. */
@@ -160,10 +162,123 @@ describe('ordinary-array traversal mutation contract', () => {
     expect(replacement.Text).toBe('replacement');
   });
 
-  it.each(['Stmt', 'CaseItem', 'ArrayElem'] as const)(
-    'isolates %s comment copies while reading later comment slots live',
-    (kind) => {
-      const original = comment(new Uint8Array([0xfe]));
+  it.each([
+    { kind: 'Buffer', text: Buffer.from([0x78]) },
+    { kind: 'Uint8Array', text: new Uint8Array([0x78]) },
+  ])('keeps edits to $kind-backed comment copies out of the stored AST', ({ text }) => {
+    expect.assertions(3);
+    const file = parseSync('echo hi #x\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    attached.Text = text;
+
+    walk(file, (node) => {
+      if (node?.Type === 'Comment' && typeof node.Text !== 'string') {
+        expect(node.Text[0]).toBe(0x78);
+        node.Text[0] = 0x79;
+      }
+      return true;
+    });
+
+    expect(printSync(file)).toBe('echo hi #x\n');
+    expect(text[0]).toBe(0x78);
+  });
+
+  it('copies nonempty Buffer comment text into a plain Uint8Array', () => {
+    const file = parseSync('echo hi #界\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    attached.Text = Buffer.from('界');
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array([0xe7, 0x95, 0x8c])]);
+  });
+
+  it('lets callbacks edit the stored Buffer text of a File.Last comment', () => {
+    const file = parseSync('#x\n', { KeepComments: true });
+    const last = file.Last?.[0];
+    if (!last) throw new Error('Missing final comment');
+    const text = Buffer.from('x');
+    last.Text = text;
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') {
+        seen.push(node.Text);
+        if (typeof node.Text !== 'string') node.Text[0] = 0x79;
+      }
+      return true;
+    });
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBe(text);
+    expect(text[0]).toBe(0x79);
+    expect(printSync(file)).toBe('#y\n');
+  });
+
+  it('copies readable bytes from a Uint8Array with a shadowed length', () => {
+    const file = parseSync('echo hi #界\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    const expected = [0xe7, 0x95, 0x8c];
+    const text = new Uint8Array(expected);
+    Object.defineProperty(text, 'length', { value: 0 });
+    attached.Text = text;
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array(expected)]);
+    const [copy] = seen;
+    if (!(copy instanceof Uint8Array)) throw new Error('Missing copied bytes');
+    copy[0] = 0x78;
+    expect([...text]).toEqual(expected);
+  });
+
+  it('visits a comment with empty text when its Buffer view goes out of bounds after a shrink', () => {
+    const file = parseSync('echo hi #x\n', { KeepComments: true });
+    const attached = file.Stmts?.[0]?.Comments?.[0];
+    if (!attached) throw new Error('Missing attached comment');
+    const backing = new ArrayBuffer(1, { maxByteLength: 2 });
+    const text = Buffer.from(backing, 0, 1);
+    text[0] = 0x78;
+    attached.Text = text;
+    backing.resize(0);
+
+    const seen: GoString[] = [];
+    walk(file, (node) => {
+      if (node?.Type === 'Comment') seen.push(node.Text);
+      return true;
+    });
+
+    expect(seen).toStrictEqual([new Uint8Array(0)]);
+    expect(printSync(file)).toBe('echo hi #\n');
+    backing.resize(1);
+    expect(text.length).toBe(1);
+    expect(seen).toStrictEqual([new Uint8Array(0)]);
+  });
+
+  it.each(
+    (['Stmt', 'CaseItem', 'ArrayElem'] as const).flatMap((kind) =>
+      (['Uint8Array', 'Buffer'] as const).map((storage) => ({ kind, storage })),
+    ),
+  )(
+    'isolates immediate $kind comment copies backed by $storage while reading later slots live',
+    ({ kind, storage }) => {
+      const expectedText = new Uint8Array([0xe7, 0x95, 0x8c]);
+      const text =
+        storage === 'Buffer'
+          ? Buffer.from([0, 0xe7, 0x95, 0x8c, 0]).subarray(1, 4)
+          : new Uint8Array(expectedText);
+      const original = comment(text);
       const later = comment('old later', 2);
       const replacement = comment('new later', 2);
       const comments = [original, later];
@@ -180,7 +295,7 @@ describe('ordinary-array traversal mutation contract', () => {
       const seen: GoString[] = [];
       walk(item, (node) => {
         if (node?.Type === 'Comment') {
-          seen.push(typeof node.Text === 'string' ? node.Text : node.Text.slice());
+          seen.push(typeof node.Text === 'string' ? node.Text : new Uint8Array(node.Text));
           expect(comments).not.toContain(node);
           if (typeof node.Text !== 'string') {
             node.Text[0] = 0xff;
@@ -190,8 +305,8 @@ describe('ordinary-array traversal mutation contract', () => {
         }
         return true;
       });
-      expect(seen).toEqual([new Uint8Array([0xfe]), 'new later']);
-      expect(original.Text).toEqual(new Uint8Array([0xfe]));
+      expect(seen).toEqual([expectedText, 'new later']);
+      expect([...text]).toEqual([...expectedText]);
       expect(original.Hash.Offset).toBe(0);
       expect(replacement.Text).toBe('new later');
     },
